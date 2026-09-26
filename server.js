@@ -21,6 +21,11 @@ app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use(express.static(path.join(__dirname)));
 
+// Root Route handler for Vercel
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // File Paths
 const DATA_DIR = path.join(__dirname, 'data');
 const CONFIG_FILE = path.join(DATA_DIR, 'admin-config.json');
@@ -31,35 +36,36 @@ const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
-// Ensure data & upload directories exist
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+// Ensure data & upload directories exist (skip on Vercel serverless read-only filesystem)
+if (!process.env.VERCEL) {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  } catch (_) {}
 }
 
 // Data Helper Functions (defined early for session hydration)
 function readJson(filePath, defaultValue = []) {
   try {
     if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2));
+      if (!process.env.VERCEL) {
+        try { fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2)); } catch (_) {}
+      }
       return defaultValue;
     }
     const data = fs.readFileSync(filePath, 'utf8');
     return JSON.parse(data);
   } catch (err) {
-    console.error(`Error reading ${filePath}:`, err);
     return defaultValue;
   }
 }
 
 function writeJson(filePath, data) {
   try {
+    if (process.env.VERCEL) return true;
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     return true;
   } catch (err) {
-    console.error(`Error writing ${filePath}:`, err);
     return false;
   }
 }
@@ -69,6 +75,7 @@ const activeOtps = new Map(); // email -> { otp, expiresAt, attempts, createdAt 
 const activeSessions = new Map(Object.entries(readJson(SESSIONS_FILE, {})));
 
 function saveSessions() {
+  if (process.env.VERCEL) return;
   try {
     const obj = Object.fromEntries(activeSessions);
     writeJson(SESSIONS_FILE, obj);

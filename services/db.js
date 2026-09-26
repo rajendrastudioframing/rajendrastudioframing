@@ -17,32 +17,37 @@ const MESSAGES_FILE = path.join(DATA_DIR, 'messages.json');
 const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 
-// Ensure local data dir exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// Ensure local data dir exists (skip on Vercel serverless read-only filesystem)
+if (!process.env.VERCEL) {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  } catch (_) {}
 }
 
 // Helper: Local JSON Read / Write
 function readJson(filePath, defaultValue = []) {
   try {
     if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2));
+      if (!process.env.VERCEL) {
+        try { fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2)); } catch (_) {}
+      }
       return defaultValue;
     }
     const data = fs.readFileSync(filePath, 'utf8');
     return JSON.parse(data);
   } catch (err) {
-    console.error(`Error reading ${filePath}:`, err.message);
     return defaultValue;
   }
 }
 
 function writeJson(filePath, data) {
   try {
+    if (process.env.VERCEL) return true;
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     return true;
   } catch (err) {
-    console.error(`Error writing ${filePath}:`, err.message);
     return false;
   }
 }
