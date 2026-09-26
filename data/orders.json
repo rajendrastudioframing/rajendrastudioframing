@@ -1,0 +1,188 @@
+[
+  {
+    "orderId": "RF-ORD-2026-005",
+    "customer": {
+      "name": "Kavya Tandel",
+      "phone": "+919328081006",
+      "email": "tandelkavya1002@gmail.com",
+      "address": "g.h.patel college of engineering",
+      "city": "anand",
+      "state": "Gujarat",
+      "pincode": "388120"
+    },
+    "items": [
+      {
+        "id": "plastic-frame-gallery",
+        "name": "Plastic Photo Frame",
+        "price": 450,
+        "quantity": 1,
+        "size": "8\" × 10\"",
+        "finish": "Studio Matte Black",
+        "image": "assets/images/plastic_frame.jpg",
+        "uploadedPhoto": null,
+        "lineTotal": 450
+      }
+    ],
+    "subtotal": 450,
+    "shipping": 0,
+    "total": 450,
+    "notes": "Order cancelled by studio. Reason: Material / Frame stock unavailable.",
+    "orderPhoto": null,
+    "paymentMethod": "Instant UPI Payment (QR Code)",
+    "upiUtr": "0",
+    "status": "Cancelled",
+    "createdAt": "2026-09-26T11:45:20.094Z",
+    "updatedAt": "2026-09-26T11:46:53.925Z"
+  },
+  {
+    "orderId": "RF-ORD-2026-004",
+    "customer": {
+      "name": "Kavya Tandel",
+      "phone": "9328081006",
+      "email": "rajeshframing0@gmail.com",
+      "address": "5 Tirth Bungalow, V.V. Nagar, Anand",
+      "city": "Anand",
+      "state": "Gujarat",
+      "pincode": "388120"
+    },
+    "items": [
+      {
+        "id": "customized-coffee-mug",
+        "name": "Mug Printing",
+        "price": 249,
+        "quantity": 1,
+        "size": "11oz Classic",
+        "finish": "Pure White",
+        "image": "assets/images/custom_mug.jpg",
+        "uploadedPhoto": null,
+        "lineTotal": 249
+      }
+    ],
+    "subtotal": 249,
+    "shipping": 0,
+    "total": 249,
+    "notes": "Customer requested cancellation due to incorrect size.",
+    "orderPhoto": null,
+    "paymentMethod": "Instant UPI Payment (QR Code)",
+    "upiUtr": null,
+    "status": "Cancelled",
+    "createdAt": "2026-09-26T09:40:46.446Z",
+    "updatedAt": "2026-09-26T09:40:46.474Z"
+  },
+  {
+    "orderId": "RF-ORD-2026-004",
+    "customer": {
+      "name": "Kavya Tandel",
+      "phone": "9328081006",
+      "email": "rajeshframing0@gmail.com",
+      "address": "Plot 12, GIDC Industrial Estate, Dahej",
+      "city": "Dahej / Bharuch",
+      "state": "Gujarat",
+      "pincode": "392130"
+    },
+    "items": [
+      {
+        "id": "glass-frame-classic",
+        "name": "Glass Photo Frame",
+        "price": 650,
+        "quantity": 1,
+        "size": "6x8 Classic",
+        "finish": "Warm Gold Standoffs",
+        "image": "assets/images/glass_frame.jpg",
+        "uploadedPhoto": null,
+        "lineTotal": 650
+      }
+    ],
+    "subtotal": 650,
+    "shipping": 0,
+    "total": 650,
+    "notes": "Order cancelled by studio. Reason: Customer requested cancellation.",
+    "orderPhoto": null,
+    "paymentMethod": "Instant UPI Payment (QR Code)",
+    "upiUtr": null,
+    "status": "Cancelled",
+    "createdAt": "2026-09-26T09:29:02.436Z",
+    "updatedAt": "2026-09-26T09:39:22.043Z"
+  },
+  {
+    "orderId": "RF-ORD-2026-003",
+    "customer": {
+      "name": "tandel kavya",
+      "phone": "9328081006",
+      "email": "tandelkavya1002@gmail.com",
+      "address": "5 tirth 1 anand",
+      "city": "Dahej / Bharuch",
+      "state": "Gujarat",
+      "pincode": "388120"
+    },
+    "items": [
+      {
+        "id": "custom-file-printing",
+        "name": "File Printing",
+        "price": 150,
+        "quantity": 2,
+        "size": "A4 Standard Document File",
+        "finish": "Corporate Navy Blue",
+        "image": "assets/images/printed_file.jpg",
+        "uploadedPhoto": null,
+        "lineTotal": 300
+      }
+    ],
+    "subtotal": 300,
+    "shipping": 0,
+    "total": 300,
+    "notes": "Order cancelled by studio. Reason: Material / Frame stock unavailable.",
+    "orderPhoto": null,
+    "paymentMethod": "Instant UPI Payment (QR Code)",
+    "upiUtr": null,
+    "status": "Cancelled",
+    "createdAt": "2026-09-26T09:14:36.485Z",
+    "updatedAt": "2026-09-26T09:14:59.811Z"
+  },
+  {
+    "orderId": "RF-ORD-2026-002",
+    "customer": {
+      "name": "Kavya Tandel",
+      "phone": "+919328081006",
+      "email": "tandelkavya1002@gmail.com",
+      "address": "g.h.patel college of engineering",
+      "city": "Dahej / Bharuch",
+      "state": "Gujarat",
+      "pincode": "388120"
+    },
+    "items": [
+      {
+        "id": "glass-frame-classic",
+        "name": "Glass Photo Frame",
+        "price": 650,
+        "quantity": 1,
+        "size": "6\" × 8\"",
+        "finish": "Warm Gold Standoffs",
+        "image": "assets/images/glass_frame.jpg",
+        "uploadedPhoto": null,
+        "lineTotal": 650
+      },
+      {
+        "id": "plastic-frame-gallery",
+        "name": "Plastic Photo Frame",
+        "price": 450,
+        "quantity": 1,
+        "size": "8\" × 10\"",
+        "finish": "Studio Matte Black",
+        "image": "assets/images/plastic_frame.jpg",
+        "uploadedPhoto": null,
+        "lineTotal": 450
+      }
+    ],
+    "subtotal": 1100,
+    "shipping": 0,
+    "total": 1100,
+    "notes": "Order cancelled by studio. Reason: Material / Frame stock unavailable.",
+    "orderPhoto": null,
+    "paymentMethod": "Pay on Delivery / Studio Pickup",
+    "upiUtr": null,
+    "status": "Cancelled",
+    "createdAt": "2026-09-26T07:27:24.290Z",
+    "updatedAt": "2026-09-26T07:35:52.800Z"
+  }
+]

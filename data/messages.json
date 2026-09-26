@@ -1,0 +1,22 @@
+[
+  {
+    "id": "MSG-2026-001",
+    "name": "Suresh Trivedi",
+    "phone": "+91 98244 55667",
+    "email": "suresh.trivedi@outlook.com",
+    "service": "Custom Printing",
+    "message": "Can you print on 36x48 inch large canvas and frame it with a floating gold shadowbox? What would be the turnaround time?",
+    "status": "Unread",
+    "createdAt": "2026-09-24T15:20:00Z"
+  },
+  {
+    "id": "MSG-2026-002",
+    "name": "Meera Joshi",
+    "phone": "+91 94088 12389",
+    "email": "meera.joshi@gmail.com",
+    "service": "Plastic Photo Frames",
+    "message": "We need 12 matching gallery frames in black (10x12) for our new office corridor in Bharuch. Do you provide installation assistance?",
+    "status": "Read",
+    "createdAt": "2026-09-23T12:05:00Z"
+  }
+]

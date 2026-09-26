@@ -1,0 +1,134 @@
+/* ==========================================================================
+   RAJESH FRAMING - ANIMATIONS & MICRO-INTERACTIONS
+   ========================================================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(37, 211, 102, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+  }
+}
+
+@keyframes goldShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Scroll reveal utility classes - SAFE & RESILIENT:
+   Guarantees that all content across ALL pages is 100% visible, crisp, and high-contrast.
+   No content will ever remain faint, hidden, or dependent on JS. */
+.reveal {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.reveal.active {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+}
+
+/* Elements above the fold (Hero, headers, etc.) must NEVER start hidden */
+.hero-wrapper-section,
+.hero-wrapper-section *,
+.hero-card-container,
+.hero-card-container *,
+.hero-layer-card,
+.hero-stat-floating-badge,
+.hero-content,
+.hero-visual-wrap,
+.hero-section .reveal,
+.page-header-banner,
+.page-header-banner *,
+.about-hero-section,
+.about-hero-section * {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.reveal-delay-1 {
+  transition-delay: 0.1s;
+}
+
+.reveal-delay-2 {
+  transition-delay: 0.2s;
+}
+
+.reveal-delay-3 {
+  transition-delay: 0.3s;
+}
+
+.reveal-delay-4 {
+  transition-delay: 0.4s;
+}
+
+/* Floating badge animations */
+.pulse-ring {
+  animation: pulseGlow 2.5s infinite;
+}
+
+/* Shimmer on luxury buttons */
+.shimmer-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-effect::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    rgba(255, 255, 255, 0) 20%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0) 80%
+  );
+  transform: rotate(30deg);
+  animation: goldShimmer 4s infinite linear;
+  pointer-events: none;
+}

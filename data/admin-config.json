@@ -1,0 +1,15 @@
+{
+  "adminEmail": "rajeshframing0@gmail.com",
+  "adminPassword": "Admin@Rajesh2026",
+  "adminName": "Rajesh Kumar",
+  "smtp": {
+    "enabled": true,
+    "service": "gmail",
+    "host": "smtp.gmail.com",
+    "port": 465,
+    "secure": true,
+    "user": "rajeshframing0@gmail.com",
+    "pass": "uywvukwsotrtuevb",
+    "fromEmail": "Rajesh Framing <rajeshframing0@gmail.com>"
+  }
+}

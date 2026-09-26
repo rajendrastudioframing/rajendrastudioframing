@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Portal Login | Rajesh Framing</title>
+  <meta name="description" content="Administrative login and authentication for Rajesh Framing." />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+  <link rel="stylesheet" href="css/admin-login.css" />
+</head>
+<body class="admin-login-body">
+
+  <div class="login-ambient-grid"></div>
+  <div class="login-glow-orb"></div>
+
+  <div class="login-wrapper">
+    <div class="login-card">
+
+      <!-- Brand Header -->
+      <div class="login-brand-header">
+        <a href="index.html" class="login-brand-logo" title="Back to Rajesh Framing Website">
+          <div class="login-brand-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <rect x="7" y="7" width="10" height="10"></rect>
+              <line x1="3" y1="3" x2="7" y2="7"></line>
+              <line x1="21" y1="3" x2="17" y2="7"></line>
+              <line x1="3" y1="21" x2="7" y2="17"></line>
+              <line x1="21" y1="21" x2="17" y2="17"></line>
+            </svg>
+          </div>
+          <div class="login-brand-name">RAJESH <span>FRAMING</span></div>
+        </a>
+        <br />
+        <span class="login-portal-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Administrative Access
+        </span>
+        <h1 class="login-title" id="formHeaderTitle">Admin Login</h1>
+        <p class="login-subtitle" id="formHeaderSubtitle">
+          Enter your authorized credentials to receive an authentication OTP on your email.
+        </p>
+      </div>
+
+      <!-- Alert Notification Banner -->
+      <div class="login-alert" id="loginAlert">
+        <div id="alertIcon"></div>
+        <div id="alertMessage"></div>
+      </div>
+
+      <!-- Test Mode OTP Preview Banner (Shown automatically when OTP is generated) -->
+      <div class="login-alert info" id="testOtpBanner" style="display: none; flex-direction: column; gap: 4px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <strong>Authentication Passcode Generated:</strong>
+        </div>
+        <div style="font-size: 0.95rem; margin-top: 4px;">
+          Your 6-Digit OTP: <code id="testOtpCode" style="font-size: 1.15rem; color: #111111; background: #C99A3D; padding: 2px 8px; border-radius: 4px; font-weight: 800; letter-spacing: 2px;">------</code>
+        </div>
+        <div style="font-size: 0.74rem; color: #9CA3AF; margin-top: 2px;">
+          (Delivered via SMTP if configured, or copy the passcode above to verify)
+        </div>
+      </div>
+
+      <!-- ==========================================
+           PHASE 1: EMAIL & PASSWORD FORM
+           ========================================== -->
+      <form id="loginCredentialsForm">
+        <div class="login-form-group">
+          <label class="login-label" for="adminEmail">Admin Email Address</label>
+          <div class="login-input-wrap">
+            <input 
+              type="email" 
+              id="adminEmail" 
+              class="login-input" 
+              placeholder="e.g. rajeshframing0@gmail.com" 
+              required 
+              autocomplete="username"
+            />
+            <svg class="login-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <div class="login-form-group">
+          <label class="login-label" for="adminPassword">Admin Password</label>
+          <div class="login-input-wrap">
+            <input 
+              type="password" 
+              id="adminPassword" 
+              class="login-input" 
+              placeholder="Enter your password" 
+              required 
+              autocomplete="current-password"
+            />
+            <svg class="login-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <button type="button" class="login-password-toggle" id="togglePasswordBtn" aria-label="Toggle password visibility">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-admin-gold" id="sendOtpBtn">
+          <span id="sendOtpBtnText">Send Login OTP</span>
+          <div class="admin-spinner" id="sendOtpSpinner" style="display: none;"></div>
+        </button>
+      </form>
+
+      <!-- ==========================================
+           PHASE 2: TWO-FACTOR OTP VERIFICATION
+           ========================================== -->
+      <form id="loginOtpForm" style="display: none;">
+        <div style="text-align: center; margin-bottom: 16px;">
+          <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(201, 154, 61, 0.1); border-radius: 9999px; font-size: 0.82rem; color: #E5B558;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <span id="targetEmailLabel">rajeshframing0@gmail.com</span>
+          </div>
+        </div>
+
+        <label class="login-label" style="text-align: center;">Enter 6-Digit Passcode</label>
+        
+        <!-- 6-Digit Split OTP Input -->
+        <div class="otp-container" id="otpContainer">
+          <input type="text" maxlength="1" class="otp-box" id="otp-1" inputmode="numeric" autofocus />
+          <input type="text" maxlength="1" class="otp-box" id="otp-2" inputmode="numeric" />
+          <input type="text" maxlength="1" class="otp-box" id="otp-3" inputmode="numeric" />
+          <input type="text" maxlength="1" class="otp-box" id="otp-4" inputmode="numeric" />
+          <input type="text" maxlength="1" class="otp-box" id="otp-5" inputmode="numeric" />
+          <input type="text" maxlength="1" class="otp-box" id="otp-6" inputmode="numeric" />
+        </div>
+
+        <!-- Timer & Resend Option -->
+        <div class="otp-resend-row">
+          <span>Resend in: <strong id="otpTimerText">60s</strong></span>
+          <button type="button" class="otp-resend-btn" id="resendOtpBtn" disabled>Resend Code</button>
+        </div>
+
+        <button type="submit" class="btn-admin-gold" id="verifyOtpBtn">
+          <span id="verifyOtpBtnText">Verify &amp; Enter Dashboard</span>
+          <div class="admin-spinner" id="verifyOtpSpinner" style="display: none;"></div>
+        </button>
+
+        <button type="button" class="btn-admin-outline" id="backToCredentialsBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Use Different Email / Password</span>
+        </button>
+      </form>
+
+      <!-- Back to Main Website -->
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="index.html" style="font-size: 0.8rem; color: #9CA3AF; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          <span>← Back to Rajesh Framing Homepage</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/admin-login.js"></script>
+</body>
+</html>
