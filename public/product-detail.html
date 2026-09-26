@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Details | Rajesh Framing</title>
+  <meta name="description" content="Detailed specifications, customizable sizes, materials, and direct pricing for custom frames and personalized printing products by Rajesh Framing." />
+  <meta name="theme-color" content="#111111" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css?v=card_redesign_v1" />
+  <link rel="stylesheet" href="css/components.css?v=card_redesign_v1" />
+  <link rel="stylesheet" href="css/animations.css?v=card_redesign_v1" />
+  <link rel="stylesheet" href="css/cart.css" />
+</head>
+<body>
+
+
+
+  <!-- Sticky Modern Navbar (Services Removed) -->
+  <header class="site-header" id="siteHeader">
+    <div class="container">
+      <nav class="navbar" aria-label="Main Navigation">
+        <a href="index.html" class="brand-logo" aria-label="Rajesh Framing Homepage">
+          <div class="brand-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <rect x="7" y="7" width="10" height="10"></rect>
+              <line x1="3" y1="3" x2="7" y2="7"></line>
+              <line x1="21" y1="3" x2="17" y2="7"></line>
+              <line x1="3" y1="21" x2="7" y2="17"></line>
+              <line x1="21" y1="21" x2="17" y2="17"></line>
+            </svg>
+          </div>
+          <div class="brand-text-wrap">
+            <span class="brand-name">RAJESH <span>FRAMING</span></span>
+            <span class="brand-subtitle">Frames &amp; Custom Prints</span>
+          </div>
+        </a>
+
+        <ul class="nav-menu">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="products.html" class="nav-link active">Products</a></li>
+          <li><a href="about.html" class="nav-link">About Us</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+        </ul>
+
+        <div class="navbar-actions">
+          <button type="button" class="navbar-cart-btn" id="navbarCartBtn" aria-label="View shopping cart" title="Shopping Cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span class="cart-badge" id="navbarCartBadge">0</span>
+          </button>
+
+          <button type="button" class="btn btn-gold btn-sm shimmer-effect navbar-quote-btn" data-open-quote>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Get a Quote</span>
+          </button>
+
+          <button class="menu-toggle" aria-label="Open mobile menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer Backdrop & Drawer -->
+  <div class="drawer-backdrop"></div>
+  <aside class="mobile-drawer" aria-label="Mobile Navigation">
+    <div class="drawer-header">
+      <div class="brand-text-wrap">
+        <span class="brand-name">RAJESH <span>FRAMING</span></span>
+        <span class="brand-subtitle">Frames &amp; Custom Prints</span>
+      </div>
+      <button class="drawer-close" aria-label="Close menu">&times;</button>
+    </div>
+
+    <ul class="drawer-nav">
+      <li><a href="index.html" class="nav-link">Home</a></li>
+      <li><a href="products.html" class="nav-link active">Products</a></li>
+      <li><a href="about.html" class="nav-link">About Us</a></li>
+      <li><a href="contact.html" class="nav-link">Contact Us</a></li>
+    </ul>
+
+    <div style="margin-top: 24px;">
+      <button type="button" class="btn btn-gold shimmer-effect" style="width: 100%;" data-open-quote>
+        <span>Get a Quote</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main id="mainContent" class="section-sm">
+    <div class="container">
+
+      <!-- Breadcrumbs -->
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a href="index.html">Home</a>
+        <span class="sep">/</span>
+        <a href="products.html">Products</a>
+        <span class="sep">/</span>
+        <a href="products.html" id="productBreadcrumbCategory">Frames</a>
+        <span class="sep">/</span>
+        <span class="current" id="productBreadcrumbCurrent">Product Details</span>
+      </nav>
+
+      <!-- Product Detail Main Grid -->
+      <div class="product-detail-layout">
+
+        <!-- LEFT: Large Product Image / Gallery -->
+        <div class="detail-gallery">
+          <div class="detail-main-img-box">
+            <img src="assets/images/glass_frame.jpg" alt="Product Image" id="detailMainImg" class="detail-main-img" />
+          </div>
+
+          <!-- Thumbnails Row -->
+          <div class="detail-thumbs-strip" id="detailThumbsContainer"></div>
+
+          <!-- Safe Transit Guarantee Box -->
+          <div style="margin-top: 24px; padding: 18px; background: #FFFFFF; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span style="font-size: 0.875rem; font-weight: 700; color: var(--primary-black);">Safe Transit &amp; Shatter-Proof Packaging</span>
+            </div>
+            <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5;">
+              Every glass and framed product is cushioned in high-density air bubble wrap with reinforced corner guards for zero-damage arrival.
+            </p>
+          </div>
+        </div>
+
+        <!-- RIGHT: Product Details, Customization Options, & Actions -->
+        <div class="detail-info">
+          
+          <div class="detail-badge-wrap">
+            <span class="badge badge-gold" id="detailBadge">Bestseller</span>
+            <span class="badge badge-dark" id="detailCategoryTag">Glass Frame</span>
+          </div>
+
+          <h1 class="detail-title" id="detailProductTitle">Glass Photo Frame</h1>
+
+          <div class="detail-rating-row">
+            <div class="stars-group" style="color: var(--accent-gold);">★★★★★</div>
+            <span class="rating-score-text" id="detailRatingScore">4.9 / 5.0</span>
+            <span class="reviews-count-link" id="detailReviewCount">(128 customer reviews)</span>
+          </div>
+
+          <!-- Pricing Display -->
+          <div class="detail-price-wrap">
+            <span class="detail-current-price" id="detailCurrentPrice">₹650</span>
+            <span class="detail-price-note">Starting price • Custom dimensions available</span>
+          </div>
+
+          <!-- Short Description -->
+          <p class="detail-desc-lead" id="detailDescLead">
+            Premium glass photo frames designed to give your memories an elegant and modern look. Hand-polished float glass with precision metallic standoffs.
+          </p>
+
+          <!-- Customization Options Box -->
+          <div class="detail-options-box">
+            
+            <!-- Available Sizes / Options -->
+            <div class="option-group">
+              <div class="option-header">
+                <span class="option-name">Available Sizes / Options:</span>
+                <span class="option-value-selected" id="selectedSizeLabel">6" × 8"</span>
+              </div>
+              <div class="size-chips" id="detailSizesContainer"></div>
+            </div>
+
+            <!-- Finish / Tone Swatches -->
+            <div class="option-group" style="margin-top: 20px;">
+              <div class="option-header">
+                <span class="option-name">Border Finish / Hardware Tone:</span>
+                <span class="option-value-selected" id="selectedFinishLabel">Warm Gold</span>
+              </div>
+              <div class="swatch-group" id="detailFinishesContainer"></div>
+            </div>
+
+            <!-- Upload Photo for Custom Framing / Printing -->
+            <div class="photo-upload-container">
+              <div class="photo-upload-header">
+                <span class="photo-upload-label">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                  Attach Photo for Framing / Printing
+                </span>
+                <span class="photo-upload-optional-pill">Optional</span>
+              </div>
+
+              <!-- Interactive Dropzone -->
+              <div class="photo-upload-dropzone" id="photoDropzone" role="button" tabindex="0" aria-label="Upload photo for custom framing">
+                <input type="file" id="photoFileInput" class="photo-upload-input" accept="image/jpeg,image/png,image/webp,image/heic,.jpg,.jpeg,.png,.webp,.heic,.pdf" />
+                
+                <div id="dropzoneEmptyState">
+                  <div class="upload-icon-circle">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                  </div>
+                  <div class="upload-prompt-title">Click to <span>Browse Photo</span> or Drag &amp; Drop</div>
+                  <div class="upload-prompt-subtitle">High-resolution JPG, PNG or WEBP (up to 25MB). You can also send photos directly on WhatsApp after ordering!</div>
+                </div>
+
+                <!-- Live Uploaded State -->
+                <div id="dropzonePreviewState" style="display: none;">
+                  <div class="uploaded-photo-preview-card">
+                    <div class="uploaded-photo-thumb-wrap">
+                      <img src="" id="uploadedPhotoThumb" class="uploaded-photo-thumb" alt="Uploaded Preview" />
+                    </div>
+                    <div class="uploaded-photo-info">
+                      <div class="uploaded-photo-name" id="uploadedPhotoName">my_photo.jpg</div>
+                      <div class="uploaded-photo-meta">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span id="uploadedPhotoSize">1.2 MB</span> • Ready for Framing
+                      </div>
+                    </div>
+                    <button type="button" class="btn-remove-photo" id="btnRemoveUploadedPhoto" title="Remove photo" aria-label="Remove photo">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Key Product Attributes (Material, Printing, Customization, Turnaround) -->
+            <div class="detail-key-specs" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-light); display: grid; grid-template-columns: 1fr; gap: 12px; font-size: 0.875rem;">
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <span style="font-weight: 700; color: var(--primary-black); min-width: 110px;">Material:</span>
+                <span id="detailMaterialLabel" style="color: var(--text-secondary); line-height: 1.5;">Optically Clear Float Glass (4mm / 6mm)</span>
+              </div>
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <span style="font-weight: 700; color: var(--primary-black); min-width: 110px;">Printing:</span>
+                <span id="detailPrintingLabel" style="color: var(--text-secondary); line-height: 1.5;">12-Color Archival Pigment Print</span>
+              </div>
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <span style="font-weight: 700; color: var(--primary-black); min-width: 110px;">Customization:</span>
+                <span id="detailCustomizationLabel" style="color: var(--text-secondary); line-height: 1.5;">Custom Sizing, Photo Prints & Text Personalization</span>
+              </div>
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <span style="font-weight: 700; color: var(--primary-black); min-width: 110px;">Turnaround:</span>
+                <span id="detailLeadTimeLabel" style="color: var(--accent-gold); font-weight: 600; line-height: 1.5;">24 - 48 Hours</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Quantity Stepper & Instant Purchase Actions -->
+          <div class="detail-purchase-section">
+            <div class="detail-qty-row">
+              <span class="detail-qty-label">Select Quantity:</span>
+              <div class="detail-qty-stepper">
+                <button type="button" class="qty-btn" id="detailQtyMinus" aria-label="Decrease quantity">−</button>
+                <span class="qty-display" id="detailQtyValue">1</span>
+                <button type="button" class="qty-btn" id="detailQtyPlus" aria-label="Increase quantity">+</button>
+              </div>
+            </div>
+
+            <div class="detail-cart-actions">
+              <button type="button" class="btn-add-to-cart" id="detailAddToCartBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                <span>Add to Cart</span>
+              </button>
+
+              <button type="button" class="btn-buy-now" id="detailBuyNowBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span>Buy Now</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Existing Consultation & Quote Actions -->
+          <div class="detail-actions-bar" style="margin-top: 16px;">
+            <div class="detail-actions-row">
+              <button type="button" class="btn btn-gold shimmer-effect" id="detailQuoteBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>Custom Quote</span>
+              </button>
+
+              <button type="button" class="btn btn-whatsapp" id="detailWhatsAppBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.058-2.18-.553-1.638-.673-2.684-2.336-2.766-2.445-.082-.109-.661-.88-.661-1.678 0-.798.419-1.189.569-1.353.15-.164.33-.205.441-.205.111 0 .222.001.32.006.103.004.24-.039.375.285.144.344.49 1.196.533 1.284.043.088.072.19.014.305-.058.115-.087.186-.173.287-.087.1-.183.224-.262.301-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.174.232-.145.39-.087.159.058 1.009.477 1.182.564.173.087.289.13.332.204.043.074.043.431-.101.836z"></path>
+                </svg>
+                <span>WhatsApp Enquiry</span>
+              </button>
+            </div>
+
+            <a href="contact.html" class="btn btn-outline" style="width: 100%;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span>Visit Our Dahej / Bharuch Studio</span>
+            </a>
+          </div>
+
+          <!-- Quality Badges -->
+          <div class="guarantee-list">
+            <div class="guarantee-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <span>Museum Archival Quality</span>
+            </div>
+            <div class="guarantee-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>50+ Year Fade Resistance</span>
+            </div>
+            <div class="guarantee-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Quick 24-48h Studio Turnaround</span>
+            </div>
+            <div class="guarantee-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span>Customized to Any Size</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- BELOW SECTION 1: Product Details (In-depth Tabs) -->
+      <div class="tabs-container" style="margin-top: 56px;">
+        <div class="tab-nav">
+          <button type="button" class="tab-trigger active" data-tab="tabOverview">Product Details</button>
+          <button type="button" class="tab-trigger" data-tab="tabSpecs">Specifications &amp; Materials</button>
+          <button type="button" class="tab-trigger" data-tab="tabCraft">Craftsmanship Process</button>
+        </div>
+
+        <!-- Tab 1: Overview Features -->
+        <div class="tab-panel active" id="tabOverview">
+          <div style="background: #FFFFFF; border-radius: var(--radius-lg); padding: 32px; border: 1px solid var(--border-light);">
+            <h3 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; color: var(--primary-black);">Product Highlights</h3>
+            <ul id="detailFeaturesList"></ul>
+          </div>
+        </div>
+
+        <!-- Tab 2: Specifications Table -->
+        <div class="tab-panel" id="tabSpecs">
+          <div style="background: #FFFFFF; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border-light);">
+            <table class="specs-table">
+              <tbody>
+                <tr>
+                  <th>Primary Material</th>
+                  <td id="specMaterial">Optically Clear Float Glass (4mm / 6mm)</td>
+                </tr>
+                <tr>
+                  <th>Printing Process</th>
+                  <td id="specPrinting">12-Color Archival Pigment Inks (1440 DPI)</td>
+                </tr>
+                <tr>
+                  <th>Mounting Options</th>
+                  <td>Desktop Metallic Standoffs / Concealed Heavy Wall Hangers</td>
+                </tr>
+                <tr>
+                  <th>Estimated Lead Time</th>
+                  <td id="specTurnaround">24 - 48 Hours</td>
+                </tr>
+                <tr>
+                  <th>Maintenance</th>
+                  <td>Wipe with soft microfiber cloth; safe for glass cleaners</td>
+                </tr>
+                <tr>
+                  <th>Suitable Occasions</th>
+                  <td>Weddings, Anniversaries, Corporate Awards, Family Gallery Displays</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 3: Craftsmanship -->
+        <div class="tab-panel" id="tabCraft">
+          <div class="craft-panel-grid">
+            <div>
+              <h3 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: var(--primary-black);">Crafted by Rajesh Framing Artisans</h3>
+              <p style="font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 16px;">
+                Each frame undergoes hand-polishing and bevel inspection. We use color-calibrated monitors and archival inks that do not shift in color or bleed. Every piece leaving our studio carries our mark of excellence.
+              </p>
+              <button type="button" class="btn btn-outline btn-sm" data-open-quote>Request Custom Workshop Proof</button>
+            </div>
+            <div>
+              <img src="assets/images/workshop.jpg" alt="Artisan framing in our workshop" style="border-radius: var(--radius-md); box-shadow: var(--shadow-sm); width: 100%; height: auto;" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BELOW SECTION 2: Why Choose This Product? -->
+      <section class="detail-why-choose-section">
+        <div style="text-align: center; max-width: 640px; margin: 0 auto 40px;">
+          <span class="eyebrow">The Rajesh Framing Advantage</span>
+          <h2 class="section-title" style="margin-bottom: 8px;">Why Choose This Product?</h2>
+          <p class="section-subtitle">
+            Every product is custom made to order with industrial-grade durability and museum aesthetic standards.
+          </p>
+        </div>
+
+        <div class="trust-grid">
+          <div class="trust-item" style="background: #FFFFFF; padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <div class="trust-icon-box" style="background: var(--secondary-cream);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+            </div>
+            <div>
+              <h4 class="trust-title">Handcrafted Precision</h4>
+              <p class="trust-desc">Precision-cut edges, flawless joinery, and meticulous hand-finishing on every piece.</p>
+            </div>
+          </div>
+
+          <div class="trust-item" style="background: #FFFFFF; padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <div class="trust-icon-box" style="background: var(--secondary-cream);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </div>
+            <div>
+              <h4 class="trust-title">Archival Longevity</h4>
+              <p class="trust-desc">Archival-grade pigments and UV-protective coatings that resist discoloration for decades.</p>
+            </div>
+          </div>
+
+          <div class="trust-item" style="background: #FFFFFF; padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <div class="trust-icon-box" style="background: var(--secondary-cream);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon>
+                <line x1="3" y1="22" x2="21" y2="22"></line>
+              </svg>
+            </div>
+            <div>
+              <h4 class="trust-title">Fully Customizable</h4>
+              <p class="trust-desc">Choose custom millimeter dimensions, frame finishes, hardware tones, and layouts.</p>
+            </div>
+          </div>
+
+          <div class="trust-item" style="background: #FFFFFF; padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <div class="trust-icon-box" style="background: var(--secondary-cream);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div>
+              <h4 class="trust-title">Safe Delivery &amp; Speed</h4>
+              <p class="trust-desc">Reinforced shatter-proof packing with swift 24-48 hour turnaround options.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BELOW SECTION 3: Related Products (Using the new Luxury Product Card design) -->
+      <div style="margin-top: 80px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px;">
+          <div>
+            <span class="eyebrow">Complementary Pieces</span>
+            <h2 class="section-title" style="margin-bottom: 0; font-size: 1.8rem;">Related Products</h2>
+          </div>
+          <a href="products.html" class="btn btn-outline btn-sm">Explore All</a>
+        </div>
+
+        <div class="products-grid" id="relatedProductsGrid"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Floating Actions (WhatsApp & Back to Top) -->
+  <div class="floating-actions-wrap">
+    <a href="https://wa.me/919876543210" target="_blank" class="floating-whatsapp-btn pulse-ring" aria-label="Chat on WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.058-2.18-.553-1.638-.673-2.684-2.336-2.766-2.445-.082-.109-.661-.88-.661-1.678 0-.798.419-1.189.569-1.353.15-.164.33-.205.441-.205.111 0 .222.001.32.006.103.004.24-.039.375.285.144.344.49 1.196.533 1.284.043.088.072.19.014.305-.058.115-.087.186-.173.287-.087.1-.183.224-.262.301-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.174.232-.145.39-.087.159.058 1.009.477 1.182.564.173.087.289.13.332.204.043.074.043.431-.101.836z"></path>
+      </svg>
+      <span>Chat on WhatsApp</span>
+    </a>
+
+    <button type="button" class="back-to-top-btn" aria-label="Back to top">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Premium Footer (Services Removed) -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3 class="brand-name">RAJESH <span>FRAMING</span></h3>
+          <p class="footer-tagline">Frames • Printing • Personalized Products</p>
+          <p class="footer-desc">
+            Your trusted destination for custom photo framing, glass mounts, durable polymer frames, personalized drinkware, and executive office printing in Dahej and Bharuch.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="footer-heading">Quick Links</h4>
+          <ul class="footer-links">
+            <li><a href="index.html" class="footer-link">Home</a></li>
+            <li><a href="products.html" class="footer-link">Products</a></li>
+            <li><a href="about.html" class="footer-link">About Us</a></li>
+            <li><a href="contact.html" class="footer-link">Contact Us</a></li>
+            <li><a href="javascript:void(0)" data-open-quote class="footer-link">Get a Quote</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-heading">Products</h4>
+          <ul class="footer-links">
+            <li><a href="products.html?category=frames" class="footer-link">Glass Frames</a></li>
+            <li><a href="products.html?category=frames" class="footer-link">Plastic Frames</a></li>
+            <li><a href="products.html?category=personalized" class="footer-link">Bottle Printing</a></li>
+            <li><a href="products.html?category=personalized" class="footer-link">Mug Printing</a></li>
+            <li><a href="products.html?category=office" class="footer-link">File Printing</a></li>
+            <li><a href="products.html?category=office" class="footer-link">Folder Printing</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-heading">Contact Us</h4>
+          <div class="footer-contact-list">
+            <div class="contact-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              <div><a href="tel:+919876543210">+91 98765 43210</a></div>
+            </div>
+            <div class="contact-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.058-2.18-.553-1.638-.673-2.684-2.336-2.766-2.445-.082-.109-.661-.88-.661-1.678 0-.798.419-1.189.569-1.353.15-.164.33-.205.441-.205.111 0 .222.001.32.006.103.004.24-.039.375.285.144.344.49 1.196.533 1.284.043.088.072.19.014.305-.058.115-.087.186-.173.287-.087.1-.183.224-.262.301-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.174.232-.145.39-.087.159.058 1.009.477 1.182.564.173.087.289.13.332.204.043.074.043.431-.101.836z"></path>
+              </svg>
+              <div><a href="https://wa.me/919876543210" target="_blank">+91 98765 43210</a></div>
+            </div>
+            <div class="contact-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <div><a href="mailto:rajeshframing0@gmail.com">rajeshframing0@gmail.com</a></div>
+            </div>
+            <div class="contact-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <div><span>Station Road, Opp. Central Plaza, Dahej / Bharuch, Gujarat 392130</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Rajesh Framing. All Rights Reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="about.html">Privacy Policy</a>
+          <a href="about.html">Terms of Service</a>
+          <a href="contact.html">Studio Location</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/products-data.js?v=card_redesign_v4"></script>
+  <script src="js/main.js?v=card_redesign_v4"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/quote-modal.js?v=card_redesign_v4"></script>
+  <script src="js/product-detail.js?v=card_redesign_v4"></script>
+</body>
+</html>

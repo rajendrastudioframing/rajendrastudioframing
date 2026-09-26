@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout &amp; Order Placement | Rajesh Framing</title>
+  <meta name="description" content="Secure checkout for custom photo frames, personalized printing, and corporate gifts from Rajesh Framing Studio." />
+
+  <!-- Fonts & Core Stylesheets -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/cart.css" />
+</head>
+<body>
+
+  <!-- Sticky Modern Navbar -->
+  <header class="site-header" id="siteHeader">
+    <div class="container">
+      <nav class="navbar" aria-label="Main Navigation">
+        
+        <!-- Brand Logo -->
+        <a href="index.html" class="brand-logo" aria-label="Rajesh Framing Home">
+          <div class="brand-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <rect x="7" y="7" width="10" height="10"></rect>
+              <line x1="3" y1="3" x2="7" y2="7"></line>
+              <line x1="21" y1="3" x2="17" y2="7"></line>
+              <line x1="3" y1="21" x2="7" y2="17"></line>
+              <line x1="21" y1="21" x2="17" y2="17"></line>
+            </svg>
+          </div>
+          <div class="brand-text-wrap">
+            <span class="brand-name">RAJESH <span>FRAMING</span></span>
+            <span class="brand-subtitle">Frames &amp; Custom Prints</span>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <ul class="nav-menu">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="products.html" class="nav-link">Products</a></li>
+          <li><a href="about.html" class="nav-link">About Us</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+          <li><a href="track-order.html" class="nav-link" style="color: var(--accent-gold); font-weight: 600;">Track Order</a></li>
+        </ul>
+
+        <!-- Right Actions -->
+        <div class="navbar-actions">
+          
+          <!-- Cart Icon Button -->
+          <button type="button" class="navbar-cart-btn" id="navbarCartBtn" aria-label="View shopping cart" title="Shopping Cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span class="cart-badge" id="navbarCartBadge">0</span>
+          </button>
+
+          <button type="button" class="btn btn-gold btn-sm shimmer-effect navbar-quote-btn" data-open-quote>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Get a Quote</span>
+          </button>
+
+          <!-- Mobile Hamburger Toggle -->
+          <button class="menu-toggle" aria-label="Open mobile menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer -->
+  <div class="drawer-backdrop"></div>
+  <aside class="mobile-drawer" aria-label="Mobile Navigation">
+    <div class="drawer-header">
+      <div class="brand-text-wrap">
+        <span class="brand-name">RAJESH <span>FRAMING</span></span>
+        <span class="brand-subtitle">Frames &amp; Custom Prints</span>
+      </div>
+      <button class="drawer-close" aria-label="Close menu">&times;</button>
+    </div>
+    <ul class="drawer-nav">
+      <li><a href="index.html" class="nav-link">Home</a></li>
+      <li><a href="products.html" class="nav-link">Products</a></li>
+      <li><a href="about.html" class="nav-link">About Us</a></li>
+      <li><a href="contact.html" class="nav-link">Contact Us</a></li>
+      <li><a href="track-order.html" class="nav-link" style="color: var(--accent-gold); font-weight: 600;">Track Order</a></li>
+    </ul>
+    <div style="margin-top: 24px;">
+      <button type="button" class="btn btn-gold shimmer-effect" style="width: 100%;" onclick="openCartDrawer()">
+        <span>View Cart (<span class="cart-badge-inline">0</span>)</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ==========================================================================
+       MAIN CHECKOUT SECTION
+       ========================================================================== -->
+  <main class="checkout-wrapper">
+    <div class="container">
+      
+      <!-- Breadcrumb -->
+      <nav class="breadcrumbs" aria-label="Breadcrumb" style="margin-bottom: 24px;">
+        <a href="index.html">Home</a>
+        <span class="sep">/</span>
+        <a href="products.html">Catalog</a>
+        <span class="sep">/</span>
+        <span class="current">Secure Checkout</span>
+      </nav>
+
+      <!-- Empty Cart Message (shown if 0 items) -->
+      <div id="checkoutEmptyState" class="checkout-card" style="display: none; text-align: center; padding: 60px 20px;">
+        <div class="cart-empty-icon" style="margin: 0 auto 20px;">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+        </div>
+        <h2 style="font-family: var(--font-heading); font-size: 1.5rem; color: #111111; margin-bottom: 10px;">Your Cart is Empty</h2>
+        <p style="color: #6B7280; max-width: 440px; margin: 0 auto 24px; font-size: 0.95rem;">
+          You don't have any items in your cart to checkout. Browse our handcrafted frames and custom printing collections to get started!
+        </p>
+        <a href="products.html" class="btn btn-gold shimmer-effect" style="display: inline-block; padding: 12px 32px;">
+          Explore Products Catalog
+        </a>
+      </div>
+
+      <!-- Checkout Active Form Grid -->
+      <div id="checkoutActiveContainer" class="checkout-grid">
+        
+        <!-- LEFT: Customer Information & Delivery Form -->
+        <section class="checkout-card" aria-labelledby="shippingHeading">
+          <h2 class="checkout-title" id="shippingHeading">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Customer &amp; Delivery Details
+          </h2>
+
+          <form id="checkoutOrderForm">
+            <div class="checkout-form-grid">
+              
+              <!-- Full Name -->
+              <div class="checkout-group full">
+                <label class="checkout-label" for="custName">Full Name <span class="req">*</span></label>
+                <input type="text" id="custName" class="checkout-input" placeholder="e.g. Rahul Sharma" required />
+              </div>
+
+              <!-- Mobile Number -->
+              <div class="checkout-group">
+                <label class="checkout-label" for="custPhone">Mobile / WhatsApp Number <span class="req">*</span></label>
+                <input type="tel" id="custPhone" class="checkout-input" placeholder="e.g. +91 98765 43210" required />
+                <span style="font-size: 0.72rem; color: #6B7280; margin-top: 4px; display: block;">
+                  Order updates &amp; preview proofs will be sent here.
+                </span>
+              </div>
+
+              <!-- Email -->
+              <div class="checkout-group">
+                <label class="checkout-label" for="custEmail">Email Address</label>
+                <input type="email" id="custEmail" class="checkout-input" placeholder="e.g. rahul@gmail.com" />
+              </div>
+
+              <!-- Street Address -->
+              <div class="checkout-group full">
+                <label class="checkout-label" for="custAddress">Delivery Address / House / Flat No. <span class="req">*</span></label>
+                <textarea id="custAddress" rows="2" class="checkout-textarea" placeholder="Flat / House No., Street, Landmark, Area..." required></textarea>
+              </div>
+
+              <!-- City -->
+              <div class="checkout-group">
+                <label class="checkout-label" for="custCity">City / Town <span class="req">*</span></label>
+                <input type="text" id="custCity" class="checkout-input" value="Dahej / Bharuch" required />
+              </div>
+
+              <!-- State -->
+              <div class="checkout-group">
+                <label class="checkout-label" for="custState">State <span class="req">*</span></label>
+                <input type="text" id="custState" class="checkout-input" value="Gujarat" required />
+              </div>
+
+              <!-- Pincode -->
+              <div class="checkout-group">
+                <label class="checkout-label" for="custPincode">Pincode <span class="req">*</span></label>
+                <input type="text" id="custPincode" class="checkout-input" placeholder="e.g. 392130" maxlength="6" required />
+              </div>
+
+              <!-- Fulfillment Method -->
+              <div class="checkout-group">
+                <label class="checkout-label" for="fulfillmentMethod">Fulfillment Preference</label>
+                <select id="fulfillmentMethod" class="checkout-select">
+                  <option value="delivery">Safe Transit Doorstep Delivery</option>
+                  <option value="pickup">Studio Pickup (Opp. Dahej Post Office)</option>
+                </select>
+              </div>
+
+              <!-- Order Notes & Special Instructions -->
+              <div class="checkout-group full">
+                <label class="checkout-label" for="orderNotes">Order Notes &amp; Custom Framing Specifications</label>
+                <textarea id="orderNotes" rows="3" class="checkout-textarea" placeholder="Specify border color preference, text engraving, delivery time preference, or any other details..."></textarea>
+              </div>
+
+            </div>
+
+            <!-- Payment Method & Dynamic UPI QR Section -->
+            <div style="margin-top: 20px;">
+              <h3 class="payment-section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
+                  <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                  <line x1="2" y1="10" x2="22" y2="10"></line>
+                </svg>
+                Select Payment Method
+              </h3>
+
+              <div class="payment-methods-grid">
+                <!-- Option 1: Dynamic UPI QR Code (Recommended) -->
+                <div class="payment-option-card active" id="payOptionUpi" data-method="upi">
+                  <div class="payment-option-header">
+                    <div class="payment-option-left">
+                      <div class="payment-radio-circle">
+                        <div class="payment-radio-dot"></div>
+                      </div>
+                      <div>
+                        <div class="payment-option-name">Instant UPI Payment (QR Code &amp; Apps)</div>
+                        <div style="font-size: 0.76rem; color: #059669; font-weight: 600; margin-top: 2px;">⚡ Zero convenience fee • Instant order confirmation</div>
+                      </div>
+                    </div>
+                    <div class="payment-brand-badges">
+                      <span class="upi-app-badge gpay">GPay</span>
+                      <span class="upi-app-badge phonepe">PhonePe</span>
+                      <span class="upi-app-badge paytm">Paytm</span>
+                      <span class="upi-app-badge bhim">BHIM</span>
+                    </div>
+                  </div>
+
+                  <!-- Dynamic QR Display Drawer -->
+                  <div class="upi-qr-content-box" id="upiQrDrawer">
+                    <div class="upi-qr-card">
+                      <img src="" id="dynamicUpiQrImg" alt="Rajesh Framing UPI QR Code" />
+                      <div class="upi-qr-amount-pill" id="upiQrAmountPill">Pay ₹0</div>
+                    </div>
+
+                    <div class="upi-info-col">
+                      <div class="upi-scan-steps">
+                        <strong>Scan to pay with any UPI app:</strong>
+                        <ol>
+                          <li>Open Google Pay, PhonePe, Paytm, or BHIM.</li>
+                          <li>Scan the live QR code on the left.</li>
+                          <li>Verify Payee name: <strong>Rajesh Framing</strong>.</li>
+                        </ol>
+                      </div>
+
+                      <div class="upi-copy-row">
+                        <span style="font-size: 0.74rem; color: #6B7280;">UPI ID:</span>
+                        <span class="upi-id-text" id="upiIdDisplay">rajeshframing0@okaxis</span>
+                        <button type="button" class="btn-copy-upi" id="btnCopyUpiId">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                          </svg>
+                          <span id="copyUpiText">Copy</span>
+                        </button>
+                      </div>
+
+                      <!-- Mobile Deep Link Button -->
+                      <a href="#" id="btnUpiDeepLink" class="btn-upi-intent">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                          <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                        </svg>
+                        <span>Open &amp; Pay via UPI App</span>
+                      </a>
+
+                      <!-- Optional UTR / Reference -->
+                      <div class="upi-utr-row">
+                        <input type="text" id="upiUtrNumber" class="upi-utr-input" placeholder="UPI Ref / UTR No. (Optional if already paid)" maxlength="20" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Option 2: Pay on Delivery / Studio Pickup -->
+                <div class="payment-option-card" id="payOptionCod" data-method="cod">
+                  <div class="payment-option-header">
+                    <div class="payment-option-left">
+                      <div class="payment-radio-circle">
+                        <div class="payment-radio-dot"></div>
+                      </div>
+                      <div>
+                        <div class="payment-option-name">Pay on Delivery / Studio Pickup</div>
+                        <div style="font-size: 0.76rem; color: #6B7280; margin-top: 2px;">Inspect your frames first • Pay via Cash, Card, or UPI upon delivery</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button (Mobile/Tablet View duplicate for convenience) -->
+            <div style="margin-top: 24px; display: none;" class="mobile-submit-wrap">
+              <button type="submit" class="btn-place-order" id="mobilePlaceOrderBtn">
+                <span>Place Order Now</span>
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- RIGHT: Order Summary Card -->
+        <aside class="order-summary-card" aria-labelledby="summaryHeading">
+          <h2 class="checkout-title" id="summaryHeading">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            Order Summary
+          </h2>
+
+          <!-- Items Preview List -->
+          <div class="order-items-preview" id="checkoutItemsList">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Price Calculation -->
+          <div class="order-breakdown-row">
+            <span>Items Subtotal:</span>
+            <strong id="summarySubtotal">₹0</strong>
+          </div>
+
+          <div class="order-breakdown-row">
+            <span>Packaging &amp; Bubble Transit:</span>
+            <span style="color: #059669; font-weight: 700;">FREE</span>
+          </div>
+
+          <div class="order-breakdown-row">
+            <span>Estimated GST (18%):</span>
+            <span style="color: #6B7280;">Included</span>
+          </div>
+
+          <div class="order-breakdown-row grand-total">
+            <span>Total Payable:</span>
+            <span id="summaryGrandTotal">₹0</span>
+          </div>
+
+          <!-- Place Order Button -->
+          <button type="button" class="btn-place-order" id="desktopPlaceOrderBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span id="placeOrderBtnText">Place Order</span>
+          </button>
+
+          <p style="text-align: center; font-size: 0.75rem; color: #6B7280; margin-top: 12px; margin-bottom: 0;">
+            🔒 By placing your order, you agree to Rajesh Framing terms &amp; conditions.
+          </p>
+
+          <!-- Guarantee Badges -->
+          <div class="order-guarantee-badges">
+            <div class="order-badge-row">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>100% Zero-Damage Transit Guarantee</span>
+            </div>
+            <div class="order-badge-row">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Fast 24 - 48 Hours Dahej Studio Turnaround</span>
+            </div>
+            <div class="order-badge-row">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span>Instant WhatsApp Status Updates</span>
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       ORDER CONFIRMATION MODAL / SUCCESS OVERLAY
+       ========================================================================== -->
+  <div class="admin-modal-overlay" id="orderSuccessModal" style="z-index: 12000;">
+    <div class="admin-modal" style="max-width: 520px; text-align: center; padding: 36px 28px;">
+      
+      <div style="width: 76px; height: 76px; background: #ECFDF5; color: #059669; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 2px solid #A7F3D0;">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+
+      <h3 style="font-family: var(--font-heading); font-size: 1.6rem; color: #111111; margin-bottom: 8px;">Order Placed Successfully!</h3>
+      <p style="color: #6B7280; font-size: 0.95rem; margin-bottom: 16px;">
+        Thank you, <strong id="successCustName">Customer</strong>! Your framing and printing order has been registered at our Dahej studio.
+      </p>
+
+      <!-- Order ID Pill -->
+      <div style="display: inline-block; background: #FAF7F2; border: 1px dashed var(--accent-gold); padding: 8px 18px; border-radius: 999px; margin-bottom: 24px;">
+        <span style="font-size: 0.8rem; color: #6B7280;">Order Reference:</span>
+        <strong id="successOrderId" style="color: var(--accent-gold); font-size: 1rem; margin-left: 4px;">RF-ORD-2026-001</strong>
+      </div>
+
+      <div style="background: #FAF8F5; border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left; font-size: 0.875rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: #6B7280;">Order Total:</span>
+          <strong id="successOrderTotal" style="color: #111111; font-size: 1rem;">₹0</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: #6B7280;">Payment Method:</span>
+          <span id="successPaymentMethod" style="font-weight: 600; color: #111111;">Instant UPI Payment</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: #6B7280;">Turnaround:</span>
+          <span style="color: var(--accent-gold); font-weight: 600;">24 - 48 Hours</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <a href="#" id="successWhatsAppBtn" target="_blank" class="btn btn-whatsapp" style="width: 100%; padding: 13px; font-size: 0.95rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.058-2.18-.553-1.638-.673-2.684-2.336-2.766-2.445-.082-.109-.661-.88-.661-1.678 0-.798.419-1.189.569-1.353.15-.164.33-.205.441-.205.111 0 .222.001.32.006.103.004.24-.039.375.285.144.344.49 1.196.533 1.284.043.088.072.19.014.305-.058.115-.087.186-.173.287-.087.1-.183.224-.262.301-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.174.232-.145.39-.087.159.058 1.009.477 1.182.564.173.087.289.13.332.204.043.074.043.431-.101.836z"></path>
+          </svg>
+          <span>Confirm Details on WhatsApp</span>
+        </a>
+        <a href="track-order.html" id="successTrackBtn" class="btn btn-gold" style="width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Track Your Order in Real-Time</span>
+        </a>
+        <a href="index.html" class="btn btn-outline" style="width: 100%; padding: 11px;">
+          Return to Home Page
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Standard Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="brand-name" style="color: #FFFFFF; font-size: 1.4rem;">RAJESH <span>FRAMING</span></span>
+          <p class="footer-tagline">Frames • Printing • Personalized Products</p>
+          <p class="footer-desc">Premium custom photo framing, fine canvas prints, corporate stationery, and customized drinkware crafted in Dahej, Gujarat.</p>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Quick Links</h4>
+          <ul class="footer-links">
+            <li><a href="index.html" class="footer-link">Home</a></li>
+            <li><a href="products.html" class="footer-link">Products</a></li>
+            <li><a href="about.html" class="footer-link">About Us</a></li>
+            <li><a href="contact.html" class="footer-link">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Products</h4>
+          <ul class="footer-links">
+            <li><a href="products.html?category=frames" class="footer-link">Glass Frames</a></li>
+            <li><a href="products.html?category=frames" class="footer-link">Plastic Frames</a></li>
+            <li><a href="products.html?category=personalized" class="footer-link">Bottle Printing</a></li>
+            <li><a href="products.html?category=personalized" class="footer-link">Mug Printing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Studio Contact</h4>
+          <div class="footer-contact-list">
+            <p>📍 Opp. Dahej Post Office, Main Road, Dahej</p>
+            <p>📞 +91 98765 43210</p>
+            <p>✉️ rajeshframing0@gmail.com</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Rajesh Framing. All Rights Reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="about.html">Privacy Policy</a>
+          <a href="about.html">Terms of Service</a>
+          <a href="admin-login.html" style="color: var(--primary-gold);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 3px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Admin Portal</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/products-data.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/quote-modal.js"></script>
+  <script src="js/checkout.js"></script>
+</body>
+</html>

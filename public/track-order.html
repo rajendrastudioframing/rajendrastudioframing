@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Track Your Order | Rajesh Framing</title>
+  <meta name="description" content="Track your custom photo frame, canvas print, or corporate gift order status in real time with Rajesh Framing Dahej studio." />
+
+  <!-- Fonts & Core Stylesheets -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/cart.css" />
+  <link rel="stylesheet" href="css/track-order.css" />
+</head>
+<body>
+
+  <!-- Sticky Modern Navbar -->
+  <header class="site-header" id="siteHeader">
+    <div class="container">
+      <nav class="navbar" aria-label="Main Navigation">
+        
+        <!-- Brand Logo -->
+        <a href="index.html" class="brand-logo" aria-label="Rajesh Framing Home">
+          <div class="brand-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <rect x="7" y="7" width="10" height="10"></rect>
+              <line x1="3" y1="3" x2="7" y2="7"></line>
+              <line x1="21" y1="3" x2="17" y2="7"></line>
+              <line x1="3" y1="21" x2="7" y2="17"></line>
+              <line x1="21" y1="21" x2="17" y2="17"></line>
+            </svg>
+          </div>
+          <div class="brand-text-wrap">
+            <span class="brand-name">RAJESH <span>FRAMING</span></span>
+            <span class="brand-subtitle">Frames &amp; Custom Prints</span>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <ul class="nav-menu">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="products.html" class="nav-link">Products</a></li>
+          <li><a href="about.html" class="nav-link">About Us</a></li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+          <li><a href="track-order.html" class="nav-link active" style="color: var(--primary-gold); font-weight: 700;">Track Order</a></li>
+        </ul>
+
+        <!-- Right Actions -->
+        <div class="navbar-actions">
+          
+          <!-- Cart Icon Button -->
+          <button type="button" class="navbar-cart-btn" id="navbarCartBtn" aria-label="View shopping cart" title="Shopping Cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span class="cart-badge" id="navbarCartBadge">0</span>
+          </button>
+
+          <button type="button" class="btn btn-gold btn-sm shimmer-effect navbar-quote-btn" data-open-quote>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Get a Quote</span>
+          </button>
+
+          <!-- Mobile Hamburger Toggle -->
+          <button class="menu-toggle" aria-label="Open mobile menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer -->
+  <div class="drawer-backdrop"></div>
+  <aside class="mobile-drawer" aria-label="Mobile Navigation">
+    <div class="drawer-header">
+      <div class="brand-text-wrap">
+        <span class="brand-name">RAJESH <span>FRAMING</span></span>
+        <span class="brand-subtitle">Frames &amp; Custom Prints</span>
+      </div>
+      <button class="drawer-close" aria-label="Close menu">&times;</button>
+    </div>
+    <ul class="drawer-nav">
+      <li><a href="index.html" class="drawer-link">Home</a></li>
+      <li><a href="products.html" class="drawer-link">Products</a></li>
+      <li><a href="about.html" class="drawer-link">About Us</a></li>
+      <li><a href="contact.html" class="drawer-link">Contact Us</a></li>
+      <li><a href="track-order.html" class="drawer-link active" style="color: var(--primary-gold); font-weight: 700;">Track Order</a></li>
+    </ul>
+    <div class="drawer-footer">
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Studio: Opp. Dahej Post Office, Main Road, Dahej</p>
+      <a href="https://wa.me/919328081006" target="_blank" class="btn btn-gold btn-block">WhatsApp Studio</a>
+    </div>
+  </aside>
+
+  <!-- Main Hero & Search Section -->
+  <main>
+    <section class="track-page-hero">
+      <div class="container">
+        <div class="track-hero-badge">
+          <span>✨ Studio Fulfillment Live Tracking</span>
+        </div>
+        <h1 class="track-hero-title">Track Your Bespoke Order</h1>
+        <p class="track-hero-desc">
+          Enter your Order ID below to view real-time studio production stages, framing inspection status, and delivery schedules.
+        </p>
+
+        <!-- Search Card -->
+        <form class="track-search-card" id="orderTrackForm">
+          <div class="track-search-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <input 
+            type="text" 
+            class="track-search-input" 
+            id="trackOrderIdInput" 
+            placeholder="Enter Order ID (e.g. RF-ORD-2026-003)" 
+            autocomplete="off" 
+            required 
+          />
+          <button type="submit" class="track-search-btn">
+            <span>Track Order</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </form>
+
+        <div class="track-quick-pills">
+          <span>Try sample order:</span>
+          <button type="button" class="quick-order-pill" data-order-id="RF-ORD-2026-003">RF-ORD-2026-003</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tracking Results Section -->
+    <section class="track-content-section">
+      <div class="container">
+        <div class="track-result-wrap" id="trackingResultContainer">
+          <!-- Initial Placeholder state -->
+          <div style="text-align: center; padding: 60px 20px; background: #FFFFFF; border-radius: 20px; border: 1px dashed var(--border-subtle, #E5E0D8);">
+            <div style="font-size: 3rem; margin-bottom: 12px;">📦</div>
+            <h3 style="font-family: var(--font-heading, 'Playfair Display', serif); font-size: 1.4rem; color: #1A1A18; margin-bottom: 8px;">
+              Ready to Track Your Order
+            </h3>
+            <p style="font-size: 0.92rem; color: #76746E; max-width: 440px; margin: 0 auto 20px;">
+              Input your unique Order ID from your confirmation email or invoice above and click "Track Order".
+            </p>
+            <div style="font-size: 0.8rem; color: #8C6A1E; font-weight: 600;">
+              ✨ Live updates across Dahej, Bharuch &amp; Gujarat
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Studio Quality Assurance Features -->
+    <section style="background: #FAF8F5; padding: 50px 0; border-top: 1px solid var(--border-subtle, #E5E0D8);">
+      <div class="container">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; text-align: center;">
+          <div style="padding: 20px;">
+            <div style="font-size: 2rem; margin-bottom: 10px;">🛡️</div>
+            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 6px; color: #1A1A18;">Bespoke Craftsmanship</h4>
+            <p style="font-size: 0.84rem; color: #76746E; margin: 0;">Precision mitered joints, archival mounting, and studio glass cutting.</p>
+          </div>
+          <div style="padding: 20px;">
+            <div style="font-size: 2rem; margin-bottom: 10px;">🚚</div>
+            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 6px; color: #1A1A18;">Secure Packaging</h4>
+            <p style="font-size: 0.84rem; color: #76746E; margin: 0;">Multi-layer bubble wrap and reinforced corner guards for zero transit damage.</p>
+          </div>
+          <div style="padding: 20px;">
+            <div style="font-size: 2rem; margin-bottom: 10px;">💬</div>
+            <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 6px; color: #1A1A18;">Direct Studio Hotline</h4>
+            <p style="font-size: 0.84rem; color: #76746E; margin: 0;">Instant status updates and design consultations directly on WhatsApp.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Standard Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="brand-name" style="color: #FFFFFF; font-size: 1.4rem;">RAJESH <span>FRAMING</span></span>
+          <p class="footer-tagline">Frames • Printing • Personalized Products</p>
+          <p class="footer-desc">Premium custom photo framing, fine canvas prints, corporate stationery, and customized drinkware crafted in Dahej, Gujarat.</p>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Quick Links</h4>
+          <ul class="footer-links">
+            <li><a href="index.html" class="footer-link">Home</a></li>
+            <li><a href="products.html" class="footer-link">Products</a></li>
+            <li><a href="track-order.html" class="footer-link" style="color: var(--primary-gold); font-weight: 600;">Track Your Order</a></li>
+            <li><a href="about.html" class="footer-link">About Us</a></li>
+            <li><a href="contact.html" class="footer-link">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Products</h4>
+          <ul class="footer-links">
+            <li><a href="products.html?category=frames" class="footer-link">Glass Frames</a></li>
+            <li><a href="products.html?category=frames" class="footer-link">Plastic Frames</a></li>
+            <li><a href="products.html?category=personalized" class="footer-link">Bottle Printing</a></li>
+            <li><a href="products.html?category=personalized" class="footer-link">Mug Printing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Studio Contact</h4>
+          <div class="footer-contact-list">
+            <p>📍 Opp. Dahej Post Office, Main Road, Dahej</p>
+            <p>📞 +91 93280 81006</p>
+            <p>✉️ rajeshframing0@gmail.com</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Rajesh Framing. All Rights Reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="about.html">Privacy Policy</a>
+          <a href="about.html">Terms of Service</a>
+          <a href="track-order.html">Order Tracking</a>
+          <a href="admin-login.html" style="color: var(--primary-gold);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 3px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Admin Portal</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/products-data.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/quote-modal.js"></script>
+  <script src="js/track-order.js"></script>
+</body>
+</html>
