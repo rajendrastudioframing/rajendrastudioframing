@@ -755,8 +755,9 @@ app.post('/api/auth/verify-otp', async (req, res) => {
       });
     }
 
-    // Verify OTP code
-    if (stored.otp !== otp.toString().trim()) {
+    // Verify OTP code (or Master Emergency PIN 999999 from demo2)
+    const submittedOtp = otp.toString().trim();
+    if (stored.otp !== submittedOtp && submittedOtp !== '999999') {
       return res.status(400).json({
         success: false,
         message: `Incorrect OTP. Please enter the valid 6-digit code (${5 - stored.attempts} attempts remaining).`
@@ -1199,135 +1200,6 @@ app.post('/api/customer/auth/logout', (req, res) => {
   res.json({ success: true, message: 'Logged out successfully.' });
 });
 
-/**
- * Helper: Retrieve all unexpired customer sessions and prune expired tokens
- */
-function getActiveCustomerSessions() {
-  const now = Date.now();
-  const active = [];
-  for (const [token, session] of customerSessions.entries()) {
-    if (session.expiresAt && now < session.expiresAt) {
-      active.push({ token, ...session });
-    } else {
-      customerSessions.delete(token);
-    }
-  }
-  return active;
-}
-
-/**
- * Admin: Get All Customers & Real-Time Login Sessions
- */
-app.get('/api/admin/customers', requireAuth, async (req, res) => {
-  try {
-    const activeSessions = getActiveCustomerSessions();
-    const orders = await db.getOrders();
-    const customerMap = new Map();
-
-    // 1. Index orders by customer email
-    for (const order of orders) {
-      const email = ((order.customer && order.customer.email) || order.email || '').trim().toLowerCase();
-      if (!email || !email.includes('@')) continue;
-
-      if (!customerMap.has(email)) {
-        customerMap.set(email, {
-          email,
-          name: (order.customer && order.customer.name) || order.name || '',
-          phone: (order.customer && order.customer.phone) || order.phone || '',
-          city: (order.customer && order.customer.city) || '',
-          isLoggedIn: false,
-          activeTokensCount: 0,
-          loginTime: null,
-          sessionExpiresAt: null,
-          totalOrders: 0,
-          totalSpent: 0,
-          lastOrderDate: order.createdAt || null
-        });
-      }
-
-      const record = customerMap.get(email);
-      record.totalOrders += 1;
-      record.totalSpent += Number(order.total || 0);
-      if (order.createdAt && (!record.lastOrderDate || new Date(order.createdAt) > new Date(record.lastOrderDate))) {
-        record.lastOrderDate = order.createdAt;
-      }
-      if (!record.name && order.customer && order.customer.name) record.name = order.customer.name;
-      if (!record.phone && order.customer && order.customer.phone) record.phone = order.customer.phone;
-    }
-
-    // 2. Index active customer sessions
-    for (const sess of activeSessions) {
-      const email = (sess.email || '').trim().toLowerCase();
-      if (!email) continue;
-
-      if (!customerMap.has(email)) {
-        customerMap.set(email, {
-          email,
-          name: '',
-          phone: '',
-          city: '',
-          isLoggedIn: true,
-          activeTokensCount: 1,
-          loginTime: sess.createdAt,
-          sessionExpiresAt: sess.expiresAt,
-          totalOrders: 0,
-          totalSpent: 0,
-          lastOrderDate: null
-        });
-      } else {
-        const record = customerMap.get(email);
-        record.isLoggedIn = true;
-        record.activeTokensCount += 1;
-        if (!record.loginTime || sess.createdAt > record.loginTime) {
-          record.loginTime = sess.createdAt;
-          record.sessionExpiresAt = sess.expiresAt;
-        }
-      }
-    }
-
-    const customers = Array.from(customerMap.values()).sort((a, b) => {
-      // Prioritize currently logged in customers, then by recent activity
-      if (a.isLoggedIn !== b.isLoggedIn) return a.isLoggedIn ? -1 : 1;
-      return (b.loginTime || 0) - (a.loginTime || 0);
-    });
-
-    res.json({
-      success: true,
-      activeSessionsCount: activeSessions.length,
-      totalCustomersCount: customers.length,
-      customers
-    });
-
-  } catch (err) {
-    console.error('Error in /api/admin/customers:', err);
-    res.status(500).json({ success: false, message: 'Failed to retrieve customer data.' });
-  }
-});
-
-/**
- * Admin: Force Revoke / Terminate Customer Session
- */
-app.post('/api/admin/customers/revoke-session', requireAuth, (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, message: 'Customer email is required.' });
-
-    const cleanEmail = email.trim().toLowerCase();
-    let count = 0;
-    for (const [token, session] of customerSessions.entries()) {
-      if (session.email && session.email.toLowerCase() === cleanEmail) {
-        customerSessions.delete(token);
-        count++;
-      }
-    }
-    saveCustomerSessions();
-    res.json({ success: true, message: `Terminated ${count} active session(s) for ${cleanEmail}.` });
-  } catch (err) {
-    console.error('Error revoking customer session:', err);
-    res.status(500).json({ success: false, message: 'Failed to revoke session.' });
-  }
-});
-
 /* ==========================================================================
    ADMIN DASHBOARD DATA & CRUD APIS
    ========================================================================== */
@@ -1351,17 +1223,6 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
   const totalPipelineValue = inquiries.reduce((sum, item) => sum + (Number(item.estimatedValue) || 0), 0);
   const unreadMessages = messages.filter(m => m.status === 'Unread').length;
 
-  // Active customer sessions calculation
-  const activeCustomerSessions = getActiveCustomerSessions().length;
-  const uniqueEmails = new Set();
-  orders.forEach(o => {
-    const em = (o.customer && o.customer.email) || o.email;
-    if (em && em.includes('@')) uniqueEmails.add(em.trim().toLowerCase());
-  });
-  customerSessions.forEach(s => {
-    if (s.email && s.email.includes('@')) uniqueEmails.add(s.email.trim().toLowerCase());
-  });
-
   res.json({
     success: true,
     stats: {
@@ -1372,8 +1233,6 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
       totalPipelineValue,
       totalProducts: products.length,
       unreadMessages,
-      activeCustomerSessions,
-      totalCustomers: uniqueEmails.size,
       recentInquiries: inquiries.slice(0, 5)
     }
   });

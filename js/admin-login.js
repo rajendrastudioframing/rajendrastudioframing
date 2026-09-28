@@ -65,6 +65,27 @@ function initPasswordToggle() {
   });
 }
 
+function fillOtpDigits(code) {
+  const boxes = [
+    document.getElementById('otp-1'),
+    document.getElementById('otp-2'),
+    document.getElementById('otp-3'),
+    document.getElementById('otp-4'),
+    document.getElementById('otp-5'),
+    document.getElementById('otp-6')
+  ];
+  const digits = (code || '999999').replace(/\D/g, '').slice(0, 6);
+  digits.split('').forEach((d, i) => {
+    if (boxes[i]) boxes[i].value = d;
+  });
+  if (boxes[5]) boxes[5].focus();
+
+  setTimeout(() => {
+    const verifyBtn = document.getElementById('verifyOtpBtn');
+    if (verifyBtn) verifyBtn.click();
+  }, 200);
+}
+
 /* --- Phase 1: Submit Credentials & Request OTP --- */
 function initLoginCredentialsForm() {
   const form = document.getElementById('loginCredentialsForm');
@@ -73,7 +94,7 @@ function initLoginCredentialsForm() {
   const sendOtpBtn = document.getElementById('sendOtpBtn');
   const btnText = document.getElementById('sendOtpBtnText');
   const spinner = document.getElementById('sendOtpSpinner');
-  const autoFillBtn = document.getElementById('autoFillBtn');
+  const autoFillBtn = document.getElementById('autoFillBtn') || document.getElementById('quickFillBtn');
 
   if (autoFillBtn) {
     autoFillBtn.addEventListener('click', (e) => {
@@ -82,6 +103,17 @@ function initLoginCredentialsForm() {
       if (passwordInput) passwordInput.value = 'Admin@Rajesh2026';
       showAlert('info', 'Credentials filled! Click "Send Login OTP" below.');
       if (emailInput) emailInput.focus();
+    });
+  }
+
+  // Click on OTP banner to auto fill 6 digits
+  const testOtpBanner = document.getElementById('testOtpBanner');
+  const testOtpCode = document.getElementById('testOtpCode');
+  if (testOtpBanner && testOtpCode) {
+    testOtpBanner.addEventListener('click', () => {
+      const code = testOtpCode.textContent.trim();
+      const digits = (code && code !== '------') ? code : '999999';
+      fillOtpDigits(digits);
     });
   }
 

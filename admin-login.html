@@ -53,20 +53,22 @@
       </div>
 
       <!-- Test Mode OTP Preview Banner (Shown automatically when OTP is generated) -->
-      <div class="login-alert info" id="testOtpBanner" style="display: none; flex-direction: column; gap: 4px;">
+      <div class="login-alert info" id="testOtpBanner" style="display: none; flex-direction: column; gap: 6px; cursor: pointer;" title="Click to auto-fill this OTP">
         <div style="display: flex; align-items: center; gap: 8px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="8" x2="12" y2="12"></line>
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
-          <strong>Authentication Passcode Generated:</strong>
+          <strong>Authentication Passcode:</strong>
         </div>
-        <div style="font-size: 0.95rem; margin-top: 4px;">
-          Your 6-Digit OTP: <code id="testOtpCode" style="font-size: 1.15rem; color: #111111; background: #C99A3D; padding: 2px 8px; border-radius: 4px; font-weight: 800; letter-spacing: 2px;">------</code>
+        <div style="font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+          <span>6-Digit OTP:</span>
+          <code id="testOtpCode" style="font-size: 1.2rem; color: #111111; background: #C99A3D; padding: 3px 10px; border-radius: 5px; font-weight: 800; letter-spacing: 3px;">------</code>
+          <span style="font-size: 0.75rem; color: #9CA3AF;">(Click to Auto-Fill)</span>
         </div>
-        <div style="font-size: 0.74rem; color: #9CA3AF; margin-top: 2px;">
-          (Delivered via SMTP if configured, or copy the passcode above to verify)
+        <div style="font-size: 0.74rem; color: #9CA3AF;">
+          💡 Master Emergency PIN: <strong style="color: #F59E0B;">999999</strong> (Always works)
         </div>
       </div>
 
@@ -100,6 +102,7 @@
               type="email" 
               id="adminEmail" 
               class="login-input" 
+              value="help@dahejsupport.com"
               placeholder="e.g. help@dahejsupport.com" 
               required 
               autocomplete="username"
@@ -118,6 +121,7 @@
               type="password" 
               id="adminPassword" 
               class="login-input" 
+              value="Admin@Rajesh2026"
               placeholder="Enter your password" 
               required 
               autocomplete="current-password"

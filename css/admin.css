@@ -17,12 +17,12 @@
   --border-medium: #CBD5E1;
   --border-dark: #94A3B8;
   
-  --primary: #1665D8;
-  --primary-hover: #1253B3;
-  --primary-light: #EFF6FF;
-  --primary-border: #BFDBFE;
-  --primary-gradient: linear-gradient(135deg, #1665D8 0%, #0F49B8 100%);
-  --primary-glow: 0 4px 14px rgba(22, 101, 216, 0.32);
+  --primary: #C99A3D;
+  --primary-hover: #B5872E;
+  --primary-light: rgba(201, 154, 61, 0.12);
+  --primary-border: rgba(201, 154, 61, 0.32);
+  --primary-gradient: linear-gradient(135deg, #C99A3D 0%, #A87A26 100%);
+  --primary-glow: 0 4px 14px rgba(201, 154, 61, 0.32);
   
   --text-main: #0F172A;
   --text-secondary: #334155;
@@ -79,12 +79,12 @@
   --border-medium: rgba(255, 255, 255, 0.15);
   --border-dark: rgba(255, 255, 255, 0.25);
   
-  --primary: #2563EB;
-  --primary-hover: #1D4ED8;
-  --primary-light: rgba(37, 99, 235, 0.16);
-  --primary-border: rgba(37, 99, 235, 0.35);
-  --primary-gradient: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
-  --primary-glow: 0 4px 18px rgba(37, 99, 235, 0.45);
+  --primary: #C99A3D;
+  --primary-hover: #D4A84D;
+  --primary-light: rgba(201, 154, 61, 0.18);
+  --primary-border: rgba(201, 154, 61, 0.38);
+  --primary-gradient: linear-gradient(135deg, #D4AF37 0%, #AA8010 100%);
+  --primary-glow: 0 4px 18px rgba(201, 154, 61, 0.45);
   
   --text-main: #F8FAFC;
   --text-secondary: #E2E8F0;
