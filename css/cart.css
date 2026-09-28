@@ -74,6 +74,177 @@
 }
 
 /* ==========================================================================
+   CUSTOMER AUTHENTICATION (NAVBAR BUTTON & MINIMAL OTP MODAL)
+   ========================================================================== */
+.navbar-user-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(201, 154, 61, 0.28);
+  border-radius: 50%;
+  color: var(--primary-black, #111111);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 0;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.navbar-user-btn:hover {
+  background: #FFFFFF;
+  color: var(--accent-gold, #C99A3D);
+  border-color: var(--accent-gold, #C99A3D);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(201, 154, 61, 0.25);
+}
+
+.navbar-user-btn svg {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.25s ease;
+}
+
+.navbar-user-btn:hover svg {
+  transform: scale(1.08);
+}
+
+.user-active-dot {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  background: #10B981;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
+}
+
+.user-avatar-initial {
+  font-family: var(--font-heading, inherit);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--accent-gold, #C99A3D);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* Minimal Customer Auth Modal Container */
+#customerAuthModal .modal-container {
+  max-width: 440px;
+}
+
+.auth-otp-input {
+  text-align: center;
+  font-size: 1.5rem !important;
+  letter-spacing: 8px !important;
+  font-weight: 800 !important;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+.auth-notice-box {
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.auth-notice-info {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  color: #1E40AF;
+}
+
+.auth-notice-success {
+  background: #ECFDF3;
+  border: 1px solid #ABEFC6;
+  color: #027A48;
+}
+
+.auth-notice-error {
+  background: #FEF3F2;
+  border: 1px solid #FECDCA;
+  color: #B42318;
+}
+
+.auth-timer-text {
+  font-size: 0.8125rem;
+  color: #6B7280;
+}
+
+.auth-resend-btn {
+  background: none;
+  border: none;
+  color: var(--accent-gold, #C99A3D);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.auth-resend-btn:disabled {
+  color: #9CA3AF;
+  text-decoration: none;
+  cursor: not-allowed;
+}
+
+/* Orders List in Account Modal */
+.cust-order-card {
+  background: #FAF9F6;
+  border: 1px solid #EBE6DC;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.cust-order-card:hover {
+  border-color: var(--accent-gold, #C99A3D);
+  background: #FFFFFF;
+}
+
+.cust-order-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.cust-order-id {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #111111;
+  text-decoration: none;
+}
+
+.cust-order-id:hover {
+  color: var(--accent-gold, #C99A3D);
+}
+
+.cust-order-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.cust-order-badge.confirmed { background: #ECFDF3; color: #027A48; }
+.cust-order-badge.shipped { background: #EFF8FF; color: #175CD3; }
+.cust-order-badge.completed { background: #ECFDF3; color: #027A48; }
+.cust-order-badge.cancelled { background: #FEF3F2; color: #B42318; }
+
+/* ==========================================================================
    2. CART DRAWER (SLIDE-OUT OVERLAY)
    ========================================================================== */
 .cart-drawer-overlay {

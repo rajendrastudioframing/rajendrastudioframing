@@ -39,6 +39,7 @@ const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
 const MESSAGES_FILE = path.join(DATA_DIR, 'messages.json');
 const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
+const CUSTOMER_SESSIONS_FILE = path.join(DATA_DIR, 'customer-sessions.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 // Ensure data & upload directories exist (skip on Vercel serverless read-only filesystem)
@@ -86,6 +87,20 @@ function saveSessions() {
     writeJson(SESSIONS_FILE, obj);
   } catch (e) {
     console.error('Error saving sessions:', e);
+  }
+}
+
+// In-Memory Storage for Customer OTPs and Customer Sessions (Email + OTP only)
+const customerOtps = new Map(); // email -> { otp, expiresAt, attempts, createdAt }
+const customerSessions = new Map(Object.entries(readJson(CUSTOMER_SESSIONS_FILE, {})));
+
+function saveCustomerSessions() {
+  if (process.env.VERCEL) return;
+  try {
+    const obj = Object.fromEntries(customerSessions);
+    writeJson(CUSTOMER_SESSIONS_FILE, obj);
+  } catch (e) {
+    console.error('Error saving customer sessions:', e);
   }
 }
 
@@ -180,6 +195,59 @@ function generateOtpEmailHtml(otp, recipientEmail) {
       <div class="footer">
         Rajesh Framing Studio • Station Road, Dahej / Bharuch, Gujarat 392130<br>
         Direct Master Line: +91 98765 43210 • Confidential Administrative Notice
+      </div>
+    </div>
+  </body>
+  </html>
+  `;
+}
+
+// Customer Email Verification Passcode (OTP) Email Generator
+function generateCustomerOtpEmailHtml(otp, recipientEmail) {
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+      body { margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F8F6F0; color: #111111; }
+      .container { max-width: 540px; margin: 36px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; border: 1px solid #EBE6DC; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+      .header { background: #111111; padding: 28px 24px; text-align: center; border-bottom: 2px solid #C99A3D; }
+      .brand-title { color: #FFFFFF; font-size: 20px; font-weight: 800; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
+      .brand-title span { color: #C99A3D; }
+      .brand-sub { color: #A0A5B1; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; }
+      .content { padding: 36px 28px; text-align: center; }
+      .headline { font-size: 20px; font-weight: 700; color: #111111; margin-bottom: 12px; }
+      .subtext { font-size: 14px; color: #555555; line-height: 1.6; margin-bottom: 24px; }
+      .otp-box { background: #FAF7F2; border: 2px dashed #C99A3D; border-radius: 12px; padding: 18px; margin: 16px 0; display: inline-block; min-width: 240px; }
+      .otp-code { font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #111111; margin: 0; font-family: 'Courier New', Courier, monospace; }
+      .timer-note { font-size: 12px; color: #888888; margin-top: 8px; }
+      .security-warning { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 12px 14px; text-align: left; font-size: 12px; color: #92400E; margin-top: 24px; border-radius: 4px; }
+      .footer { background: #FAF8F5; padding: 18px 24px; text-align: center; font-size: 11px; color: #888888; border-top: 1px solid #EBE6DC; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 class="brand-title">RAJESH <span>FRAMING</span></h1>
+        <div class="brand-sub">Frames &amp; Custom Prints • Customer Account</div>
+      </div>
+      <div class="content">
+        <h2 class="headline">Your Customer Login Passcode</h2>
+        <p class="subtext">
+          Use the secure 6-digit One-Time Passcode below to sign in to your Rajesh Framing account for <strong>${recipientEmail}</strong>.
+        </p>
+        <div class="otp-box">
+          <div class="otp-code">${otp}</div>
+          <div class="timer-note">Valid for <strong>5 minutes</strong> • Single use only</div>
+        </div>
+        <div class="security-warning">
+          <strong>Security Note:</strong> Never share this passcode with anyone. If you did not request this login code, you can safely ignore this email.
+        </div>
+      </div>
+      <div class="footer">
+        Rajesh Framing Studio • Station Road, Dahej &amp; Bharuch, Gujarat 392130<br>
+        Direct Customer Support: +91 9328081006 • rajeshframing0@gmail.com
       </div>
     </div>
   </body>
@@ -814,6 +882,305 @@ app.post('/api/auth/logout', (req, res) => {
     const token = authHeader.split(' ')[1];
     activeSessions.delete(token);
     saveSessions();
+  }
+  res.json({ success: true, message: 'Logged out successfully.' });
+});
+
+/* ==========================================================================
+   CUSTOMER AUTHENTICATION & ORDERS ENDPOINTS (EMAIL + OTP ONLY)
+   ========================================================================== */
+
+// Customer Authentication Middleware
+function requireCustomerAuth(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, message: 'Authentication required. Please log in with your email and OTP.' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  let session = customerSessions.get(token);
+
+  if (!session) {
+    return res.status(401).json({ success: false, message: 'Session expired or invalid. Please request a new OTP.' });
+  }
+
+  if (Date.now() > session.expiresAt) {
+    customerSessions.delete(token);
+    saveCustomerSessions();
+    return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
+  }
+
+  req.customerEmail = session.email;
+  next();
+}
+
+/**
+ * Customer Step 1: Request OTP via Email
+ */
+app.post('/api/customer/auth/send-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ success: false, message: 'Email address is required.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+
+    // Rate limiting: 30s cooldown
+    const existing = customerOtps.get(cleanEmail);
+    if (existing && Date.now() - existing.createdAt < 30000) {
+      const waitSeconds = Math.ceil((30000 - (Date.now() - existing.createdAt)) / 1000);
+      return res.status(429).json({
+        success: false,
+        message: `Please wait ${waitSeconds}s before requesting a new OTP.`
+      });
+    }
+
+    // Secure 6-digit numeric OTP
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes validity
+
+    customerOtps.set(cleanEmail, {
+      otp,
+      expiresAt,
+      attempts: 0,
+      createdAt: Date.now()
+    });
+
+    console.log(`🔐 [CUSTOMER OTP GENERATED] Recipient: ${cleanEmail} (Valid for 5 mins)`);
+
+    const config = await db.getAdminConfig();
+    const transporter = createTransporter(config);
+
+    if (transporter) {
+      try {
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
+        await transporter.sendMail({
+          from: fromAddress,
+          to: cleanEmail,
+          subject: `🔐 Your Rajesh Framing Login Passcode: ${otp}`,
+          text: `Hello,\n\nYour One-Time Passcode (OTP) to sign in to Rajesh Framing Studio is: ${otp}\n\nThis code will expire in 5 minutes. Please do not share it with anyone.\n\nThank you,\nRajesh Framing Studio`,
+          html: generateCustomerOtpEmailHtml(otp, cleanEmail)
+        });
+        console.log(`✅ [Nodemailer] Customer OTP email delivered to ${cleanEmail}`);
+      } catch (mailErr) {
+        console.error(`⚠️ [Nodemailer Error] Could not send customer OTP email:`, mailErr.message);
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to deliver OTP email at this moment. Please verify your email address or try again shortly.'
+        });
+      }
+    } else {
+      console.warn('⚠️ [SMTP Info] Mail transporter not configured. Cannot send OTP email.');
+      return res.status(503).json({
+        success: false,
+        message: 'Email service is currently offline. Please try again later.'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'OTP sent to your email address.'
+    });
+
+  } catch (err) {
+    console.error('Error in /api/customer/auth/send-otp:', err);
+    return res.status(500).json({ success: false, message: 'Server error generating authentication OTP.' });
+  }
+});
+
+/**
+ * Customer Step 2: Verify OTP -> Issue Customer Session Token
+ */
+app.post('/api/customer/auth/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: 'Email and 6-digit OTP are required.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanOtp = otp.toString().trim();
+    const stored = customerOtps.get(cleanEmail);
+
+    if (!stored) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active OTP request found. Please request a new OTP.'
+      });
+    }
+
+    // Check expiration (5 minutes)
+    if (Date.now() > stored.expiresAt) {
+      customerOtps.delete(cleanEmail);
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired (valid for 5 minutes). Please request a new one.'
+      });
+    }
+
+    // Check max attempts (5)
+    stored.attempts += 1;
+    if (stored.attempts > 5) {
+      customerOtps.delete(cleanEmail);
+      return res.status(429).json({
+        success: false,
+        message: 'Too many incorrect attempts. Please request a new OTP.'
+      });
+    }
+
+    // Verify OTP exact match
+    if (stored.otp !== cleanOtp) {
+      return res.status(400).json({
+        success: false,
+        message: `Incorrect OTP. Please enter the valid 6-digit code (${5 - stored.attempts} attempts remaining).`
+      });
+    }
+
+    // Correct OTP! Clear OTP immediately (single use only)
+    customerOtps.delete(cleanEmail);
+
+    // Create secure customer session token
+    const token = 'rf_cust_' + crypto.randomBytes(32).toString('hex');
+    const sessionExpiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
+
+    customerSessions.set(token, {
+      email: cleanEmail,
+      createdAt: Date.now(),
+      expiresAt: sessionExpiresAt
+    });
+    saveCustomerSessions();
+
+    console.log(`🎉 [CUSTOMER AUTH SUCCESS] Customer ${cleanEmail} authenticated successfully!`);
+
+    return res.json({
+      success: true,
+      message: 'Successfully logged in!',
+      token,
+      customer: {
+        email: cleanEmail
+      }
+    });
+
+  } catch (err) {
+    console.error('Error in /api/customer/auth/verify-otp:', err);
+    return res.status(500).json({ success: false, message: 'Server error during OTP verification.' });
+  }
+});
+
+/**
+ * Customer Resend OTP
+ */
+app.post('/api/customer/auth/resend-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+
+    // Rate limiting: 30s cooldown
+    const existing = customerOtps.get(cleanEmail);
+    if (existing && Date.now() - existing.createdAt < 30000) {
+      const waitSeconds = Math.ceil((30000 - (Date.now() - existing.createdAt)) / 1000);
+      return res.status(429).json({
+        success: false,
+        message: `Please wait ${waitSeconds}s before requesting a new OTP.`
+      });
+    }
+
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+
+    customerOtps.set(cleanEmail, {
+      otp,
+      expiresAt,
+      attempts: 0,
+      createdAt: Date.now()
+    });
+
+    const config = await db.getAdminConfig();
+    const transporter = createTransporter(config);
+    if (transporter) {
+      try {
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
+        await transporter.sendMail({
+          from: fromAddress,
+          to: cleanEmail,
+          subject: `🔐 Your Rajesh Framing Login Passcode: ${otp}`,
+          text: `Hello,\n\nYour new One-Time Passcode (OTP) is: ${otp}\n\nValid for 5 minutes. Do not share with anyone.\n\nRajesh Framing Studio`,
+          html: generateCustomerOtpEmailHtml(otp, cleanEmail)
+        });
+      } catch (mailErr) {
+        console.error('Error sending resend OTP email:', mailErr.message);
+        return res.status(500).json({ success: false, message: 'Failed to deliver OTP email.' });
+      }
+    } else {
+      return res.status(503).json({ success: false, message: 'Email service unavailable.' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'A new OTP has been sent to your email address.'
+    });
+
+  } catch (err) {
+    console.error('Error in /api/customer/auth/resend-otp:', err);
+    return res.status(500).json({ success: false, message: 'Server error resending OTP.' });
+  }
+});
+
+/**
+ * Get Current Customer Session
+ */
+app.get('/api/customer/auth/me', requireCustomerAuth, (req, res) => {
+  res.json({
+    success: true,
+    customer: {
+      email: req.customerEmail
+    }
+  });
+});
+
+/**
+ * Get Customer Orders (Protected: Only returns orders matching logged-in customer email)
+ */
+app.get('/api/customer/orders', requireCustomerAuth, async (req, res) => {
+  try {
+    const allOrders = await db.getOrders();
+    const customerOrders = allOrders.filter(o => {
+      const oEmail = (o.customer && o.customer.email) || o.email || '';
+      return oEmail.trim().toLowerCase() === req.customerEmail.toLowerCase();
+    });
+
+    res.json({
+      success: true,
+      orders: customerOrders
+    });
+  } catch (err) {
+    console.error('Error in /api/customer/orders:', err);
+    res.status(500).json({ success: false, message: 'Failed to load customer orders.' });
+  }
+});
+
+/**
+ * Customer Logout
+ */
+app.post('/api/customer/auth/logout', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    customerSessions.delete(token);
+    saveCustomerSessions();
   }
   res.json({ success: true, message: 'Logged out successfully.' });
 });
