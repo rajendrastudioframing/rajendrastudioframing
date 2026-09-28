@@ -263,38 +263,38 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
   const isCompleted = newStatus === 'Completed' || newStatus === 'Delivered';
 
   let badgeText = 'ORDER STATUS UPDATE';
-  let badgeBg = '#EFF8FF';
-  let badgeColor = '#175CD3';
-  let badgeBorder = '#B2DDFF';
+  let badgeBg = '#FEF9EE';
+  let badgeColor = '#92400E';
+  let badgeBorder = '#FDE68A';
   let headline = `Update on Order #${orderId}`;
   let primaryMessage = `Your order status has been updated to <strong>${newStatus}</strong>.`;
 
   if (isAccepted) {
-    badgeText = '✓ ORDER ACCEPTED & CONFIRMED';
-    badgeBg = '#ECFDF3';
-    badgeColor = '#027A48';
-    badgeBorder = '#ABEFC6';
+    badgeText = '✓ ORDER CONFIRMED & IN PRODUCTION';
+    badgeBg = '#FEF9EE';
+    badgeColor = '#92400E';
+    badgeBorder = '#FDE68A';
     headline = 'Great news! Your Order is Confirmed & In Production';
     primaryMessage = 'We are excited to let you know that your order has been accepted by Rajesh Framing Studio! Our master craftsmen have queued your piece for precision framing and custom assembly.';
   } else if (isCancelled) {
     badgeText = '⚠️ ORDER CANCELLED';
-    badgeBg = '#FEF3F2';
-    badgeColor = '#B42318';
-    badgeBorder = '#FECDCA';
+    badgeBg = '#FEF2F2';
+    badgeColor = '#991B1B';
+    badgeBorder = '#FECACA';
     headline = 'Important Notice: Order Cancelled';
     primaryMessage = 'We are writing to inform you that your order has been cancelled. If this cancellation was requested by you, no further action is needed.';
   } else if (isShipped) {
     badgeText = '🚚 DISPATCHED & OUT FOR DELIVERY';
-    badgeBg = '#EFF8FF';
-    badgeColor = '#175CD3';
-    badgeBorder = '#B2DDFF';
+    badgeBg = '#F0FDF4';
+    badgeColor = '#166534';
+    badgeBorder = '#BBF7D0';
     headline = 'Your Frames are On The Way!';
     primaryMessage = 'Your custom framed order has been carefully packaged and is now out for delivery or ready for studio pickup.';
   } else if (isCompleted) {
     badgeText = '🎉 DELIVERED & COMPLETED';
-    badgeBg = '#ECFDF3';
-    badgeColor = '#027A48';
-    badgeBorder = '#ABEFC6';
+    badgeBg = '#ECFDF5';
+    badgeColor = '#047857';
+    badgeBorder = '#A7F3D0';
     headline = 'Order Delivered! Thank You for Choosing Rajesh Framing';
     primaryMessage = 'Your order has been marked as completed/delivered. We hope you enjoy your custom framed memory! Thank you for trusting Rajesh Framing Studio.';
   }
@@ -302,18 +302,18 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
   // Items rows
   const itemsHtml = (items && items.length > 0)
     ? items.map(item => `
-        <tr style="border-bottom: 1px solid #F1F5F9;">
-          <td style="padding: 12px 0; font-size: 14px; color: #1E293B; font-weight: 600;">
+        <tr style="border-bottom: 1px solid #EFECE6;">
+          <td style="padding: 12px 0; font-size: 14px; color: #111111; font-weight: 600;">
             ${item.name || 'Framed Item'}
-            ${item.size ? `<br><span style="font-size: 12px; color: #64748B; font-weight: normal;">Size: ${item.size} • ${item.finish || 'Standard'}</span>` : ''}
+            ${item.size ? `<br><span style="font-size: 12px; color: #78716C; font-weight: normal;">Size: ${item.size} • ${item.finish || 'Standard'}</span>` : ''}
           </td>
-          <td style="padding: 12px 8px; font-size: 14px; color: #64748B; text-align: center;">x${item.quantity || 1}</td>
-          <td style="padding: 12px 0; font-size: 14px; color: #1E293B; font-weight: 700; text-align: right;">₹${((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}</td>
+          <td style="padding: 12px 8px; font-size: 14px; color: #78716C; text-align: center;">x${item.quantity || 1}</td>
+          <td style="padding: 12px 0; font-size: 14px; color: #111111; font-weight: 700; text-align: right;">₹${((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}</td>
         </tr>
       `).join('')
     : `
         <tr>
-          <td colspan="3" style="padding: 12px 0; font-size: 14px; color: #1E293B;">Custom Framing &amp; Print Order</td>
+          <td colspan="3" style="padding: 12px 0; font-size: 14px; color: #111111;">Custom Framing &amp; Print Order</td>
         </tr>
       `;
 
@@ -325,18 +325,18 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order #${orderId} - Rajesh Framing</title>
   </head>
-  <body style="margin: 0; padding: 0; background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0F172A; -webkit-font-smoothing: antialiased;">
-    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; padding: 30px 15px;">
+  <body style="margin: 0; padding: 0; background-color: #F8F6F0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111111; -webkit-font-smoothing: antialiased;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8F6F0; padding: 30px 15px;">
       <tr>
         <td align="center">
-          <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; border: 1px solid #E2E8F0; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
-            <!-- Header Brand -->
+          <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; border: 1px solid #E8E3DA; box-shadow: 0 10px 25px rgba(0,0,0,0.06);">
+            <!-- Header Brand Matching Website Theme -->
             <tr>
-              <td style="background-color: #0B111E; padding: 28px 32px; text-align: center; border-bottom: 3px solid #1665D8;">
-                <div style="font-size: 22px; font-weight: 800; letter-spacing: 1px; color: #FFFFFF; text-transform: uppercase;">
-                  RAJESH <span style="color: #38BDF8;">FRAMING</span>
+              <td style="background-color: #111111; padding: 28px 32px; text-align: center; border-bottom: 3px solid #C99A3D;">
+                <div style="font-size: 22px; font-weight: 800; letter-spacing: 2px; color: #FFFFFF; text-transform: uppercase;">
+                  RAJESH <span style="color: #C99A3D;">FRAMING</span>
                 </div>
-                <div style="font-size: 11px; letter-spacing: 1.5px; color: #94A3B8; text-transform: uppercase; margin-top: 4px;">
+                <div style="font-size: 11px; letter-spacing: 1.5px; color: #C5A880; text-transform: uppercase; margin-top: 5px;">
                   Custom Framing Studio &bull; Dahej &amp; Bharuch
                 </div>
               </td>
@@ -348,11 +348,11 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
                 <div style="display: inline-block; background-color: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; border-radius: 9999px; padding: 6px 16px; font-size: 12px; font-weight: 800; letter-spacing: 0.5px;">
                   ${badgeText}
                 </div>
-                <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 18px 0 8px; line-height: 1.3;">
+                <h2 style="font-size: 22px; font-weight: 800; color: #111111; margin: 18px 0 8px; line-height: 1.3;">
                   ${headline}
                 </h2>
-                <div style="font-size: 14px; color: #64748B;">
-                  Order ID: <strong style="color: #1665D8;">#${orderId}</strong>
+                <div style="font-size: 14px; color: #78716C;">
+                  Order ID: <strong style="color: #C99A3D;">#${orderId}</strong>
                 </div>
               </td>
             </tr>
@@ -360,22 +360,22 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
             <!-- Message Body -->
             <tr>
               <td style="padding: 0 32px 24px;">
-                <p style="font-size: 15px; line-height: 1.6; color: #334155; margin: 0 0 16px;">
+                <p style="font-size: 15px; line-height: 1.6; color: #333333; margin: 0 0 16px;">
                   Hello <strong>${customerName || 'Valued Customer'}</strong>,
                 </p>
-                <p style="font-size: 15px; line-height: 1.6; color: #334155; margin: 0 0 20px;">
+                <p style="font-size: 15px; line-height: 1.6; color: #333333; margin: 0 0 20px;">
                   ${primaryMessage}
                 </p>
 
                 ${notes ? `
-                  <div style="background-color: #F8FAFC; border-left: 4px solid #1665D8; padding: 14px 16px; border-radius: 6px; margin: 20px 0; font-size: 14px; color: #334155;">
-                    <strong style="color: #0F172A; display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Studio Note / Update:</strong>
+                  <div style="background-color: #FFFDF7; border-left: 4px solid #C99A3D; padding: 14px 16px; border-radius: 6px; margin: 20px 0; font-size: 14px; color: #333333; border: 1px solid #F5E8D0; border-left-width: 4px;">
+                    <strong style="color: #8B7355; display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Studio Note / Update:</strong>
                     ${notes}
                   </div>
                 ` : ''}
 
                 ${isCancelled ? `
-                  <div style="background-color: #FFF1F2; border: 1px solid #FECDD3; border-radius: 10px; padding: 16px; margin: 20px 0; font-size: 13px; color: #9F1239; line-height: 1.5;">
+                  <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; padding: 16px; margin: 20px 0; font-size: 13px; color: #991B1B; line-height: 1.5;">
                     <strong>Refund / Payment Policy:</strong><br>
                     If you paid online via instant UPI (QR code) or advance deposit, our accounts team will verify your transaction (UTR) and process a full refund to your source account within 24–48 hours. If you chose Pay on Delivery, no payment was deducted.
                   </div>
@@ -383,45 +383,45 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
               </td>
             </tr>
 
-            <!-- CTA Button: Track Your Order Online -->
+            <!-- CTA Button: Track Your Order Online (Gold Button matching Website) -->
             <tr>
               <td align="center" style="padding: 0 32px 30px;">
                 <table border="0" cellspacing="0" cellpadding="0">
                   <tr>
-                    <td align="center" style="border-radius: 8px; background: linear-gradient(135deg, #1665D8 0%, #0F4599 100%);">
-                      <a href="${trackingUrl}" target="_blank" style="font-size: 15px; font-weight: 700; color: #FFFFFF; text-decoration: none; padding: 14px 32px; display: inline-block; border-radius: 8px; box-shadow: 0 4px 12px rgba(22, 101, 216, 0.35);">
+                    <td align="center" style="border-radius: 8px; background: linear-gradient(135deg, #C99A3D 0%, #A67C2E 100%); box-shadow: 0 4px 14px rgba(201, 154, 61, 0.35);">
+                      <a href="${trackingUrl}" target="_blank" style="font-size: 15px; font-weight: 700; color: #FFFFFF; text-decoration: none; padding: 14px 32px; display: inline-block; border-radius: 8px; letter-spacing: 0.3px;">
                         Track Your Order Online &rarr;
                       </a>
                     </td>
                   </tr>
                 </table>
-                <div style="font-size: 12px; color: #94A3B8; margin-top: 10px;">
-                  Or track anytime on our website with Order ID: <strong>${orderId}</strong>
+                <div style="font-size: 12px; color: #A8A29E; margin-top: 10px;">
+                  Or track anytime on our website with Order ID: <strong style="color: #111111;">${orderId}</strong>
                 </div>
               </td>
             </tr>
 
-            <!-- Order Summary Section -->
+            <!-- Order Summary Section (Artisanal Warm Card) -->
             <tr>
               <td style="padding: 0 32px 28px;">
-                <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px;">
-                  <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #64748B; margin-bottom: 12px; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">
+                <div style="background-color: #FAF7F2; border: 1px solid #EAE5DB; border-radius: 12px; padding: 20px;">
+                  <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #8B7355; margin-bottom: 12px; border-bottom: 1px solid #EAE5DB; padding-bottom: 8px;">
                     Order Summary
                   </div>
                   <table width="100%" border="0" cellspacing="0" cellpadding="0">
                     ${itemsHtml}
                     <tr>
-                      <td colspan="2" style="padding-top: 14px; font-size: 15px; font-weight: 800; color: #0F172A;">Total Amount</td>
-                      <td style="padding-top: 14px; font-size: 17px; font-weight: 800; color: #1665D8; text-align: right;">₹${Number(total || 0).toLocaleString('en-IN')}</td>
+                      <td colspan="2" style="padding-top: 14px; font-size: 15px; font-weight: 800; color: #111111;">Total Amount</td>
+                      <td style="padding-top: 14px; font-size: 18px; font-weight: 800; color: #C99A3D; text-align: right;">₹${Number(total || 0).toLocaleString('en-IN')}</td>
                     </tr>
                   </table>
                   ${paymentMethod ? `
-                    <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #CBD5E1; font-size: 12px; color: #64748B;">
+                    <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #D6D0C5; font-size: 12px; color: #78716C;">
                       <strong>Payment Method:</strong> ${paymentMethod}
                     </div>
                   ` : ''}
                   ${address ? `
-                    <div style="margin-top: 6px; font-size: 12px; color: #64748B;">
+                    <div style="margin-top: 6px; font-size: 12px; color: #78716C;">
                       <strong>Delivery To:</strong> ${address}
                     </div>
                   ` : ''}
@@ -429,24 +429,24 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
               </td>
             </tr>
 
-            <!-- Support & Footer -->
+            <!-- Support & Footer (Matching Website Footer) -->
             <tr>
-              <td style="background-color: #F1F5F9; padding: 24px 32px; text-align: center; border-top: 1px solid #E2E8F0;">
-                <div style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">
+              <td style="background-color: #FAF8F5; padding: 24px 32px; text-align: center; border-top: 1px solid #EAE5DB;">
+                <div style="font-size: 13px; font-weight: 700; color: #111111; margin-bottom: 6px;">
                   Questions or Need Immediate Assistance?
                 </div>
-                <div style="font-size: 12px; color: #64748B; margin-bottom: 14px;">
+                <div style="font-size: 12px; color: #78716C; margin-bottom: 14px;">
                   Our studio team is available Mon–Sat (9:00 AM – 9:00 PM).
                 </div>
                 <div>
-                  <a href="https://wa.me/919328081006?text=${encodeURIComponent('Hello Rajesh Framing, I am inquiring about my Order #' + orderId)}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 8px 18px; border-radius: 9999px; margin: 0 4px;">
+                  <a href="https://wa.me/919328081006?text=${encodeURIComponent('Hello Rajesh Framing, I am inquiring about my Order #' + orderId)}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);">
                     💬 Chat on WhatsApp
                   </a>
-                  <a href="tel:+919328081006" style="display: inline-block; background-color: #FFFFFF; color: #334155; border: 1px solid #CBD5E1; font-size: 12px; font-weight: 700; text-decoration: none; padding: 8px 18px; border-radius: 9999px; margin: 0 4px;">
+                  <a href="tel:+919328081006" style="display: inline-block; background-color: #111111; color: #FFFFFF; border: 1px solid #C99A3D; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px;">
                     📞 +91 9328081006
                   </a>
                 </div>
-                <div style="margin-top: 20px; font-size: 11px; color: #94A3B8; line-height: 1.5;">
+                <div style="margin-top: 20px; font-size: 11px; color: #A8A29E; line-height: 1.6;">
                   Rajesh Framing Studio &bull; Station Road, Dahej &amp; Bharuch, Gujarat 392130<br>
                   This is an automated operational notification regarding your order with Rajesh Framing.
                 </div>
@@ -1185,6 +1185,135 @@ app.post('/api/customer/auth/logout', (req, res) => {
   res.json({ success: true, message: 'Logged out successfully.' });
 });
 
+/**
+ * Helper: Retrieve all unexpired customer sessions and prune expired tokens
+ */
+function getActiveCustomerSessions() {
+  const now = Date.now();
+  const active = [];
+  for (const [token, session] of customerSessions.entries()) {
+    if (session.expiresAt && now < session.expiresAt) {
+      active.push({ token, ...session });
+    } else {
+      customerSessions.delete(token);
+    }
+  }
+  return active;
+}
+
+/**
+ * Admin: Get All Customers & Real-Time Login Sessions
+ */
+app.get('/api/admin/customers', requireAuth, async (req, res) => {
+  try {
+    const activeSessions = getActiveCustomerSessions();
+    const orders = await db.getOrders();
+    const customerMap = new Map();
+
+    // 1. Index orders by customer email
+    for (const order of orders) {
+      const email = ((order.customer && order.customer.email) || order.email || '').trim().toLowerCase();
+      if (!email || !email.includes('@')) continue;
+
+      if (!customerMap.has(email)) {
+        customerMap.set(email, {
+          email,
+          name: (order.customer && order.customer.name) || order.name || '',
+          phone: (order.customer && order.customer.phone) || order.phone || '',
+          city: (order.customer && order.customer.city) || '',
+          isLoggedIn: false,
+          activeTokensCount: 0,
+          loginTime: null,
+          sessionExpiresAt: null,
+          totalOrders: 0,
+          totalSpent: 0,
+          lastOrderDate: order.createdAt || null
+        });
+      }
+
+      const record = customerMap.get(email);
+      record.totalOrders += 1;
+      record.totalSpent += Number(order.total || 0);
+      if (order.createdAt && (!record.lastOrderDate || new Date(order.createdAt) > new Date(record.lastOrderDate))) {
+        record.lastOrderDate = order.createdAt;
+      }
+      if (!record.name && order.customer && order.customer.name) record.name = order.customer.name;
+      if (!record.phone && order.customer && order.customer.phone) record.phone = order.customer.phone;
+    }
+
+    // 2. Index active customer sessions
+    for (const sess of activeSessions) {
+      const email = (sess.email || '').trim().toLowerCase();
+      if (!email) continue;
+
+      if (!customerMap.has(email)) {
+        customerMap.set(email, {
+          email,
+          name: '',
+          phone: '',
+          city: '',
+          isLoggedIn: true,
+          activeTokensCount: 1,
+          loginTime: sess.createdAt,
+          sessionExpiresAt: sess.expiresAt,
+          totalOrders: 0,
+          totalSpent: 0,
+          lastOrderDate: null
+        });
+      } else {
+        const record = customerMap.get(email);
+        record.isLoggedIn = true;
+        record.activeTokensCount += 1;
+        if (!record.loginTime || sess.createdAt > record.loginTime) {
+          record.loginTime = sess.createdAt;
+          record.sessionExpiresAt = sess.expiresAt;
+        }
+      }
+    }
+
+    const customers = Array.from(customerMap.values()).sort((a, b) => {
+      // Prioritize currently logged in customers, then by recent activity
+      if (a.isLoggedIn !== b.isLoggedIn) return a.isLoggedIn ? -1 : 1;
+      return (b.loginTime || 0) - (a.loginTime || 0);
+    });
+
+    res.json({
+      success: true,
+      activeSessionsCount: activeSessions.length,
+      totalCustomersCount: customers.length,
+      customers
+    });
+
+  } catch (err) {
+    console.error('Error in /api/admin/customers:', err);
+    res.status(500).json({ success: false, message: 'Failed to retrieve customer data.' });
+  }
+});
+
+/**
+ * Admin: Force Revoke / Terminate Customer Session
+ */
+app.post('/api/admin/customers/revoke-session', requireAuth, (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Customer email is required.' });
+
+    const cleanEmail = email.trim().toLowerCase();
+    let count = 0;
+    for (const [token, session] of customerSessions.entries()) {
+      if (session.email && session.email.toLowerCase() === cleanEmail) {
+        customerSessions.delete(token);
+        count++;
+      }
+    }
+    saveCustomerSessions();
+    res.json({ success: true, message: `Terminated ${count} active session(s) for ${cleanEmail}.` });
+  } catch (err) {
+    console.error('Error revoking customer session:', err);
+    res.status(500).json({ success: false, message: 'Failed to revoke session.' });
+  }
+});
+
 /* ==========================================================================
    ADMIN DASHBOARD DATA & CRUD APIS
    ========================================================================== */
@@ -1208,6 +1337,17 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
   const totalPipelineValue = inquiries.reduce((sum, item) => sum + (Number(item.estimatedValue) || 0), 0);
   const unreadMessages = messages.filter(m => m.status === 'Unread').length;
 
+  // Active customer sessions calculation
+  const activeCustomerSessions = getActiveCustomerSessions().length;
+  const uniqueEmails = new Set();
+  orders.forEach(o => {
+    const em = (o.customer && o.customer.email) || o.email;
+    if (em && em.includes('@')) uniqueEmails.add(em.trim().toLowerCase());
+  });
+  customerSessions.forEach(s => {
+    if (s.email && s.email.includes('@')) uniqueEmails.add(s.email.trim().toLowerCase());
+  });
+
   res.json({
     success: true,
     stats: {
@@ -1218,6 +1358,8 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
       totalPipelineValue,
       totalProducts: products.length,
       unreadMessages,
+      activeCustomerSessions,
+      totalCustomers: uniqueEmails.size,
       recentInquiries: inquiries.slice(0, 5)
     }
   });

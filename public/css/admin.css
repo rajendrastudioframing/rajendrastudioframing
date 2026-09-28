@@ -758,12 +758,40 @@ body.admin-dashboard-body[data-theme="dark"] {
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   box-shadow: var(--shadow-card);
   margin-bottom: 28px;
   overflow: hidden;
   position: relative;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cust-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.cust-status-badge.active {
+  background: var(--badge-green-bg);
+  color: var(--badge-green-text);
+  border: 1px solid var(--badge-green-border);
+}
+.cust-status-badge.offline {
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+.cust-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 6px #10B981;
 }
 
 .metric-segment {

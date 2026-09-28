@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initEditOrderModal();
   initCancelOrderModal();
   initSettingsForms();
+  initCustomerSearch();
 
   // Initial Data Load
   await loadDashboardStats();
@@ -126,6 +127,7 @@ function initNavigation() {
     viewOrders: 'Orders',
     viewLeads: 'Leads',
     viewMessages: 'Messages',
+    viewCustomers: 'Customers & Logins',
     viewSettings: 'Settings'
   };
 
@@ -143,6 +145,7 @@ function initNavigation() {
   else if (hash === 'leads') switchTab('viewLeads');
   else if (hash === 'products') switchTab('viewProducts');
   else if (hash === 'messages') switchTab('viewMessages');
+  else if (hash === 'customers') switchTab('viewCustomers');
   else if (hash === 'settings') switchTab('viewSettings');
 
   window.switchTab = (viewId) => {
@@ -177,6 +180,7 @@ function initNavigation() {
     if (viewId === 'viewOrders' || viewId === 'viewLeads') loadInquiries();
     if (viewId === 'viewProducts') loadProducts();
     if (viewId === 'viewMessages') loadMessages();
+    if (viewId === 'viewCustomers') loadCustomers();
     if (viewId === 'viewSettings') loadSettings();
   };
 }
@@ -271,6 +275,17 @@ async function loadDashboardStats() {
     if (badgeMessages) {
       badgeMessages.textContent = stats.unreadMessages;
       badgeMessages.style.display = stats.unreadMessages > 0 ? 'inline-block' : 'none';
+    }
+
+    // Active Logged-in Customer Sessions
+    const kpiActiveUsers = document.getElementById('kpiActiveUsersCount');
+    const badgeActiveUsers = document.getElementById('sidebarActiveUsersBadge');
+    const activeCount = stats.activeCustomerSessions || 0;
+
+    if (kpiActiveUsers) kpiActiveUsers.textContent = activeCount;
+    if (badgeActiveUsers) {
+      badgeActiveUsers.textContent = activeCount;
+      badgeActiveUsers.style.display = activeCount > 0 ? 'inline-block' : 'none';
     }
 
   } catch (err) {
@@ -1823,3 +1838,193 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+/* ==========================================================================
+   CUSTOMERS & ACTIVE LOGINS CONTROLLER
+   ========================================================================== */
+let allCustomersCache = [];
+
+async function loadCustomers() {
+  const tbody = document.getElementById('customersTableBody');
+  const activeSummary = document.getElementById('activeSessionsSummaryCount');
+  const totalSummary = document.getElementById('totalCustomersSummaryCount');
+  const badgeActiveUsers = document.getElementById('sidebarActiveUsersBadge');
+  const kpiActiveUsers = document.getElementById('kpiActiveUsersCount');
+
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">Loading customer sessions data...</td></tr>`;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/customers`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #EF4444; padding: 24px;">Failed to load customers: ${data.message || 'Error'}</td></tr>`;
+      return;
+    }
+
+    allCustomersCache = data.customers || [];
+
+    if (activeSummary) activeSummary.textContent = data.activeSessionsCount || 0;
+    if (totalSummary) totalSummary.textContent = data.totalCustomersCount || 0;
+    if (kpiActiveUsers) kpiActiveUsers.textContent = data.activeSessionsCount || 0;
+    if (badgeActiveUsers) {
+      badgeActiveUsers.textContent = data.activeSessionsCount || 0;
+      badgeActiveUsers.style.display = (data.activeSessionsCount > 0) ? 'inline-block' : 'none';
+    }
+
+    renderCustomersTable(allCustomersCache);
+
+  } catch (err) {
+    console.error('Failed to load customers:', err);
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #EF4444; padding: 24px;">Network error loading customer data.</td></tr>`;
+  }
+}
+window.loadCustomers = loadCustomers;
+
+function renderCustomersTable(customers) {
+  const tbody = document.getElementById('customersTableBody');
+  if (!tbody) return;
+
+  if (!customers || customers.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px 16px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--text-subtle); margin-bottom: 8px; display: inline-block;">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+          </svg>
+          <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">No Customers Found</div>
+          <div style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 4px;">No customer accounts or orders have been recorded yet.</div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = customers.map(cust => {
+    const isOnline = cust.isLoggedIn;
+    const initial = (cust.email || 'C').charAt(0).toUpperCase();
+    const loginDate = cust.loginTime ? new Date(cust.loginTime).toLocaleDateString('en-IN', {
+      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+    }) : '—';
+    const expiryDate = cust.sessionExpiresAt ? new Date(cust.sessionExpiresAt).toLocaleDateString('en-IN', {
+      day: 'numeric', month: 'short', year: 'numeric'
+    }) : '—';
+    const totalSpent = Number(cust.totalSpent || 0).toLocaleString('en-IN');
+
+    return `
+      <tr>
+        <td>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 34px; height: 34px; border-radius: 50%; background: ${isOnline ? '#FEF9EE' : '#F1F5F9'}; color: ${isOnline ? '#C99A3D' : '#64748B'}; border: 1px solid ${isOnline ? '#FDE68A' : '#E2E8F0'}; font-weight: 700; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              ${initial}
+            </div>
+            <div>
+              <strong style="color: var(--text-main); font-size: 0.875rem; display: block; word-break: break-all;">${escapeHtml(cust.email)}</strong>
+              ${cust.name ? `<span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(cust.name)}${cust.phone ? ' • ' + escapeHtml(cust.phone) : ''}</span>` : ''}
+            </div>
+          </div>
+        </td>
+        <td>
+          ${isOnline ? `
+            <span class="cust-status-badge active" title="Active unexpired session">
+              <span class="cust-pulse-dot"></span>
+              Logged In
+            </span>
+          ` : `
+            <span class="cust-status-badge offline" title="No active session right now">
+              Offline
+            </span>
+          `}
+        </td>
+        <td style="font-size: 0.8125rem; color: var(--text-secondary);">${loginDate}</td>
+        <td style="font-size: 0.8125rem; color: var(--text-muted);">${expiryDate}</td>
+        <td style="text-align: center;">
+          <span style="display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.8125rem; background: ${cust.totalOrders > 0 ? '#EFF8FF' : '#F1F5F9'}; color: ${cust.totalOrders > 0 ? '#175CD3' : '#64748B'};">
+            ${cust.totalOrders}
+          </span>
+        </td>
+        <td style="text-align: right; font-weight: 700; font-size: 0.875rem; color: var(--text-main);">
+          ₹${totalSpent}
+        </td>
+        <td style="text-align: center;">
+          <div style="display: flex; gap: 6px; justify-content: center;">
+            ${cust.totalOrders > 0 ? `
+              <button type="button" class="btn-table-action" onclick="filterCustomerOrders('${escapeHtml(cust.email)}')" title="Filter orders for this customer" style="padding: 4px 8px; font-size: 0.75rem;">
+                Orders
+              </button>
+            ` : ''}
+            ${isOnline ? `
+              <button type="button" class="btn-table-action" onclick="revokeCustomerSessionPrompt('${escapeHtml(cust.email)}')" title="Log customer out immediately" style="color: #DC2626; border-color: #FCA5A5; padding: 4px 8px; font-size: 0.75rem;">
+                Logout
+              </button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterCustomerOrders(email) {
+  switchTab('viewOrders');
+  const searchInput = document.getElementById('orderSearchInput') || document.querySelector('.search-input');
+  if (searchInput) {
+    searchInput.value = email;
+    searchInput.dispatchEvent(new Event('input'));
+  }
+}
+window.filterCustomerOrders = filterCustomerOrders;
+
+async function revokeCustomerSessionPrompt(email) {
+  if (!confirm(`Are you sure you want to terminate all active sessions for ${email}? The customer will be logged out immediately.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/customers/revoke-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Customer session terminated.', 'success');
+      loadCustomers();
+      loadDashboardStats();
+    } else {
+      showToast(data.message || 'Failed to revoke session', 'error');
+    }
+  } catch (err) {
+    showToast('Network error terminating session', 'error');
+  }
+}
+window.revokeCustomerSessionPrompt = revokeCustomerSessionPrompt;
+
+function initCustomerSearch() {
+  const searchInput = document.getElementById('customerSearchInput');
+  if (!searchInput) return;
+
+  searchInput.addEventListener('input', (e) => {
+    const q = (e.target.value || '').trim().toLowerCase();
+    if (!q) {
+      renderCustomersTable(allCustomersCache);
+      return;
+    }
+    const filtered = allCustomersCache.filter(c => {
+      const email = (c.email || '').toLowerCase();
+      const name = (c.name || '').toLowerCase();
+      const phone = (c.phone || '').toLowerCase();
+      return email.includes(q) || name.includes(q) || phone.includes(q);
+    });
+    renderCustomersTable(filtered);
+  });
+}
+window.initCustomerSearch = initCustomerSearch;
