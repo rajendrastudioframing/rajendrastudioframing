@@ -73,6 +73,17 @@ function initLoginCredentialsForm() {
   const sendOtpBtn = document.getElementById('sendOtpBtn');
   const btnText = document.getElementById('sendOtpBtnText');
   const spinner = document.getElementById('sendOtpSpinner');
+  const autoFillBtn = document.getElementById('autoFillBtn');
+
+  if (autoFillBtn) {
+    autoFillBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (emailInput) emailInput.value = 'help@dahejsupport.com';
+      if (passwordInput) passwordInput.value = 'Admin@Rajesh2026';
+      showAlert('info', 'Credentials filled! Click "Send Login OTP" below.');
+      if (emailInput) emailInput.focus();
+    });
+  }
 
   if (!form) return;
 
@@ -134,7 +145,7 @@ function initLoginCredentialsForm() {
       }
     } catch (err) {
       console.error('Login request failed:', err);
-      showAlert('danger', 'Connection error. Please make sure the Rajesh Framing server is running on port 5000.');
+      showAlert('danger', 'Connection error. Please make sure the Dahej Support server is running on port 5000.');
     } finally {
       sendOtpBtn.disabled = false;
       btnText.textContent = 'Send Login OTP';

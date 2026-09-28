@@ -70,6 +70,25 @@
         </div>
       </div>
 
+      <!-- Quick Auto-Fill Credentials Card (Dahej Support / Rajesh Framing) -->
+      <div class="login-autofill-card" id="autoFillCard">
+        <div class="login-autofill-creds">
+          <div class="autofill-cred-row">
+            <span class="autofill-icon">📧</span>
+            <span class="autofill-label">Email:</span>
+            <strong class="autofill-val" id="autoCredEmail">help@dahejsupport.com</strong>
+          </div>
+          <div class="autofill-cred-row">
+            <span class="autofill-icon">🔑</span>
+            <span class="autofill-label">Password:</span>
+            <strong class="autofill-val" id="autoCredPass">Admin@Rajesh2026</strong>
+          </div>
+        </div>
+        <button type="button" class="btn-autofill-trigger" id="autoFillBtn" title="Click to auto-fill credentials">
+          <span class="autofill-bolt">⚡</span> Auto Fill
+        </button>
+      </div>
+
       <!-- ==========================================
            PHASE 1: EMAIL & PASSWORD FORM
            ========================================== -->
@@ -81,7 +100,7 @@
               type="email" 
               id="adminEmail" 
               class="login-input" 
-              placeholder="e.g. rajeshframing0@gmail.com" 
+              placeholder="e.g. help@dahejsupport.com" 
               required 
               autocomplete="username"
             />

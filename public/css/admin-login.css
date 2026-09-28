@@ -211,6 +211,93 @@ body.admin-login-body {
   color: #93C5FD;
 }
 
+/* Quick Auto-Fill Credentials Card */
+.login-autofill-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(245, 158, 11, 0.05);
+  border: 1.5px dashed rgba(245, 158, 11, 0.45);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 22px;
+  transition: all 0.2s ease;
+}
+
+.login-autofill-card:hover {
+  background: rgba(245, 158, 11, 0.09);
+  border-color: rgba(245, 158, 11, 0.7);
+}
+
+.login-autofill-creds {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.autofill-cred-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #F1F5F9;
+}
+
+.autofill-icon {
+  font-size: 0.95rem;
+  display: inline-block;
+  line-height: 1;
+}
+
+.autofill-label {
+  color: #94A3B8;
+  font-weight: 600;
+}
+
+.autofill-val {
+  color: #F59E0B;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  font-family: inherit;
+}
+
+.btn-autofill-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 8px;
+  color: #F59E0B;
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.btn-autofill-trigger:hover {
+  background: rgba(245, 158, 11, 0.24);
+  border-color: #F59E0B;
+  color: #FBBF24;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+}
+
+.btn-autofill-trigger:active {
+  transform: translateY(0);
+}
+
+.autofill-bolt {
+  color: #F59E0B;
+  font-size: 0.95rem;
+}
+
 /* Form Controls */
 .login-form-group {
   margin-bottom: 20px;
