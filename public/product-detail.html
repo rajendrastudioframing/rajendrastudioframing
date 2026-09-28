@@ -9,7 +9,7 @@
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/style.css?v=card_redesign_v1" />
-  <link rel="stylesheet" href="css/components.css?v=card_redesign_v1" />
+  <link rel="stylesheet" href="css/components.css?v=reviews_v1" />
   <link rel="stylesheet" href="css/animations.css?v=card_redesign_v1" />
   <link rel="stylesheet" href="css/cart.css" />
 </head>
@@ -153,7 +153,7 @@
           <div class="detail-rating-row">
             <div class="stars-group" style="color: var(--accent-gold);">★★★★★</div>
             <span class="rating-score-text" id="detailRatingScore">4.9 / 5.0</span>
-            <span class="reviews-count-link" id="detailReviewCount">(128 customer reviews)</span>
+            <a href="#customerReviewsSection" class="reviews-count-link" id="detailReviewCount" style="text-decoration: underline; cursor: pointer;">(128 customer reviews)</a>
           </div>
 
           <!-- Pricing Display -->
@@ -424,67 +424,161 @@
         </div>
       </div>
 
-      <!-- BELOW SECTION 2: Why Choose This Product? -->
-      <section class="detail-why-choose-section">
-        <div style="text-align: center; max-width: 640px; margin: 0 auto 40px;">
-          <span class="eyebrow">The Rajesh Framing Advantage</span>
-          <h2 class="section-title" style="margin-bottom: 8px;">Why Choose This Product?</h2>
-          <p class="section-subtitle">
-            Every product is custom made to order with industrial-grade durability and museum aesthetic standards.
-          </p>
+      <!-- BELOW SECTION 2: Customer Reviews & Ratings System -->
+      <section class="detail-reviews-section" id="customerReviewsSection">
+        <div class="reviews-section-header">
+          <div style="text-align: center; max-width: 680px; margin: 0 auto 36px;">
+            <span class="eyebrow">Real Customer Experiences</span>
+            <h2 class="section-title" style="margin-bottom: 8px;">Customer Reviews &amp; Ratings</h2>
+            <p class="section-subtitle">
+              Verified feedback from studio patrons across Dahej, Bharuch, and online orders.
+            </p>
+          </div>
         </div>
 
-        <div class="trust-grid">
-          <div class="trust-item" style="background: #FFFFFF; padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
-            <div class="trust-icon-box" style="background: var(--secondary-cream);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-              </svg>
-            </div>
-            <div>
-              <h4 class="trust-title">Handcrafted Precision</h4>
-              <p class="trust-desc">Precision-cut edges, flawless joinery, and meticulous hand-finishing on every piece.</p>
-            </div>
-          </div>
-
-          <div class="trust-item" style="background: #FFFFFF; padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
-            <div class="trust-icon-box" style="background: var(--secondary-cream);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- Rating Summary & Breakdown Card -->
+        <div class="reviews-summary-card">
+          <!-- Left: Big Rating Number & Stars -->
+          <div class="reviews-score-col">
+            <div class="score-number" id="reviewOverallScore">4.9</div>
+            <div class="stars-gold-lg" id="reviewStarsVisual">★★★★★</div>
+            <div class="score-subtext" id="reviewSummarySubtext">Based on 128 verified ratings</div>
+            <div class="verified-recommend-badge">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <polyline points="9 12 11 14 15 10"></polyline>
               </svg>
-            </div>
-            <div>
-              <h4 class="trust-title">Archival Longevity</h4>
-              <p class="trust-desc">Archival-grade pigments and UV-protective coatings that resist discoloration for decades.</p>
+              <span>99% Recommended</span>
             </div>
           </div>
 
-          <div class="trust-item" style="background: #FFFFFF; padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
-            <div class="trust-icon-box" style="background: var(--secondary-cream);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon>
-                <line x1="3" y1="22" x2="21" y2="22"></line>
-              </svg>
+          <!-- Middle: Breakdown Progress Bars -->
+          <div class="reviews-breakdown-col" id="reviewsBreakdownCol">
+            <div class="rating-bar-row" data-filter-stars="5">
+              <span class="bar-label">5 Stars</span>
+              <div class="bar-track"><div class="bar-fill" id="bar5Stars" style="width: 88%;"></div></div>
+              <span class="bar-count" id="count5Stars">88%</span>
             </div>
-            <div>
-              <h4 class="trust-title">Fully Customizable</h4>
-              <p class="trust-desc">Choose custom millimeter dimensions, frame finishes, hardware tones, and layouts.</p>
+            <div class="rating-bar-row" data-filter-stars="4">
+              <span class="bar-label">4 Stars</span>
+              <div class="bar-track"><div class="bar-fill" id="bar4Stars" style="width: 10%;"></div></div>
+              <span class="bar-count" id="count4Stars">10%</span>
+            </div>
+            <div class="rating-bar-row" data-filter-stars="3">
+              <span class="bar-label">3 Stars</span>
+              <div class="bar-track"><div class="bar-fill" id="bar3Stars" style="width: 2%;"></div></div>
+              <span class="bar-count" id="count3Stars">2%</span>
+            </div>
+            <div class="rating-bar-row" data-filter-stars="2">
+              <span class="bar-label">2 Stars</span>
+              <div class="bar-track"><div class="bar-fill" id="bar2Stars" style="width: 0%;"></div></div>
+              <span class="bar-count" id="count2Stars">0%</span>
+            </div>
+            <div class="rating-bar-row" data-filter-stars="1">
+              <span class="bar-label">1 Star</span>
+              <div class="bar-track"><div class="bar-fill" id="bar1Stars" style="width: 0%;"></div></div>
+              <span class="bar-count" id="count1Stars">0%</span>
             </div>
           </div>
 
-          <div class="trust-item" style="background: #FFFFFF; padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
-            <div class="trust-icon-box" style="background: var(--secondary-cream);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
+          <!-- Right: CTA to Write a Review -->
+          <div class="reviews-cta-col">
+            <h4 class="reviews-cta-title">Share Your Experience</h4>
+            <p class="reviews-cta-desc">Ordered this product from Rajesh Framing? Let other customers know about the quality, finish, and turnaround.</p>
+            <button type="button" class="btn btn-primary" id="btnToggleWriteReview">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
-            </div>
-            <div>
-              <h4 class="trust-title">Safe Delivery &amp; Speed</h4>
-              <p class="trust-desc">Reinforced shatter-proof packing with swift 24-48 hour turnaround options.</p>
-            </div>
+              <span>Write a Review</span>
+            </button>
           </div>
         </div>
+
+        <!-- Interactive "Write a Review" Form Container -->
+        <div class="write-review-card" id="writeReviewCard" style="display: none;">
+          <div class="write-review-header">
+            <h3 class="write-review-title">Write a Customer Review</h3>
+            <button type="button" class="btn-close-review" id="btnCloseReviewForm" aria-label="Close review form">&times;</button>
+          </div>
+
+          <form id="productReviewForm" class="review-form">
+            <!-- Star Rating Picker -->
+            <div class="form-group-rating">
+              <label class="review-field-label">Overall Rating <span class="required-star">*</span></label>
+              <div class="star-rating-picker" id="starPicker">
+                <button type="button" class="picker-star active" data-rating="1" aria-label="1 star">★</button>
+                <button type="button" class="picker-star active" data-rating="2" aria-label="2 stars">★</button>
+                <button type="button" class="picker-star active" data-rating="3" aria-label="3 stars">★</button>
+                <button type="button" class="picker-star active" data-rating="4" aria-label="4 stars">★</button>
+                <button type="button" class="picker-star active" data-rating="5" aria-label="5 stars">★</button>
+                <span class="picker-rating-text" id="pickerRatingText">5.0 - Excellent! Outstanding quality</span>
+              </div>
+              <input type="hidden" id="reviewRatingInput" value="5" />
+            </div>
+
+            <!-- Two Column Inputs -->
+            <div class="review-inputs-grid">
+              <div class="review-input-group">
+                <label for="reviewAuthor" class="review-field-label">Your Name <span class="required-star">*</span></label>
+                <input type="text" id="reviewAuthor" class="review-input" placeholder="e.g. Kavya Tandel" required />
+              </div>
+              <div class="review-input-group">
+                <label for="reviewCity" class="review-field-label">City / Location <span class="required-star">*</span></label>
+                <input type="text" id="reviewCity" class="review-input" placeholder="e.g. Bharuch, Dahej, Surat" required />
+              </div>
+            </div>
+
+            <div class="review-input-group">
+              <label for="reviewHeadline" class="review-field-label">Review Headline <span class="required-star">*</span></label>
+              <input type="text" id="reviewHeadline" class="review-input" placeholder="e.g. Stunning glass finish and crisp photo print!" required />
+            </div>
+
+            <div class="review-input-group">
+              <label for="reviewComment" class="review-field-label">Detailed Review <span class="required-star">*</span></label>
+              <textarea id="reviewComment" class="review-textarea" rows="4" placeholder="Tell us about the craftsmanship, materials, delivery, and overall satisfaction..." required></textarea>
+            </div>
+
+            <div class="review-form-footer">
+              <label class="review-verified-checkbox">
+                <input type="checkbox" id="reviewVerifiedCheckbox" checked />
+                <span>I confirm this is an authentic review of a purchased Rajesh Framing product.</span>
+              </label>
+
+              <div class="review-form-actions">
+                <button type="button" class="btn btn-outline btn-sm" id="btnCancelReview">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="btnSubmitReview">
+                  <span>Submit Review</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Filter & Sorting Toolbar -->
+        <div class="reviews-toolbar">
+          <div class="reviews-filter-pills" id="reviewsFilterPills">
+            <button type="button" class="filter-pill active" data-filter="all">All Reviews</button>
+            <button type="button" class="filter-pill" data-filter="5">5 Stars</button>
+            <button type="button" class="filter-pill" data-filter="4">4 Stars</button>
+            <button type="button" class="filter-pill" data-filter="verified">Verified Buyers</button>
+          </div>
+
+          <div class="reviews-sort-wrap">
+            <span class="sort-label">Sort by:</span>
+            <select id="reviewsSortSelect" class="reviews-sort-select">
+              <option value="recent">Most Recent</option>
+              <option value="highest">Highest Rating</option>
+              <option value="helpful">Most Helpful</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Reviews Dynamic List -->
+        <div class="reviews-list" id="reviewsListContainer">
+          <!-- Dynamically populated by JS -->
+        </div>
+
       </section>
 
       <!-- BELOW SECTION 3: Related Products (Using the new Luxury Product Card design) -->
@@ -604,6 +698,6 @@
   <script src="js/cart.js"></script>
   <script src="js/customer-auth.js"></script>
   <script src="js/quote-modal.js?v=card_redesign_v4"></script>
-  <script src="js/product-detail.js?v=card_redesign_v4"></script>
+  <script src="js/product-detail.js?v=reviews_v1"></script>
 </body>
 </html>

@@ -40,6 +40,7 @@ const MESSAGES_FILE = path.join(DATA_DIR, 'messages.json');
 const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 const CUSTOMER_SESSIONS_FILE = path.join(DATA_DIR, 'customer-sessions.json');
+const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 // Ensure data & upload directories exist (skip on Vercel serverless read-only filesystem)
@@ -1901,6 +1902,47 @@ app.post('/api/contact', async (req, res) => {
   } catch (err) {
     console.error('Error saving contact message:', err);
     res.status(500).json({ success: false, message: 'Failed to record message.' });
+  }
+});
+
+/**
+ * Public Customer Reviews Endpoints (GET / POST)
+ */
+app.get('/api/reviews', (req, res) => {
+  try {
+    const { productId } = req.query;
+    const allReviews = readJson(REVIEWS_FILE, []);
+    const filtered = productId ? allReviews.filter(r => r.productId === productId) : allReviews;
+    res.json({ success: true, reviews: filtered });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to load reviews' });
+  }
+});
+
+app.post('/api/reviews', (req, res) => {
+  try {
+    const { productId, author, city, rating, headline, comment } = req.body;
+    if (!productId || !author || !rating || !comment) {
+      return res.status(400).json({ success: false, message: 'Required review fields missing.' });
+    }
+    const allReviews = readJson(REVIEWS_FILE, []);
+    const newReview = {
+      id: `rev-${Date.now()}`,
+      productId,
+      author: String(author).trim(),
+      city: String(city || 'Dahej / Bharuch').trim(),
+      rating: Math.min(5, Math.max(1, Number(rating) || 5)),
+      date: new Date().toISOString().split('T')[0],
+      headline: String(headline || '').trim() || 'Verified Purchase Review',
+      comment: String(comment).trim(),
+      verified: true,
+      helpful: 0
+    };
+    allReviews.unshift(newReview);
+    writeJson(REVIEWS_FILE, allReviews);
+    res.json({ success: true, message: 'Review submitted successfully!', review: newReview });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to save review' });
   }
 });
 

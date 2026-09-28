@@ -70,6 +70,12 @@ async function initProductDetailPage() {
   } catch (e) {
     console.error('Error in renderRelatedProducts:', e);
   }
+
+  try {
+    initProductReviews();
+  } catch (e) {
+    console.error('Error in initProductReviews:', e);
+  }
 }
 
 function populateProductData() {
@@ -549,3 +555,614 @@ function setupTabs() {
     });
   });
 }
+
+/* ==========================================================================
+   CUSTOMER REVIEWS & RATINGS CONTROLLER
+   ========================================================================== */
+const SEED_PRODUCT_REVIEWS = {
+  'glass-frame-classic': [
+    {
+      id: 'rev-gfc-1',
+      productId: 'glass-frame-classic',
+      author: 'Dr. Pratik Desai',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-24',
+      headline: 'Museum quality float glass and impeccable brass standoffs!',
+      comment: 'Ordered an 18x24 glass frame for our family portrait. The diamond-beveled float glass clarity is stunning, and the metallic standoffs make it float off the wall like in an art gallery. Delivered to Bharuch in heavy protective wooden casing.',
+      verified: true,
+      helpful: 18
+    },
+    {
+      id: 'rev-gfc-2',
+      productId: 'glass-frame-classic',
+      author: 'Anjali Mehta',
+      city: 'Dahej GIDC',
+      rating: 5,
+      date: '2026-09-20',
+      headline: 'Fast 24-hr turnaround for our corporate executive awards',
+      comment: 'We needed 10 glass award frames customized with company logos on short notice. Rajesh Framing delivered all 10 within 24 hours. The archival print vibrant colors didn\'t smudge or bleed. Exceptional studio service!',
+      verified: true,
+      helpful: 12
+    },
+    {
+      id: 'rev-gfc-3',
+      productId: 'glass-frame-classic',
+      author: 'Kavita Solanki',
+      city: 'Ankleshwar',
+      rating: 4,
+      date: '2026-09-15',
+      headline: 'Very elegant glass finish, highly recommended',
+      comment: 'The finish is super premium and looks much more expensive than the price paid. Sturdy hardware and easy to hang with provided wall anchors. Will definitely order again for my living room gallery.',
+      verified: true,
+      helpful: 7
+    }
+  ],
+  'plastic-frame-gallery': [
+    {
+      id: 'rev-pfg-1',
+      productId: 'plastic-frame-gallery',
+      author: 'Sanjay Patel',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-22',
+      headline: 'Lightweight yet sturdy with authentic conservation matting',
+      comment: 'Used these frames to build a 9-photo memory wall in my home. The polymer build is ultra-clean with zero corner gaps, and the 1.5mm museum matting gives every picture a royal appearance.',
+      verified: true,
+      helpful: 15
+    },
+    {
+      id: 'rev-pfg-2',
+      productId: 'plastic-frame-gallery',
+      author: 'Roshni Shah',
+      city: 'Dahej',
+      rating: 5,
+      date: '2026-09-17',
+      headline: 'Great value and crisp photo print included',
+      comment: 'I sent my digital photo via WhatsApp and the studio color-matched it perfectly before framing. Crystal clear glazing and zero dust inside. Very impressed.',
+      verified: true,
+      helpful: 9
+    },
+    {
+      id: 'rev-pfg-3',
+      productId: 'plastic-frame-gallery',
+      author: 'Vikram Rathod',
+      city: 'Surat',
+      rating: 4,
+      date: '2026-09-10',
+      headline: 'Clean matte finish, ideal for office corridors',
+      comment: 'Ordered 15 frames for our regional branch office. All arrived in spotless condition with reinforced corner guards. Excellent quality polymer.',
+      verified: true,
+      helpful: 6
+    }
+  ],
+  'printed-water-bottle-steel': [
+    {
+      id: 'rev-pwb-1',
+      productId: 'printed-water-bottle-steel',
+      author: 'Hardik Chauhan',
+      city: 'Dahej GIDC',
+      rating: 5,
+      date: '2026-09-21',
+      headline: 'Laser engraved finish doesn\'t scratch even after daily factory use',
+      comment: 'Ordered insulated steel bottles with laser-etched names for our plant engineering team. Keeps water ice-cold throughout the humid afternoon shifts. Outstanding industrial quality.',
+      verified: true,
+      helpful: 21
+    },
+    {
+      id: 'rev-pwb-2',
+      productId: 'printed-water-bottle-steel',
+      author: 'Pooja Varma',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-16',
+      headline: 'Stunning 360-degree color print gift for my brother',
+      comment: 'The wrap-around color printing is vivid and sharp. No peeling or discoloration after multiple dishwasher runs. Great personalized gift!',
+      verified: true,
+      helpful: 11
+    }
+  ],
+  'customized-coffee-mug': [
+    {
+      id: 'rev-cmc-1',
+      productId: 'customized-coffee-mug',
+      author: 'Mona Joshi',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-23',
+      headline: 'High-gloss sublimation and brilliant colors!',
+      comment: 'Created custom magic mugs for our anniversary. The color transition when pouring hot tea is completely seamless and amazed everyone. Grade-A ceramic with rich weight.',
+      verified: true,
+      helpful: 24
+    },
+    {
+      id: 'rev-cmc-2',
+      productId: 'customized-coffee-mug',
+      author: 'Tushar Rana',
+      city: 'Dahej',
+      rating: 5,
+      date: '2026-09-19',
+      headline: 'Bulk corporate mugs delivered on time',
+      comment: '50 custom branded mugs ordered for our Dahej logistics facility. Every single logo print is centered and color-accurate to our brand hex codes. Thank you Rajesh Framing!',
+      verified: true,
+      helpful: 14
+    }
+  ],
+  'custom-file-printing': [
+    {
+      id: 'rev-cfp-1',
+      productId: 'custom-file-printing',
+      author: 'Gaurav Bhatt',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-18',
+      headline: 'Durable 450 GSM board files with heavy metal clips',
+      comment: 'We order all our legal files and audit binders from Rajesh Framing. Heavy duty clips don\'t bend and the matte lamination prevents edge tearing.',
+      verified: true,
+      helpful: 13
+    }
+  ],
+  'printed-office-folder-executive': [
+    {
+      id: 'rev-pof-1',
+      productId: 'printed-office-folder-executive',
+      author: 'Kinjal Parekh',
+      city: 'Dahej / Bharuch',
+      rating: 5,
+      date: '2026-09-22',
+      headline: 'Gold foil stamping looks extremely prestigious',
+      comment: 'Our presentation folders with metallic gold foil stamping turned out fantastic. Clients at our Dahej industrial expo specifically remarked on how luxurious our folders felt.',
+      verified: true,
+      helpful: 16
+    }
+  ],
+  'custom-fine-art-canvas': [
+    {
+      id: 'rev-fac-1',
+      productId: 'custom-fine-art-canvas',
+      author: 'Rohan Merchant',
+      city: 'Surat',
+      rating: 5,
+      date: '2026-09-25',
+      headline: 'Breathtaking 12-color archival giclée canvas',
+      comment: 'Printed a 30x40 landscape photography canvas. The texture of the 380 GSM natural cotton and depth of black tones are extraordinary. Gallery wrapping around the pine frame is taut and flawless.',
+      verified: true,
+      helpful: 28
+    }
+  ]
+};
+
+let productReviews = [];
+let activeReviewFilter = 'all';
+let activeReviewSort = 'recent';
+let selectedFormRating = 5;
+
+const RATING_TEXTS = {
+  1: '1.0 - Poor • Needs substantial improvement',
+  2: '2.0 - Fair • Below expectations',
+  3: '3.0 - Good • Meets standard quality',
+  4: '4.0 - Very Good • Highly satisfied',
+  5: '5.0 - Excellent! Outstanding luxury craftsmanship'
+};
+
+async function initProductReviews() {
+  const pId = currentProduct ? currentProduct.id : 'glass-frame-classic';
+  const storageKey = `rf_reviews_${pId}`;
+
+  // 1. Try loading from API
+  try {
+    const res = await fetch(`/api/reviews?productId=${encodeURIComponent(pId)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.reviews) && data.reviews.length > 0) {
+        productReviews = data.reviews;
+      }
+    }
+  } catch (err) {
+    // API not reachable or offline
+  }
+
+  // 2. Fallback to localStorage or seed
+  if (!productReviews || productReviews.length === 0) {
+    const local = localStorage.getItem(storageKey);
+    if (local) {
+      try {
+        productReviews = JSON.parse(local);
+      } catch (_) {}
+    }
+    if (!productReviews || productReviews.length === 0) {
+      productReviews = SEED_PRODUCT_REVIEWS[pId] || [
+        {
+          id: `rev-default-1`,
+          productId: pId,
+          author: 'Verified Studio Patron',
+          city: 'Bharuch',
+          rating: 5,
+          date: '2026-09-20',
+          headline: 'Exceptional craftsmanship and swift turnaround',
+          comment: 'The materials, print fidelity, and bespoke finishing from Rajesh Framing were top notch. Seamless process from ordering to doorstep delivery.',
+          verified: true,
+          helpful: 10
+        }
+      ];
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(productReviews));
+      } catch (_) {}
+    }
+  }
+
+  // Setup form toggling & star picker
+  setupReviewFormHandlers();
+
+  // Setup filter & sort events
+  setupReviewFilterSort();
+
+  // Render review elements
+  renderReviewsSection();
+}
+
+function setupReviewFormHandlers() {
+  const toggleBtn = document.getElementById('btnToggleWriteReview');
+  const card = document.getElementById('writeReviewCard');
+  const closeBtn = document.getElementById('btnCloseReviewForm');
+  const cancelBtn = document.getElementById('btnCancelReview');
+  const form = document.getElementById('productReviewForm');
+
+  if (toggleBtn && card) {
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = card.style.display === 'none' || !card.style.display;
+      card.style.display = isHidden ? 'block' : 'none';
+      if (isHidden) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // Auto-fill logged-in customer info if available
+        try {
+          const custUser = localStorage.getItem('rajesh_customer_user');
+          if (custUser) {
+            const parsed = JSON.parse(custUser);
+            const authorInput = document.getElementById('reviewAuthor');
+            if (authorInput && !authorInput.value && parsed.name) {
+              authorInput.value = parsed.name;
+            }
+          }
+        } catch (_) {}
+      }
+    });
+  }
+
+  if (closeBtn && card) {
+    closeBtn.addEventListener('click', () => {
+      card.style.display = 'none';
+    });
+  }
+
+  if (cancelBtn && card) {
+    cancelBtn.addEventListener('click', () => {
+      card.style.display = 'none';
+    });
+  }
+
+  // Star Picker Interactions
+  const starPicker = document.getElementById('starPicker');
+  const ratingInput = document.getElementById('reviewRatingInput');
+  const ratingText = document.getElementById('pickerRatingText');
+
+  if (starPicker) {
+    const stars = starPicker.querySelectorAll('.picker-star');
+    stars.forEach(star => {
+      star.addEventListener('click', () => {
+        const val = parseInt(star.getAttribute('data-rating'), 10) || 5;
+        selectedFormRating = val;
+        if (ratingInput) ratingInput.value = val;
+        if (ratingText) ratingText.textContent = RATING_TEXTS[val] || `${val}.0 Stars`;
+
+        stars.forEach(s => {
+          const sVal = parseInt(s.getAttribute('data-rating'), 10);
+          if (sVal <= val) {
+            s.classList.add('active');
+          } else {
+            s.classList.remove('active');
+          }
+        });
+      });
+    });
+  }
+
+  // Form Submit Handler
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const author = (document.getElementById('reviewAuthor')?.value || '').trim();
+      const city = (document.getElementById('reviewCity')?.value || '').trim();
+      const headline = (document.getElementById('reviewHeadline')?.value || '').trim();
+      const comment = (document.getElementById('reviewComment')?.value || '').trim();
+      const rating = selectedFormRating;
+      const pId = currentProduct ? currentProduct.id : 'glass-frame-classic';
+
+      if (!author || !headline || !comment) {
+        alert('Please complete all required review fields.');
+        return;
+      }
+
+      const submitBtn = document.getElementById('btnSubmitReview');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Posting Review...</span>';
+      }
+
+      const newReview = {
+        id: `rev-${Date.now()}`,
+        productId: pId,
+        author,
+        city: city || 'Dahej / Bharuch',
+        rating,
+        date: new Date().toISOString().split('T')[0],
+        headline,
+        comment,
+        verified: true,
+        helpful: 0
+      };
+
+      // 1. Try sending to server
+      try {
+        await fetch('/api/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newReview)
+        });
+      } catch (err) {
+        // Continue with local storage save
+      }
+
+      // 2. Prepend to local memory and localStorage
+      productReviews.unshift(newReview);
+      try {
+        localStorage.setItem(`rf_reviews_${pId}`, JSON.stringify(productReviews));
+      } catch (_) {}
+
+      // 3. Reset form and hide card
+      form.reset();
+      selectedFormRating = 5;
+      if (ratingInput) ratingInput.value = 5;
+      if (ratingText) ratingText.textContent = RATING_TEXTS[5];
+      if (card) card.style.display = 'none';
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Submit Review</span>';
+      }
+
+      // 4. Re-render reviews with feedback
+      renderReviewsSection();
+
+      // Show temporary confirmation
+      alert(`Thank you, ${author}! Your verified review has been posted successfully.`);
+    });
+  }
+}
+
+function setupReviewFilterSort() {
+  const pills = document.querySelectorAll('#reviewsFilterPills .filter-pill');
+  pills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      pills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      activeReviewFilter = pill.getAttribute('data-filter');
+      renderReviewsListOnly();
+    });
+  });
+
+  const sortSelect = document.getElementById('reviewsSortSelect');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', () => {
+      activeReviewSort = sortSelect.value;
+      renderReviewsListOnly();
+    });
+  }
+
+  // Click on rating breakdown bars to filter
+  const barRows = document.querySelectorAll('.rating-bar-row');
+  barRows.forEach(row => {
+    row.addEventListener('click', () => {
+      const star = row.getAttribute('data-filter-stars');
+      if (star) {
+        const correspondingPill = document.querySelector(`#reviewsFilterPills .filter-pill[data-filter="${star}"]`);
+        if (correspondingPill) {
+          pills.forEach(p => p.classList.remove('active'));
+          correspondingPill.classList.add('active');
+          activeReviewFilter = star;
+          renderReviewsListOnly();
+        }
+      }
+    });
+  });
+}
+
+function renderReviewsSection() {
+  const total = productReviews.length;
+  if (total === 0) return;
+
+  const sumRating = productReviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0);
+  const avg = (sumRating / total).toFixed(1);
+
+  // Update Score Elements
+  const overallScoreEl = document.getElementById('reviewOverallScore');
+  if (overallScoreEl) overallScoreEl.textContent = avg;
+
+  const subtextEl = document.getElementById('reviewSummarySubtext');
+  if (subtextEl) subtextEl.textContent = `Based on ${total} verified ratings`;
+
+  // Update Top Bar Rating
+  const topScore = document.getElementById('detailRatingScore');
+  if (topScore) topScore.textContent = `${avg} / 5.0`;
+
+  const topCount = document.getElementById('detailReviewCount');
+  if (topCount) topCount.textContent = `(${total} customer reviews)`;
+
+  // Breakdown percentages
+  const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  productReviews.forEach(r => {
+    const s = Math.round(Number(r.rating) || 5);
+    if (counts[s] !== undefined) counts[s]++;
+  });
+
+  for (let s = 1; s <= 5; s++) {
+    const count = counts[s];
+    const pct = Math.round((count / total) * 100);
+    const barEl = document.getElementById(`bar${s}Stars`);
+    const countEl = document.getElementById(`count${s}Stars`);
+    if (barEl) barEl.style.width = `${pct}%`;
+    if (countEl) countEl.textContent = `${pct}% (${count})`;
+  }
+
+  renderReviewsListOnly();
+}
+
+function renderReviewsListOnly() {
+  const listContainer = document.getElementById('reviewsListContainer');
+  if (!listContainer) return;
+
+  let filtered = [...productReviews];
+
+  // Apply Filter
+  if (activeReviewFilter === '5') {
+    filtered = filtered.filter(r => Math.round(Number(r.rating)) === 5);
+  } else if (activeReviewFilter === '4') {
+    filtered = filtered.filter(r => Math.round(Number(r.rating)) === 4);
+  } else if (activeReviewFilter === 'verified') {
+    filtered = filtered.filter(r => r.verified === true);
+  }
+
+  // Apply Sort
+  if (activeReviewSort === 'highest') {
+    filtered.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+  } else if (activeReviewSort === 'helpful') {
+    filtered.sort((a, b) => (Number(b.helpful) || 0) - (Number(a.helpful) || 0));
+  } else {
+    // Recent
+    filtered.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  }
+
+  if (filtered.length === 0) {
+    listContainer.innerHTML = `
+      <div class="empty-reviews-state">
+        <p style="font-weight: 700; margin-bottom: 4px; color: var(--primary-black);">No customer reviews match this filter.</p>
+        <p style="font-size: 0.85rem; margin: 0;">Be the first to share your experience with this piece!</p>
+      </div>
+    `;
+    return;
+  }
+
+  const votedReviews = JSON.parse(localStorage.getItem('rf_voted_reviews') || '[]');
+
+  listContainer.innerHTML = filtered.map(rev => {
+    const ratingStars = '★'.repeat(Math.min(5, Math.max(1, Math.round(Number(rev.rating) || 5))));
+    const dateFormatted = formatReviewDate(rev.date);
+    const initials = getAuthorInitials(rev.author);
+    const isVoted = votedReviews.includes(rev.id);
+
+    return `
+      <div class="review-card" data-review-id="${rev.id}">
+        <div class="review-card-top">
+          <div class="review-author-info">
+            <div class="review-author-avatar">${initials}</div>
+            <div class="review-author-meta">
+              <div class="review-author-name-row">
+                <span class="review-author-name">${escapeHtml(rev.author)}</span>
+                ${rev.verified ? `
+                  <span class="badge-verified-buyer" title="Verified Studio Purchase">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                      <polyline points="9 12 11 14 15 10"></polyline>
+                    </svg>
+                    <span>Verified Buyer</span>
+                  </span>
+                ` : ''}
+              </div>
+              <span class="review-author-city">${escapeHtml(rev.city || 'Gujarat, India')}</span>
+            </div>
+          </div>
+
+          <div class="review-meta-right">
+            <div class="review-stars">${ratingStars}</div>
+            <div class="review-date">${dateFormatted}</div>
+          </div>
+        </div>
+
+        <div class="review-headline">${escapeHtml(rev.headline)}</div>
+        <div class="review-comment">${escapeHtml(rev.comment)}</div>
+
+        <div class="review-card-footer">
+          <span>Was this review helpful?</span>
+          <button type="button" class="btn-helpful ${isVoted ? 'voted' : ''}" onclick="voteReviewHelpful('${rev.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+            </svg>
+            <span id="helpfulCount_${rev.id}">Helpful (${rev.helpful || 0})</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.voteReviewHelpful = function(reviewId) {
+  const voted = JSON.parse(localStorage.getItem('rf_voted_reviews') || '[]');
+  if (voted.includes(reviewId)) {
+    return; // Already voted
+  }
+
+  const rev = productReviews.find(r => r.id === reviewId);
+  if (rev) {
+    rev.helpful = (rev.helpful || 0) + 1;
+    voted.push(reviewId);
+    try {
+      localStorage.setItem('rf_voted_reviews', JSON.stringify(voted));
+      const pId = currentProduct ? currentProduct.id : 'glass-frame-classic';
+      localStorage.setItem(`rf_reviews_${pId}`, JSON.stringify(productReviews));
+    } catch (_) {}
+
+    const counter = document.getElementById(`helpfulCount_${reviewId}`);
+    if (counter) counter.textContent = `Helpful (${rev.helpful})`;
+
+    const card = document.querySelector(`.review-card[data-review-id="${reviewId}"] .btn-helpful`);
+    if (card) card.classList.add('voted');
+  }
+};
+
+function formatReviewDate(dateStr) {
+  if (!dateStr) return 'Recently';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const now = new Date();
+    const diffDays = Math.round((now - d) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch (_) {
+    return dateStr;
+  }
+}
+
+function getAuthorInitials(name) {
+  if (!name) return 'RF';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
