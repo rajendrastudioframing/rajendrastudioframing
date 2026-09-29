@@ -27,9 +27,10 @@ const PRODUCTS_DATA = [
       { name: "Custom Size", price: 2200 }
     ],
     finishes: [
-      { id: "gold-standoffs", name: "Warm Gold Standoffs", color: "#C99A3D" },
-      { id: "silver-standoffs", name: "Brushed Silver Standoffs", color: "#CBD5E1" },
-      { id: "black-standoffs", name: "Matte Black Standoffs", color: "#111111" }
+      { id: "gold-standoffs", name: "Warm Gold Standoffs", color: "#C99A3D", image: "assets/images/glass_frame.jpg" },
+      { id: "royal-blue-glass", name: "Royal Sapphire Blue Accent", color: "#1E3A8A", image: "assets/images/glass_frame_blue.jpg" },
+      { id: "silver-standoffs", name: "Brushed Silver Standoffs", color: "#CBD5E1", image: "assets/images/glass_frame.jpg" },
+      { id: "black-standoffs", name: "Matte Black Standoffs", color: "#111111", image: "assets/images/glass_frame.jpg" }
     ],
     features: [
       "Diamond-polished beveled edges for safe, lustrous finish",
@@ -62,10 +63,11 @@ const PRODUCTS_DATA = [
       { name: "20\" × 30\"", price: 2100 }
     ],
     finishes: [
-      { id: "matte-black", name: "Studio Matte Black", color: "#111111" },
-      { id: "pure-white", name: "Gallery Pure White", color: "#F8FAFC" },
-      { id: "warm-walnut", name: "Warm Walnut Grain", color: "#5C3A21" },
-      { id: "champagne-gold", name: "Champagne Gold", color: "#C99A3D" }
+      { id: "matte-black", name: "Studio Matte Black", color: "#111111", image: "assets/images/plastic_frame_black.jpg" },
+      { id: "royal-blue", name: "Royal Sapphire Blue", color: "#1E3A8A", image: "assets/images/plastic_frame_blue.jpg" },
+      { id: "pure-white", name: "Gallery Pure White", color: "#F8FAFC", image: "assets/images/plastic_frame_white.jpg" },
+      { id: "warm-walnut", name: "Warm Walnut Grain", color: "#5C3A21", image: "assets/images/plastic_frame_walnut.jpg" },
+      { id: "champagne-gold", name: "Champagne Gold", color: "#C99A3D", image: "assets/images/plastic_frame_gold.jpg" }
     ],
     features: [
       "100% moisture-proof, termite-resistant, and impact safe",
@@ -96,9 +98,9 @@ const PRODUCTS_DATA = [
       { name: "1000 ml Hydrate", price: 799 }
     ],
     finishes: [
-      { id: "matte-black-bottle", name: "Matte Stealth Black", color: "#111111" },
-      { id: "brushed-silver-bottle", name: "Brushed Metallic Silver", color: "#94A3B8" },
-      { id: "royal-blue-bottle", name: "Midnight Navy Blue", color: "#1E3A8A" }
+      { id: "matte-black-bottle", name: "Matte Stealth Black", color: "#111111", image: "assets/images/printed_bottle.jpg" },
+      { id: "royal-blue-bottle", name: "Midnight Navy Blue", color: "#1E3A8A", image: "assets/images/printed_bottle_blue.jpg" },
+      { id: "brushed-silver-bottle", name: "Brushed Metallic Silver", color: "#94A3B8", image: "assets/images/printed_bottle.jpg" }
     ],
     features: [
       "Keeps beverages chilled for 24 hours, steaming hot for 12 hours",
@@ -129,9 +131,9 @@ const PRODUCTS_DATA = [
       { name: "Magic Color Changing (325 ml)", price: 399 }
     ],
     finishes: [
-      { id: "classic-white-mug", name: "Glossy Alpine White", color: "#FFFFFF" },
-      { id: "magic-black-mug", name: "Heat-Reactive Stealth Black", color: "#111111" },
-      { id: "navy-gold-mug", name: "Deep Navy with Gold Trim", color: "#1E3A8A" }
+      { id: "classic-white-mug", name: "Glossy Alpine White", color: "#FFFFFF", image: "assets/images/custom_mug.jpg" },
+      { id: "magic-black-mug", name: "Heat-Reactive Stealth Black", color: "#111111", image: "assets/images/custom_mug_black.jpg" },
+      { id: "navy-gold-mug", name: "Deep Navy with Gold Trim", color: "#1E3A8A", image: "assets/images/custom_mug.jpg" }
     ],
     features: [
       "100% Dishwasher and microwave safe high-density ceramic",
@@ -162,9 +164,9 @@ const PRODUCTS_DATA = [
       { name: "Hospital Case File (Multi-Flap)", price: 190 }
     ],
     finishes: [
-      { id: "navy-file", name: "Corporate Navy Blue", color: "#1E3A8A" },
-      { id: "forest-file", name: "Forest Green", color: "#14532D" },
-      { id: "black-file", name: "Executive Charcoal Black", color: "#111111" }
+      { id: "navy-file", name: "Corporate Navy Blue", color: "#1E3A8A", image: "assets/images/printed_file.jpg" },
+      { id: "forest-file", name: "Forest Green", color: "#14532D", image: "assets/images/printed_file.jpg" },
+      { id: "black-file", name: "Executive Charcoal Black", color: "#111111", image: "assets/images/printed_file.jpg" }
     ],
     features: [
       "Heavy-duty metal lever arch or spring clip mechanism",
@@ -195,9 +197,9 @@ const PRODUCTS_DATA = [
       { name: "Luxury Padded Certificate Folio", price: 490 }
     ],
     finishes: [
-      { id: "gold-foil-navy", name: "Navy Blue with Gold Foil", color: "#1E3A8A" },
-      { id: "forest-gold", name: "Forest Green with Gold Foil", color: "#14532D" },
-      { id: "charcoal-gold", name: "Charcoal with Gold Foil", color: "#111111" }
+      { id: "gold-foil-navy", name: "Navy Blue with Gold Foil", color: "#1E3A8A", image: "assets/images/printed_folder.jpg" },
+      { id: "forest-gold", name: "Forest Green with Gold Foil", color: "#14532D", image: "assets/images/printed_folder.jpg" },
+      { id: "charcoal-gold", name: "Charcoal with Gold Foil", color: "#111111", image: "assets/images/printed_folder.jpg" }
     ],
     features: [
       "Precision die-cut pockets hold 25-50 sheets securely",
@@ -229,9 +231,9 @@ const PRODUCTS_DATA = [
       { name: "24\" × 36\" Grand Canvas", price: 3400 }
     ],
     finishes: [
-      { id: "gallery-wrap-1-5", name: "1.5\" Deep Gallery Wrap", color: "#78716C" },
-      { id: "floating-black", name: "Floating Black Shadowbox", color: "#111111" },
-      { id: "floating-gold", name: "Floating Warm Gold Shadowbox", color: "#C99A3D" }
+      { id: "gallery-wrap-1-5", name: "1.5\" Deep Gallery Wrap", color: "#78716C", image: "assets/images/custom_canvas.jpg" },
+      { id: "floating-black", name: "Floating Black Shadowbox", color: "#111111", image: "assets/images/custom_canvas.jpg" },
+      { id: "floating-gold", name: "Floating Warm Gold Shadowbox", color: "#C99A3D", image: "assets/images/custom_canvas.jpg" }
     ],
     features: [
       "100% pure cotton canvas sealed with UV protective archival varnish",

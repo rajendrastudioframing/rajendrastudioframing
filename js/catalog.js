@@ -136,6 +136,24 @@ function renderCatalog() {
   gridContainer.innerHTML = filtered.map(product => {
     const priceFormatted = product.price ? `₹${product.price}` : product.priceDisplay;
     const wishActive = typeof isInWishlist === 'function' && isInWishlist(product.id);
+    const initialCardImg = (product.finishes && product.finishes.length > 0 && product.finishes[0].image) ? product.finishes[0].image : product.image;
+
+    const finishesHtml = (product.finishes && product.finishes.length > 0) ? `
+      <div class="card-color-swatches" onclick="event.stopPropagation();" aria-label="Available Colors">
+        ${product.finishes.map((f, i) => `
+          <button type="button" 
+            class="card-swatch-dot ${i === 0 ? 'active' : ''}" 
+            style="background-color: ${f.color};" 
+            title="${f.name}"
+            aria-label="${f.name}"
+            data-product-id="${product.id}"
+            data-finish-img="${f.image || product.image}"
+            onclick="changeCatalogCardImage('${product.id}', '${f.image || product.image}', this, event);">
+          </button>
+        `).join('')}
+      </div>
+    ` : '';
+
     return `
     <article class="product-card" data-id="${product.id}" onclick="window.location.href='product-detail.html?id=${product.id}'">
       <div class="product-card-top">
@@ -148,7 +166,7 @@ function renderCatalog() {
       </div>
 
       <div class="product-image-box">
-        <img src="${product.image}" alt="${product.name}" class="product-image" loading="lazy" />
+        <img src="${initialCardImg}" alt="${product.name}" class="product-image" loading="lazy" />
         <div class="product-image-overlay"></div>
       </div>
 
@@ -159,6 +177,7 @@ function renderCatalog() {
           </h3>
           <span class="capsule-price">${priceFormatted}</span>
         </div>
+        ${finishesHtml}
         <div class="capsule-bottom-row">
           <div class="capsule-store-info">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -180,6 +199,27 @@ function renderCatalog() {
     </article>
   `}).join('');
 }
+
+window.changeCatalogCardImage = function(productId, newImgSrc, swatchEl, event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  const card = document.querySelector(`.product-card[data-id="${productId}"]`);
+  if (!card) return;
+  const img = card.querySelector('.product-image');
+  if (img && newImgSrc) {
+    img.style.transition = 'opacity 0.2s ease-in-out';
+    img.style.opacity = '0.35';
+    setTimeout(() => {
+      img.src = newImgSrc;
+      img.style.opacity = '1';
+    }, 120);
+  }
+  const dots = card.querySelectorAll('.card-swatch-dot');
+  dots.forEach(d => d.classList.remove('active'));
+  if (swatchEl) swatchEl.classList.add('active');
+};
 
 function resetFilters() {
   currentCategory = 'all';

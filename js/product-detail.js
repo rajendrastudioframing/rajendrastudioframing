@@ -116,18 +116,19 @@ function populateProductData() {
   const reviewCount = document.getElementById('detailReviewCount');
   if (reviewCount) reviewCount.textContent = `(${p.reviewsCount} customer ratings)`;
 
-  // Main Image
+  // Main Image & Active Variant Image
+  const initialImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : p.image;
   const mainImg = document.getElementById('detailMainImg');
   if (mainImg) {
-    mainImg.src = p.image;
-    mainImg.alt = p.name;
+    mainImg.src = initialImg;
+    mainImg.alt = `${p.name} - ${selectedFinish ? selectedFinish.name : ''}`;
   }
 
   // Thumbnails
   const thumbsContainer = document.getElementById('detailThumbsContainer');
   if (thumbsContainer) {
     const thumbs = [
-      p.image,
+      initialImg,
       'assets/images/workshop.jpg',
       'assets/images/hero_showcase.jpg'
     ];
@@ -142,7 +143,17 @@ function populateProductData() {
       thumb.addEventListener('click', () => {
         thumbsContainer.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
         thumb.classList.add('active');
-        if (mainImg) mainImg.src = thumb.getAttribute('data-src');
+        if (mainImg) {
+          const targetThumbSrc = thumb.getAttribute('data-src');
+          if (mainImg.getAttribute('src') !== targetThumbSrc) {
+            mainImg.style.transition = 'opacity 0.2s ease-in-out';
+            mainImg.style.opacity = '0.35';
+            setTimeout(() => {
+              mainImg.src = targetThumbSrc;
+              mainImg.style.opacity = '1';
+            }, 120);
+          }
+        }
       });
     });
   }
@@ -222,30 +233,98 @@ function renderFinishOptions() {
   const container = document.getElementById('detailFinishesContainer');
   if (!container || !currentProduct.finishes) return;
 
-  container.innerHTML = currentProduct.finishes.map((f, idx) => `
-    <button type="button" class="color-swatch-item ${idx === 0 ? 'active' : ''}" 
-      style="background-color: ${f.color};" 
-      data-finish-id="${f.id}" 
-      data-finish-name="${f.name}" 
-      title="${f.name}">
-    </button>
-  `).join('');
+  container.innerHTML = currentProduct.finishes.map((f, idx) => {
+    const isActive = (selectedFinish && selectedFinish.id === f.id) || (!selectedFinish && idx === 0);
+    return `
+      <button type="button" class="color-swatch-item ${isActive ? 'active' : ''}" 
+        style="background-color: ${f.color};" 
+        data-finish-id="${f.id}" 
+        data-finish-name="${f.name}" 
+        data-finish-img="${f.image || currentProduct.image}"
+        data-finish-color="${f.color}"
+        title="${f.name}"
+        aria-label="Select ${f.name} color option">
+      </button>
+    `;
+  }).join('');
 
   container.querySelectorAll('.color-swatch-item').forEach(swatch => {
     swatch.addEventListener('click', () => {
       container.querySelectorAll('.color-swatch-item').forEach(s => s.classList.remove('active'));
       swatch.classList.add('active');
 
+      const finishId = swatch.getAttribute('data-finish-id');
       const finishName = swatch.getAttribute('data-finish-name');
-      selectedFinish = { id: swatch.getAttribute('data-finish-id'), name: finishName };
+      const finishImg = swatch.getAttribute('data-finish-img');
+      const finishColor = swatch.getAttribute('data-finish-color');
+
+      const foundFinish = currentProduct.finishes.find(item => item.id === finishId);
+      selectedFinish = foundFinish || { id: finishId, name: finishName, image: finishImg, color: finishColor };
 
       const selectedDisplay = document.getElementById('selectedFinishLabel');
       if (selectedDisplay) selectedDisplay.textContent = finishName;
+
+      // Dynamically update product preview image & gallery thumbnail
+      updateDetailImageForFinish(selectedFinish);
     });
   });
 
   const selectedDisplay = document.getElementById('selectedFinishLabel');
   if (selectedDisplay && selectedFinish) selectedDisplay.textContent = selectedFinish.name;
+}
+
+/**
+ * Dynamically switches product image when color finish changes
+ */
+function updateDetailImageForFinish(finish) {
+  if (!finish) return;
+  const targetSrc = finish.image || currentProduct.image;
+  if (!targetSrc) return;
+
+  const mainImg = document.getElementById('detailMainImg');
+  const mainImgBox = document.querySelector('.detail-main-img-box');
+
+  if (mainImg) {
+    mainImg.style.transition = 'opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+    mainImg.style.opacity = '0.25';
+    mainImg.style.transform = 'scale(0.98)';
+
+    const imgLoader = new Image();
+    imgLoader.onload = () => {
+      mainImg.src = targetSrc;
+      mainImg.alt = `${currentProduct.name} - ${finish.name}`;
+      mainImg.style.opacity = '1';
+      mainImg.style.transform = 'scale(1)';
+    };
+    imgLoader.onerror = () => {
+      mainImg.src = targetSrc;
+      mainImg.style.opacity = '1';
+      mainImg.style.transform = 'scale(1)';
+    };
+    imgLoader.src = targetSrc;
+  }
+
+  // Accent glow feedback on frame preview box
+  if (mainImgBox && finish.color) {
+    mainImgBox.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
+    mainImgBox.style.borderColor = finish.color;
+    mainImgBox.style.boxShadow = `0 8px 24px ${finish.color}35`;
+  }
+
+  // Update primary thumbnail in strip
+  const thumbsContainer = document.getElementById('detailThumbsContainer');
+  if (thumbsContainer) {
+    const thumbs = thumbsContainer.querySelectorAll('.detail-thumb');
+    if (thumbs.length > 0) {
+      const firstThumb = thumbs[0];
+      firstThumb.setAttribute('data-src', targetSrc);
+      const thumbImg = firstThumb.querySelector('img');
+      if (thumbImg) thumbImg.src = targetSrc;
+
+      thumbs.forEach(t => t.classList.remove('active'));
+      firstThumb.classList.add('active');
+    }
+  }
 }
 
 function updatePriceDisplay() {
@@ -289,13 +368,14 @@ function setupOptionInteractions() {
       const sizeStr = selectedSize ? selectedSize.name : 'Standard';
       const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
       const activePrice = selectedSize ? selectedSize.price : currentProduct.price;
+      const activeImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : currentProduct.image;
 
       if (window.addToCart) {
         window.addToCart({
           id: currentProduct.id,
           name: currentProduct.name,
           price: activePrice,
-          image: currentProduct.image,
+          image: activeImg,
           category: currentProduct.category,
           size: sizeStr,
           finish: finishStr,
@@ -313,13 +393,14 @@ function setupOptionInteractions() {
       const sizeStr = selectedSize ? selectedSize.name : 'Standard';
       const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
       const activePrice = selectedSize ? selectedSize.price : currentProduct.price;
+      const activeImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : currentProduct.image;
 
       if (window.buyNow) {
         window.buyNow({
           id: currentProduct.id,
           name: currentProduct.name,
           price: activePrice,
-          image: currentProduct.image,
+          image: activeImg,
           category: currentProduct.category,
           size: sizeStr,
           finish: finishStr,
@@ -327,7 +408,7 @@ function setupOptionInteractions() {
           leadTime: currentProduct.leadTime || '24 - 48 Hours'
         }, currentQuantity);
       } else {
-        window.location.href = `checkout.html?buyNow=${currentProduct.id}&qty=${currentQuantity}&size=${encodeURIComponent(sizeStr)}&finish=${encodeURIComponent(finishStr)}`;
+        window.location.href = `checkout.html?buyNow=${currentProduct.id}&qty=${currentQuantity}&size=${encodeURIComponent(sizeStr)}&finish=${encodeURIComponent(finishStr)}&image=${encodeURIComponent(activeImg)}`;
       }
     });
   }

@@ -359,6 +359,38 @@
   margin: 0 !important;
 }
 
+/* Capsule Card Color Swatches */
+.card-color-swatches {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 2px 0 !important;
+  z-index: 3 !important;
+}
+
+.card-swatch-dot {
+  width: 15px !important;
+  height: 15px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+  cursor: pointer !important;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, border-color 0.18s ease !important;
+  padding: 0 !important;
+  outline: none !important;
+  flex-shrink: 0 !important;
+}
+
+.card-swatch-dot:hover {
+  transform: scale(1.28) !important;
+}
+
+.card-swatch-dot.active {
+  transform: scale(1.28) !important;
+  border-color: #D4AF37 !important;
+  box-shadow: 0 0 0 2px #D4AF37 !important;
+}
+
 /* Capsule Bottom Row: Store info + Add/Quote Button */
 .capsule-bottom-row,
 .product-card-footer {
