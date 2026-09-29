@@ -43,6 +43,70 @@ document.addEventListener('DOMContentLoaded', () => {
       trackOrder(orderId);
     });
   }
+
+  // Setup Customer Edit Order Form
+  const editOrderForm = document.getElementById('customerEditOrderForm');
+  if (editOrderForm) {
+    editOrderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById('customerEditSaveBtn');
+      const origText = saveBtn ? saveBtn.innerHTML : 'Save Changes';
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = 'Saving...';
+      }
+
+      const orderId = (document.getElementById('customerEditOrderId')?.value || '').trim();
+      const payload = {
+        name: document.getElementById('customerEditName')?.value.trim(),
+        phone: document.getElementById('customerEditPhone')?.value.trim(),
+        email: document.getElementById('customerEditEmail')?.value.trim(),
+        address: document.getElementById('customerEditAddress')?.value.trim(),
+        city: document.getElementById('customerEditCity')?.value.trim(),
+        pincode: document.getElementById('customerEditPincode')?.value.trim(),
+        notes: document.getElementById('customerEditNotes')?.value.trim()
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(orderId)}/customer-update`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('✅ Your order details have been updated successfully!');
+          closeCustomerEditOrderModal();
+          trackOrder(orderId);
+        } else {
+          alert(data.message || 'Could not update order details. Please contact studio on WhatsApp.');
+        }
+      } catch (err) {
+        console.error('Customer update order error:', err);
+        alert('Network connection error. Please try again.');
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = origText;
+        }
+      }
+    });
+  }
+
+  // Close modal when clicking on backdrop
+  document.addEventListener('click', (e) => {
+    const modal = document.getElementById('customerEditOrderModal');
+    if (modal && e.target === modal) {
+      closeCustomerEditOrderModal();
+    }
+  });
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeCustomerEditOrderModal();
+    }
+  });
 });
 
 async function trackOrder(orderId) {
@@ -52,9 +116,14 @@ async function trackOrder(orderId) {
   // Normalize order ID
   const cleanId = orderId.trim().replace(/^#/, '');
 
+  // Check if edit action requested in URL
+  const currentParams = new URLSearchParams(window.location.search);
+  const actionParam = currentParams.get('action');
+  const actionQuery = actionParam ? `&action=${encodeURIComponent(actionParam)}` : '';
+
   // Update browser URL without reloading so customer can bookmark/share
-  const newUrl = `${window.location.pathname}?id=${encodeURIComponent(cleanId)}`;
-  window.history.replaceState({ orderId: cleanId }, '', newUrl);
+  const newUrl = `${window.location.pathname}?id=${encodeURIComponent(cleanId)}${actionQuery}`;
+  window.history.replaceState({ orderId: cleanId, action: actionParam }, '', newUrl);
 
   // Show Loading Spinner
   container.innerHTML = `
@@ -71,6 +140,11 @@ async function trackOrder(orderId) {
 
     if (data.success && data.order) {
       renderTrackingResult(data.order, container);
+      if (actionParam === 'edit' && data.order.canEdit) {
+        setTimeout(() => {
+          openCustomerEditOrderModal();
+        }, 150);
+      }
     } else {
       renderNotFound(cleanId, data.message, container);
     }
@@ -81,6 +155,7 @@ async function trackOrder(orderId) {
 }
 
 function renderTrackingResult(order, container) {
+  window.currentTrackedOrder = order;
   const isCancelled = order.status === 'Cancelled' || order.isCancelled;
   const statusClass = (order.status || 'in-progress').toLowerCase().replace(/\s+/g, '-');
 
@@ -140,7 +215,12 @@ function renderTrackingResult(order, container) {
           <span class="track-order-id">#${escapeHtml(order.orderId)}</span>
           <span class="track-order-date">Placed on ${dateFormatted}</span>
         </div>
-        <div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          ${order.canEdit ? `
+            <button type="button" class="btn btn-gold btn-sm" onclick="openCustomerEditOrderModal()" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.82rem; font-weight: 700;">
+              ✏️ Edit Order
+            </button>
+          ` : ''}
           <span class="track-status-badge ${statusClass}">
             <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:currentColor; margin-right:4px;"></span>
             ${escapeHtml(order.status)}
@@ -182,6 +262,13 @@ function renderTrackingResult(order, container) {
             <strong>Delivery Address:</strong><br>
             <span style="color: #4A4843;">${escapeHtml(cust.address || 'Studio Pickup')}, ${escapeHtml(cust.city || 'Dahej')} ${escapeHtml(cust.pincode ? '(' + cust.pincode + ')' : '')}</span>
           </div>
+          ${order.canEdit ? `
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #E5E0D8;">
+              <button type="button" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 4px 10px;" onclick="openCustomerEditOrderModal()">
+                ✏️ Edit Address / Contact Info
+              </button>
+            </div>
+          ` : ''}
         </div>
 
         <div class="track-info-box">
@@ -237,6 +324,11 @@ function renderTrackingResult(order, container) {
         </div>
 
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          ${order.canEdit ? `
+            <button type="button" class="btn btn-gold btn-sm" onclick="openCustomerEditOrderModal()" style="font-weight: 700;">
+              ✏️ Edit Order Details
+            </button>
+          ` : ''}
           <button type="button" class="btn btn-outline btn-sm" onclick="copyTrackingUrl('${escapeHtml(order.orderId)}')">
             🔗 Copy Tracking Link
           </button>
@@ -274,6 +366,53 @@ function renderNotFound(orderId, message, container) {
     </div>
   `;
 }
+
+window.openCustomerEditOrderModal = () => {
+  const order = window.currentTrackedOrder;
+  if (!order) return;
+
+  const modal = document.getElementById('customerEditOrderModal');
+  if (!modal) return;
+
+  const modalIdSpan = document.getElementById('customerEditOrderModalId');
+  if (modalIdSpan) modalIdSpan.textContent = '#' + (order.orderId || '');
+
+  const idInput = document.getElementById('customerEditOrderId');
+  if (idInput) idInput.value = order.orderId || '';
+
+  const cust = order.customer || {};
+  const nameInput = document.getElementById('customerEditName');
+  if (nameInput) nameInput.value = cust.name || '';
+
+  const phoneInput = document.getElementById('customerEditPhone');
+  if (phoneInput) phoneInput.value = cust.phone || '';
+
+  const emailInput = document.getElementById('customerEditEmail');
+  if (emailInput) emailInput.value = cust.email || '';
+
+  const addressInput = document.getElementById('customerEditAddress');
+  if (addressInput) addressInput.value = cust.address || '';
+
+  const cityInput = document.getElementById('customerEditCity');
+  if (cityInput) cityInput.value = cust.city || 'Dahej';
+
+  const pincodeInput = document.getElementById('customerEditPincode');
+  if (pincodeInput) pincodeInput.value = cust.pincode || '';
+
+  const notesInput = document.getElementById('customerEditNotes');
+  if (notesInput) notesInput.value = order.notes || '';
+
+  modal.classList.add('open');
+  modal.classList.add('active');
+};
+
+window.closeCustomerEditOrderModal = () => {
+  const modal = document.getElementById('customerEditOrderModal');
+  if (modal) {
+    modal.classList.remove('open');
+    modal.classList.remove('active');
+  }
+};
 
 window.copyTrackingUrl = (orderId) => {
   const url = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(orderId)}`;

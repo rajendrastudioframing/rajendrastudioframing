@@ -248,6 +248,64 @@
     </div>
   </footer>
 
+  <!-- ==========================================================================
+       CUSTOMER EDIT ORDER DETAILS MODAL
+       ========================================================================== -->
+  <div class="modal-overlay" id="customerEditOrderModal">
+    <div class="modal-container" style="max-width: 540px;">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <span>✏️ Edit Order &bull; <span id="customerEditOrderModalId" style="color: var(--accent-gold);">#RF-ORD-000</span></span>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeCustomerEditOrderModal()">&times;</button>
+      </div>
+      <form id="customerEditOrderForm">
+        <input type="hidden" id="customerEditOrderId" />
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px; padding: 22px;">
+          <div style="font-size: 0.84rem; color: #555; background: #FAF7F2; padding: 12px 14px; border-radius: 8px; border: 1px solid #EFECE6; line-height: 1.5;">
+            Need to change your shipping address or special instructions before framing begins? Update your details below and our studio team will fulfill accordingly.
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #222;">Full Name *</label>
+            <input type="text" id="customerEditName" required style="width: 100%; padding: 10px 14px; border: 1.5px solid #E5E0D8; border-radius: 8px; font-size: 0.92rem;" />
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #222;">Phone Number *</label>
+              <input type="tel" id="customerEditPhone" required style="width: 100%; padding: 10px 14px; border: 1.5px solid #E5E0D8; border-radius: 8px; font-size: 0.92rem;" />
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #222;">Email Address</label>
+              <input type="email" id="customerEditEmail" style="width: 100%; padding: 10px 14px; border: 1.5px solid #E5E0D8; border-radius: 8px; font-size: 0.92rem;" />
+            </div>
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #222;">Delivery Address *</label>
+            <textarea id="customerEditAddress" rows="2" required style="width: 100%; padding: 10px 14px; border: 1.5px solid #E5E0D8; border-radius: 8px; font-family: inherit; font-size: 0.92rem; resize: vertical;"></textarea>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #222;">City</label>
+              <input type="text" id="customerEditCity" style="width: 100%; padding: 10px 14px; border: 1.5px solid #E5E0D8; border-radius: 8px; font-size: 0.92rem;" />
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #222;">Pincode</label>
+              <input type="text" id="customerEditPincode" style="width: 100%; padding: 10px 14px; border: 1.5px solid #E5E0D8; border-radius: 8px; font-size: 0.92rem;" />
+            </div>
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #222;">Special Instructions / Studio Notes</label>
+            <input type="text" id="customerEditNotes" placeholder="e.g. Call before delivery, gift wrap..." style="width: 100%; padding: 10px 14px; border: 1.5px solid #E5E0D8; border-radius: 8px; font-size: 0.92rem;" />
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="closeCustomerEditOrderModal()">Cancel</button>
+            <button type="submit" class="btn btn-gold btn-sm" id="customerEditSaveBtn">Save Changes</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="js/products-data.js"></script>
   <script src="js/main.js"></script>

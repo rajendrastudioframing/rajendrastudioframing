@@ -555,10 +555,6 @@ function createOrderCardRowHTML(order) {
             </button>
           ` : ''))))}
           
-          <button type="button" class="btn-card-action update" onclick="openEditOrderModal('${order.id}')" title="Edit order details, status, notes, or address">
-            ✏️ Edit Order
-          </button>
-          
           <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" class="btn-card-action invoice" title="Chat on WhatsApp">
             💬 WhatsApp / Invoice
           </a>
@@ -925,21 +921,47 @@ window.exportOrdersToCSV = () => {
   }
 
   const headers = ['Order ID', 'Date', 'Customer Name', 'Phone', 'Email', 'Product', 'Quantity', 'Amount (INR)', 'Status', 'Notes'];
-  const rows = allInquiries.map(inq => [
-    inq.id,
-    new Date(inq.createdAt).toLocaleString('en-IN'),
-    `"${(inq.name || '').replace(/"/g, '""')}"`,
-    inq.phone || '',
-    inq.email || '',
-    `"${(inq.product || '').replace(/"/g, '""')}"`,
-    inq.quantity || 1,
-    inq.estimatedValue || 0,
-    inq.status || 'New',
-    `"${(inq.notes || inq.specs || '').replace(/"/g, '""')}"`
-  ]);
+  const rows = allInquiries.map(inq => {
+    // Format Date cleanly as YYYY-MM-DD HH:mm:ss without unquoted commas that break CSV column alignment
+    let dateStr = '';
+    if (inq.createdAt) {
+      const d = new Date(inq.createdAt);
+      if (!isNaN(d.getTime())) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        dateStr = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      } else {
+        dateStr = String(inq.createdAt);
+      }
+    }
 
-  const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // Resolve Email reliably across inquiries and order objects
+    const email = (inq.customer && inq.customer.email) || inq.email || '';
+    const phone = (inq.customer && inq.customer.phone) || inq.phone || '';
+    const name = (inq.customer && inq.customer.name) || inq.name || '';
+    const product = inq.product || (inq.items && inq.items.map(it => `${it.name} (x${it.quantity})`).join('; ')) || '';
+    const notes = inq.notes || inq.specs || '';
+
+    return [
+      `"${String(inq.id || '').replace(/"/g, '""')}"`,
+      `"${dateStr.replace(/"/g, '""')}"`,
+      `"${String(name).replace(/"/g, '""')}"`,
+      `"${String(phone).replace(/"/g, '""')}"`,
+      `"${String(email).replace(/"/g, '""')}"`,
+      `"${String(product).replace(/"/g, '""')}"`,
+      inq.quantity || 1,
+      Number(inq.estimatedValue || inq.total || 0),
+      `"${String(inq.status || 'New').replace(/"/g, '""')}"`,
+      `"${String(notes).replace(/"/g, '""')}"`
+    ];
+  });
+
+  const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
   

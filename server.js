@@ -266,7 +266,7 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
 }
 
 // Customer Order Status Notification Email Generator
-function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, notes, items, total, paymentMethod, trackingUrl, address }) {
+function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, notes, items, total, paymentMethod, trackingUrl, editOrderUrl, address }) {
   const isPlaced = newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed';
   const isAccepted = newStatus === 'In Progress' || newStatus === 'Confirmed' || newStatus === 'Accepted';
   const isCancelled = newStatus === 'Cancelled';
@@ -401,21 +401,35 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
               </td>
             </tr>
 
-            <!-- CTA Button: Track Your Order Online (Gold Button matching Website) -->
+            <!-- CTA Buttons: Track Your Order & Edit Order Online -->
             <tr>
               <td align="center" style="padding: 0 32px 30px;">
                 <table border="0" cellspacing="0" cellpadding="0">
                   <tr>
                     <td align="center" style="border-radius: 8px; background: linear-gradient(135deg, #C99A3D 0%, #A67C2E 100%); box-shadow: 0 4px 14px rgba(201, 154, 61, 0.35);">
-                      <a href="${trackingUrl}" target="_blank" style="font-size: 15px; font-weight: 700; color: #FFFFFF; text-decoration: none; padding: 14px 32px; display: inline-block; border-radius: 8px; letter-spacing: 0.3px;">
+                      <a href="${trackingUrl}" target="_blank" style="font-size: 15px; font-weight: 700; color: #FFFFFF; text-decoration: none; padding: 14px 28px; display: inline-block; border-radius: 8px; letter-spacing: 0.3px;">
                         Track Your Order Online &rarr;
                       </a>
                     </td>
+                    ${isPlaced ? `
+                    <td width="12"></td>
+                    <td align="center" style="border-radius: 8px; background: #FFFFFF; border: 1.5px solid #C99A3D; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+                      <a href="${editOrderUrl || trackingUrl + '&action=edit'}" target="_blank" style="font-size: 15px; font-weight: 700; color: #111111; text-decoration: none; padding: 13px 22px; display: inline-block; border-radius: 8px; letter-spacing: 0.3px;">
+                        ✏️ Edit Order
+                      </a>
+                    </td>
+                    ` : ''}
                   </tr>
                 </table>
+                ${isPlaced ? `
+                <div style="font-size: 12px; color: #78716C; margin-top: 12px; line-height: 1.4;">
+                  Need to change your delivery address or contact details before production? Click <strong>Edit Order</strong> above.
+                </div>
+                ` : `
                 <div style="font-size: 12px; color: #A8A29E; margin-top: 10px;">
                   Or track anytime on our website with Order ID: <strong style="color: #111111;">${orderId}</strong>
                 </div>
+                `}
               </td>
             </tr>
 
@@ -518,6 +532,7 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
     const protocol = req ? req.protocol : 'http';
     const host = req ? req.get('host') : `localhost:${PORT}`;
     const trackingUrl = `${protocol}://${host}/track-order.html?id=${encodeURIComponent(orderId)}`;
+    const editOrderUrl = `${protocol}://${host}/track-order.html?id=${encodeURIComponent(orderId)}&action=edit`;
 
     let items = [];
     if (orderOrInquiry.items && Array.isArray(orderOrInquiry.items)) {
@@ -571,7 +586,7 @@ ${notes ? `\nStudio Note: ${notes}\n` : ''}
 ${newStatus === 'Cancelled' ? '\nIf you made an online advance or UPI payment, our team will process your refund to the original payment source within 24-48 business hours. If you selected Pay on Delivery, no payment was deducted.\n' : ''}
 Track your order anytime online:
 ${trackingUrl}
-
+${(newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed') ? `\nNeed to edit your delivery address or instructions? Edit your order here:\n${editOrderUrl}\n` : ''}
 Order Summary:
 Order ID: #${orderId}
 Total Amount: ₹${Number(total || 0).toLocaleString('en-IN')}
@@ -599,6 +614,7 @@ Station Road, Dahej & Bharuch, Gujarat 392130
         total,
         paymentMethod,
         trackingUrl,
+        editOrderUrl,
         address
       })
     });
@@ -1620,9 +1636,12 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
         orderId,
         status,
         isCancelled,
+        canEdit: (status === 'New' || status === 'Pending' || status === 'Placed' || status === 'In Progress') && !isCancelled,
         customer: {
           name,
+          phone: rawPhone,
           phoneMasked: maskedPhone,
+          email: rawEmail,
           emailMasked: maskedEmail,
           address,
           city,
@@ -1642,6 +1661,78 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
   } catch (err) {
     console.error('Error tracking order:', err);
     res.status(500).json({ success: false, message: 'Server error retrieving order status.' });
+  }
+});
+
+/**
+ * Public Customer Endpoint: Edit Order Details (PUT)
+ * Allows customers to update recipient name, phone, email, address, and notes
+ */
+app.put('/api/orders/:orderId/customer-update', async (req, res) => {
+  try {
+    const rawId = (req.params.orderId || '').trim().replace(/^#/, '');
+    if (!rawId) {
+      return res.status(400).json({ success: false, message: 'Order ID is required.' });
+    }
+
+    const { name, phone, email, address, city, pincode, notes } = req.body;
+
+    const orders = await db.getOrders();
+    const order = orders.find(o => o.orderId && (o.orderId.toLowerCase() === rawId.toLowerCase() || o.orderId.toLowerCase() === `rf-ord-${rawId.toLowerCase()}`));
+
+    const inquiries = await db.getInquiries();
+    const inq = inquiries.find(i => i.id && (i.id.toLowerCase() === rawId.toLowerCase() || i.id.toLowerCase() === `rf-ord-${rawId.toLowerCase()}`));
+
+    if (!order && !inq) {
+      return res.status(404).json({ success: false, message: `Order #${rawId} not found.` });
+    }
+
+    const currentStatus = (order && order.status) || (inq && inq.status) || 'New';
+    if (currentStatus === 'Shipped' || currentStatus === 'Dispatched' || currentStatus === 'Completed' || currentStatus === 'Delivered') {
+      return res.status(400).json({
+        success: false,
+        message: 'This order has already been dispatched/delivered and cannot be edited online. Please contact our studio on WhatsApp.'
+      });
+    }
+
+    const timestamp = new Date().toISOString();
+
+    if (order) {
+      order.customer = order.customer || {};
+      if (name) order.customer.name = name.trim();
+      if (phone) order.customer.phone = phone.trim();
+      if (email) order.customer.email = email.trim();
+      if (address) order.customer.address = address.trim();
+      if (city) order.customer.city = city.trim();
+      if (pincode) order.customer.pincode = pincode.trim();
+      if (notes !== undefined) order.notes = notes.trim();
+      order.updatedAt = timestamp;
+      await db.saveOrder(order);
+    }
+
+    if (inq) {
+      if (name) inq.name = name.trim();
+      if (phone) inq.phone = phone.trim();
+      if (email) inq.email = email.trim();
+      const addrStr = address ? address.trim() : (inq.specs || '');
+      const cityStr = city ? `, ${city.trim()}` : '';
+      const pinStr = pincode ? ` (${pincode.trim()})` : '';
+      inq.specs = `Deliver to: ${addrStr}${cityStr}${pinStr} • ${order ? order.paymentMethod : 'Customer Updated'}`;
+      if (notes !== undefined) inq.notes = notes.trim();
+      inq.updatedAt = timestamp;
+      await db.saveInquiry(inq);
+    }
+
+    console.log(`✏️ [CUSTOMER EDITED ORDER] #${rawId} by ${name || 'Customer'}`);
+
+    res.json({
+      success: true,
+      message: 'Your order details have been updated successfully!',
+      order: order || inq
+    });
+  } catch (err) {
+    console.error('Error updating customer order:', err);
+    res.status(500).json({ success: false, message: 'Server error updating order: ' + err.message });
   }
 });
 
