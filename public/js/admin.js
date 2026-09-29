@@ -478,17 +478,62 @@ function createOrderCardRowHTML(order) {
           <span>${noteText}</span>
         </div>
         <div class="order-action-buttons">
+          <!-- Direct Status Switcher (Always accessible for all orders) -->
+          <div class="order-quick-status-wrap" title="Quick change fulfillment status">
+            <select class="order-quick-status-select" onchange="changeOrderStatusDirectly('${order.id}', this.value)">
+              <option value="New" ${order.status === 'New' || order.status === 'Pending' ? 'selected' : ''}>🔵 New Order</option>
+              <option value="In Progress" ${order.status === 'In Progress' || order.status === 'Confirmed' ? 'selected' : ''}>🟡 In Production (Confirmed)</option>
+              <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>🟣 Dispatched / Ready</option>
+              <option value="Completed" ${order.status === 'Completed' ? 'selected' : ''}>🟢 Delivered</option>
+              <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>🔴 Cancelled</option>
+            </select>
+          </div>
+
+          <!-- Contextual Primary Workflow Actions -->
           ${order.status === 'New' || order.status === 'Pending' ? `
-            <button type="button" class="btn-card-action accept" onclick="acceptOrderQuick('${order.id}')" title="Accept order and notify customer via email">
-              ✓ Accept Order
+            <button type="button" class="btn-card-action accept" onclick="acceptOrderQuick('${order.id}')" title="Confirm order & move to production">
+              ✓ Confirm Order
             </button>
-          ` : (order.status === 'In Progress' ? `
+            <button type="button" class="btn-card-action cancel" onclick="openCancelOrderModal('${order.id}')" title="Cancel order and notify customer">
+              ✕ Cancel Order
+            </button>
+          ` : (order.status === 'In Progress' || order.status === 'Confirmed' ? `
+            <button type="button" class="btn-card-action dispatch" onclick="updateInquiryStatus('${order.id}', 'Shipped')" title="Mark as Dispatched / Ready for Pickup">
+              🚚 Mark Dispatched
+            </button>
             <button type="button" class="btn-card-action accept" onclick="updateInquiryStatus('${order.id}', 'Completed')" title="Mark order as completed/delivered">
               ✓ Mark Delivered
             </button>
+            <button type="button" class="btn-card-action revert" onclick="updateInquiryStatus('${order.id}', 'New')" title="Revert order back to New status">
+              ↩ Move to New
+            </button>
+            <button type="button" class="btn-card-action cancel" onclick="openCancelOrderModal('${order.id}')" title="Cancel order and notify customer">
+              ✕ Cancel Order
+            </button>
+          ` : (order.status === 'Shipped' ? `
+            <button type="button" class="btn-card-action accept" onclick="updateInquiryStatus('${order.id}', 'Completed')" title="Mark order as completed/delivered">
+              ✓ Mark Delivered
+            </button>
+            <button type="button" class="btn-card-action revert" onclick="updateInquiryStatus('${order.id}', 'In Progress')" title="Move back to In Production">
+              ↩ In Production
+            </button>
+            <button type="button" class="btn-card-action cancel" onclick="openCancelOrderModal('${order.id}')" title="Cancel order">
+              ✕ Cancel Order
+            </button>
           ` : (order.status === 'Completed' ? `
             <span class="status-pill completed" style="font-size: 0.72rem; padding: 4px 8px;">✓ Delivered</span>
-          ` : ''))}
+            <button type="button" class="btn-card-action reopen" onclick="updateInquiryStatus('${order.id}', 'In Progress')" title="Reopen order into Production">
+              🔄 Reopen Order
+            </button>
+          ` : (order.status === 'Cancelled' ? `
+            <span class="status-pill cancelled" style="font-size: 0.72rem; padding: 4px 8px;">✕ Cancelled</span>
+            <button type="button" class="btn-card-action reopen" onclick="restoreCancelledOrder('${order.id}', 'In Progress')" title="Restore and put order back into Production">
+              🔄 Reopen &amp; Confirm
+            </button>
+            <button type="button" class="btn-card-action revert" onclick="restoreCancelledOrder('${order.id}', 'New')" title="Restore and move back to New Orders">
+              ↩ Restore to New
+            </button>
+          ` : ''))))}
           
           <button type="button" class="btn-card-action update" onclick="openEditOrderModal('${order.id}')" title="Edit order details, status, notes, or address">
             ✏️ Edit Order
@@ -497,14 +542,6 @@ function createOrderCardRowHTML(order) {
           <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" class="btn-card-action invoice" title="Chat on WhatsApp">
             💬 WhatsApp / Invoice
           </a>
-
-          ${order.status !== 'Cancelled' ? `
-            <button type="button" class="btn-card-action cancel" onclick="openCancelOrderModal('${order.id}')" title="Cancel order and notify customer">
-              ✕ Cancel Order
-            </button>
-          ` : `
-            <span class="status-pill cancelled" style="font-size: 0.72rem; padding: 4px 8px;">✕ Cancelled</span>
-          `}
         </div>
       </div>
     </div>
@@ -640,7 +677,10 @@ function initOrderFiltering() {
     );
 
     let filtered = orders.filter(order => {
-      const matchesFilter = activeFilter === 'all' || order.status === activeFilter;
+      const matchesFilter = activeFilter === 'all' || 
+        order.status === activeFilter ||
+        (activeFilter === 'In Progress' && (order.status === 'In Progress' || order.status === 'Confirmed')) ||
+        (activeFilter === 'New' && (order.status === 'New' || order.status === 'Pending'));
       const matchesQuery = !query || 
         order.id.toLowerCase().includes(query) ||
         (order.name && order.name.toLowerCase().includes(query)) ||
@@ -751,8 +791,9 @@ window.cycleOrderStatus = async (id) => {
 };
 
 window.updateInquiryStatus = async (id, newStatus) => {
+  const cleanId = (id || '').replace(/^#/, '');
   try {
-    const res = await fetch(`${API_BASE}/api/admin/inquiries/${id}/status`, {
+    const res = await fetch(`${API_BASE}/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -762,17 +803,57 @@ window.updateInquiryStatus = async (id, newStatus) => {
     });
     const data = await res.json();
     if (data.success) {
-      const item = allInquiries.find(i => i.id === id);
+      const item = allInquiries.find(i => i.id === cleanId || i.id === id);
       if (item) item.status = newStatus;
       await loadInquiries();
       await loadDashboardStats();
-      showToast('Status Updated', `Order #${id} status changed to "${newStatus}".`, 'success');
+      showToast('Status Updated', `Order #${cleanId} status changed to "${newStatus}".`, 'success');
     } else {
       showToast('Update Failed', data.message || 'Status update failed.', 'danger');
     }
   } catch (err) {
     console.error('Error updating status:', err);
     showToast('Network Error', 'Could not reach server to update status.', 'danger');
+  }
+};
+
+window.changeOrderStatusDirectly = async (id, newStatus) => {
+  const cleanId = (id || '').replace(/^#/, '');
+  if (!newStatus) return;
+  if (newStatus === 'Cancelled') {
+    openCancelOrderModal(cleanId);
+    return;
+  }
+  await updateInquiryStatus(cleanId, newStatus);
+};
+
+window.restoreCancelledOrder = async (id, targetStatus = 'In Progress') => {
+  const cleanId = (id || '').replace(/^#/, '');
+  try {
+    showToast('Restoring Order', `Restoring Order #${cleanId} to "${targetStatus}"...`, 'info');
+    const res = await fetch(`${API_BASE}/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        status: targetStatus,
+        notes: `Order restored by studio admin to ${targetStatus}.`,
+        notifyCustomer: true
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      await loadInquiries();
+      await loadDashboardStats();
+      showToast('Order Restored! ✓', `Order #${cleanId} is now ${targetStatus}.`, 'success');
+    } else {
+      showToast('Action Failed', data.message || 'Could not restore order.', 'danger');
+    }
+  } catch (err) {
+    console.error('Error restoring order:', err);
+    showToast('Network Error', 'Failed to restore order.', 'danger');
   }
 };
 
@@ -1267,9 +1348,9 @@ function renderAdminProducts(products) {
           ${prod.badge ? `<span class="status-pill amber">${escapeHtml(prod.badge)}</span>` : '<span style="color: var(--text-subtle);">—</span>'}
         </td>
         <td>
-          <span class="status-pill ${prod.status === 'In Stock' ? 'paid' : 'cancelled'}">
-            ${prod.status}
-          </span>
+          <button type="button" class="btn-table-icon stock ${prod.status === 'In Stock' ? 'in-stock' : 'out-stock'}" onclick="toggleProductStock('${prod.id}')" title="Click to toggle: ${prod.status === 'In Stock' ? 'Mark Out of Stock' : 'Mark In Stock'}">
+            ${prod.status === 'In Stock' ? '🟢 In Stock' : '🔴 Out of Stock'}
+          </button>
         </td>
         <td>
           <span style="font-size: 0.78rem; color: var(--text-muted);">${escapeHtml(prod.leadTime || '24 - 48 Hours')}</span>
@@ -1300,15 +1381,45 @@ function initProductModals() {
   const addModal = document.getElementById('addProductModal');
   const addForm = document.getElementById('addProductForm');
 
+  window.openAddProductModal = () => {
+    if (addForm) addForm.reset();
+    if (addModal) addModal.classList.add('open');
+  };
+
   if (openAddBtn && addModal) {
-    openAddBtn.addEventListener('click', () => {
-      addForm.reset();
-      addModal.classList.add('open');
-    });
+    openAddBtn.addEventListener('click', window.openAddProductModal);
   }
 
   window.closeAddProductModal = () => {
     if (addModal) addModal.classList.remove('open');
+  };
+
+  window.toggleProductStock = async (id) => {
+    const prod = allProducts.find(p => p.id === id);
+    if (!prod) return;
+
+    const nextStatus = prod.status === 'In Stock' ? 'Out of Stock' : 'In Stock';
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/products/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: nextStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        prod.status = nextStatus;
+        renderAdminProducts(allProducts);
+        showToast('Stock Status Updated', `${prod.name} is now ${nextStatus}!`, nextStatus === 'In Stock' ? 'success' : 'warning');
+      } else {
+        showToast('Update Failed', data.message || 'Failed to update stock.', 'danger');
+      }
+    } catch (err) {
+      console.error('Error toggling product stock:', err);
+      showToast('Error', 'Network error updating stock.', 'danger');
+    }
   };
 
   if (addForm) {
@@ -1317,10 +1428,13 @@ function initProductModals() {
       const name = document.getElementById('newProductName').value.trim();
       const category = document.getElementById('newProductCategory').value;
       const price = document.getElementById('newProductPrice').value;
-      const badge = document.getElementById('newProductBadge').value.trim();
-      const leadTime = document.getElementById('newProductLeadTime').value.trim();
-      const material = document.getElementById('newProductMaterial').value.trim();
-      const desc = document.getElementById('newProductDesc').value.trim();
+      const status = document.getElementById('newProductStatus') ? document.getElementById('newProductStatus').value : 'In Stock';
+      const stockQty = document.getElementById('newProductStockQty') ? document.getElementById('newProductStockQty').value : 100;
+      const badge = document.getElementById('newProductBadge') ? document.getElementById('newProductBadge').value.trim() : '';
+      const leadTime = document.getElementById('newProductLeadTime') ? document.getElementById('newProductLeadTime').value.trim() : '24 - 48 Hours';
+      const material = document.getElementById('newProductMaterial') ? document.getElementById('newProductMaterial').value.trim() : 'Premium Material';
+      const desc = document.getElementById('newProductDesc') ? document.getElementById('newProductDesc').value.trim() : '';
+      const imagePreset = document.getElementById('newProductImagePreset') ? document.getElementById('newProductImagePreset').value : '';
 
       try {
         const res = await fetch(`${API_BASE}/api/admin/products`, {
@@ -1334,11 +1448,14 @@ function initProductModals() {
             category,
             categoryLabel: getCategoryLabel(category),
             price,
+            status,
+            stockQty,
             badge,
             leadTime,
             material,
             shortDescription: desc,
-            description: desc
+            description: desc,
+            image: imagePreset
           })
         });
 
@@ -1346,7 +1463,7 @@ function initProductModals() {
         if (data.success) {
           closeAddProductModal();
           await loadProducts();
-          showToast('Product Added', 'New product successfully added to catalog!', 'success');
+          showToast('Product & Stock Added', `"${name}" added successfully with status: ${status}!`, 'success');
         } else {
           showToast('Add Failed', data.message || 'Failed to add product.', 'danger');
         }

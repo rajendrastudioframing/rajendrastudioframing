@@ -1798,13 +1798,22 @@ app.get('/api/admin/products', requireAuth, async (req, res) => {
  * Add New Product (POST)
  */
 app.post('/api/admin/products', requireAuth, async (req, res) => {
-  const { name, category, categoryLabel, price, badge, shortDescription, description, material, printingType, leadTime, image } = req.body;
+  const { name, category, categoryLabel, price, badge, shortDescription, description, material, printingType, leadTime, image, status, stockQty } = req.body;
 
   if (!name || !price) {
     return res.status(400).json({ success: false, message: 'Product name and price are required.' });
   }
 
   const idSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `product-${Date.now()}`;
+
+  // Default fallback image by category if none provided
+  let resolvedImage = image;
+  if (!resolvedImage) {
+    if (category === 'frames') resolvedImage = 'assets/images/glass_frame.jpg';
+    else if (category === 'personalized') resolvedImage = 'assets/images/printed_bottle.jpg';
+    else if (category === 'office') resolvedImage = 'assets/images/printed_file.jpg';
+    else resolvedImage = 'assets/images/custom_canvas.jpg';
+  }
 
   const newProduct = {
     id: idSlug,
@@ -1816,12 +1825,13 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     rating: 5.0,
     reviewsCount: 1,
     badge: badge || 'New',
-    image: image || 'assets/images/custom_canvas.jpg',
-    shortDescription: shortDescription || 'High-quality bespoke framing and custom printing product.',
-    description: description || 'Crafted with premium materials at Rajesh Framing Dahej studio.',
+    image: resolvedImage,
+    shortDescription: shortDescription || `${name.trim()} customized by Rajesh Framing Studio.`,
+    description: description || shortDescription || `${name.trim()} handcrafted with premium materials and archival printing standards.`,
     material: material || 'Premium Archival Grade',
     printingType: printingType || 'High-Resolution Archival Print',
-    status: 'In Stock',
+    status: status || 'In Stock',
+    stockQty: Number(stockQty || 100),
     leadTime: leadTime || '24 - 48 Hours',
     createdAt: new Date().toISOString()
   };
