@@ -53,6 +53,7 @@ body.admin-login-body {
   left: 50%;
   transform: translateX(-50%);
   width: 520px;
+  max-width: 90vw;
   height: 380px;
   background: radial-gradient(circle, rgba(201, 154, 61, 0.16) 0%, rgba(201, 154, 61, 0.05) 50%, transparent 75%);
   filter: blur(60px);
@@ -562,18 +563,43 @@ body.admin-login-body {
 
 /* Mobile Responsiveness */
 @media (max-width: 480px) {
+  .login-wrapper {
+    padding: 16px 12px;
+  }
+
   .login-card {
-    padding: 32px 22px 28px;
+    padding: 28px 18px 24px;
     border-radius: 18px;
   }
 
   .login-title {
-    font-size: 1.55rem;
+    font-size: 1.45rem;
+  }
+
+  .otp-container {
+    gap: 5px;
   }
 
   .otp-box {
-    width: 40px;
-    height: 48px;
-    font-size: 1.35rem;
+    width: 38px;
+    height: 46px;
+    font-size: 1.25rem;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .login-card {
+    padding: 24px 14px 20px;
+  }
+
+  .otp-container {
+    gap: 3px;
+  }
+
+  .otp-box {
+    width: 34px;
+    height: 42px;
+    font-size: 1.1rem;
   }
 }

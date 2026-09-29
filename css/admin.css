@@ -1636,6 +1636,8 @@ body.admin-dashboard-body[data-theme="dark"] {
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: var(--shadow-card);
 }
 
@@ -2071,6 +2073,45 @@ body.admin-dashboard-body[data-theme="dark"] {
   }
 }
 
+@media (max-width: 600px) {
+  .order-card-body {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .order-action-buttons {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 6px;
+  }
+  .order-action-buttons .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-size: 0.75rem;
+    padding: 7px 10px;
+  }
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .admin-actions-bar {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px;
+  }
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  .orders-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .admin-content {
+    padding: 12px 10px;
+  }
+}
+
 /* ==========================================================================
    ADMIN PORTAL LOGIN PAGE STYLES
    ========================================================================== */
@@ -2105,6 +2146,7 @@ body.admin-login-body {
   left: 50%;
   transform: translateX(-50%);
   width: 520px;
+  max-width: 90vw;
   height: 380px;
   background: radial-gradient(circle, rgba(201, 154, 61, 0.16) 0%, rgba(201, 154, 61, 0.05) 50%, transparent 75%);
   filter: blur(60px);

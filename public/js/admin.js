@@ -186,8 +186,27 @@ function initSidebarToggle() {
   const sidebar = document.getElementById('adminSidebar');
   if (!toggleBtn || !sidebar) return;
 
-  toggleBtn.addEventListener('click', () => {
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
     sidebar.classList.toggle('open');
+  });
+
+  // Close sidebar when clicking any navigation link on mobile
+  sidebar.querySelectorAll('.sidebar-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove('open');
+      }
+    });
+  });
+
+  // Close when clicking outside sidebar on mobile
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+      if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    }
   });
 }
 

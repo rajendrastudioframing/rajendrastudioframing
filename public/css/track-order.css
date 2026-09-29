@@ -598,3 +598,39 @@
     padding: 18px 20px;
   }
 }
+
+@media (max-width: 480px) {
+  .track-search-card {
+    flex-direction: column;
+    padding: 10px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+  .track-search-icon {
+    display: none;
+  }
+  .track-search-input {
+    width: 100%;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 0.95rem;
+  }
+  .track-search-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .track-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .track-status-pill {
+    align-self: flex-start;
+  }
+  .track-card-header,
+  .track-items-section,
+  .track-card-footer {
+    padding: 14px 16px;
+  }
+}
+
