@@ -508,8 +508,8 @@
 /* 3D Perspective Viewport & Stage */
 .slider-viewport {
   width: 100%;
-  min-height: 420px;
-  height: 420px;
+  min-height: 430px;
+  height: 430px;
   position: relative;
   perspective: 1400px;
   -webkit-perspective: 1400px;
@@ -2595,6 +2595,9 @@
   cursor: pointer !important;
   box-sizing: border-box !important;
   height: 380px !important;
+  min-height: 0 !important;
+  max-height: 380px !important;
+  aspect-ratio: auto !important;
   width: 100% !important;
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
   overflow: hidden !important;
@@ -2611,7 +2614,7 @@
   position: relative !important;
   width: 100% !important;
   flex: 1 1 auto !important;
-  min-height: 180px !important;
+  min-height: 0 !important;
   height: calc(100% - 122px) !important;
   border-radius: 13px !important;
   overflow: hidden !important;
@@ -2832,7 +2835,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 24px;
+  margin-top: 36px;
   position: relative;
   z-index: 5;
 }
