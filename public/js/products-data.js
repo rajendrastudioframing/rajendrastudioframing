@@ -29,8 +29,8 @@ const PRODUCTS_DATA = [
     finishes: [
       { id: "gold-standoffs", name: "Warm Gold Standoffs", color: "#C99A3D", image: "assets/images/glass_frame.jpg" },
       { id: "royal-blue-glass", name: "Royal Sapphire Blue Accent", color: "#1E3A8A", image: "assets/images/glass_frame_blue.jpg" },
-      { id: "silver-standoffs", name: "Brushed Silver Standoffs", color: "#CBD5E1", image: "assets/images/glass_frame.jpg" },
-      { id: "black-standoffs", name: "Matte Black Standoffs", color: "#111111", image: "assets/images/glass_frame.jpg" }
+      { id: "silver-standoffs", name: "Brushed Silver Standoffs", color: "#CBD5E1", image: "assets/images/glass_frame_silver.jpg" },
+      { id: "black-standoffs", name: "Matte Black Standoffs", color: "#111111", image: "assets/images/glass_frame_black.jpg" }
     ],
     features: [
       "Diamond-polished beveled edges for safe, lustrous finish",
@@ -50,7 +50,7 @@ const PRODUCTS_DATA = [
     rating: 4.8,
     reviewsCount: 94,
     badge: "Popular",
-    image: "assets/images/plastic_frame.jpg",
+    image: "assets/images/plastic_frame_black.jpg",
     shortDescription: "Durable, lightweight customized polymer frames with archival museum mat board in timeless matte finishes.",
     description: "Manufactured from high-density, eco-friendly structural polymer, our Plastic Photo Frames deliver clean architectural lines without excessive weight. Paired with 1.5mm archival conservation mat board and crystal-clear glazing, these frames are ideal for expansive gallery walls, corridors, and family travel photos.",
     material: "High-density Engineered Polymer with Conservation Mat",

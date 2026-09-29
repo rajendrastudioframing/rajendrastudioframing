@@ -15,7 +15,13 @@
     "material": "Optically Clear Float Glass (4mm / 6mm) with Diamond Beveled Edge",
     "printingType": "12-Color Archival Pigment Print (Fade-resistant 50+ yrs)",
     "status": "In Stock",
-    "leadTime": "24 - 48 Hours"
+    "leadTime": "24 - 48 Hours",
+    "finishes": [
+      { "id": "gold-standoffs", "name": "Warm Gold Standoffs", "color": "#C99A3D", "image": "assets/images/glass_frame.jpg" },
+      { "id": "royal-blue-glass", "name": "Royal Sapphire Blue Accent", "color": "#1E3A8A", "image": "assets/images/glass_frame_blue.jpg" },
+      { "id": "silver-standoffs", "name": "Brushed Silver Standoffs", "color": "#CBD5E1", "image": "assets/images/glass_frame_silver.jpg" },
+      { "id": "black-standoffs", "name": "Matte Black Standoffs", "color": "#111111", "image": "assets/images/glass_frame_black.jpg" }
+    ]
   },
   {
     "id": "plastic-frame-gallery",
@@ -27,13 +33,20 @@
     "rating": 4.8,
     "reviewsCount": 94,
     "badge": "Popular",
-    "image": "assets/images/plastic_frame.jpg",
+    "image": "assets/images/plastic_frame_black.jpg",
     "shortDescription": "Durable, lightweight customized polymer frames with archival museum mat board in timeless matte finishes.",
     "description": "Manufactured from high-density, eco-friendly structural polymer, our Plastic Photo Frames deliver clean architectural lines without excessive weight. Paired with 1.5mm archival conservation mat board and crystal-clear glazing, these frames are ideal for expansive gallery walls, corridors, and family travel photos.",
     "material": "High-density Engineered Polymer with Conservation Mat",
     "printingType": "Ultra HD Fine Art Photographic Printing (300 DPI)",
     "status": "In Stock",
-    "leadTime": "Same Day / 24 Hours"
+    "leadTime": "Same Day / 24 Hours",
+    "finishes": [
+      { "id": "matte-black", "name": "Studio Matte Black", "color": "#111111", "image": "assets/images/plastic_frame_black.jpg" },
+      { "id": "royal-blue", "name": "Royal Sapphire Blue", "color": "#1E3A8A", "image": "assets/images/plastic_frame_blue.jpg" },
+      { "id": "pure-white", "name": "Gallery Pure White", "color": "#F8FAFC", "image": "assets/images/plastic_frame_white.jpg" },
+      { "id": "warm-walnut", "name": "Warm Walnut Grain", "color": "#5C3A21", "image": "assets/images/plastic_frame_walnut.jpg" },
+      { "id": "champagne-gold", "name": "Champagne Gold", "color": "#C99A3D", "image": "assets/images/plastic_frame_gold.jpg" }
+    ]
   },
   {
     "id": "printed-water-bottle-steel",
@@ -51,7 +64,12 @@
     "material": "Food-Grade 304 Stainless Steel (Double-Wall Vacuum)",
     "printingType": "Full 360° Rotary UV Color Print or Laser Engraving",
     "status": "In Stock",
-    "leadTime": "1 - 2 Business Days"
+    "leadTime": "1 - 2 Business Days",
+    "finishes": [
+      { "id": "matte-black-bottle", "name": "Matte Stealth Black", "color": "#111111", "image": "assets/images/printed_bottle.jpg" },
+      { "id": "royal-blue-bottle", "name": "Midnight Navy Blue", "color": "#1E3A8A", "image": "assets/images/printed_bottle_blue.jpg" },
+      { "id": "brushed-silver-bottle", "name": "Brushed Metallic Silver", "color": "#94A3B8", "image": "assets/images/printed_bottle.jpg" }
+    ]
   },
   {
     "id": "customized-coffee-mug",
@@ -69,7 +87,12 @@
     "material": "Grade AAA Coated Ceramic (Microwave & Dishwasher Safe)",
     "printingType": "Full-Surface High-Definition Heat Sublimation Transfer",
     "status": "In Stock",
-    "leadTime": "Same Day / 24 Hours"
+    "leadTime": "Same Day / 24 Hours",
+    "finishes": [
+      { "id": "classic-white-mug", "name": "Glossy Alpine White", "color": "#FFFFFF", "image": "assets/images/custom_mug.jpg" },
+      { "id": "magic-black-mug", "name": "Heat-Reactive Stealth Black", "color": "#111111", "image": "assets/images/custom_mug_black.jpg" },
+      { "id": "navy-gold-mug", "name": "Deep Navy with Gold Trim", "color": "#1E3A8A", "image": "assets/images/custom_mug.jpg" }
+    ]
   },
   {
     "id": "custom-file-printing",

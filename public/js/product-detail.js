@@ -40,12 +40,18 @@ async function initProductDetailPage() {
   }
 
   const urlParams = new URLSearchParams(window.location.search);
-  const productId = urlParams.get('id') || 'glass-frame-classic';
+  const productId = urlParams.get('id') || 'plastic-frame-gallery';
+  const finishIdParam = urlParams.get('finish') || urlParams.get('color');
 
   currentProduct = PRODUCTS_DATA.find(p => p.id === productId) || PRODUCTS_DATA[0];
 
   selectedSize = currentProduct.sizes && currentProduct.sizes.length > 0 ? currentProduct.sizes[0] : null;
-  selectedFinish = currentProduct.finishes && currentProduct.finishes.length > 0 ? currentProduct.finishes[0] : null;
+
+  if (finishIdParam && currentProduct.finishes && currentProduct.finishes.length > 0) {
+    selectedFinish = currentProduct.finishes.find(f => f.id === finishIdParam) || currentProduct.finishes[0];
+  } else {
+    selectedFinish = currentProduct.finishes && currentProduct.finishes.length > 0 ? currentProduct.finishes[0] : null;
+  }
 
   try {
     populateProductData();
@@ -115,6 +121,16 @@ function populateProductData() {
 
   const reviewCount = document.getElementById('detailReviewCount');
   if (reviewCount) reviewCount.textContent = `(${p.reviewsCount} customer ratings)`;
+
+  // Preload all finish variant images into memory so color switching is instantaneous
+  if (currentProduct.finishes && currentProduct.finishes.length > 0) {
+    currentProduct.finishes.forEach(f => {
+      if (f.image) {
+        const pre = new Image();
+        pre.src = f.image;
+      }
+    });
+  }
 
   // Main Image & Active Variant Image
   const initialImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : p.image;
@@ -285,30 +301,38 @@ function updateDetailImageForFinish(finish) {
   const mainImgBox = document.querySelector('.detail-main-img-box');
 
   if (mainImg) {
-    mainImg.style.transition = 'opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
-    mainImg.style.opacity = '0.25';
-    mainImg.style.transform = 'scale(0.98)';
+    mainImg.style.objectFit = 'cover';
+    mainImg.style.background = '';
+    mainImg.style.padding = '';
 
-    const imgLoader = new Image();
-    imgLoader.onload = () => {
-      mainImg.src = targetSrc;
-      mainImg.alt = `${currentProduct.name} - ${finish.name}`;
+    mainImg.style.transition = 'opacity 0.15s ease-out, transform 0.15s ease-out';
+    mainImg.style.opacity = '0.35';
+    mainImg.style.transform = 'scale(0.985)';
+
+    // Directly set target image source for instant browser response
+    mainImg.src = targetSrc;
+    mainImg.alt = `${currentProduct.name} - ${finish.name}`;
+
+    if (mainImg.complete) {
       mainImg.style.opacity = '1';
       mainImg.style.transform = 'scale(1)';
-    };
-    imgLoader.onerror = () => {
-      mainImg.src = targetSrc;
-      mainImg.style.opacity = '1';
-      mainImg.style.transform = 'scale(1)';
-    };
-    imgLoader.src = targetSrc;
+    } else {
+      mainImg.onload = () => {
+        mainImg.style.opacity = '1';
+        mainImg.style.transform = 'scale(1)';
+      };
+      mainImg.onerror = () => {
+        mainImg.style.opacity = '1';
+        mainImg.style.transform = 'scale(1)';
+      };
+    }
   }
 
-  // Accent glow feedback on frame preview box
+  // Accent glow & border on frame container
   if (mainImgBox && finish.color) {
-    mainImgBox.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
+    mainImgBox.style.transition = 'border-color 0.25s ease, box-shadow 0.25s ease';
     mainImgBox.style.borderColor = finish.color;
-    mainImgBox.style.boxShadow = `0 8px 24px ${finish.color}35`;
+    mainImgBox.style.boxShadow = `0 10px 30px ${finish.color}44`;
   }
 
   // Update primary thumbnail in strip
@@ -473,6 +497,22 @@ function setupPhotoUpload() {
       if (emptyState) emptyState.style.display = 'block';
       if (previewState) previewState.style.display = 'none';
       if (thumbImg) thumbImg.src = '';
+
+      const mainImg = document.getElementById('detailMainImg');
+      if (mainImg) {
+        const revertSrc = (selectedFinish && selectedFinish.image) ? selectedFinish.image : currentProduct.image;
+        mainImg.style.transition = 'opacity 0.15s ease-out';
+        mainImg.style.opacity = '0.35';
+        mainImg.src = revertSrc;
+        mainImg.style.objectFit = 'cover';
+        mainImg.style.background = '';
+        mainImg.style.padding = '';
+        if (mainImg.complete) {
+          mainImg.style.opacity = '1';
+        } else {
+          mainImg.onload = () => { mainImg.style.opacity = '1'; };
+        }
+      }
     });
   }
 
@@ -500,6 +540,20 @@ function setupPhotoUpload() {
       if (sizeEl) sizeEl.textContent = formattedSize;
       if (emptyState) emptyState.style.display = 'none';
       if (previewState) previewState.style.display = 'block';
+
+      // Update main product image to show user's uploaded photo inside the chosen frame
+      const mainImg = document.getElementById('detailMainImg');
+      if (mainImg) {
+        mainImg.style.transition = 'opacity 0.2s ease-in-out';
+        mainImg.style.opacity = '0.35';
+        setTimeout(() => {
+          mainImg.src = dataUrl;
+          mainImg.style.objectFit = 'contain';
+          mainImg.style.background = '#F8FAFC';
+          mainImg.style.padding = '16px';
+          mainImg.style.opacity = '1';
+        }, 120);
+      }
 
       // Set temporary state while uploading
       currentUploadedPhoto = {

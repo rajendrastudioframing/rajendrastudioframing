@@ -401,3 +401,46 @@ function initHomeContactForm() {
   });
 }
 
+// Global Swatch Switcher for product cards on Homepage & Catalog
+window.changeCatalogCardImage = function(productId, newImgSrc, swatchEl, event, finishId, finishName) {
+  if (event) {
+    if (typeof event.stopPropagation === 'function') event.stopPropagation();
+    if (typeof event.preventDefault === 'function') event.preventDefault();
+  }
+  const cards = document.querySelectorAll(`.product-card[data-id="${productId}"], .product-card[data-product-id="${productId}"]`);
+  let parentCard = swatchEl ? swatchEl.closest('.product-card') : null;
+  const targetCards = parentCard ? [parentCard] : cards;
+
+  targetCards.forEach(card => {
+    if (finishId) card.setAttribute('data-selected-finish-id', finishId);
+    if (finishName) card.setAttribute('data-selected-finish-name', finishName);
+    if (newImgSrc) card.setAttribute('data-selected-finish-img', newImgSrc);
+
+    // Update navigation destination
+    const targetUrl = `product-detail.html?id=${productId}${finishId ? `&finish=${finishId}` : ''}`;
+    card.setAttribute('onclick', `window.location.href='${targetUrl}'`);
+    const cardTitleLink = card.querySelector('.capsule-title a, .bento-title a');
+    if (cardTitleLink) {
+      cardTitleLink.setAttribute('href', targetUrl);
+    }
+
+    const img = card.querySelector('.product-image, .bento-product-img');
+    if (img && newImgSrc) {
+      img.style.transition = 'opacity 0.15s ease-out';
+      img.style.opacity = '0.35';
+      img.src = newImgSrc;
+      if (img.complete) {
+        img.style.opacity = '1';
+      } else {
+        img.onload = () => { img.style.opacity = '1'; };
+        img.onerror = () => { img.style.opacity = '1'; };
+      }
+    }
+
+    const dots = card.querySelectorAll('.card-swatch-dot');
+    dots.forEach(d => d.classList.remove('active'));
+  });
+
+  if (swatchEl) swatchEl.classList.add('active');
+};
+

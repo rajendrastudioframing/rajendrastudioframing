@@ -436,7 +436,7 @@ function quickAddToCart(productId, event) {
     if (typeof event.stopPropagation === 'function') event.stopPropagation();
   }
 
-  handleProductCardAddToCart(productId, false);
+  handleProductCardAddToCart(productId, false, event);
 
   // Visual button feedback
   if (event && event.currentTarget) {
@@ -464,32 +464,40 @@ function buyNowFromCard(productId, event) {
     window.location.href = `product-detail.html?id=${productId}`;
     return;
   }
+  const card = event && event.target ? event.target.closest('.product-card') : document.querySelector(`.product-card[data-id="${productId}"]`);
+  const selectedFinishName = card ? card.getAttribute('data-selected-finish-name') : null;
+  const selectedFinishImg = card ? card.getAttribute('data-selected-finish-img') : null;
+
   buyNow({
     id: product.id,
     name: product.name,
     price: Number(product.price) || 650,
-    image: product.image,
+    image: selectedFinishImg || product.image,
     category: product.category,
     size: 'Standard',
-    finish: 'Warm Gold',
+    finish: selectedFinishName || (product.finishes && product.finishes.length > 0 ? product.finishes[0].name : 'Standard'),
     leadTime: product.leadTime || '24 - 48 Hours'
   }, 1);
 }
 
-function handleProductCardAddToCart(productId, openDrawer = false) {
+function handleProductCardAddToCart(productId, openDrawer = false, event = null) {
   if (!productId) return;
   const products = (typeof PRODUCTS_DATA !== 'undefined' ? PRODUCTS_DATA : []);
   const product = products.find(p => p.id === productId);
   if (!product) return;
 
+  const card = event && event.target ? event.target.closest('.product-card') : document.querySelector(`.product-card[data-id="${productId}"]`);
+  const selectedFinishName = card ? card.getAttribute('data-selected-finish-name') : null;
+  const selectedFinishImg = card ? card.getAttribute('data-selected-finish-img') : null;
+
   addToCart({
     id: product.id,
     name: product.name,
     price: Number(product.price) || 650,
-    image: product.image,
+    image: selectedFinishImg || product.image,
     category: product.category,
     size: 'Standard',
-    finish: 'Warm Gold',
+    finish: selectedFinishName || (product.finishes && product.finishes.length > 0 ? product.finishes[0].name : 'Standard'),
     leadTime: product.leadTime || '24 - 48 Hours'
   }, 1, openDrawer);
 }

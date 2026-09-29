@@ -257,7 +257,7 @@
                 <div class="hero-layer-card layer-bottom-left">
                   <div class="layer-card-inner">
                     <div class="layer-img-wrap">
-                      <img src="assets/images/plastic_frame.jpg" alt="Sleek Polymer Photo Frame" class="layer-img" />
+                      <img src="assets/images/plastic_frame_blue.jpg" alt="Sleek Polymer Photo Frame" class="layer-img" />
                     </div>
                     <div class="layer-card-caption">
                       <div class="layer-tag">Polymer Matte</div>
@@ -457,7 +457,7 @@
 
                 <!-- Image Container -->
                 <div class="bento-image-container" style="background: #EAE6DF;">
-                  <img src="assets/images/plastic_frame.jpg" alt="Plastic Photo Frame" class="bento-product-img" loading="lazy" />
+                  <img src="assets/images/plastic_frame_black.jpg" alt="Plastic Photo Frame" class="bento-product-img" loading="lazy" />
                 </div>
 
                 <!-- Bottom Bento Content -->
@@ -665,7 +665,7 @@
 
         <div class="products-grid">
           <!-- Featured 1: Glass Photo Frame -->
-          <article class="product-card reveal reveal-delay-1" onclick="window.location.href='product-detail.html?id=glass-frame-classic'">
+          <article class="product-card reveal reveal-delay-1" data-id="glass-frame-classic" data-selected-finish-id="gold-standoffs" data-selected-finish-name="Warm Gold Standoffs" data-selected-finish-img="assets/images/glass_frame.jpg" onclick="window.location.href='product-detail.html?id=glass-frame-classic&finish=gold-standoffs'">
             <div class="product-card-top">
               <span class="product-badge-pill">Bestseller</span>
               <button type="button" class="product-wishlist-btn" data-wishlist-id="glass-frame-classic" aria-label="Add to wishlist" onclick="toggleWishlist('glass-frame-classic', event);" title="Add to Wishlist">
@@ -681,9 +681,15 @@
             <div class="product-capsule">
               <div class="capsule-top-row">
                 <h3 class="capsule-title">
-                  <a href="product-detail.html?id=glass-frame-classic">Glass Photo Frame</a>
+                  <a href="product-detail.html?id=glass-frame-classic&finish=gold-standoffs">Glass Photo Frame</a>
                 </h3>
                 <span class="capsule-price">₹650</span>
+              </div>
+              <div class="card-color-swatches" onclick="event.stopPropagation();" aria-label="Available Colors">
+                <button type="button" class="card-swatch-dot active" style="background-color: #C99A3D;" title="Warm Gold Standoffs" aria-label="Warm Gold Standoffs" data-product-id="glass-frame-classic" data-finish-id="gold-standoffs" data-finish-name="Warm Gold Standoffs" data-finish-img="assets/images/glass_frame.jpg" onclick="changeCatalogCardImage('glass-frame-classic', 'assets/images/glass_frame.jpg', this, event, 'gold-standoffs', 'Warm Gold Standoffs');"></button>
+                <button type="button" class="card-swatch-dot" style="background-color: #1E3A8A;" title="Royal Sapphire Blue Accent" aria-label="Royal Sapphire Blue Accent" data-product-id="glass-frame-classic" data-finish-id="royal-blue-glass" data-finish-name="Royal Sapphire Blue Accent" data-finish-img="assets/images/glass_frame_blue.jpg" onclick="changeCatalogCardImage('glass-frame-classic', 'assets/images/glass_frame_blue.jpg', this, event, 'royal-blue-glass', 'Royal Sapphire Blue Accent');"></button>
+                <button type="button" class="card-swatch-dot" style="background-color: #CBD5E1;" title="Brushed Silver Standoffs" aria-label="Brushed Silver Standoffs" data-product-id="glass-frame-classic" data-finish-id="silver-standoffs" data-finish-name="Brushed Silver Standoffs" data-finish-img="assets/images/glass_frame_silver.jpg" onclick="changeCatalogCardImage('glass-frame-classic', 'assets/images/glass_frame_silver.jpg', this, event, 'silver-standoffs', 'Brushed Silver Standoffs');"></button>
+                <button type="button" class="card-swatch-dot" style="background-color: #111111;" title="Matte Black Standoffs" aria-label="Matte Black Standoffs" data-product-id="glass-frame-classic" data-finish-id="black-standoffs" data-finish-name="Matte Black Standoffs" data-finish-img="assets/images/glass_frame_black.jpg" onclick="changeCatalogCardImage('glass-frame-classic', 'assets/images/glass_frame_black.jpg', this, event, 'black-standoffs', 'Matte Black Standoffs');"></button>
               </div>
               <div class="capsule-bottom-row">
                 <div class="capsule-store-info">
@@ -706,7 +712,7 @@
           </article>
 
           <!-- Featured 2: Plastic Photo Frame -->
-          <article class="product-card reveal reveal-delay-2" onclick="window.location.href='product-detail.html?id=plastic-frame-gallery'">
+          <article class="product-card reveal reveal-delay-2" data-id="plastic-frame-gallery" data-selected-finish-id="matte-black" data-selected-finish-name="Studio Matte Black" data-selected-finish-img="assets/images/plastic_frame_black.jpg" onclick="window.location.href='product-detail.html?id=plastic-frame-gallery&finish=matte-black'">
             <div class="product-card-top">
               <span class="product-badge-pill">Popular</span>
               <button type="button" class="product-wishlist-btn" data-wishlist-id="plastic-frame-gallery" aria-label="Add to wishlist" onclick="toggleWishlist('plastic-frame-gallery', event);" title="Add to Wishlist">
@@ -716,15 +722,22 @@
               </button>
             </div>
             <div class="product-image-box">
-              <img src="assets/images/plastic_frame.jpg" alt="Plastic Photo Frame" class="product-image" loading="lazy" />
+              <img src="assets/images/plastic_frame_black.jpg" alt="Plastic Photo Frame" class="product-image" loading="lazy" />
               <div class="product-image-overlay"></div>
             </div>
             <div class="product-capsule">
               <div class="capsule-top-row">
                 <h3 class="capsule-title">
-                  <a href="product-detail.html?id=plastic-frame-gallery">Plastic Photo Frame</a>
+                  <a href="product-detail.html?id=plastic-frame-gallery&finish=matte-black">Plastic Photo Frame</a>
                 </h3>
                 <span class="capsule-price">₹450</span>
+              </div>
+              <div class="card-color-swatches" onclick="event.stopPropagation();" aria-label="Available Colors">
+                <button type="button" class="card-swatch-dot active" style="background-color: #111111;" title="Studio Matte Black" aria-label="Studio Matte Black" data-product-id="plastic-frame-gallery" data-finish-id="matte-black" data-finish-name="Studio Matte Black" data-finish-img="assets/images/plastic_frame_black.jpg" onclick="changeCatalogCardImage('plastic-frame-gallery', 'assets/images/plastic_frame_black.jpg', this, event, 'matte-black', 'Studio Matte Black');"></button>
+                <button type="button" class="card-swatch-dot" style="background-color: #1E3A8A;" title="Royal Sapphire Blue" aria-label="Royal Sapphire Blue" data-product-id="plastic-frame-gallery" data-finish-id="royal-blue" data-finish-name="Royal Sapphire Blue" data-finish-img="assets/images/plastic_frame_blue.jpg" onclick="changeCatalogCardImage('plastic-frame-gallery', 'assets/images/plastic_frame_blue.jpg', this, event, 'royal-blue', 'Royal Sapphire Blue');"></button>
+                <button type="button" class="card-swatch-dot" style="background-color: #F8FAFC;" title="Gallery Pure White" aria-label="Gallery Pure White" data-product-id="plastic-frame-gallery" data-finish-id="pure-white" data-finish-name="Gallery Pure White" data-finish-img="assets/images/plastic_frame_white.jpg" onclick="changeCatalogCardImage('plastic-frame-gallery', 'assets/images/plastic_frame_white.jpg', this, event, 'pure-white', 'Gallery Pure White');"></button>
+                <button type="button" class="card-swatch-dot" style="background-color: #5C3A21;" title="Warm Walnut Grain" aria-label="Warm Walnut Grain" data-product-id="plastic-frame-gallery" data-finish-id="warm-walnut" data-finish-name="Warm Walnut Grain" data-finish-img="assets/images/plastic_frame_walnut.jpg" onclick="changeCatalogCardImage('plastic-frame-gallery', 'assets/images/plastic_frame_walnut.jpg', this, event, 'warm-walnut', 'Warm Walnut Grain');"></button>
+                <button type="button" class="card-swatch-dot" style="background-color: #C99A3D;" title="Champagne Gold" aria-label="Champagne Gold" data-product-id="plastic-frame-gallery" data-finish-id="champagne-gold" data-finish-name="Champagne Gold" data-finish-img="assets/images/plastic_frame_gold.jpg" onclick="changeCatalogCardImage('plastic-frame-gallery', 'assets/images/plastic_frame_gold.jpg', this, event, 'champagne-gold', 'Champagne Gold');"></button>
               </div>
               <div class="capsule-bottom-row">
                 <div class="capsule-store-info">
@@ -747,7 +760,7 @@
           </article>
 
           <!-- Featured 3: Bottle Printing -->
-          <article class="product-card reveal reveal-delay-3" onclick="window.location.href='product-detail.html?id=printed-water-bottle-steel'">
+          <article class="product-card reveal reveal-delay-3" data-id="printed-water-bottle-steel" data-selected-finish-id="matte-black-bottle" data-selected-finish-name="Matte Stealth Black" data-selected-finish-img="assets/images/printed_bottle.jpg" onclick="window.location.href='product-detail.html?id=printed-water-bottle-steel&finish=matte-black-bottle'">
             <div class="product-card-top">
               <span class="product-badge-pill">Trending</span>
               <button type="button" class="product-wishlist-btn" data-wishlist-id="printed-water-bottle-steel" aria-label="Add to wishlist" onclick="toggleWishlist('printed-water-bottle-steel', event);" title="Add to Wishlist">
@@ -763,9 +776,14 @@
             <div class="product-capsule">
               <div class="capsule-top-row">
                 <h3 class="capsule-title">
-                  <a href="product-detail.html?id=printed-water-bottle-steel">Bottle Printing</a>
+                  <a href="product-detail.html?id=printed-water-bottle-steel&finish=matte-black-bottle">Bottle Printing</a>
                 </h3>
                 <span class="capsule-price">₹499</span>
+              </div>
+              <div class="card-color-swatches" onclick="event.stopPropagation();" aria-label="Available Colors">
+                <button type="button" class="card-swatch-dot active" style="background-color: #111111;" title="Matte Stealth Black" aria-label="Matte Stealth Black" data-product-id="printed-water-bottle-steel" data-finish-id="matte-black-bottle" data-finish-name="Matte Stealth Black" data-finish-img="assets/images/printed_bottle.jpg" onclick="changeCatalogCardImage('printed-water-bottle-steel', 'assets/images/printed_bottle.jpg', this, event, 'matte-black-bottle', 'Matte Stealth Black');"></button>
+                <button type="button" class="card-swatch-dot" style="background-color: #1E3A8A;" title="Midnight Navy Blue" aria-label="Midnight Navy Blue" data-product-id="printed-water-bottle-steel" data-finish-id="royal-blue-bottle" data-finish-name="Midnight Navy Blue" data-finish-img="assets/images/printed_bottle_blue.jpg" onclick="changeCatalogCardImage('printed-water-bottle-steel', 'assets/images/printed_bottle_blue.jpg', this, event, 'royal-blue-bottle', 'Midnight Navy Blue');"></button>
+                <button type="button" class="card-swatch-dot" style="background-color: #94A3B8;" title="Brushed Metallic Silver" aria-label="Brushed Metallic Silver" data-product-id="printed-water-bottle-steel" data-finish-id="brushed-silver-bottle" data-finish-name="Brushed Metallic Silver" data-finish-img="assets/images/printed_bottle.jpg" onclick="changeCatalogCardImage('printed-water-bottle-steel', 'assets/images/printed_bottle.jpg', this, event, 'brushed-silver-bottle', 'Brushed Metallic Silver');"></button>
               </div>
               <div class="capsule-bottom-row">
                 <div class="capsule-store-info">
@@ -1138,11 +1156,11 @@
   </footer>
 
   <!-- Scripts -->
-  <script src="js/products-data.js?v=unique_img_v1"></script>
-  <script src="js/main.js?v=swap_2s_v1"></script>
-  <script src="js/cart.js"></script>
-  <script src="js/wishlist.js"></script>
-  <script src="js/customer-auth.js"></script>
-  <script src="js/quote-modal.js"></script>
+  <script src="js/products-data.js?v=color_switch_v10"></script>
+  <script src="js/main.js?v=color_switch_v10"></script>
+  <script src="js/cart.js?v=color_switch_v10"></script>
+  <script src="js/wishlist.js?v=color_switch_v10"></script>
+  <script src="js/customer-auth.js?v=color_switch_v10"></script>
+  <script src="js/quote-modal.js?v=color_switch_v10"></script>
 </body>
 </html>
