@@ -135,11 +135,12 @@ function renderCatalog() {
   // Render cards in editorial full-bleed capsule format
   gridContainer.innerHTML = filtered.map(product => {
     const priceFormatted = product.price ? `₹${product.price}` : product.priceDisplay;
+    const wishActive = typeof isInWishlist === 'function' && isInWishlist(product.id);
     return `
     <article class="product-card" data-id="${product.id}" onclick="window.location.href='product-detail.html?id=${product.id}'">
       <div class="product-card-top">
         ${product.badge ? `<span class="product-badge-pill">${product.badge}</span>` : '<span></span>'}
-        <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
+        <button type="button" class="product-wishlist-btn ${wishActive ? 'active' : ''}" data-wishlist-id="${product.id}" aria-label="Add to wishlist" onclick="toggleWishlist('${product.id}', event);" title="Add to Wishlist">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
@@ -167,7 +168,7 @@ function renderCatalog() {
             </svg>
             <span>Rajesh Framing</span>
           </div>
-          <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="${product.id}" onclick="event.stopPropagation();" title="Add to Cart">
+          <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="${product.id}" onclick="quickAddToCart('${product.id}', event);" title="Add to Cart">
             <span>Add</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="12" y1="5" x2="12" y2="19"></line>

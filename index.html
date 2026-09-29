@@ -56,6 +56,13 @@
 
         <!-- Right Actions -->
         <div class="navbar-actions">
+          <button type="button" class="navbar-wishlist-btn" id="navbarWishlistBtn" aria-label="View wishlist" title="Wishlist">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            <span class="wishlist-badge" id="navbarWishlistBadge">0</span>
+          </button>
+
           <button type="button" class="navbar-cart-btn" id="navbarCartBtn" aria-label="View shopping cart" title="Shopping Cart">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="9" cy="21" r="1"></circle>
@@ -409,41 +416,36 @@
             
             <!-- Slide 1: Glass Photo Frame -->
             <div class="slider-slide">
-              <article class="product-card" onclick="window.location.href='product-detail.html?id=glass-frame-classic'">
-                <div class="product-card-top">
-                  <span class="product-badge-pill">Bestseller</span>
-                  <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                  </button>
+              <article class="product-card bento-card" onclick="window.location.href='product-detail.html?id=glass-frame-classic'">
+                <!-- Top Left Wishlist Button -->
+                <button type="button" class="product-wishlist-btn bento-wishlist-btn" data-wishlist-id="glass-frame-classic" aria-label="Add to wishlist" onclick="toggleWishlist('glass-frame-classic', event);" title="Add to Wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </button>
+
+                <!-- Top Right Price Notch Cutout -->
+                <div class="bento-price-notch">
+                  <span class="bento-price-val">₹650</span>
                 </div>
-                <div class="product-image-box">
-                  <img src="assets/images/glass_frame.jpg" alt="Glass Photo Frame" class="product-image" loading="lazy" />
-                  <div class="product-image-overlay"></div>
+
+                <!-- Image Container -->
+                <div class="bento-image-container" style="background: #E1E8DC;">
+                  <img src="assets/images/glass_frame.jpg" alt="Glass Photo Frame" class="bento-product-img" loading="lazy" />
                 </div>
-                <div class="product-capsule">
-                  <div class="capsule-top-row">
-                    <h3 class="capsule-title">
-                      <a href="product-detail.html?id=glass-frame-classic">Glass Photo Frame</a>
-                    </h3>
-                    <span class="capsule-price">₹650</span>
-                  </div>
-                  <div class="capsule-bottom-row">
-                    <div class="capsule-store-info">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="2" y1="12" x2="22" y2="12"></line>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                      </svg>
-                      <span>Rajesh Framing</span>
-                    </div>
-                    <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="glass-frame-classic" onclick="event.stopPropagation();" title="Add to Cart">
-                      <span>Add</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
+
+                <!-- Bottom Bento Content -->
+                <div class="bento-content">
+                  <h3 class="bento-title">
+                    <a href="product-detail.html?id=glass-frame-classic">Glass Photo Frame</a>
+                  </h3>
+                  <p class="bento-desc">Elegant glass frames designed to preserve memories with beveled edges.</p>
+                  <div class="bento-actions">
+                    <button type="button" class="bento-add-btn" data-add-to-cart data-product-id="glass-frame-classic" onclick="quickAddToCart('glass-frame-classic', event);" title="Add to Cart">
+                      <span>Add +</span>
+                    </button>
+                    <button type="button" class="bento-buynow-btn" onclick="event.stopPropagation(); buyNowFromCard('glass-frame-classic', event);" title="Buy Now">
+                      <span>Buy Now ↗</span>
                     </button>
                   </div>
                 </div>
@@ -452,41 +454,36 @@
 
             <!-- Slide 2: Plastic Photo Frame -->
             <div class="slider-slide">
-              <article class="product-card" onclick="window.location.href='product-detail.html?id=plastic-frame-gallery'">
-                <div class="product-card-top">
-                  <span class="product-badge-pill">Popular</span>
-                  <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                  </button>
+              <article class="product-card bento-card" onclick="window.location.href='product-detail.html?id=plastic-frame-gallery'">
+                <!-- Top Left Wishlist Button -->
+                <button type="button" class="product-wishlist-btn bento-wishlist-btn" data-wishlist-id="plastic-frame-gallery" aria-label="Add to wishlist" onclick="toggleWishlist('plastic-frame-gallery', event);" title="Add to Wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </button>
+
+                <!-- Top Right Price Notch Cutout -->
+                <div class="bento-price-notch">
+                  <span class="bento-price-val">₹450</span>
                 </div>
-                <div class="product-image-box">
-                  <img src="assets/images/plastic_frame.jpg" alt="Plastic Photo Frame" class="product-image" loading="lazy" />
-                  <div class="product-image-overlay"></div>
+
+                <!-- Image Container -->
+                <div class="bento-image-container" style="background: #EAE6DF;">
+                  <img src="assets/images/plastic_frame.jpg" alt="Plastic Photo Frame" class="bento-product-img" loading="lazy" />
                 </div>
-                <div class="product-capsule">
-                  <div class="capsule-top-row">
-                    <h3 class="capsule-title">
-                      <a href="product-detail.html?id=plastic-frame-gallery">Plastic Photo Frame</a>
-                    </h3>
-                    <span class="capsule-price">₹450</span>
-                  </div>
-                  <div class="capsule-bottom-row">
-                    <div class="capsule-store-info">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="2" y1="12" x2="22" y2="12"></line>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                      </svg>
-                      <span>Rajesh Framing</span>
-                    </div>
-                    <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="plastic-frame-gallery" onclick="event.stopPropagation();" title="Add to Cart">
-                      <span>Add</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
+
+                <!-- Bottom Bento Content -->
+                <div class="bento-content">
+                  <h3 class="bento-title">
+                    <a href="product-detail.html?id=plastic-frame-gallery">Plastic Photo Frame</a>
+                  </h3>
+                  <p class="bento-desc">Durable, lightweight customized polymer frames in timeless matte finishes.</p>
+                  <div class="bento-actions">
+                    <button type="button" class="bento-add-btn" data-add-to-cart data-product-id="plastic-frame-gallery" onclick="quickAddToCart('plastic-frame-gallery', event);" title="Add to Cart">
+                      <span>Add +</span>
+                    </button>
+                    <button type="button" class="bento-buynow-btn" onclick="event.stopPropagation(); buyNowFromCard('plastic-frame-gallery', event);" title="Buy Now">
+                      <span>Buy Now ↗</span>
                     </button>
                   </div>
                 </div>
@@ -495,41 +492,36 @@
 
             <!-- Slide 3: Bottle Printing -->
             <div class="slider-slide">
-              <article class="product-card" onclick="window.location.href='product-detail.html?id=printed-water-bottle-steel'">
-                <div class="product-card-top">
-                  <span class="product-badge-pill">Trending</span>
-                  <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                  </button>
+              <article class="product-card bento-card" onclick="window.location.href='product-detail.html?id=printed-water-bottle-steel'">
+                <!-- Top Left Wishlist Button -->
+                <button type="button" class="product-wishlist-btn bento-wishlist-btn" data-wishlist-id="printed-water-bottle-steel" aria-label="Add to wishlist" onclick="toggleWishlist('printed-water-bottle-steel', event);" title="Add to Wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </button>
+
+                <!-- Top Right Price Notch Cutout -->
+                <div class="bento-price-notch">
+                  <span class="bento-price-val">₹499</span>
                 </div>
-                <div class="product-image-box">
-                  <img src="assets/images/printed_bottle.jpg" alt="Bottle Printing" class="product-image" loading="lazy" />
-                  <div class="product-image-overlay"></div>
+
+                <!-- Image Container -->
+                <div class="bento-image-container" style="background: #DCE4E8;">
+                  <img src="assets/images/printed_bottle.jpg" alt="Bottle Printing" class="bento-product-img" loading="lazy" />
                 </div>
-                <div class="product-capsule">
-                  <div class="capsule-top-row">
-                    <h3 class="capsule-title">
-                      <a href="product-detail.html?id=printed-water-bottle-steel">Bottle Printing</a>
-                    </h3>
-                    <span class="capsule-price">₹499</span>
-                  </div>
-                  <div class="capsule-bottom-row">
-                    <div class="capsule-store-info">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="2" y1="12" x2="22" y2="12"></line>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                      </svg>
-                      <span>Rajesh Framing</span>
-                    </div>
-                    <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="printed-water-bottle-steel" onclick="event.stopPropagation();" title="Add to Cart">
-                      <span>Add</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
+
+                <!-- Bottom Bento Content -->
+                <div class="bento-content">
+                  <h3 class="bento-title">
+                    <a href="product-detail.html?id=printed-water-bottle-steel">Bottle Printing</a>
+                  </h3>
+                  <p class="bento-desc">Personalized printing on insulated stainless steel bottles for branding & gifts.</p>
+                  <div class="bento-actions">
+                    <button type="button" class="bento-add-btn" data-add-to-cart data-product-id="printed-water-bottle-steel" onclick="quickAddToCart('printed-water-bottle-steel', event);" title="Add to Cart">
+                      <span>Add +</span>
+                    </button>
+                    <button type="button" class="bento-buynow-btn" onclick="event.stopPropagation(); buyNowFromCard('printed-water-bottle-steel', event);" title="Buy Now">
+                      <span>Buy Now ↗</span>
                     </button>
                   </div>
                 </div>
@@ -538,41 +530,36 @@
 
             <!-- Slide 4: Mug Printing -->
             <div class="slider-slide">
-              <article class="product-card" onclick="window.location.href='product-detail.html?id=customized-coffee-mug'">
-                <div class="product-card-top">
-                  <span class="product-badge-pill">Bestseller</span>
-                  <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                  </button>
+              <article class="product-card bento-card" onclick="window.location.href='product-detail.html?id=customized-coffee-mug'">
+                <!-- Top Left Wishlist Button -->
+                <button type="button" class="product-wishlist-btn bento-wishlist-btn" data-wishlist-id="customized-coffee-mug" aria-label="Add to wishlist" onclick="toggleWishlist('customized-coffee-mug', event);" title="Add to Wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </button>
+
+                <!-- Top Right Price Notch Cutout -->
+                <div class="bento-price-notch">
+                  <span class="bento-price-val">₹249</span>
                 </div>
-                <div class="product-image-box">
-                  <img src="assets/images/custom_mug.jpg" alt="Mug Printing" class="product-image" loading="lazy" />
-                  <div class="product-image-overlay"></div>
+
+                <!-- Image Container -->
+                <div class="bento-image-container" style="background: #E8E2DD;">
+                  <img src="assets/images/custom_mug.jpg" alt="Mug Printing" class="bento-product-img" loading="lazy" />
                 </div>
-                <div class="product-capsule">
-                  <div class="capsule-top-row">
-                    <h3 class="capsule-title">
-                      <a href="product-detail.html?id=customized-coffee-mug">Mug Printing</a>
-                    </h3>
-                    <span class="capsule-price">₹249</span>
-                  </div>
-                  <div class="capsule-bottom-row">
-                    <div class="capsule-store-info">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="2" y1="12" x2="22" y2="12"></line>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                      </svg>
-                      <span>Rajesh Framing</span>
-                    </div>
-                    <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="customized-coffee-mug" onclick="event.stopPropagation();" title="Add to Cart">
-                      <span>Add</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
+
+                <!-- Bottom Bento Content -->
+                <div class="bento-content">
+                  <h3 class="bento-title">
+                    <a href="product-detail.html?id=customized-coffee-mug">Mug Printing</a>
+                  </h3>
+                  <p class="bento-desc">Customized ceramic mugs with photos & logos. Microwave safe high-gloss sublimation.</p>
+                  <div class="bento-actions">
+                    <button type="button" class="bento-add-btn" data-add-to-cart data-product-id="customized-coffee-mug" onclick="quickAddToCart('customized-coffee-mug', event);" title="Add to Cart">
+                      <span>Add +</span>
+                    </button>
+                    <button type="button" class="bento-buynow-btn" onclick="event.stopPropagation(); buyNowFromCard('customized-coffee-mug', event);" title="Buy Now">
+                      <span>Buy Now ↗</span>
                     </button>
                   </div>
                 </div>
@@ -581,41 +568,36 @@
 
             <!-- Slide 5: File Printing -->
             <div class="slider-slide">
-              <article class="product-card" onclick="window.location.href='product-detail.html?id=custom-file-printing'">
-                <div class="product-card-top">
-                  <span class="product-badge-pill">Office Essential</span>
-                  <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                  </button>
+              <article class="product-card bento-card" onclick="window.location.href='product-detail.html?id=custom-file-printing'">
+                <!-- Top Left Wishlist Button -->
+                <button type="button" class="product-wishlist-btn bento-wishlist-btn" data-wishlist-id="custom-file-printing" aria-label="Add to wishlist" onclick="toggleWishlist('custom-file-printing', event);" title="Add to Wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </button>
+
+                <!-- Top Right Price Notch Cutout -->
+                <div class="bento-price-notch">
+                  <span class="bento-price-val">₹150</span>
                 </div>
-                <div class="product-image-box">
-                  <img src="assets/images/printed_file.jpg" alt="File Printing" class="product-image" loading="lazy" />
-                  <div class="product-image-overlay"></div>
+
+                <!-- Image Container -->
+                <div class="bento-image-container" style="background: #DCE0E8;">
+                  <img src="assets/images/printed_file.jpg" alt="File Printing" class="bento-product-img" loading="lazy" />
                 </div>
-                <div class="product-capsule">
-                  <div class="capsule-top-row">
-                    <h3 class="capsule-title">
-                      <a href="product-detail.html?id=custom-file-printing">File Printing</a>
-                    </h3>
-                    <span class="capsule-price">₹150</span>
-                  </div>
-                  <div class="capsule-bottom-row">
-                    <div class="capsule-store-info">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="2" y1="12" x2="22" y2="12"></line>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                      </svg>
-                      <span>Rajesh Framing</span>
-                    </div>
-                    <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="custom-file-printing" onclick="event.stopPropagation();" title="Add to Cart">
-                      <span>Add</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
+
+                <!-- Bottom Bento Content -->
+                <div class="bento-content">
+                  <h3 class="bento-title">
+                    <a href="product-detail.html?id=custom-file-printing">File Printing</a>
+                  </h3>
+                  <p class="bento-desc">Custom printed office document files and clip files with branded graphics.</p>
+                  <div class="bento-actions">
+                    <button type="button" class="bento-add-btn" data-add-to-cart data-product-id="custom-file-printing" onclick="quickAddToCart('custom-file-printing', event);" title="Add to Cart">
+                      <span>Add +</span>
+                    </button>
+                    <button type="button" class="bento-buynow-btn" onclick="event.stopPropagation(); buyNowFromCard('custom-file-printing', event);" title="Buy Now">
+                      <span>Buy Now ↗</span>
                     </button>
                   </div>
                 </div>
@@ -624,41 +606,36 @@
 
             <!-- Slide 6: Folder Printing -->
             <div class="slider-slide">
-              <article class="product-card" onclick="window.location.href='product-detail.html?id=printed-office-folder-executive'">
-                <div class="product-card-top">
-                  <span class="product-badge-pill">Corporate Choice</span>
-                  <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                  </button>
+              <article class="product-card bento-card" onclick="window.location.href='product-detail.html?id=printed-office-folder-executive'">
+                <!-- Top Left Wishlist Button -->
+                <button type="button" class="product-wishlist-btn bento-wishlist-btn" data-wishlist-id="printed-office-folder-executive" aria-label="Add to wishlist" onclick="toggleWishlist('printed-office-folder-executive', event);" title="Add to Wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </button>
+
+                <!-- Top Right Price Notch Cutout -->
+                <div class="bento-price-notch">
+                  <span class="bento-price-val">₹180</span>
                 </div>
-                <div class="product-image-box">
-                  <img src="assets/images/printed_folder.jpg" alt="Folder Printing" class="product-image" loading="lazy" />
-                  <div class="product-image-overlay"></div>
+
+                <!-- Image Container -->
+                <div class="bento-image-container" style="background: #DEE6E0;">
+                  <img src="assets/images/printed_folder.jpg" alt="Folder Printing" class="bento-product-img" loading="lazy" />
                 </div>
-                <div class="product-capsule">
-                  <div class="capsule-top-row">
-                    <h3 class="capsule-title">
-                      <a href="product-detail.html?id=printed-office-folder-executive">Folder Printing</a>
-                    </h3>
-                    <span class="capsule-price">₹180</span>
-                  </div>
-                  <div class="capsule-bottom-row">
-                    <div class="capsule-store-info">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="2" y1="12" x2="22" y2="12"></line>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                      </svg>
-                      <span>Rajesh Framing</span>
-                    </div>
-                    <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="printed-office-folder-executive" onclick="event.stopPropagation();" title="Add to Cart">
-                      <span>Add</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
+
+                <!-- Bottom Bento Content -->
+                <div class="bento-content">
+                  <h3 class="bento-title">
+                    <a href="product-detail.html?id=printed-office-folder-executive">Folder Printing</a>
+                  </h3>
+                  <p class="bento-desc">Executive presentation folders with metallic gold foil stamping & card pockets.</p>
+                  <div class="bento-actions">
+                    <button type="button" class="bento-add-btn" data-add-to-cart data-product-id="printed-office-folder-executive" onclick="quickAddToCart('printed-office-folder-executive', event);" title="Add to Cart">
+                      <span>Add +</span>
+                    </button>
+                    <button type="button" class="bento-buynow-btn" onclick="event.stopPropagation(); buyNowFromCard('printed-office-folder-executive', event);" title="Buy Now">
+                      <span>Buy Now ↗</span>
                     </button>
                   </div>
                 </div>
@@ -667,41 +644,36 @@
 
             <!-- Slide 7: Custom Printing -->
             <div class="slider-slide">
-              <article class="product-card" onclick="window.location.href='product-detail.html?id=custom-fine-art-canvas'">
-                <div class="product-card-top">
-                  <span class="product-badge-pill">Artisanal</span>
-                  <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                  </button>
+              <article class="product-card bento-card" onclick="window.location.href='product-detail.html?id=custom-fine-art-canvas'">
+                <!-- Top Left Wishlist Button -->
+                <button type="button" class="product-wishlist-btn bento-wishlist-btn" data-wishlist-id="custom-fine-art-canvas" aria-label="Add to wishlist" onclick="toggleWishlist('custom-fine-art-canvas', event);" title="Add to Wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </button>
+
+                <!-- Top Right Price Notch Cutout -->
+                <div class="bento-price-notch">
+                  <span class="bento-price-val">₹850</span>
                 </div>
-                <div class="product-image-box">
-                  <img src="assets/images/custom_canvas.jpg" alt="Custom Printing" class="product-image" loading="lazy" />
-                  <div class="product-image-overlay"></div>
+
+                <!-- Image Container -->
+                <div class="bento-image-container" style="background: #E6DFE8;">
+                  <img src="assets/images/custom_canvas.jpg" alt="Custom Printing" class="bento-product-img" loading="lazy" />
                 </div>
-                <div class="product-capsule">
-                  <div class="capsule-top-row">
-                    <h3 class="capsule-title">
-                      <a href="product-detail.html?id=custom-fine-art-canvas">Custom Printing</a>
-                    </h3>
-                    <span class="capsule-price">₹850</span>
-                  </div>
-                  <div class="capsule-bottom-row">
-                    <div class="capsule-store-info">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="2" y1="12" x2="22" y2="12"></line>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                      </svg>
-                      <span>Rajesh Framing</span>
-                    </div>
-                    <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="custom-fine-art-canvas" onclick="event.stopPropagation();" title="Add to Cart">
-                      <span>Add</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
+
+                <!-- Bottom Bento Content -->
+                <div class="bento-content">
+                  <h3 class="bento-title">
+                    <a href="product-detail.html?id=custom-fine-art-canvas">Custom Printing</a>
+                  </h3>
+                  <p class="bento-desc">Bespoke fine art canvas gallery wraps, acrylic prints & personalized gift sets.</p>
+                  <div class="bento-actions">
+                    <button type="button" class="bento-add-btn" data-add-to-cart data-product-id="custom-fine-art-canvas" onclick="quickAddToCart('custom-fine-art-canvas', event);" title="Add to Cart">
+                      <span>Add +</span>
+                    </button>
+                    <button type="button" class="bento-buynow-btn" onclick="event.stopPropagation(); buyNowFromCard('custom-fine-art-canvas', event);" title="Buy Now">
+                      <span>Buy Now ↗</span>
                     </button>
                   </div>
                 </div>
@@ -738,7 +710,7 @@
           <article class="product-card reveal reveal-delay-1" onclick="window.location.href='product-detail.html?id=glass-frame-classic'">
             <div class="product-card-top">
               <span class="product-badge-pill">Bestseller</span>
-              <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
+              <button type="button" class="product-wishlist-btn" data-wishlist-id="glass-frame-classic" aria-label="Add to wishlist" onclick="toggleWishlist('glass-frame-classic', event);" title="Add to Wishlist">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                 </svg>
@@ -764,7 +736,7 @@
                   </svg>
                   <span>Rajesh Framing</span>
                 </div>
-                <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="glass-frame-classic" onclick="event.stopPropagation();" title="Add to Cart">
+                <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="glass-frame-classic" onclick="quickAddToCart('glass-frame-classic', event);" title="Add to Cart">
                   <span>Add</span>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -779,7 +751,7 @@
           <article class="product-card reveal reveal-delay-2" onclick="window.location.href='product-detail.html?id=plastic-frame-gallery'">
             <div class="product-card-top">
               <span class="product-badge-pill">Popular</span>
-              <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
+              <button type="button" class="product-wishlist-btn" data-wishlist-id="plastic-frame-gallery" aria-label="Add to wishlist" onclick="toggleWishlist('plastic-frame-gallery', event);" title="Add to Wishlist">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                 </svg>
@@ -805,7 +777,7 @@
                   </svg>
                   <span>Rajesh Framing</span>
                 </div>
-                <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="plastic-frame-gallery" onclick="event.stopPropagation();" title="Add to Cart">
+                <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="plastic-frame-gallery" onclick="quickAddToCart('plastic-frame-gallery', event);" title="Add to Cart">
                   <span>Add</span>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -820,7 +792,7 @@
           <article class="product-card reveal reveal-delay-3" onclick="window.location.href='product-detail.html?id=printed-water-bottle-steel'">
             <div class="product-card-top">
               <span class="product-badge-pill">Trending</span>
-              <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
+              <button type="button" class="product-wishlist-btn" data-wishlist-id="printed-water-bottle-steel" aria-label="Add to wishlist" onclick="toggleWishlist('printed-water-bottle-steel', event);" title="Add to Wishlist">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                 </svg>
@@ -846,7 +818,7 @@
                   </svg>
                   <span>Rajesh Framing</span>
                 </div>
-                <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="printed-water-bottle-steel" onclick="event.stopPropagation();" title="Add to Cart">
+                <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="printed-water-bottle-steel" onclick="quickAddToCart('printed-water-bottle-steel', event);" title="Add to Cart">
                   <span>Add</span>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -1212,6 +1184,7 @@
   <script src="js/products-data.js?v=unique_img_v1"></script>
   <script src="js/main.js?v=swap_2s_v1"></script>
   <script src="js/cart.js"></script>
+  <script src="js/wishlist.js"></script>
   <script src="js/customer-auth.js"></script>
   <script src="js/quote-modal.js"></script>
 </body>

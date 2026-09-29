@@ -2591,6 +2591,794 @@
   color: #DC2626;
 }
 
+/* ==========================================================================
+   BENTO PRODUCT CARD STYLES (COMPACT, MINIMAL & STRICTLY UNIFORM)
+   ========================================================================== */
+.product-card.bento-card {
+  position: relative !important;
+  border-radius: 18px !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 8px !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  height: 380px !important;
+  width: 100% !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
+  overflow: hidden !important;
+}
 
+.product-card.bento-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(201, 154, 61, 0.4) !important;
+}
 
+/* Image Container with Inner Curve & Notch Cutout */
+.bento-image-container {
+  position: relative !important;
+  width: 100% !important;
+  flex: 1 1 auto !important;
+  min-height: 180px !important;
+  height: calc(100% - 122px) !important;
+  border-radius: 13px !important;
+  overflow: hidden !important;
+  background: #DCE3D6 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.bento-product-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+.product-card.bento-card:hover .bento-product-img {
+  transform: scale(1.04) !important;
+}
+
+/* Top-Right Price Notch Cutout */
+.bento-price-notch {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  background: #FFFFFF !important;
+  padding: 4px 12px 5px 12px !important;
+  border-radius: 0 13px 0 12px !important;
+  z-index: 10 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+.bento-price-notch::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -10px !important;
+  width: 10px !important;
+  height: 10px !important;
+  background: radial-gradient(circle at 0 0, transparent 10px, #FFFFFF 10.5px) !important;
+}
+
+.bento-price-notch::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: -10px !important;
+  right: 0 !important;
+  width: 10px !important;
+  height: 10px !important;
+  background: radial-gradient(circle at 0 0, transparent 10px, #FFFFFF 10.5px) !important;
+}
+
+.bento-price-val {
+  font-family: var(--font-heading) !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  color: #111111 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.5px !important;
+}
+
+/* Bottom Content Area: Name, 2-line Description, Full Width Buttons */
+.bento-content {
+  width: 100% !important;
+  padding: 8px 2px 2px 2px !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.bento-title {
+  font-family: var(--font-heading) !important;
+  font-size: 0.98rem !important;
+  font-weight: 700 !important;
+  color: #121417 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  letter-spacing: -0.3px !important;
+  line-height: 1.25 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  width: 100% !important;
+  text-align: left !important;
+  display: block !important;
+}
+
+.bento-title a {
+  color: #121417 !important;
+  text-decoration: none !important;
+  transition: color 0.2s ease !important;
+}
+
+.bento-title a:hover {
+  color: var(--accent-gold, #C99A3D) !important;
+}
+
+/* 2-line Description directly below title */
+.bento-desc {
+  font-family: var(--font-body) !important;
+  font-size: 0.77rem !important;
+  line-height: 1.32 !important;
+  color: #64748B !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  height: 2.65em !important;
+  text-align: left !important;
+}
+
+/* Full Width Action Buttons (Add + Buy Now spanning 100% of card) */
+.bento-actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 6px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.bento-add-btn {
+  width: 100% !important;
+  height: 34px !important;
+  background: #111111 !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 9px !important;
+  padding: 0 !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+  font-family: var(--font-body) !important;
+  box-sizing: border-box !important;
+}
+
+.bento-add-btn:hover {
+  background: #2D3325 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+.bento-buynow-btn {
+  width: 100% !important;
+  height: 34px !important;
+  background: linear-gradient(135deg, #C99A3D 0%, #A87A24 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 9px !important;
+  padding: 0 !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+  font-family: var(--font-body) !important;
+  box-sizing: border-box !important;
+}
+
+.bento-buynow-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(201, 154, 61, 0.35) !important;
+}
+
+/* Center / Active Card - 100% Crystal Sharp, Zero Blur */
+.slider-slide.is-active {
+  z-index: 50 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  transform: translate3d(0, 0, 0) scale(1) !important;
+  -webkit-transform: translate3d(0, 0, 0) scale(1) !important;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.slider-slide.is-active .product-card.bento-card {
+  box-shadow: 0 18px 42px -8px rgba(0, 0, 0, 0.18), 0 0 0 1.5px rgba(201, 154, 61, 0.6) !important;
+  border-color: rgba(201, 154, 61, 0.8) !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+.slider-slide.is-active img,
+.slider-slide.is-active .bento-product-img {
+  filter: none !important;
+  -webkit-filter: none !important;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transform: none !important;
+}
+
+/* Pagination Dots */
+.slider-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  position: relative;
+  z-index: 5;
+}
+
+.slider-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full, 9999px);
+  background: rgba(17, 17, 17, 0.18);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slider-dot.active {
+  width: 24px;
+  background: var(--accent-gold, #C99A3D);
+  box-shadow: 0 2px 8px rgba(201, 154, 61, 0.4);
+}
+
+@media (max-width: 992px) {
+  .slider-slide {
+    width: 280px;
+    height: 365px;
+    margin-top: -182.5px;
+    margin-left: -140px;
+  }
+  .bento-image-container {
+    height: 260px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .product-slider-section {
+    padding: 40px 0 50px;
+  }
+  .slider-viewport {
+    height: 380px;
+    min-height: 380px;
+    perspective: 900px;
+    -webkit-perspective: 900px;
+  }
+  .slider-slide {
+    width: 260px;
+    height: 350px;
+    margin-top: -175px;
+    margin-left: -130px;
+  }
+  .bento-image-container {
+    height: 245px !important;
+  }
+  .bento-title {
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+  }
+  .bento-actions {
+    gap: 6px !important;
+  }
+  .bento-add-btn, .bento-buynow-btn {
+    padding: 7px 2px;
+    font-size: 0.76rem;
+  }
+}
+
+/* ==========================================================================
+   WISHLIST SYSTEM STYLES (NAVBAR BUTTON, DRAWER, CARDS & NOTIFICATION)
+   ========================================================================== */
+.navbar-wishlist-btn {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary-black, #111111);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.navbar-wishlist-btn:hover {
+  background: rgba(201, 154, 61, 0.12);
+  color: #E11D48;
+}
+
+.navbar-wishlist-btn svg {
+  transition: transform 0.2s ease, fill 0.2s ease;
+}
+
+.navbar-wishlist-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.wishlist-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #E11D48;
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 2px 6px rgba(225, 29, 72, 0.4);
+  border: 2px solid #FFFFFF;
+}
+
+/* Wishlist Drawer (Slide-out Overlay) */
+.wishlist-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 16, 20, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.wishlist-drawer-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.wishlist-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 440px;
+  background: #FFFFFF;
+  z-index: 10000;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wishlist-drawer-overlay.open .wishlist-drawer {
+  transform: translateX(0);
+}
+
+.wishlist-drawer-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #F0ECE4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FAF8F5;
+}
+
+.wishlist-drawer-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wishlist-drawer-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--primary-black, #111111);
+  margin: 0;
+}
+
+.wishlist-count-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  background: #FFE4E6;
+  color: #E11D48;
+}
+
+.wishlist-drawer-close {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  line-height: 1;
+  color: var(--text-muted, #71717A);
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.15s ease;
+}
+
+.wishlist-drawer-close:hover {
+  color: var(--primary-black, #111111);
+}
+
+.wishlist-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Wishlist Item */
+.wishlist-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  background: #FAF8F5;
+  border: 1px solid #EFEAE1;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.wishlist-item:hover {
+  border-color: rgba(201, 154, 61, 0.4);
+  background: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.wishlist-item-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #E8E2D5;
+  flex-shrink: 0;
+}
+
+.wishlist-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.wishlist-item-title {
+  font-family: var(--font-heading);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111111;
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wishlist-item-price {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--accent-gold, #C99A3D);
+  margin-bottom: 8px;
+}
+
+.wishlist-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-wishlist-cart {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #111111;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-wishlist-cart:hover {
+  background: var(--accent-gold, #C99A3D);
+}
+
+.btn-wishlist-remove {
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-wishlist-remove:hover {
+  color: #DC2626;
+  background: #FEE2E2;
+}
+
+/* Wishlist Drawer Footer */
+.wishlist-drawer-footer {
+  padding: 20px 24px;
+  background: #FAF8F5;
+  border-top: 1px solid #F0ECE4;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-wishlist-move-all {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #C99A3D 0%, #A87A24 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(201, 154, 61, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-wishlist-move-all:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(201, 154, 61, 0.35);
+}
+
+.btn-wishlist-continue {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #52525B);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  padding: 6px;
+}
+
+.btn-wishlist-continue:hover {
+  color: var(--primary-black, #111111);
+}
+
+/* Empty State */
+.wishlist-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.wishlist-empty-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: #FAF8F5;
+  border: 1px dashed #E5E0D5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.wishlist-empty-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111111;
+  margin-bottom: 8px;
+}
+
+.wishlist-empty-text {
+  font-size: 0.88rem;
+  color: var(--text-secondary, #6B7280);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+/* Floating Wishlist Toast */
+.wishlist-toast {
+  position: fixed;
+  bottom: 84px;
+  right: 24px;
+  background: #0F1014;
+  color: #FFFFFF;
+  border: 1px solid #333333;
+  border-radius: 10px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  z-index: 11000;
+  transform: translateY(100px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.wishlist-toast.show {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.wishlist-toast-btn {
+  background: #E11D48;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  pointer-events: auto;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.wishlist-toast-btn:hover {
+  background: #BE123C;
+  transform: translateY(-1px);
+}
+
+/* Details Page Wishlist Action Button */
+.btn-detail-wishlist {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #FFFFFF;
+  border: 1.5px solid var(--border-light, #E5E0D5);
+  color: var(--primary-black, #111111);
+  border-radius: var(--radius-md, 12px);
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-detail-wishlist:hover {
+  border-color: #E11D48;
+  color: #E11D48;
+  background: #FFF1F2;
+}
+
+.btn-detail-wishlist.active {
+  border-color: #FECDD3;
+  background: #FFF1F2;
+  color: #E11D48;
+}
+
+.btn-detail-wishlist.active svg {
+  fill: #E11D48;
+}
+
+/* Heart Pop Keyframes */
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+.heart-pop {
+  animation: heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Card Wishlist Buttons (Catalog & Bento) */
+.product-card-top {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.product-card-top > * {
+  pointer-events: auto;
+}
+
+.product-wishlist-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #71717A;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+  margin-left: auto;
+}
+
+.product-wishlist-btn:hover {
+  background: #FFFFFF;
+  color: #E11D48;
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(225, 29, 72, 0.25);
+}
+
+.product-wishlist-btn.active {
+  background: #FFF1F2;
+  color: #E11D48;
+  border-color: #FECDD3;
+}
+
+.product-wishlist-btn.active svg {
+  fill: #E11D48;
+}
+
+.bento-wishlist-btn {
+  position: absolute !important;
+  top: 12px !important;
+  left: 12px !important;
+  right: auto !important;
+  z-index: 15 !important;
+  margin-left: 0 !important;
+  width: 34px !important;
+  height: 34px !important;
+}
 

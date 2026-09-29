@@ -112,47 +112,38 @@ function initBackToTop() {
 }
 
 /* ==========================================================================
-   PRODUCT SHOWCASE SLIDER / CAROUSEL CONTROLLER
-   Smooth transitions, 3 desktop / 2 tablet / 1 mobile, touch swipe, auto-slide
+   3D COVERFLOW & FAN-OUT PRODUCT SHOWCASE CONTROLLER
+   Curved 3D perspective fan formation, continuous 3s infinite loop, touch swipe
    ========================================================================== */
 function initProductSlider() {
   const slider = document.querySelector('.product-slider-section');
   if (!slider) return;
 
   const track = slider.querySelector('.slider-track');
-  const slides = slider.querySelectorAll('.slider-slide');
+  const slides = Array.from(slider.querySelectorAll('.slider-slide'));
   const prevBtn = slider.querySelector('.slider-prev');
   const nextBtn = slider.querySelector('.slider-next');
   const dotsContainer = slider.querySelector('.slider-dots');
 
   if (!track || !slides.length) return;
 
-  let currentIndex = 0;
+  // Start with index 3 (Mug Printing - ₹249) in center, matching user design
+  let currentIndex = 3;
   let autoSlideTimer = null;
-  const autoSlideInterval = 2000; // 2 seconds auto-swap to the right
+  const autoSlideInterval = 3000; // 3 seconds loop interval
   const totalSlides = slides.length;
-
-  function getItemsPerView() {
-    if (window.innerWidth <= 640) return 1;
-    if (window.innerWidth <= 992) return 2;
-    return 3;
-  }
-
-  function getMaxIndex() {
-    return Math.max(0, totalSlides - getItemsPerView());
-  }
 
   // Create pagination dots
   function renderDots() {
     if (!dotsContainer) return;
     dotsContainer.innerHTML = '';
-    const maxIdx = getMaxIndex();
 
-    for (let i = 0; i <= maxIdx; i++) {
+    for (let i = 0; i < totalSlides; i++) {
       const dot = document.createElement('button');
       dot.className = `slider-dot ${i === currentIndex ? 'active' : ''}`;
-      dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
-      dot.addEventListener('click', () => {
+      dot.setAttribute('aria-label', `Go to product ${i + 1}`);
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
         goToSlide(i);
         restartAutoSlide();
       });
@@ -160,74 +151,143 @@ function initProductSlider() {
     }
   }
 
-  function updateSliderPosition() {
-    const itemsPerView = getItemsPerView();
-    const maxIdx = getMaxIndex();
-    if (currentIndex > maxIdx) currentIndex = maxIdx;
+  // Calculate 3D Coverflow transforms for all slides
+  function update3DCoverflow() {
+    const isMobile = window.innerWidth <= 640;
+    const isTablet = window.innerWidth <= 992;
 
-    const firstSlide = slides[0];
-    if (!firstSlide) return;
+    slides.forEach((slide, i) => {
+      // Shortest circular offset from current active slide
+      let offset = (i - currentIndex) % totalSlides;
+      if (offset > totalSlides / 2) offset -= totalSlides;
+      if (offset < -totalSlides / 2) offset += totalSlides;
 
-    // Calculate gap dynamically (24px)
-    const slideWidth = firstSlide.offsetWidth;
-    const gap = 24;
-    const offset = currentIndex * (slideWidth + gap);
+      slide.classList.toggle('is-active', offset === 0);
 
-    track.style.transform = `translateX(-${offset}px)`;
+      // Card click handling: click side card to center it
+      slide.onclick = (e) => {
+        // If clicking inside cart buttons or buynow, let them handle it
+        if (e.target.closest('[data-add-to-cart]') || e.target.closest('.bento-add-btn') || e.target.closest('.bento-buynow-btn') || e.target.closest('.product-wishlist-btn')) {
+          return;
+        }
+        if (offset !== 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          goToSlide(i);
+          restartAutoSlide();
+        }
+      };
 
-    // Update dots
+      let transform = '';
+      let opacity = 1;
+      let zIndex = 1;
+      let pointerEvents = 'auto';
+
+      if (offset === 0) {
+        // Active Center Card: 100% Crisp Native 1:1 Scale, Zero Blur, Perfectly Sharp
+        transform = 'translate3d(0, 0, 0px) scale(1) rotateY(0deg) rotateZ(0deg)';
+        opacity = 1;
+        zIndex = 50;
+      } else if (offset === -1) {
+        // Immediate Left (-1): Scaled down to 0.82, angled inwards
+        const xOffset = isMobile ? '-52%' : '-66%';
+        const rotY = isMobile ? '18deg' : '26deg';
+        const rotZ = isMobile ? '-2deg' : '-3.5deg';
+        transform = `translate3d(${xOffset}, 0, -40px) scale(0.82) rotateY(${rotY}) rotateZ(${rotZ})`;
+        opacity = 0.85;
+        zIndex = 20;
+      } else if (offset === 1) {
+        // Immediate Right (+1): Scaled down to 0.82, angled inwards
+        const xOffset = isMobile ? '52%' : '66%';
+        const rotY = isMobile ? '-18deg' : '-26deg';
+        const rotZ = isMobile ? '2deg' : '3.5deg';
+        transform = `translate3d(${xOffset}, 0, -40px) scale(0.82) rotateY(${rotY}) rotateZ(${rotZ})`;
+        opacity = 0.85;
+        zIndex = 20;
+      } else if (offset === -2) {
+        // Far Left (-2): Scaled down to 0.68
+        if (isMobile) {
+          transform = `translate3d(-90%, 0, -80px) scale(0.6) rotateY(30deg)`;
+          opacity = 0;
+          pointerEvents = 'none';
+          zIndex = 5;
+        } else {
+          const xOffset = isTablet ? '-105%' : '-125%';
+          transform = `translate3d(${xOffset}, 0, -80px) scale(0.68) rotateY(42deg) rotateZ(-6deg)`;
+          opacity = 0.55;
+          zIndex = 10;
+        }
+      } else if (offset === 2) {
+        // Far Right (+2): Scaled down to 0.68
+        if (isMobile) {
+          transform = `translate3d(90%, 0, -80px) scale(0.6) rotateY(-30deg)`;
+          opacity = 0;
+          pointerEvents = 'none';
+          zIndex = 5;
+        } else {
+          const xOffset = isTablet ? '105%' : '125%';
+          transform = `translate3d(${xOffset}, 0, -80px) scale(0.68) rotateY(-42deg) rotateZ(6deg)`;
+          opacity = 0.55;
+          zIndex = 10;
+        }
+      } else {
+        // Extra hidden cards (behind)
+        const sign = offset < 0 ? -1 : 1;
+        transform = `translate3d(${sign * 150}%, 0, -140px) scale(0.5)`;
+        opacity = 0;
+        pointerEvents = 'none';
+        zIndex = 1;
+      }
+
+      slide.style.transform = transform;
+      slide.style.webkitTransform = transform;
+      slide.style.opacity = opacity;
+      slide.style.zIndex = zIndex;
+      slide.style.pointerEvents = pointerEvents;
+      slide.style.filter = 'none';
+    });
+
+    // Update Dots
     if (dotsContainer) {
       const dots = dotsContainer.querySelectorAll('.slider-dot');
       dots.forEach((dot, idx) => {
         dot.classList.toggle('active', idx === currentIndex);
       });
     }
-
-    // Update button states (always enabled for continuous wrap navigation)
-    if (prevBtn) prevBtn.disabled = false;
-    if (nextBtn) nextBtn.disabled = false;
   }
 
   function goToSlide(index) {
-    const maxIdx = getMaxIndex();
-    currentIndex = Math.max(0, Math.min(index, maxIdx));
-    updateSliderPosition();
+    currentIndex = (index + totalSlides) % totalSlides;
+    update3DCoverflow();
   }
 
   function nextSlide() {
-    const maxIdx = getMaxIndex();
-    if (currentIndex < maxIdx) {
-      currentIndex++;
-    } else {
-      currentIndex = 0; // Seamless loop back to start
-    }
-    updateSliderPosition();
+    currentIndex = (currentIndex + 1) % totalSlides;
+    update3DCoverflow();
   }
 
   function prevSlide() {
-    if (currentIndex > 0) {
-      currentIndex--;
-    } else {
-      currentIndex = getMaxIndex(); // Loop to end
-    }
-    updateSliderPosition();
+    currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+    update3DCoverflow();
   }
 
   if (nextBtn) {
-    nextBtn.addEventListener('click', () => {
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       nextSlide();
       restartAutoSlide();
     });
   }
 
   if (prevBtn) {
-    prevBtn.addEventListener('click', () => {
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       prevSlide();
       restartAutoSlide();
     });
   }
 
-  // Auto slide management - strict 2-second continuous interval
+  // Auto-slide management
   function startAutoSlide() {
     stopAutoSlide();
     autoSlideTimer = setInterval(() => {
@@ -247,10 +307,11 @@ function initProductSlider() {
     startAutoSlide();
   }
 
-  // Do NOT stop on mouseenter so it keeps auto-sliding reliably every 2 seconds
-  // Only pause briefly on active drag/interaction
+  // Pause on hover for comfortable user interaction, resume on leave
+  slider.addEventListener('mouseenter', stopAutoSlide);
+  slider.addEventListener('mouseleave', startAutoSlide);
 
-  // Touch and Swipe Support for Mobile
+  // Touch & Swipe Support for Mobile / Tablet
   let startX = 0;
   let currentX = 0;
   let isSwiping = false;
@@ -282,14 +343,13 @@ function initProductSlider() {
     startAutoSlide();
   });
 
-  // Handle screen resize
+  // Window Resize
   window.addEventListener('resize', () => {
-    renderDots();
-    updateSliderPosition();
+    update3DCoverflow();
   });
 
   renderDots();
-  updateSliderPosition();
+  update3DCoverflow();
   startAutoSlide();
 }
 
