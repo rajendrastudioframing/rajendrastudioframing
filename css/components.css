@@ -505,61 +505,49 @@
   cursor: not-allowed;
 }
 
+/* 3D Perspective Viewport & Stage */
 .slider-viewport {
   width: 100%;
-  overflow: hidden;
-  padding: 10px 0 24px;
-}
-
-.slider-track {
-  display: flex;
-  gap: 24px;
-  transition: transform 0.65s cubic-bezier(0.25, 1, 0.5, 1);
-  will-change: transform;
-}
-
-.slider-slide {
-  flex-shrink: 0;
-  width: calc((100% - 48px) / 3); /* Desktop: 3 cards */
-  box-sizing: border-box;
-}
-
-/* Pagination Dots */
-.slider-dots {
+  min-height: 420px;
+  height: 420px;
+  position: relative;
+  perspective: 1400px;
+  -webkit-perspective: 1400px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 24px;
+  overflow: visible;
+  padding: 10px 0 20px;
+  user-select: none;
+  touch-action: pan-y;
 }
 
-.slider-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: rgba(17, 17, 17, 0.18);
-  border: none;
+.slider-track {
+  position: relative;
+  width: 100%;
+  max-width: 1100px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+/* 3D Slide Cards - Absolute centered position with dynamic 3D transforms */
+.slider-slide {
+  position: absolute;
+  width: 300px;
+  height: 380px;
+  top: 50%;
+  left: 50%;
+  margin-top: -190px;
+  margin-left: -150px;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.65s ease;
+  will-change: transform, opacity;
   cursor: pointer;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  padding: 0;
-}
-
-.slider-dot.active {
-  background: linear-gradient(90deg, #C99A3D 0%, #A87A24 100%);
-  width: 28px;
-  box-shadow: 0 2px 8px rgba(201, 154, 61, 0.35);
-}
-
-@media (max-width: 992px) {
-  .slider-slide {
-    width: calc((100% - 24px) / 2); /* Tablet: 2 cards */
-  }
-}
-
-@media (max-width: 640px) {
-  .slider-slide {
-    width: 100%; /* Mobile: 1 card */
-  }
 }
 
 /* ==========================================================================

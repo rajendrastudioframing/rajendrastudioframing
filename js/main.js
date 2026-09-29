@@ -130,7 +130,7 @@ function initProductSlider() {
   // Start with index 3 (Mug Printing - ₹249) in center, matching user design
   let currentIndex = 3;
   let autoSlideTimer = null;
-  const autoSlideInterval = 3000; // 3 seconds loop interval
+  const autoSlideInterval = 2000; // 2 seconds loop interval
   const totalSlides = slides.length;
 
   // Create pagination dots
@@ -230,10 +230,36 @@ function initProductSlider() {
           opacity = 0.55;
           zIndex = 10;
         }
+      } else if (offset === -3) {
+        // Outer Left (-3): Visible at the edge
+        if (isMobile) {
+          transform = `translate3d(-120%, 0, -120px) scale(0.5) rotateY(35deg)`;
+          opacity = 0;
+          pointerEvents = 'none';
+          zIndex = 2;
+        } else {
+          const xOffset = isTablet ? '-140%' : '-172%';
+          transform = `translate3d(${xOffset}, 0, -120px) scale(0.56) rotateY(48deg) rotateZ(-8deg)`;
+          opacity = 0.35;
+          zIndex = 5;
+        }
+      } else if (offset === 3) {
+        // Outer Right (+3): Visible at the edge
+        if (isMobile) {
+          transform = `translate3d(120%, 0, -120px) scale(0.5) rotateY(-35deg)`;
+          opacity = 0;
+          pointerEvents = 'none';
+          zIndex = 2;
+        } else {
+          const xOffset = isTablet ? '140%' : '172%';
+          transform = `translate3d(${xOffset}, 0, -120px) scale(0.56) rotateY(-48deg) rotateZ(8deg)`;
+          opacity = 0.35;
+          zIndex = 5;
+        }
       } else {
         // Extra hidden cards (behind)
         const sign = offset < 0 ? -1 : 1;
-        transform = `translate3d(${sign * 150}%, 0, -140px) scale(0.5)`;
+        transform = `translate3d(${sign * 180}%, 0, -160px) scale(0.4)`;
         opacity = 0;
         pointerEvents = 'none';
         zIndex = 1;
@@ -307,9 +333,7 @@ function initProductSlider() {
     startAutoSlide();
   }
 
-  // Pause on hover for comfortable user interaction, resume on leave
-  slider.addEventListener('mouseenter', stopAutoSlide);
-  slider.addEventListener('mouseleave', startAutoSlide);
+  // Keep rotating every 2s continuously without mouse hover interruption
 
   // Touch & Swipe Support for Mobile / Tablet
   let startX = 0;
