@@ -122,6 +122,21 @@ function populateProductData() {
   const reviewCount = document.getElementById('detailReviewCount');
   if (reviewCount) reviewCount.textContent = `(${p.reviewsCount} customer ratings)`;
 
+  // Dynamic Finish Title Label
+  const finishOptionTitle = document.getElementById('finishOptionTitle') || 
+    document.querySelectorAll('.option-group .option-name')[1];
+  if (finishOptionTitle) {
+    if (p.category === 'frames' || p.name.toLowerCase().includes('frame')) {
+      finishOptionTitle.textContent = 'Frame Color / Finish Option:';
+    } else if (p.category === 'office' || p.id.includes('file') || p.id.includes('folder')) {
+      finishOptionTitle.textContent = 'Executive Color / Finish:';
+    } else if (p.category === 'drinkware' || p.id.includes('bottle') || p.id.includes('mug')) {
+      finishOptionTitle.textContent = 'Color & Tone Option:';
+    } else {
+      finishOptionTitle.textContent = 'Color / Finish Style:';
+    }
+  }
+
   // Preload all finish variant images into memory so color switching is instantaneous
   if (currentProduct.finishes && currentProduct.finishes.length > 0) {
     currentProduct.finishes.forEach(f => {
@@ -249,6 +264,22 @@ function renderFinishOptions() {
   const container = document.getElementById('detailFinishesContainer');
   if (!container || !currentProduct.finishes) return;
 
+  // Dynamic finish option title based on product type
+  const finishOptionTitle = document.getElementById('finishOptionTitle') || 
+    (container.parentElement ? container.parentElement.querySelector('.option-name') : null);
+  if (finishOptionTitle) {
+    const p = currentProduct;
+    if (p.category === 'frames' || p.name.toLowerCase().includes('frame')) {
+      finishOptionTitle.textContent = 'Frame Color / Finish Option:';
+    } else if (p.category === 'office' || p.id.includes('file') || p.id.includes('folder')) {
+      finishOptionTitle.textContent = 'Executive Color / Finish:';
+    } else if (p.category === 'drinkware' || p.id.includes('bottle') || p.id.includes('mug')) {
+      finishOptionTitle.textContent = 'Color & Tone Option:';
+    } else {
+      finishOptionTitle.textContent = 'Color / Finish Style:';
+    }
+  }
+
   container.innerHTML = currentProduct.finishes.map((f, idx) => {
     const isActive = (selectedFinish && selectedFinish.id === f.id) || (!selectedFinish && idx === 0);
     return `
@@ -309,6 +340,15 @@ function updateDetailImageForFinish(finish) {
     mainImg.style.opacity = '0.35';
     mainImg.style.transform = 'scale(0.985)';
 
+    mainImg.onload = () => {
+      mainImg.style.opacity = '1';
+      mainImg.style.transform = 'scale(1)';
+    };
+    mainImg.onerror = () => {
+      mainImg.style.opacity = '1';
+      mainImg.style.transform = 'scale(1)';
+    };
+
     // Directly set target image source for instant browser response
     mainImg.src = targetSrc;
     mainImg.alt = `${currentProduct.name} - ${finish.name}`;
@@ -316,15 +356,6 @@ function updateDetailImageForFinish(finish) {
     if (mainImg.complete) {
       mainImg.style.opacity = '1';
       mainImg.style.transform = 'scale(1)';
-    } else {
-      mainImg.onload = () => {
-        mainImg.style.opacity = '1';
-        mainImg.style.transform = 'scale(1)';
-      };
-      mainImg.onerror = () => {
-        mainImg.style.opacity = '1';
-        mainImg.style.transform = 'scale(1)';
-      };
     }
   }
 

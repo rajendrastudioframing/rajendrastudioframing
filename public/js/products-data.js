@@ -98,9 +98,9 @@ const PRODUCTS_DATA = [
       { name: "1000 ml Hydrate", price: 799 }
     ],
     finishes: [
-      { id: "matte-black-bottle", name: "Matte Stealth Black", color: "#111111", image: "assets/images/printed_bottle.jpg" },
+      { id: "matte-black-bottle", name: "Matte Stealth Black", color: "#111111", image: "assets/images/printed_bottle_black.jpg" },
       { id: "royal-blue-bottle", name: "Midnight Navy Blue", color: "#1E3A8A", image: "assets/images/printed_bottle_blue.jpg" },
-      { id: "brushed-silver-bottle", name: "Brushed Metallic Silver", color: "#94A3B8", image: "assets/images/printed_bottle.jpg" }
+      { id: "brushed-silver-bottle", name: "Brushed Metallic Silver", color: "#94A3B8", image: "assets/images/printed_bottle_silver.jpg" }
     ],
     features: [
       "Keeps beverages chilled for 24 hours, steaming hot for 12 hours",
@@ -165,8 +165,8 @@ const PRODUCTS_DATA = [
     ],
     finishes: [
       { id: "navy-file", name: "Corporate Navy Blue", color: "#1E3A8A", image: "assets/images/printed_file.jpg" },
-      { id: "forest-file", name: "Forest Green", color: "#14532D", image: "assets/images/printed_file.jpg" },
-      { id: "black-file", name: "Executive Charcoal Black", color: "#111111", image: "assets/images/printed_file.jpg" }
+      { id: "forest-file", name: "Forest Green", color: "#14532D", image: "assets/images/printed_file_green.jpg" },
+      { id: "black-file", name: "Executive Charcoal Black", color: "#111111", image: "assets/images/printed_file_black.jpg" }
     ],
     features: [
       "Heavy-duty metal lever arch or spring clip mechanism",
@@ -186,7 +186,7 @@ const PRODUCTS_DATA = [
     rating: 4.9,
     reviewsCount: 88,
     badge: "Corporate Choice",
-    image: "assets/images/printed_folder.jpg",
+    image: "assets/images/printed_folder_navy.jpg",
     shortDescription: "Executive presentation folders with metallic gold foil stamping, debossed logos, and precision die-cut card pockets.",
     description: "Make an unforgettable first impression at client presentations, proposal pitches, and conferences. Crafted from 400+ GSM art card or textured leatherette with metallic foil stamping and die-cut internal pockets for documents and business cards.",
     material: "400 GSM Imperial Art Card / Textured Leatherette",
@@ -197,9 +197,9 @@ const PRODUCTS_DATA = [
       { name: "Luxury Padded Certificate Folio", price: 490 }
     ],
     finishes: [
-      { id: "gold-foil-navy", name: "Navy Blue with Gold Foil", color: "#1E3A8A", image: "assets/images/printed_folder.jpg" },
-      { id: "forest-gold", name: "Forest Green with Gold Foil", color: "#14532D", image: "assets/images/printed_folder.jpg" },
-      { id: "charcoal-gold", name: "Charcoal with Gold Foil", color: "#111111", image: "assets/images/printed_folder.jpg" }
+      { id: "gold-foil-navy", name: "Navy Blue with Gold Foil", color: "#1E3A8A", image: "assets/images/printed_folder_navy.jpg" },
+      { id: "forest-gold", name: "Forest Green with Gold Foil", color: "#14532D", image: "assets/images/printed_folder_green.jpg" },
+      { id: "charcoal-gold", name: "Charcoal with Gold Foil", color: "#111111", image: "assets/images/printed_folder_black.jpg" }
     ],
     features: [
       "Precision die-cut pockets hold 25-50 sheets securely",

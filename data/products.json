@@ -66,9 +66,9 @@
     "status": "In Stock",
     "leadTime": "1 - 2 Business Days",
     "finishes": [
-      { "id": "matte-black-bottle", "name": "Matte Stealth Black", "color": "#111111", "image": "assets/images/printed_bottle.jpg" },
+      { "id": "matte-black-bottle", "name": "Matte Stealth Black", "color": "#111111", "image": "assets/images/printed_bottle_black.jpg" },
       { "id": "royal-blue-bottle", "name": "Midnight Navy Blue", "color": "#1E3A8A", "image": "assets/images/printed_bottle_blue.jpg" },
-      { "id": "brushed-silver-bottle", "name": "Brushed Metallic Silver", "color": "#94A3B8", "image": "assets/images/printed_bottle.jpg" }
+      { "id": "brushed-silver-bottle", "name": "Brushed Metallic Silver", "color": "#94A3B8", "image": "assets/images/printed_bottle_silver.jpg" }
     ]
   },
   {
@@ -110,7 +110,12 @@
     "material": "350-450 GSM Heavy Board / Polypropylene with Metal Clip",
     "printingType": "High-Speed Offset & Screen Print with Matte Lamination",
     "status": "In Stock",
-    "leadTime": "2 - 3 Business Days"
+    "leadTime": "2 - 3 Business Days",
+    "finishes": [
+      { "id": "navy-file", "name": "Corporate Navy Blue", "color": "#1E3A8A", "image": "assets/images/printed_file.jpg" },
+      { "id": "forest-file", "name": "Forest Green", "color": "#14532D", "image": "assets/images/printed_file_green.jpg" },
+      { "id": "black-file", "name": "Executive Charcoal Black", "color": "#111111", "image": "assets/images/printed_file_black.jpg" }
+    ]
   },
   {
     "id": "printed-office-folder-executive",
@@ -122,13 +127,18 @@
     "rating": 4.9,
     "reviewsCount": 88,
     "badge": "Corporate Choice",
-    "image": "assets/images/printed_folder.jpg",
+    "image": "assets/images/printed_folder_navy.jpg",
     "shortDescription": "Executive presentation folders with metallic gold foil stamping, debossed logos, and precision die-cut card pockets.",
     "description": "Make an unforgettable first impression at client presentations, proposal pitches, and conferences. Crafted from 400+ GSM art card or textured leatherette with metallic foil stamping and die-cut internal pockets for documents and business cards.",
     "material": "400 GSM Imperial Art Card / Textured Leatherette",
     "printingType": "Metallic Hot Foil Stamping, Debossing & Spot UV",
     "status": "In Stock",
-    "leadTime": "2 - 4 Business Days"
+    "leadTime": "2 - 4 Business Days",
+    "finishes": [
+      { "id": "gold-foil-navy", "name": "Navy Blue with Gold Foil", "color": "#1E3A8A", "image": "assets/images/printed_folder_navy.jpg" },
+      { "id": "forest-gold", "name": "Forest Green with Gold Foil", "color": "#14532D", "image": "assets/images/printed_folder_green.jpg" },
+      { "id": "charcoal-gold", "name": "Charcoal with Gold Foil", "color": "#111111", "image": "assets/images/printed_folder_black.jpg" }
+    ]
   },
   {
     "id": "custom-fine-art-canvas",
