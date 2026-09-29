@@ -214,15 +214,16 @@ body.admin-login-body {
 /* Quick Auto-Fill Credentials Card */
 .login-autofill-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   background: rgba(245, 158, 11, 0.05);
   border: 1.5px dashed rgba(245, 158, 11, 0.45);
   border-radius: 14px;
-  padding: 14px 18px;
+  padding: 12px 16px;
   margin-bottom: 22px;
   transition: all 0.2s ease;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .login-autofill-card:hover {
@@ -230,12 +231,33 @@ body.admin-login-body {
   border-color: rgba(245, 158, 11, 0.7);
 }
 
+.autofill-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.18);
+}
+
+.autofill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #FBBF24;
+}
+
 .login-autofill-creds {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   line-height: 1.35;
+  width: 100%;
 }
 
 .autofill-cred-row {
@@ -243,17 +265,20 @@ body.admin-login-body {
   align-items: center;
   gap: 8px;
   color: #F1F5F9;
+  flex-wrap: wrap;
 }
 
 .autofill-icon {
   font-size: 0.95rem;
   display: inline-block;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .autofill-label {
   color: #94A3B8;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .autofill-val {
@@ -261,32 +286,35 @@ body.admin-login-body {
   font-weight: 700;
   letter-spacing: 0.3px;
   font-family: inherit;
+  word-break: break-all;
 }
 
 .btn-autofill-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: rgba(245, 158, 11, 0.12);
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: rgba(245, 158, 11, 0.14);
   border: 1px solid rgba(245, 158, 11, 0.45);
-  border-radius: 8px;
+  border-radius: 6px;
   color: #F59E0B;
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
 }
 
 .btn-autofill-trigger:hover {
-  background: rgba(245, 158, 11, 0.24);
+  background: rgba(245, 158, 11, 0.28);
   border-color: #F59E0B;
   color: #FBBF24;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
 }
 
 .btn-autofill-trigger:active {
@@ -295,7 +323,7 @@ body.admin-login-body {
 
 .autofill-bolt {
   color: #F59E0B;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
 /* Form Controls */

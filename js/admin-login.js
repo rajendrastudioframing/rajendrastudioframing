@@ -95,14 +95,24 @@ function initLoginCredentialsForm() {
   const btnText = document.getElementById('sendOtpBtnText');
   const spinner = document.getElementById('sendOtpSpinner');
   const autoFillBtn = document.getElementById('autoFillBtn') || document.getElementById('quickFillBtn');
+  const autoFillCard = document.getElementById('autoFillCard');
+
+  const fillCredentials = (e) => {
+    if (e) e.preventDefault();
+    if (emailInput) emailInput.value = 'help@dahejsupport.com';
+    if (passwordInput) passwordInput.value = 'Admin@Rajesh2026';
+    showAlert('info', 'Credentials filled! Click "Send Login OTP" below.');
+    if (emailInput) emailInput.focus();
+  };
 
   if (autoFillBtn) {
-    autoFillBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (emailInput) emailInput.value = 'help@dahejsupport.com';
-      if (passwordInput) passwordInput.value = 'Admin@Rajesh2026';
-      showAlert('info', 'Credentials filled! Click "Send Login OTP" below.');
-      if (emailInput) emailInput.focus();
+    autoFillBtn.addEventListener('click', fillCredentials);
+  }
+  if (autoFillCard) {
+    autoFillCard.style.cursor = 'pointer';
+    autoFillCard.addEventListener('click', (e) => {
+      if (e.target.closest('#autoFillBtn')) return;
+      fillCredentials(e);
     });
   }
 
