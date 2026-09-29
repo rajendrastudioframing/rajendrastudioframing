@@ -267,9 +267,10 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
 
 // Customer Order Status Notification Email Generator
 function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, notes, items, total, paymentMethod, trackingUrl, address }) {
+  const isPlaced = newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed';
   const isAccepted = newStatus === 'In Progress' || newStatus === 'Confirmed' || newStatus === 'Accepted';
   const isCancelled = newStatus === 'Cancelled';
-  const isShipped = newStatus === 'Shipped';
+  const isShipped = newStatus === 'Shipped' || newStatus === 'Dispatched';
   const isCompleted = newStatus === 'Completed' || newStatus === 'Delivered';
 
   let badgeText = 'ORDER STATUS UPDATE';
@@ -279,20 +280,27 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
   let headline = `Update on Order #${orderId}`;
   let primaryMessage = `Your order status has been updated to <strong>${newStatus}</strong>.`;
 
-  if (isAccepted) {
+  if (isPlaced) {
+    badgeText = '📦 ORDER PLACED • UNDER STUDIO REVIEW';
+    badgeBg = '#FFFBEB';
+    badgeColor = '#B45309';
+    badgeBorder = '#FDE68A';
+    headline = 'Your Order Has Been Placed Successfully!';
+    primaryMessage = 'Thank you for placing your order with Rajesh Framing! We have received your order details and payment information. Our studio team is currently reviewing your order specifications and will officially confirm your order shortly before framing production begins.';
+  } else if (isAccepted) {
     badgeText = '✓ ORDER CONFIRMED & IN PRODUCTION';
     badgeBg = '#FEF9EE';
     badgeColor = '#92400E';
     badgeBorder = '#FDE68A';
     headline = 'Great news! Your Order is Confirmed & In Production';
-    primaryMessage = 'We are excited to let you know that your order has been accepted by Rajesh Framing Studio! Our master craftsmen have queued your piece for precision framing and custom assembly.';
+    primaryMessage = 'We are excited to let you know that your order has been officially verified and confirmed by Rajesh Framing Studio! Our master craftsmen have queued your piece for precision framing and custom assembly.';
   } else if (isCancelled) {
     badgeText = '⚠️ ORDER CANCELLED';
     badgeBg = '#FEF2F2';
     badgeColor = '#991B1B';
     badgeBorder = '#FECACA';
     headline = 'Important Notice: Order Cancelled';
-    primaryMessage = 'We are writing to inform you that your order has been cancelled. If this cancellation was requested by you, no further action is needed.';
+    primaryMessage = 'We are writing to inform you that your order has been cancelled by Rajesh Framing Studio. If this cancellation was requested by you, no further action is needed.';
   } else if (isShipped) {
     badgeText = '🚚 DISPATCHED & OUT FOR DELIVERY';
     badgeBg = '#F0FDF4';
@@ -528,22 +536,37 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
 
     // Spam-safe subject lines (avoiding exclamation marks or emojis that spam filters flag)
     let subject = `Order #${orderId} Status Update: ${newStatus} - Rajesh Framing`;
-    if (newStatus === 'In Progress' || newStatus === 'Confirmed' || newStatus === 'Accepted') {
+    if (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed') {
+      subject = `Order #${orderId} Placed: Received & Pending Studio Review - Rajesh Framing`;
+    } else if (newStatus === 'In Progress' || newStatus === 'Confirmed' || newStatus === 'Accepted') {
       subject = `Order #${orderId} Confirmed - Rajesh Framing Studio`;
     } else if (newStatus === 'Cancelled') {
       subject = `Order #${orderId} Cancellation Notice - Rajesh Framing Studio`;
-    } else if (newStatus === 'Shipped') {
+    } else if (newStatus === 'Shipped' || newStatus === 'Dispatched') {
       subject = `Order #${orderId} Dispatched for Delivery - Rajesh Framing`;
-    } else if (newStatus === 'Completed') {
+    } else if (newStatus === 'Completed' || newStatus === 'Delivered') {
       subject = `Order #${orderId} Delivered - Thank You - Rajesh Framing`;
     }
 
     const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
 
+    let introText = `Your order #${orderId} status has been updated to: ${newStatus}.`;
+    if (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed') {
+      introText = `Your order #${orderId} has been placed successfully and received by Rajesh Framing Studio. Our team is currently reviewing your order specifications and will confirm it shortly.`;
+    } else if (newStatus === 'Confirmed' || newStatus === 'In Progress' || newStatus === 'Accepted') {
+      introText = `Great news! Your order #${orderId} has been officially confirmed by Rajesh Framing Studio and is now in production.`;
+    } else if (newStatus === 'Cancelled') {
+      introText = `Your order #${orderId} has been cancelled by Rajesh Framing Studio.`;
+    } else if (newStatus === 'Shipped' || newStatus === 'Dispatched') {
+      introText = `Your order #${orderId} has been dispatched and is on its way to you!`;
+    } else if (newStatus === 'Completed' || newStatus === 'Delivered') {
+      introText = `Your order #${orderId} has been delivered. Thank you for choosing Rajesh Framing!`;
+    }
+
     // Plain text version ensures maximum email deliverability to inbox (not Spam)
     const plainTextBody = `Hello ${customerName || 'Valued Customer'},
 
-${newStatus === 'Cancelled' ? `Your order #${orderId} has been cancelled by Rajesh Framing Studio.` : `Your order #${orderId} status has been updated to: ${newStatus}.`}
+${introText}
 ${notes ? `\nStudio Note: ${notes}\n` : ''}
 ${newStatus === 'Cancelled' ? '\nIf you made an online advance or UPI payment, our team will process your refund to the original payment source within 24-48 business hours. If you selected Pay on Delivery, no payment was deducted.\n' : ''}
 Track your order anytime online:
@@ -1401,7 +1424,7 @@ app.post('/api/orders', async (req, res) => {
       orderPhoto: orderPhoto || null,
       paymentMethod: req.body.paymentMethod || 'Instant UPI Payment (QR Code)',
       upiUtr: req.body.upiUtr || null,
-      status: 'Confirmed',
+      status: 'New',
       createdAt: new Date().toISOString()
     };
 
@@ -1425,7 +1448,7 @@ app.post('/api/orders', async (req, res) => {
         quantity: newOrder.items.reduce((sum, i) => sum + i.quantity, 0),
         estimatedValue: newOrder.total,
         notes: `Order Notes: ${newOrder.notes || 'None'}. Full address: ${newOrder.customer.address}`,
-        status: 'In Progress',
+        status: 'New',
         hasUpload: Boolean(photoUrl),
         uploadFileName: photoName,
         createdAt: newOrder.createdAt
@@ -1441,10 +1464,10 @@ app.post('/api/orders', async (req, res) => {
     console.log(`📍 Address: ${newOrder.customer.address}, ${newOrder.customer.city}`);
     console.log(`======================================================\n`);
 
-    // Dispatch Order Placed confirmation email if customer email provided
+    // Dispatch Order Placed confirmation email to customer (pending studio confirmation)
     if (newOrder.customer && newOrder.customer.email && newOrder.customer.email.includes('@')) {
-      sendCustomerOrderNotification(newOrder, 'Confirmed', 'Order placed successfully online. Our studio will review and begin production.', req)
-        .catch(err => console.warn('Order confirmation email error:', err.message));
+      sendCustomerOrderNotification(newOrder, 'Placed', 'Thank you! Your order has been placed successfully online. Our studio will review and confirm it shortly before production.', req)
+        .catch(err => console.warn('Order placed email error:', err.message));
     }
 
     res.json({

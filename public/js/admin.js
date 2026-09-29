@@ -481,8 +481,9 @@ function createOrderCardRowHTML(order) {
           <!-- Direct Status Switcher (Always accessible for all orders) -->
           <div class="order-quick-status-wrap" title="Quick change fulfillment status">
             <select class="order-quick-status-select" onchange="changeOrderStatusDirectly('${order.id}', this.value)">
-              <option value="New" ${order.status === 'New' || order.status === 'Pending' ? 'selected' : ''}>🔵 New Order</option>
-              <option value="In Progress" ${order.status === 'In Progress' || order.status === 'Confirmed' ? 'selected' : ''}>🟡 In Production (Confirmed)</option>
+              <option value="New" ${order.status === 'New' || order.status === 'Pending' ? 'selected' : ''}>🔵 New Order (Pending)</option>
+              <option value="Confirmed" ${order.status === 'Confirmed' ? 'selected' : ''}>✓ Confirmed (In Production)</option>
+              <option value="In Progress" ${order.status === 'In Progress' ? 'selected' : ''}>🟡 In Production</option>
               <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>🟣 Dispatched / Ready</option>
               <option value="Completed" ${order.status === 'Completed' ? 'selected' : ''}>🟢 Delivered</option>
               <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>🔴 Cancelled</option>
@@ -790,16 +791,30 @@ window.cycleOrderStatus = async (id) => {
   await updateInquiryStatus(id, nextStatus);
 };
 
-window.updateInquiryStatus = async (id, newStatus) => {
+window.updateInquiryStatus = async (id, newStatus, customNotes = null) => {
   const cleanId = (id || '').replace(/^#/, '');
   try {
+    const payload = {
+      status: newStatus,
+      notifyCustomer: true
+    };
+    if (customNotes) {
+      payload.notes = customNotes;
+    } else if (newStatus === 'Confirmed' || newStatus === 'In Progress') {
+      payload.notes = 'Order confirmed by studio. Custom framing and crafting underway.';
+    } else if (newStatus === 'Shipped') {
+      payload.notes = 'Your order has been dispatched for delivery / studio pickup.';
+    } else if (newStatus === 'Completed') {
+      payload.notes = 'Order delivered successfully. Thank you for choosing Rajesh Framing!';
+    }
+
     const res = await fetch(`${API_BASE}/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ status: newStatus })
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
     if (data.success) {
@@ -807,7 +822,8 @@ window.updateInquiryStatus = async (id, newStatus) => {
       if (item) item.status = newStatus;
       await loadInquiries();
       await loadDashboardStats();
-      showToast('Status Updated', `Order #${cleanId} status changed to "${newStatus}".`, 'success');
+      const emailNotice = data.emailResult && data.emailResult.sent ? ` (Customer notified via email)` : '';
+      showToast('Status Updated', `Order #${cleanId} status changed to "${newStatus}".${emailNotice}`, 'success');
     } else {
       showToast('Update Failed', data.message || 'Status update failed.', 'danger');
     }
@@ -978,35 +994,37 @@ function initNewOrderModal() {
    ACCEPT ORDER (QUICK ACTION WITH EMAIL NOTIFICATION)
    ========================================================================== */
 window.acceptOrderQuick = async (id) => {
-  const item = allInquiries.find(i => i.id === id);
+  const cleanId = (id || '').replace(/^#/, '');
+  const item = allInquiries.find(i => i.id === cleanId || i.id === id);
   if (!item) return;
 
   try {
-    showToast('Accepting Order', `Processing Order #${id} and generating customer email...`, 'info');
-    const res = await fetch(`${API_BASE}/api/admin/inquiries/${id}/status`, {
+    showToast('Confirming Order', `Confirming Order #${cleanId} and sending confirmation email to customer...`, 'info');
+    const res = await fetch(`${API_BASE}/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
-        status: 'In Progress',
-        notes: 'Order accepted by studio. Custom framing and crafting underway.',
+        status: 'Confirmed',
+        notes: 'Order confirmed by studio. Custom framing and crafting underway.',
         notifyCustomer: true
       })
     });
 
     const data = await res.json();
     if (data.success) {
+      if (item) item.status = 'Confirmed';
       await loadInquiries();
       await loadDashboardStats();
-      const emailNotice = data.emailResult && data.emailResult.sent ? ' Customer email notification dispatched!' : '';
-      showToast('Order Accepted! ✓', `Order #${id} is now In Progress.${emailNotice}`, 'success');
+      const emailNotice = data.emailResult && data.emailResult.sent ? ` Confirmation email sent to ${data.emailResult.recipient}!` : '';
+      showToast('Order Confirmed! ✓', `Order #${cleanId} is now Confirmed.${emailNotice}`, 'success');
     } else {
-      showToast('Action Failed', data.message || 'Could not accept order.', 'danger');
+      showToast('Action Failed', data.message || 'Could not confirm order.', 'danger');
     }
   } catch (err) {
-    console.error('Error accepting order:', err);
+    console.error('Error confirming order:', err);
     showToast('Network Error', 'Failed to connect to server.', 'danger');
   }
 };
