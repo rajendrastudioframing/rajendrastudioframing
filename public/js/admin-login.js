@@ -19,19 +19,75 @@ let currentAdminEmail = '';
 let otpCountdownTimer = null;
 let countdownSeconds = 60;
 
-// Base API URL (falls back to current origin or port 5000)
-const API_BASE = window.location.origin.includes(':5500') 
-  ? 'http://localhost:5000' 
-  : window.location.origin;
+// Cloud fallback endpoint in case local server is not running
+const CLOUD_API_FALLBACK = 'https://rajesh-framing.vercel.app';
+
+function getInitialApiBase() {
+  const isLocalDev = window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1' || 
+                     window.location.protocol === 'file:';
+  if (isLocalDev && window.location.port !== '5000') {
+    return 'http://localhost:5000';
+  }
+  return window.location.origin;
+}
+
+let activeApiBase = getInitialApiBase();
+
+/**
+ * Universal fetch with automatic cloud fallback if local Node server is not running
+ */
+async function requestApi(endpoint, options = {}) {
+  const fullUrl = `${activeApiBase}${endpoint}`;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(fullUrl, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    return res;
+  } catch (err) {
+    // If local dev port 5000 is not running, automatically fallback to live cloud server
+    const isLocal = activeApiBase.includes('localhost') || activeApiBase.includes('127.0.0.1');
+    if (isLocal && activeApiBase !== CLOUD_API_FALLBACK) {
+      console.warn(`Local server at ${activeApiBase} unavailable. Falling back to live cloud API: ${CLOUD_API_FALLBACK}...`);
+      activeApiBase = CLOUD_API_FALLBACK;
+      try {
+        return await fetch(`${activeApiBase}${endpoint}`, options);
+      } catch (fallbackErr) {
+        throw fallbackErr;
+      }
+    }
+    throw err;
+  }
+}
+
+/**
+ * Safely parse JSON from response, preventing uncaught SyntaxError on 404/500 HTML pages
+ */
+async function parseResponseJson(res) {
+  if (!res) return { success: false, message: 'No response received from server' };
+  try {
+    const text = await res.text();
+    return JSON.parse(text);
+  } catch (e) {
+    return { 
+      success: false, 
+      message: res.status === 404 ? 'Service endpoint not found (404)' : `Server error (${res.status || 'offline'})` 
+    };
+  }
+}
 
 /* --- Check Existing Session --- */
 async function checkExistingSession(token) {
   try {
-    const res = await fetch(`${API_BASE}/api/auth/me`, {
+    const res = await requestApi('/api/auth/me', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    const data = await res.json();
-    if (data.success) {
+    const data = await parseResponseJson(res);
+    if (data && data.success) {
       window.location.href = 'admin';
     } else {
       localStorage.removeItem('rf_admin_token');
@@ -147,15 +203,15 @@ function initLoginCredentialsForm() {
     spinner.style.display = 'inline-block';
 
     try {
-      const response = await fetch(`${API_BASE}/api/auth/login-request`, {
+      const response = await requestApi('/api/auth/login-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
 
-      const result = await response.json();
+      const result = await parseResponseJson(response);
 
-      if (response.ok && result.success) {
+      if (response && response.ok && result && result.success) {
         currentAdminEmail = email;
 
         // Transition to Phase 2 (OTP input)
@@ -183,11 +239,11 @@ function initLoginCredentialsForm() {
         if (firstOtpBox) firstOtpBox.focus();
 
       } else {
-        showAlert('danger', result.message || 'Invalid credentials. Please verify your email and password.');
+        showAlert('danger', (result && result.message) ? result.message : 'Invalid credentials. Please verify your email and password.');
       }
     } catch (err) {
       console.error('Login request failed:', err);
-      showAlert('danger', 'Connection error. Please make sure the Dahej Support server is running on port 5000.');
+      showAlert('danger', 'Unable to reach the authentication service. Please verify your internet connection and try again.');
     } finally {
       sendOtpBtn.disabled = false;
       btnText.textContent = 'Send Login OTP';
@@ -265,7 +321,7 @@ function initOtpVerificationForm() {
       spinner.style.display = 'inline-block';
 
       try {
-        const response = await fetch(`${API_BASE}/api/auth/verify-otp`, {
+        const response = await requestApi('/api/auth/verify-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -274,9 +330,9 @@ function initOtpVerificationForm() {
           })
         });
 
-        const result = await response.json();
+        const result = await parseResponseJson(response);
 
-        if (response.ok && result.success) {
+        if (response && response.ok && result && result.success) {
           showAlert('success', 'Passcode verified! Redirecting to Dashboard...');
           
           // Save session token in localStorage
@@ -288,14 +344,14 @@ function initOtpVerificationForm() {
           }, 800);
 
         } else {
-          showAlert('danger', result.message || 'Incorrect or expired OTP.');
+          showAlert('danger', (result && result.message) ? result.message : 'Incorrect or expired OTP.');
           // Clear boxes on error
           boxes.forEach(b => b.value = '');
           if (boxes[0]) boxes[0].focus();
         }
       } catch (err) {
         console.error('Verification error:', err);
-        showAlert('danger', 'Could not reach server to verify passcode.');
+        showAlert('danger', 'Could not reach server to verify passcode. Please try again.');
       } finally {
         verifyBtn.disabled = false;
         btnText.textContent = 'Verify & Enter Dashboard';
@@ -313,21 +369,21 @@ function initOtpVerificationForm() {
       resendBtn.textContent = 'Resending...';
 
       try {
-        const response = await fetch(`${API_BASE}/api/auth/resend-otp`, {
+        const response = await requestApi('/api/auth/resend-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: currentAdminEmail })
         });
 
-        const result = await response.json();
-        if (response.ok && result.success) {
+        const result = await parseResponseJson(response);
+        if (response && response.ok && result && result.success) {
           showAlert('success', result.message || 'New OTP sent to your email.');
           if (result.testOtp) {
             document.getElementById('testOtpCode').textContent = result.testOtp;
           }
           startOtpCountdown();
         } else {
-          showAlert('danger', result.message || 'Could not resend OTP.');
+          showAlert('danger', (result && result.message) ? result.message : 'Could not resend OTP.');
           resendBtn.disabled = false;
           resendBtn.textContent = 'Resend Code';
         }

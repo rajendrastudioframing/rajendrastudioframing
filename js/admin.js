@@ -4,7 +4,8 @@
  * Features: Order Card Rows, Leads Avatar Table, Products Catalog, CSV Export, WhatsApp Connect
  */
 
-const API_BASE = window.location.origin.includes(':5500') 
+const CLOUD_API_FALLBACK = 'https://rajesh-framing.vercel.app';
+let API_BASE = (window.location.origin.includes(':5500') || window.location.origin.includes(':3000')) 
   ? 'http://localhost:5000' 
   : window.location.origin;
 
@@ -49,12 +50,32 @@ document.addEventListener('DOMContentLoaded', async () => {
    ========================================================================== */
 async function verifyAdminSession() {
   try {
-    const res = await fetch(`${API_BASE}/api/auth/me`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
+    let res;
+    try {
+      res = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (networkErr) {
+      if (API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1')) {
+        console.warn('Local API at ' + API_BASE + ' unreachable. Falling back to live cloud API: ' + CLOUD_API_FALLBACK);
+        API_BASE = CLOUD_API_FALLBACK;
+        res = await fetch(`${API_BASE}/api/auth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } else {
+        throw networkErr;
+      }
+    }
 
-    if (data.success && data.admin) {
+    let data;
+    try {
+      data = await res.json();
+    } catch (jsonErr) {
+      console.warn('Could not parse auth response JSON:', jsonErr);
+      data = { success: false };
+    }
+
+    if (data && data.success && data.admin) {
       currentAdminUser = data.admin;
       updateAdminProfileUI(data.admin);
       return true;
