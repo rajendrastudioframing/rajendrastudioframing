@@ -22,6 +22,7 @@ function initContactForm() {
 
     const name = document.getElementById('contactName').value.trim();
     const phone = document.getElementById('contactPhone').value.trim();
+    const email = document.getElementById('contactEmail') ? document.getElementById('contactEmail').value.trim() : '';
     const service = document.getElementById('contactService').value;
     const message = document.getElementById('contactMessage').value.trim();
 
@@ -30,7 +31,7 @@ function initContactForm() {
       fetch(`${API_BASE}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, service, message })
+        body: JSON.stringify({ name, phone, email, service, message })
       }).catch(err => console.warn('Could not sync message with admin server:', err));
     } catch (e) {
       console.warn('API sync warning:', e);

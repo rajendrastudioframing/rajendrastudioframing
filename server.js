@@ -1329,6 +1329,43 @@ app.post('/api/inquiries', async (req, res) => {
 
     console.log(`📥 [NEW CUSTOMER INQUIRY] ID: ${newId} from ${name} (${phone}) for ${newInquiry.product}`);
 
+    // Send real-time notification email to Studio Admin
+    try {
+      const config = await db.getAdminConfig();
+      const transporter = createTransporter(config);
+      if (transporter) {
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
+        const adminRecipient = config.adminEmail || 'rajeshframing0@gmail.com';
+        await transporter.sendMail({
+          from: fromAddress,
+          to: adminRecipient,
+          subject: `🔔 New Quote Request: ${name.trim()} (${newInquiry.product})`,
+          text: `New Custom Quote Inquiry!\n\nID: ${newId}\nCustomer: ${name.trim()}\nPhone: ${phone.trim()}\nEmail: ${email || 'N/A'}\nProduct: ${newInquiry.product}\nQuantity: ${quantity || 1}\nSpecs: ${specs || 'Standard'}\nNotes: ${notes || 'None'}\n\nView in Admin Panel: https://rajesh-framing.vercel.app/admin.html#leads`,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 24px; background: #FAF8F5; border-radius: 12px; border: 1px solid #E5E0D5;">
+              <h2 style="color: #1A1A18; margin-top: 0;">🔔 New Custom Quote Inquiry #${newId}</h2>
+              <p style="color: #555555; font-size: 15px;">A new quote request has been submitted on the website:</p>
+              <table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;">
+                <tr><td style="padding: 8px 0; color: #888888; width: 130px;">Inquiry ID:</td><td style="font-weight: 700; color: #8C6A1E;">#${newId}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Customer:</td><td style="font-weight: 700; color: #111111;">${name.trim()}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Phone:</td><td style="font-weight: 700; color: #111111;">${phone.trim()}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Email:</td><td>${email || 'N/A'}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Product:</td><td style="font-weight: 700; color: #111111;">${newInquiry.product}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Quantity:</td><td>${quantity || 1}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Specs / Size:</td><td>${specs || 'Standard'}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888; vertical-align: top;">Notes:</td><td style="color: #333333; background: #FFFFFF; padding: 10px; border-radius: 6px; border: 1px solid #E5E0D8;">${notes || 'None'}</td></tr>
+              </table>
+              <div style="margin-top: 20px;">
+                <a href="https://rajesh-framing.vercel.app/admin.html#leads" style="background: #C89B3C; color: #FFFFFF; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">Open Admin Panel Leads &rarr;</a>
+              </div>
+            </div>
+          `
+        });
+      }
+    } catch (mailErr) {
+      console.warn('Admin quote notification warning:', mailErr.message);
+    }
+
     res.json({ success: true, message: 'Your quote inquiry has been submitted to Rajesh Framing!', inquiryId: newId });
   } catch (err) {
     console.error('Error saving inquiry:', err);
@@ -2016,26 +2053,86 @@ app.post('/api/contact', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name, phone, and message are required.' });
     }
 
+    const cleanName = name.trim();
+    const cleanPhone = phone.trim();
+    const cleanEmail = (email || '').trim();
+    const cleanService = (service || 'General Inquiry').trim();
+    const cleanMessage = message.trim();
+    const nowIso = new Date().toISOString();
+
+    // 1. Save to Contact Messages
     const messages = await db.getMessages();
     const newMsg = {
       id: `MSG-${new Date().getFullYear()}-${String(messages.length + 1).padStart(3, '0')}`,
-      name: name.trim(),
-      phone: phone.trim(),
-      email: (email || '').trim(),
-      service: service || 'General Inquiry',
-      message: message.trim(),
+      name: cleanName,
+      phone: cleanPhone,
+      email: cleanEmail,
+      service: cleanService,
+      message: cleanMessage,
       status: 'Unread',
-      createdAt: new Date().toISOString()
+      createdAt: nowIso
     };
-
     await db.saveMessage(newMsg);
 
-    console.log(`✉️ [NEW CONTACT MESSAGE] From ${name} (${phone}) - Topic: ${newMsg.service}`);
+    // 2. ALSO save to Inquiries / Leads table so it displays in "Leads" section in Admin Panel!
+    const inquiries = await db.getInquiries();
+    const newInquiry = {
+      id: `INQ-${new Date().getFullYear()}-${String(inquiries.length + 1).padStart(3, '0')}`,
+      name: cleanName,
+      phone: cleanPhone,
+      email: cleanEmail,
+      product: cleanService,
+      specs: 'Contact Page Form Submission',
+      quantity: 1,
+      estimatedValue: 650,
+      notes: cleanMessage,
+      status: 'New',
+      hasUpload: false,
+      uploadFileName: null,
+      createdAt: nowIso
+    };
+    await db.saveInquiry(newInquiry);
 
-    res.json({ success: true, message: 'Your message has been sent to Rajesh Framing!' });
+    console.log(`✉️ [NEW CONTACT ENQUIRY] From ${cleanName} (${cleanPhone}) - Topic: ${cleanService} (Logged to Messages & Leads)`);
+
+    // 3. Send real-time notification email to Studio Admin
+    try {
+      const config = await db.getAdminConfig();
+      const transporter = createTransporter(config);
+      if (transporter) {
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
+        const adminRecipient = config.adminEmail || 'rajeshframing0@gmail.com';
+        await transporter.sendMail({
+          from: fromAddress,
+          to: adminRecipient,
+          subject: `🔔 New Website Enquiry: ${cleanName} (${cleanService})`,
+          text: `New Customer Enquiry!\n\nName: ${cleanName}\nPhone: ${cleanPhone}\nEmail: ${cleanEmail || 'Not provided'}\nProduct/Service: ${cleanService}\nMessage: ${cleanMessage}\n\nView and manage in Admin Panel: https://rajesh-framing.vercel.app/admin.html#leads`,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 24px; background: #FAF8F5; border-radius: 12px; border: 1px solid #E5E0D5;">
+              <h2 style="color: #1A1A18; margin-top: 0;">🔔 New Customer Enquiry Received</h2>
+              <p style="color: #555555; font-size: 15px;">A new customer enquiry was submitted on the Rajesh Framing website:</p>
+              <table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;">
+                <tr><td style="padding: 8px 0; color: #888888; width: 130px;">Customer Name:</td><td style="font-weight: 700; color: #111111;">${cleanName}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Phone Number:</td><td style="font-weight: 700; color: #111111;">${cleanPhone}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Email Address:</td><td>${cleanEmail || 'N/A'}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Service / Product:</td><td style="font-weight: 700; color: #8C6A1E;">${cleanService}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888; vertical-align: top;">Message:</td><td style="color: #333333; background: #FFFFFF; padding: 12px; border-radius: 8px; border: 1px solid #E5E0D8; line-height: 1.5;">${cleanMessage}</td></tr>
+              </table>
+              <div style="margin-top: 20px;">
+                <a href="https://rajesh-framing.vercel.app/admin.html#leads" style="background: #C89B3C; color: #FFFFFF; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">Open Admin Panel Leads &rarr;</a>
+              </div>
+            </div>
+          `
+        });
+      }
+    } catch (mailErr) {
+      console.warn('Admin notification email warning:', mailErr.message);
+    }
+
+    res.json({ success: true, message: 'Your enquiry has been sent to Rajesh Framing!' });
   } catch (err) {
-    console.error('Error saving contact message:', err);
-    res.status(500).json({ success: false, message: 'Failed to record message.' });
+    console.error('Error saving contact enquiry:', err);
+    res.status(500).json({ success: false, message: 'Failed to record enquiry.' });
   }
 });
 

@@ -47,6 +47,11 @@ function injectQuoteModalMarkup() {
               </div>
             </div>
 
+            <div class="form-group">
+              <label class="form-label" for="quoteEmail">Email Address (Optional)</label>
+              <input type="email" id="quoteEmail" class="form-input" placeholder="e.g. rahul@example.com" />
+            </div>
+
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="quoteProduct">Product or Service <span class="required">*</span></label>
@@ -313,8 +318,16 @@ function bindQuoteFormSubmit() {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Submitting Enquiry...</span>`;
+    }
+
     const name = document.getElementById('quoteName').value.trim();
     const phone = document.getElementById('quotePhone').value.trim();
+    const email = document.getElementById('quoteEmail') ? document.getElementById('quoteEmail').value.trim() : '';
     const product = document.getElementById('quoteProduct').value || 'Custom Framing/Printing';
     const qty = document.getElementById('quoteQuantity').value || '1';
     const dimensions = document.getElementById('quoteDimensions').value.trim() || 'Standard';
@@ -325,23 +338,34 @@ function bindQuoteFormSubmit() {
       customerNameHolder.textContent = name;
     }
 
-    // Post to Admin API in background
+    // Post to Admin API
     try {
-      fetch(`${API_BASE}/api/inquiries`, {
+      const response = await fetch(`${API_BASE}/api/inquiries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
           phone,
+          email,
           product,
           specs: dimensions,
           quantity: qty,
           notes: req,
           uploadFileName: selectedFileObject ? selectedFileObject.name : null
         })
-      }).catch(err => console.warn('Could not sync inquiry with admin server:', err));
+      });
+
+      const resData = await response.json().catch(() => ({}));
+      if (resData && resData.success) {
+        console.log('✓ Quote inquiry successfully saved to admin panel:', resData.inquiryId);
+      }
     } catch (e) {
       console.warn('API sync warning:', e);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+      }
     }
 
     // Switch to success view
@@ -358,12 +382,13 @@ function bindQuoteFormSubmit() {
     whatsAppBtn.addEventListener('click', () => {
       const name = document.getElementById('quoteName').value.trim() || 'Valued Customer';
       const phone = document.getElementById('quotePhone').value.trim() || 'Not specified';
+      const email = document.getElementById('quoteEmail') ? document.getElementById('quoteEmail').value.trim() : '';
       const product = document.getElementById('quoteProduct').value || 'Custom Framing/Printing';
       const qty = document.getElementById('quoteQuantity').value || '1';
       const dimensions = document.getElementById('quoteDimensions').value.trim() || 'Standard';
       const req = document.getElementById('quoteRequirements').value.trim() || 'Please share pricing details.';
 
-      const msg = `Hello Rajesh Framing!\n\nI would like to request a quote:\n• Name: ${name}\n• Phone: ${phone}\n• Product/Service: ${product}\n• Quantity: ${qty}\n• Preferred Size: ${dimensions}\n• Requirements: ${req}\n\nLooking forward to hearing from you!`;
+      const msg = `Hello Rajesh Framing!\n\nI would like to request a quote:\n• Name: ${name}\n• Phone: ${phone}${email ? `\n• Email: ${email}` : ''}\n• Product/Service: ${product}\n• Quantity: ${qty}\n• Preferred Size: ${dimensions}\n• Requirements: ${req}\n\nLooking forward to hearing from you!`;
 
       const whatsappUrl = `https://wa.me/919876543210?text=${encodeURIComponent(msg)}`;
       window.open(whatsappUrl, '_blank');

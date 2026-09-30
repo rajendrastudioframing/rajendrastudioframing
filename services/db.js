@@ -7,6 +7,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { createClient } = require('@supabase/supabase-js');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
@@ -17,8 +18,8 @@ const MESSAGES_FILE = path.join(DATA_DIR, 'messages.json');
 const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 
-// Ensure local data dir exists (skip on Vercel serverless read-only filesystem)
-if (!process.env.VERCEL) {
+// Ensure local data dir exists when running in local development
+if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -26,28 +27,76 @@ if (!process.env.VERCEL) {
   } catch (_) {}
 }
 
-// Helper: Local JSON Read / Write
-function readJson(filePath, defaultValue = []) {
-  try {
-    if (!fs.existsSync(filePath)) {
-      if (!process.env.VERCEL) {
-        try { fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2)); } catch (_) {}
+// Global in-memory cache to guarantee instant persistence across all lambda invocations in the instance
+global._rfMemoryStore = global._rfMemoryStore || {};
+
+function getWritableFilePath(filePath) {
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    const tmpDir = path.join(os.tmpdir(), 'rajesh_framing_data');
+    try {
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
       }
-      return defaultValue;
+    } catch (_) {}
+    return path.join(tmpDir, path.basename(filePath));
+  }
+  return filePath;
+}
+
+// Helper: Local JSON Read / Write with Serverless /tmp and Memory Persistence
+function readJson(filePath, defaultValue = []) {
+  const key = path.basename(filePath, '.json');
+
+  // 1. Return in-memory cached copy if already updated in current process
+  if (global._rfMemoryStore[key] !== undefined && global._rfMemoryStore[key] !== null) {
+    return global._rfMemoryStore[key];
+  }
+
+  try {
+    const writablePath = getWritableFilePath(filePath);
+
+    // 2. Check writable storage location (e.g. /tmp on Vercel)
+    if (writablePath !== filePath && fs.existsSync(writablePath)) {
+      const data = fs.readFileSync(writablePath, 'utf8');
+      const parsed = JSON.parse(data);
+      global._rfMemoryStore[key] = parsed;
+      return parsed;
     }
-    const data = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(data);
+
+    // 3. Check bundled read-only repository location
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf8');
+      const parsed = JSON.parse(data);
+      global._rfMemoryStore[key] = parsed;
+      return parsed;
+    }
+
+    global._rfMemoryStore[key] = defaultValue;
+    return defaultValue;
   } catch (err) {
+    console.warn(`[readJson Warning] Could not parse ${filePath}:`, err.message);
+    global._rfMemoryStore[key] = defaultValue;
     return defaultValue;
   }
 }
 
 function writeJson(filePath, data) {
+  const key = path.basename(filePath, '.json');
+  global._rfMemoryStore[key] = data;
+
   try {
-    if (process.env.VERCEL) return true;
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    const writablePath = getWritableFilePath(filePath);
+    fs.writeFileSync(writablePath, JSON.stringify(data, null, 2), 'utf8');
+
+    // Also persist to original data directory if running in local environment
+    if (writablePath !== filePath && !process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      try {
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+      } catch (_) {}
+    }
     return true;
   } catch (err) {
+    console.error(`[writeJson Error] Could not write to ${filePath}:`, err.message);
     return false;
   }
 }

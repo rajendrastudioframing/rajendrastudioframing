@@ -365,11 +365,17 @@ function updateLeadsKPIs(leads) {
   const elAct = document.getElementById('leadsKpiActive');
   const elClo = document.getElementById('leadsKpiClosed');
   const elNew = document.getElementById('leadsKpiNew');
+  const badgeLeads = document.getElementById('sidebarLeadsBadge');
 
   if (elTot) elTot.textContent = total;
   if (elAct) elAct.textContent = active;
   if (elClo) elClo.textContent = closed;
   if (elNew) elNew.textContent = newInq;
+
+  if (badgeLeads) {
+    badgeLeads.textContent = newInq;
+    badgeLeads.style.display = newInq > 0 ? 'inline-block' : 'none';
+  }
 }
 
 /* ==========================================================================
@@ -605,7 +611,7 @@ function renderAllLeads(leads) {
             <div class="lead-avatar-circle ${color}">${initials}</div>
             <div class="lead-cust-info">
               <span class="lead-cust-name">${escapeHtml(lead.name)}</span>
-              <span class="lead-cust-email">${escapeHtml(lead.email || 'customer@gmail.com')}</span>
+              <span class="lead-cust-email">${escapeHtml(lead.email || 'No email provided')}</span>
             </div>
           </div>
         </td>
@@ -616,8 +622,8 @@ function renderAllLeads(leads) {
           <span class="status-pill inquiry">${escapeHtml(inquiryType)}</span>
         </td>
         <td>
-          <strong style="font-size: 0.82rem; color: var(--text-main); display: block;">WhatsApp Inquiry</strong>
-          <span class="status-pill active" style="font-size: 0.68rem; padding: 1px 6px; margin-top: 2px;">Active</span>
+          <strong style="font-size: 0.82rem; color: var(--text-main); display: block;">${escapeHtml(lead.specs || 'Website Inquiry')}</strong>
+          <span class="status-pill ${lead.status === 'Completed' ? 'completed' : (lead.status === 'In Progress' ? 'processing' : 'active')}" style="font-size: 0.68rem; padding: 1px 6px; margin-top: 2px;">${escapeHtml(lead.status || 'New')}</span>
         </td>
         <td>
           ${dateFormatted}
@@ -1320,6 +1326,15 @@ window.viewInquiryDetail = (id) => {
         ${inq.specs ? escapeHtml(inq.specs) : '<em style="color: var(--text-muted);">Standard Studio Pickup</em>'}
       </div>
     </div>
+
+    ${inq.notes ? `
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 0.76rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Customer Message / Enquiry Notes:</label>
+        <div style="background: var(--bg-hover); border: 1px solid var(--border-subtle); padding: 12px 14px; border-radius: 8px; font-size: 0.88rem; color: var(--text-main); margin-top: 6px; line-height: 1.5; white-space: pre-wrap;">
+          ${escapeHtml(inq.notes)}
+        </div>
+      </div>
+    ` : ''}
 
     ${inq.hasUpload && inq.uploadedFileUrl ? `
       <div style="margin-bottom: 14px; background: var(--bg-card-subtle); border: 1px solid var(--primary-border); border-radius: 10px; padding: 14px;">
