@@ -17,24 +17,40 @@ function initContactForm() {
     ? 'http://localhost:5000' 
     : window.location.origin;
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Sending Enquiry...</span>`;
+    }
 
     const name = document.getElementById('contactName').value.trim();
     const phone = document.getElementById('contactPhone').value.trim();
     const email = document.getElementById('contactEmail') ? document.getElementById('contactEmail').value.trim() : '';
-    const service = document.getElementById('contactService').value;
+    const service = document.getElementById('contactService') ? document.getElementById('contactService').value : 'General Inquiry';
     const message = document.getElementById('contactMessage').value.trim();
 
     // Sync with backend API
     try {
-      fetch(`${API_BASE}/api/contact`, {
+      const response = await fetch(`${API_BASE}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, email, service, message })
-      }).catch(err => console.warn('Could not sync message with admin server:', err));
+      });
+      const resData = await response.json().catch(() => ({}));
+      if (resData && resData.success) {
+        console.log('✓ Contact enquiry submitted to studio:', resData);
+      }
     } catch (e) {
       console.warn('API sync warning:', e);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+      }
     }
 
     // Show visual confirmation

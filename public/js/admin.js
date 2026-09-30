@@ -1659,6 +1659,14 @@ async function loadMessages() {
 
     allMessages = data.messages || [];
     renderContactMessages(allMessages);
+
+    // Update unread badge in sidebar
+    const unreadCount = allMessages.filter(m => m.status === 'Unread').length;
+    const badgeMessages = document.getElementById('sidebarUnreadMessagesBadge');
+    if (badgeMessages) {
+      badgeMessages.textContent = unreadCount;
+      badgeMessages.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+    }
   } catch (err) {
     console.error('Failed to load messages:', err);
   }
@@ -1685,7 +1693,8 @@ function renderContactMessages(messages) {
     });
 
     const cleanPhone = (msg.phone || '').replace(/\D/g, '');
-    const waText = encodeURIComponent(`Hello ${msg.name}, Rajesh Framing here responding to your message regarding ${msg.subject || 'framing inquiry'}.`);
+    const subject = msg.subject || msg.service || 'General Inquiry';
+    const waText = encodeURIComponent(`Hello ${msg.name}, Rajesh Framing here responding to your message regarding ${subject}.`);
 
     return `
       <tr>
@@ -1696,10 +1705,10 @@ function renderContactMessages(messages) {
           <span style="font-size: 0.82rem; color: var(--text-muted);">💬 ${escapeHtml(msg.phone)}</span>
         </td>
         <td>
-          <span style="font-size: 0.82rem; color: var(--text-muted);">${escapeHtml(msg.email)}</span>
+          <span style="font-size: 0.82rem; color: var(--text-muted);">${escapeHtml(msg.email || 'No email provided')}</span>
         </td>
         <td>
-          <strong style="font-size: 0.82rem; color: var(--text-main);">${escapeHtml(msg.subject || 'General Inquiry')}</strong>
+          <strong style="font-size: 0.82rem; color: var(--text-main);">${escapeHtml(subject)}</strong>
         </td>
         <td>
           <div style="font-size: 0.8rem; color: var(--text-secondary); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(msg.message)}">
@@ -1711,6 +1720,12 @@ function renderContactMessages(messages) {
         </td>
         <td style="text-align: center;">
           <div class="table-action-icons">
+            <button type="button" class="btn-table-icon edit" onclick="viewMessageDetail('${msg.id}')" title="View Full Message">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
             <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" class="btn-table-icon chat" title="Reply on WhatsApp">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.188 8.188 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.82 2.42a8.183 8.183 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.23 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43s-.56-1.34-.76-1.84c-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.84-.86 2.05 0 1.21.88 2.38 1 2.54.12.17 1.73 2.65 4.2 3.71.59.25 1.05.4 1.41.51.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.48-.3z"/>
@@ -1729,6 +1744,56 @@ function renderContactMessages(messages) {
   }).join('');
 }
 
+window.viewMessageDetail = (id) => {
+  const msg = allMessages.find(m => m.id === id);
+  if (!msg) return;
+
+  const modal = document.getElementById('inquiryDetailModal');
+  const titleEl = document.getElementById('modalInquiryId');
+  const bodyEl = document.getElementById('modalInquiryContent');
+  const waBtn = document.getElementById('modalWhatsAppActionBtn');
+
+  if (!modal || !bodyEl) return;
+
+  titleEl.textContent = `Contact Message #${msg.id}`;
+
+  const cleanPhone = (msg.phone || '').replace(/\D/g, '');
+  const subject = msg.subject || msg.service || 'General Inquiry';
+  const waText = encodeURIComponent(`Hello ${msg.name}, Rajesh Framing here regarding your message about ${subject}.`);
+  if (waBtn) waBtn.href = `https://wa.me/${cleanPhone}?text=${waText}`;
+
+  bodyEl.innerHTML = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">
+      <div style="background: var(--bg-hover); padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border-subtle);">
+        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Customer Info</span>
+        <div style="font-weight: 700; font-size: 1.05rem; color: var(--text-main); margin-top: 4px;">${escapeHtml(msg.name)}</div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">📞 ${escapeHtml(msg.phone)}</div>
+        <div style="font-size: 0.82rem; color: var(--text-muted);">✉️ ${escapeHtml(msg.email || 'Not provided')}</div>
+      </div>
+
+      <div style="background: var(--bg-hover); padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border-subtle);">
+        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Subject / Service</span>
+        <div style="font-weight: 700; font-size: 1.05rem; color: var(--text-main); margin-top: 4px;">${escapeHtml(subject)}</div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">Status: <strong style="color: var(--primary);">${escapeHtml(msg.status || 'Unread')}</strong></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 14px;">
+      <label style="font-size: 0.76rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Full Customer Message:</label>
+      <div style="background: var(--bg-hover); border: 1px solid var(--border-subtle); padding: 14px 16px; border-radius: 8px; font-size: 0.92rem; color: var(--text-main); margin-top: 6px; line-height: 1.6; white-space: pre-wrap;">
+        ${escapeHtml(msg.message)}
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--border-subtle); font-size: 0.78rem; color: var(--text-muted);">
+      <span>Received: ${new Date(msg.createdAt).toLocaleString('en-IN')}</span>
+      <span>Source: <strong>Website Contact Form</strong></span>
+    </div>
+  `;
+
+  modal.classList.add('open');
+};
+
 window.deleteMessage = async (id) => {
   if (!confirm('Delete this contact message?')) return;
   try {
@@ -1740,6 +1805,8 @@ window.deleteMessage = async (id) => {
     if (data.success) {
       allMessages = allMessages.filter(m => m.id !== id);
       renderContactMessages(allMessages);
+      await loadDashboardStats();
+      showToast('Message Deleted', 'Contact message was deleted.', 'info');
     }
   } catch (err) {
     console.error('Error deleting message:', err);

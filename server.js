@@ -2068,6 +2068,7 @@ app.post('/api/contact', async (req, res) => {
       phone: cleanPhone,
       email: cleanEmail,
       service: cleanService,
+      subject: cleanService,
       message: cleanMessage,
       status: 'Unread',
       createdAt: nowIso

@@ -383,21 +383,57 @@ function initHomeContactForm() {
   const successBox = document.getElementById('homeFormSuccess');
   if (!form) return;
 
-  form.addEventListener('submit', (e) => {
+  const API_BASE = window.location.origin.includes(':5500') 
+    ? 'http://localhost:5000' 
+    : window.location.origin;
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Sending Enquiry...</span>`;
+    }
+
     const name = document.getElementById('homeContactName').value.trim();
     const phone = document.getElementById('homeContactPhone').value.trim();
-    const interest = document.getElementById('homeContactInterest').value;
+    const email = document.getElementById('homeContactEmail') ? document.getElementById('homeContactEmail').value.trim() : '';
+    const interest = document.getElementById('homeContactInterest') ? document.getElementById('homeContactInterest').value : 'General Inquiry';
     const message = document.getElementById('homeContactMessage').value.trim();
+
+    try {
+      const response = await fetch(`${API_BASE}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          phone,
+          email,
+          service: interest,
+          message
+        })
+      });
+
+      const resData = await response.json().catch(() => ({}));
+      if (resData && resData.success) {
+        console.log('✓ Homepage contact enquiry submitted to studio:', resData);
+      }
+    } catch (err) {
+      console.warn('Could not sync homepage enquiry with admin server:', err);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+      }
+    }
 
     // Visual feedback
     if (successBox) {
       form.style.display = 'none';
       successBox.style.display = 'block';
     }
-
-    // Optional direct sync or notification
-    console.log('Homepage Enquiry Submitted:', { name, phone, interest, message });
   });
 }
 
