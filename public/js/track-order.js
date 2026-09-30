@@ -182,7 +182,7 @@ function renderTrackingResult(order, container) {
           return `
             <li class="track-step-item ${itemClass}">
               <div class="track-step-circle">
-                ${step.completed && !step.current ? '✓' : stepIcons[idx]}
+                ${step.completed ? '✓' : stepIcons[idx]}
               </div>
               <div class="track-step-info">
                 <div class="track-step-title">${escapeHtml(step.title)}</div>

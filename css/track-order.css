@@ -223,8 +223,13 @@
   letter-spacing: 0.5px;
 }
 
+.track-status-badge.confirmed {
+  background: #ECFDF3;
+  color: #027A48;
+  border: 1px solid #A6F4C5;
+}
+
 .track-status-badge.in-progress,
-.track-status-badge.confirmed,
 .track-status-badge.new {
   background: #EFF8FF;
   color: #175CD3;
@@ -268,16 +273,8 @@
   list-style: none;
 }
 
-/* The connecting line behind steps */
 .track-steps-bar::before {
-  content: '';
-  position: absolute;
-  top: 22px;
-  left: 36px;
-  right: 36px;
-  height: 3px;
-  background: #E5E0D8;
-  z-index: 1;
+  display: none;
 }
 
 .track-step-item {
@@ -286,6 +283,23 @@
   text-align: center;
   flex: 1;
   padding: 0 6px;
+}
+
+/* Horizontal connector line segment between steps */
+.track-step-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  width: 100%;
+  height: 3px;
+  background: #E5E0D8;
+  z-index: 1;
+  transition: background 0.3s ease;
+}
+
+.track-step-item.completed:not(:last-child)::after {
+  background: #C89B3C;
 }
 
 .track-step-circle {
@@ -302,6 +316,8 @@
   font-weight: 700;
   font-size: 0.95rem;
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .track-step-item.completed .track-step-circle {
@@ -310,7 +326,7 @@
   color: #FFFFFF;
 }
 
-.track-step-item.current .track-step-circle {
+.track-step-item.current:not(.completed) .track-step-circle {
   background: #FFFFFF;
   border-color: #C89B3C;
   color: #C89B3C;
@@ -571,20 +587,35 @@
   }
 
   .track-steps-bar::before {
-    top: 20px;
-    bottom: 20px;
-    left: 21px;
-    right: auto;
-    width: 3px;
-    height: auto;
+    display: none;
   }
 
   .track-step-item {
+    position: relative;
     display: flex;
     align-items: flex-start;
     gap: 16px;
     text-align: left;
     padding: 0;
+  }
+
+  /* Vertical connector line segment on mobile */
+  .track-step-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 44px;
+    bottom: -22px;
+    left: 21px;
+    right: auto;
+    width: 3px;
+    height: auto;
+    background: #E5E0D8;
+    z-index: 1;
+    transition: background 0.3s ease;
+  }
+
+  .track-step-item.completed:not(:last-child)::after {
+    background: #C89B3C;
   }
 
   .track-step-circle {

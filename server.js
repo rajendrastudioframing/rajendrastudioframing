@@ -1569,9 +1569,10 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
 
     // Status derivation
     const isCancelled = status === 'Cancelled';
-    const isNew = status === 'New';
-    const isInProgress = status === 'In Progress' || status === 'Confirmed' || status === 'Accepted';
-    const isShipped = status === 'Shipped';
+    const isNew = status === 'New' || status === 'Pending';
+    const isConfirmed = status === 'Confirmed' || status === 'Accepted';
+    const isInProduction = status === 'In Progress' || status === 'Processing';
+    const isShipped = status === 'Shipped' || status === 'Dispatched';
     const isCompleted = status === 'Completed' || status === 'Delivered';
 
     const orderDateFormatted = new Date(createdAt).toLocaleDateString('en-IN', {
@@ -1598,17 +1599,17 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
         title: 'Order Accepted & Confirmed',
         description: 'Reviewed and approved by framing studio',
         date: (!isNew && !isCancelled) ? 'Confirmed' : 'Pending',
-        completed: isInProgress || isShipped || isCompleted,
-        current: isInProgress
+        completed: isConfirmed || isInProduction || isShipped || isCompleted,
+        current: false
       },
       {
         id: 'production',
         step: 3,
         title: 'Framing & Precision Crafting',
         description: 'Mounting, glass cutting, and frame assembly',
-        date: (isShipped || isCompleted) ? 'Completed' : (isInProgress ? 'In Progress' : 'Pending'),
+        date: (isShipped || isCompleted) ? 'Completed' : ((isConfirmed || isInProduction) ? 'In Progress' : 'Pending'),
         completed: isShipped || isCompleted,
-        current: false
+        current: (isConfirmed || isInProduction) && !isShipped && !isCompleted
       },
       {
         id: 'dispatched',
