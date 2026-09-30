@@ -659,7 +659,7 @@ function renderRelatedProducts() {
   container.innerHTML = related.map(p => {
     const priceFormatted = p.price ? `₹${p.price}` : p.priceDisplay;
     return `
-    <article class="product-card" data-id="${p.id}" onclick="window.location.href='product-detail.html?id=${p.id}'">
+    <article class="product-card" data-id="${p.id}" onclick="window.location.href='product-detail?id=${p.id}'">
       <div class="product-card-top">
         ${p.badge ? `<span class="product-badge-pill">${p.badge}</span>` : '<span></span>'}
         <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
@@ -677,7 +677,7 @@ function renderRelatedProducts() {
       <div class="product-capsule">
         <div class="capsule-top-row">
           <h4 class="capsule-title">
-            <a href="product-detail.html?id=${p.id}">${p.name}</a>
+            <a href="product-detail?id=${p.id}">${p.name}</a>
           </h4>
           <span class="capsule-price">${priceFormatted}</span>
         </div>
@@ -690,7 +690,7 @@ function renderRelatedProducts() {
             </svg>
             <span>Rajesh Framing</span>
           </div>
-          <button type="button" class="capsule-action-btn" onclick="event.stopPropagation(); window.location.href='product-detail.html?id=${p.id}'">
+          <button type="button" class="capsule-action-btn" onclick="event.stopPropagation(); window.location.href='product-detail?id=${p.id}'">
             <span>View</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="5" y1="12" x2="19" y2="12"></line>

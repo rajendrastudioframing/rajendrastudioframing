@@ -274,7 +274,7 @@ function renderWishlistDrawer() {
         </div>
         <h4 class="wishlist-empty-title">Your Wishlist is Empty</h4>
         <p class="wishlist-empty-text">Explore our custom frames, personalized mugs, bottles, and office printing to save your favorite designs.</p>
-        <a href="products.html" class="btn btn-gold shimmer-effect" style="display: inline-block; padding: 10px 24px;" onclick="closeWishlistDrawer()">
+        <a href="products" class="btn btn-gold shimmer-effect" style="display: inline-block; padding: 10px 24px;" onclick="closeWishlistDrawer()">
           Explore Collection
         </a>
       </div>

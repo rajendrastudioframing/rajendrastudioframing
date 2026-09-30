@@ -32,7 +32,7 @@ async function checkExistingSession(token) {
     });
     const data = await res.json();
     if (data.success) {
-      window.location.href = 'admin.html';
+      window.location.href = 'admin';
     } else {
       localStorage.removeItem('rf_admin_token');
       localStorage.removeItem('rf_admin_user');
@@ -284,7 +284,7 @@ function initOtpVerificationForm() {
           localStorage.setItem('rf_admin_user', JSON.stringify(result.admin));
 
           setTimeout(() => {
-            window.location.href = 'admin.html';
+            window.location.href = 'admin';
           }, 800);
 
         } else {

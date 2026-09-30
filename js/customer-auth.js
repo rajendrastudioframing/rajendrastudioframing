@@ -267,7 +267,7 @@
                   <h3 style="font-family: var(--font-heading); font-size: 0.95rem; font-weight: 700; color: #111111; margin: 0;">
                     My Orders
                   </h3>
-                  <a href="track-order.html" style="font-size: 0.75rem; color: var(--accent-gold, #C99A3D); font-weight: 600; text-decoration: none;">
+                  <a href="track-order" style="font-size: 0.75rem; color: var(--accent-gold, #C99A3D); font-weight: 600; text-decoration: none;">
                     Track Order &rarr;
                   </a>
                 </div>
@@ -286,7 +286,7 @@
                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                   </svg>
                   <p style="font-size: 0.85rem; color: #6B7280; margin: 0 0 10px;">No orders found for this email yet.</p>
-                  <a href="products.html" class="btn btn-gold btn-sm shimmer-effect" style="display: inline-block; padding: 6px 16px; font-size: 0.75rem;">
+                  <a href="products" class="btn btn-gold btn-sm shimmer-effect" style="display: inline-block; padding: 6px 16px; font-size: 0.75rem;">
                     Browse Catalog
                   </a>
                 </div>
@@ -637,7 +637,7 @@
           return `
             <div class="cust-order-card">
               <div class="cust-order-header">
-                <a href="track-order.html?id=${encodeURIComponent(orderId)}" class="cust-order-id" title="Track this order">
+                <a href="track-order?id=${encodeURIComponent(orderId)}" class="cust-order-id" title="Track this order">
                   #${orderId}
                 </a>
                 <span class="cust-order-badge ${statusClass}">${status}</span>
@@ -647,7 +647,7 @@
                 <strong style="color: #111111;">₹${total}</strong>
               </div>
               <div style="text-align: right; margin-top: 6px;">
-                <a href="track-order.html?id=${encodeURIComponent(orderId)}" style="font-size: 0.75rem; color: var(--accent-gold, #C99A3D); font-weight: 600; text-decoration: none;">
+                <a href="track-order?id=${encodeURIComponent(orderId)}" style="font-size: 0.75rem; color: var(--accent-gold, #C99A3D); font-weight: 600; text-decoration: none;">
                   Track Live Status &rarr;
                 </a>
               </div>

@@ -224,7 +224,7 @@ function bindCheckoutForm() {
     const cart = getCart();
     if (!cart || cart.length === 0) {
       alert('Your cart is empty. Please add products before placing an order.');
-      window.location.href = 'products.html';
+      window.location.href = 'products';
       return;
     }
 
@@ -301,7 +301,7 @@ function bindCheckoutForm() {
 
         const trackBtn = document.getElementById('successTrackBtn');
         if (trackBtn) {
-          trackBtn.href = `track-order.html?id=${encodeURIComponent(orderId)}`;
+          trackBtn.href = `track-order?id=${encodeURIComponent(orderId)}`;
         }
 
         // Clear cart

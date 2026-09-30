@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('trackOrderIdInput');
   const resultContainer = document.getElementById('trackingResultContainer');
 
-  // Check URL query parameter (e.g. track-order.html?id=RF-ORD-2026-003)
+  // Check URL query parameter (e.g. track-order?id=RF-ORD-2026-003)
   const urlParams = new URLSearchParams(window.location.search);
   const initialId = urlParams.get('id') || urlParams.get('orderId');
 

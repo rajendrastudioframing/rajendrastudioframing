@@ -28,8 +28,19 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0, etag: false }));
-app.use(express.static(path.join(__dirname), { maxAge: 0, etag: false }));
+// Clean URL redirect middleware: strip .html extension for clean browser URLs
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html')) {
+    const cleanPath = req.path.slice(0, -5);
+    const target = cleanPath === '/index' ? '/' : cleanPath;
+    const query = req.url.slice(req.path.length);
+    return res.redirect(301, (target || '/') + query);
+  }
+  next();
+});
+
+app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'], maxAge: 0, etag: false }));
+app.use(express.static(path.join(__dirname), { extensions: ['html'], maxAge: 0, etag: false }));
 
 // Root Route handler
 app.get('/', (req, res) => {
@@ -1356,7 +1367,7 @@ app.post('/api/inquiries', async (req, res) => {
                 <tr><td style="padding: 8px 0; color: #888888; vertical-align: top;">Notes:</td><td style="color: #333333; background: #FFFFFF; padding: 10px; border-radius: 6px; border: 1px solid #E5E0D8;">${notes || 'None'}</td></tr>
               </table>
               <div style="margin-top: 20px;">
-                <a href="https://rajesh-framing.vercel.app/admin.html#leads" style="background: #C89B3C; color: #FFFFFF; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">Open Admin Panel Leads &rarr;</a>
+                <a href="https://rajesh-framing.vercel.app/admin#leads" style="background: #C89B3C; color: #FFFFFF; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">Open Admin Panel Leads &rarr;</a>
               </div>
             </div>
           `
@@ -2107,7 +2118,7 @@ app.post('/api/contact', async (req, res) => {
           from: fromAddress,
           to: adminRecipient,
           subject: `🔔 New Website Enquiry: ${cleanName} (${cleanService})`,
-          text: `New Customer Enquiry!\n\nName: ${cleanName}\nPhone: ${cleanPhone}\nEmail: ${cleanEmail || 'Not provided'}\nProduct/Service: ${cleanService}\nMessage: ${cleanMessage}\n\nView and manage in Admin Panel: https://rajesh-framing.vercel.app/admin.html#leads`,
+          text: `New Customer Enquiry!\n\nName: ${cleanName}\nPhone: ${cleanPhone}\nEmail: ${cleanEmail || 'Not provided'}\nProduct/Service: ${cleanService}\nMessage: ${cleanMessage}\n\nView and manage in Admin Panel: https://rajesh-framing.vercel.app/admin#leads`,
           html: `
             <div style="font-family: Arial, sans-serif; padding: 24px; background: #FAF8F5; border-radius: 12px; border: 1px solid #E5E0D5;">
               <h2 style="color: #1A1A18; margin-top: 0;">🔔 New Customer Enquiry Received</h2>
@@ -2120,7 +2131,7 @@ app.post('/api/contact', async (req, res) => {
                 <tr><td style="padding: 8px 0; color: #888888; vertical-align: top;">Message:</td><td style="color: #333333; background: #FFFFFF; padding: 12px; border-radius: 8px; border: 1px solid #E5E0D8; line-height: 1.5;">${cleanMessage}</td></tr>
               </table>
               <div style="margin-top: 20px;">
-                <a href="https://rajesh-framing.vercel.app/admin.html#leads" style="background: #C89B3C; color: #FFFFFF; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">Open Admin Panel Leads &rarr;</a>
+                <a href="https://rajesh-framing.vercel.app/admin#leads" style="background: #C89B3C; color: #FFFFFF; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">Open Admin Panel Leads &rarr;</a>
               </div>
             </div>
           `

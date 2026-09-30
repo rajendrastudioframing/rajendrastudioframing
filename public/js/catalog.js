@@ -158,7 +158,7 @@ function renderCatalog() {
     ` : '';
 
     return `
-    <article class="product-card" data-id="${product.id}" data-selected-finish-id="${defaultFinish ? defaultFinish.id : ''}" data-selected-finish-name="${defaultFinish ? defaultFinish.name : ''}" data-selected-finish-img="${initialCardImg}" onclick="window.location.href='product-detail.html?id=${product.id}${defaultFinish ? `&finish=${defaultFinish.id}` : ''}'">
+    <article class="product-card" data-id="${product.id}" data-selected-finish-id="${defaultFinish ? defaultFinish.id : ''}" data-selected-finish-name="${defaultFinish ? defaultFinish.name : ''}" data-selected-finish-img="${initialCardImg}" onclick="window.location.href='product-detail?id=${product.id}${defaultFinish ? `&finish=${defaultFinish.id}` : ''}'">
       <div class="product-card-top">
         ${product.badge ? `<span class="product-badge-pill">${product.badge}</span>` : '<span></span>'}
         <button type="button" class="product-wishlist-btn ${wishActive ? 'active' : ''}" data-wishlist-id="${product.id}" aria-label="Add to wishlist" onclick="toggleWishlist('${product.id}', event);" title="Add to Wishlist">
@@ -176,7 +176,7 @@ function renderCatalog() {
       <div class="product-capsule">
         <div class="capsule-top-row">
           <h3 class="capsule-title">
-            <a href="product-detail.html?id=${product.id}${defaultFinish ? `&finish=${defaultFinish.id}` : ''}">${product.name}</a>
+            <a href="product-detail?id=${product.id}${defaultFinish ? `&finish=${defaultFinish.id}` : ''}">${product.name}</a>
           </h3>
           <span class="capsule-price">${priceFormatted}</span>
         </div>
@@ -215,7 +215,7 @@ window.changeCatalogCardImage = function(productId, newImgSrc, swatchEl, event, 
     if (newImgSrc) card.setAttribute('data-selected-finish-img', newImgSrc);
 
     // Update navigation destination
-    const targetUrl = `product-detail.html?id=${productId}${finishId ? `&finish=${finishId}` : ''}`;
+    const targetUrl = `product-detail?id=${productId}${finishId ? `&finish=${finishId}` : ''}`;
     card.setAttribute('onclick', `window.location.href='${targetUrl}'`);
     const cardTitleLink = card.querySelector('.capsule-title a');
     if (cardTitleLink) {

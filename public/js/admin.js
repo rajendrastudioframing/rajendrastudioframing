@@ -17,7 +17,7 @@ let allMessages = [];
 // Initialize Dashboard
 document.addEventListener('DOMContentLoaded', async () => {
   if (!token) {
-    window.location.href = 'admin-login.html';
+    window.location.href = 'admin-login';
     return;
   }
 
@@ -90,7 +90,7 @@ function updateAdminProfileUI(admin) {
 function handleAuthFailure() {
   localStorage.removeItem('rf_admin_token');
   localStorage.removeItem('rf_admin_user');
-  window.location.href = 'admin-login.html';
+  window.location.href = 'admin-login';
 }
 
 function initLogout() {

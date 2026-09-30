@@ -74,15 +74,17 @@ function initMobileDrawer() {
 
 /* --- Highlight Active Nav Link based on URL --- */
 function highlightActiveNavLink() {
-  const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+  const rawPath = window.location.pathname.split('/').pop().replace(/\.html$/, '');
+  const currentPath = (!rawPath || rawPath === 'index') ? 'index' : rawPath;
   const navLinks = document.querySelectorAll('.nav-menu .nav-link, .drawer-nav .nav-link');
 
   navLinks.forEach(link => {
     const href = link.getAttribute('href');
     if (!href) return;
-    const linkPath = href.split('/').pop();
+    const rawLink = href.split('/').pop().replace(/\.html$/, '');
+    const linkPath = (!rawLink || rawLink === 'index' || href === '/') ? 'index' : rawLink;
 
-    if (linkPath === currentPath || (currentPath === '' && linkPath === 'index.html')) {
+    if (linkPath === currentPath) {
       link.classList.add('active');
     } else {
       link.classList.remove('active');
@@ -453,7 +455,7 @@ window.changeCatalogCardImage = function(productId, newImgSrc, swatchEl, event, 
     if (newImgSrc) card.setAttribute('data-selected-finish-img', newImgSrc);
 
     // Update navigation destination
-    const targetUrl = `product-detail.html?id=${productId}${finishId ? `&finish=${finishId}` : ''}`;
+    const targetUrl = `product-detail?id=${productId}${finishId ? `&finish=${finishId}` : ''}`;
     card.setAttribute('onclick', `window.location.href='${targetUrl}'`);
     const cardTitleLink = card.querySelector('.capsule-title a, .bento-title a');
     if (cardTitleLink) {

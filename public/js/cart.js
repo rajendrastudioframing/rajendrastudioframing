@@ -94,7 +94,7 @@ function addToCart(product, quantity = 1, openDrawer = true) {
  */
 function buyNow(product, quantity = 1) {
   addToCart(product, quantity, false);
-  window.location.href = 'checkout.html';
+  window.location.href = 'checkout';
 }
 
 function updateQuantity(index, newQty) {
@@ -214,7 +214,7 @@ function injectCartDrawerMarkup() {
             <span id="drawerTotalAmount">₹0</span>
           </div>
 
-          <a href="checkout.html" class="btn-cart-checkout" id="drawerCheckoutBtn">
+          <a href="checkout" class="btn-cart-checkout" id="drawerCheckoutBtn">
             <span>Proceed to Checkout</span>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -274,7 +274,7 @@ function renderCartDrawer() {
         </div>
         <h4 class="cart-empty-title">Your Cart is Empty</h4>
         <p class="cart-empty-text">Browse our luxury glass frames, personalized bottles, mugs, and fine art prints to add items to your cart.</p>
-        <a href="products.html" class="btn btn-gold shimmer-effect" style="display: inline-block; padding: 10px 24px;" onclick="closeCartDrawer()">
+        <a href="products" class="btn btn-gold shimmer-effect" style="display: inline-block; padding: 10px 24px;" onclick="closeCartDrawer()">
           Explore Products
         </a>
       </div>
@@ -340,7 +340,7 @@ function openCartDrawer() {
     overlay = document.getElementById('cartDrawerOverlay');
   }
   if (!overlay) {
-    window.location.href = 'checkout.html';
+    window.location.href = 'checkout';
     return;
   }
   renderCartDrawer();
@@ -461,7 +461,7 @@ function buyNowFromCard(productId, event) {
   const products = (typeof PRODUCTS_DATA !== 'undefined' ? PRODUCTS_DATA : []);
   const product = products.find(p => p.id === productId);
   if (!product) {
-    window.location.href = `product-detail.html?id=${productId}`;
+    window.location.href = `product-detail?id=${productId}`;
     return;
   }
   const card = event && event.target ? event.target.closest('.product-card') : document.querySelector(`.product-card[data-id="${productId}"]`);
