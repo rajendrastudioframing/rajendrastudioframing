@@ -11,11 +11,49 @@ function initCheckoutPage() {
   handleBuyNowQueryParam();
   renderCheckoutSummary();
   bindCheckoutForm();
+  updateCheckoutAuthUI();
 
   // Listen to cart updates in case drawer changes items
   window.addEventListener('cartUpdated', () => {
     renderCheckoutSummary();
   });
+
+  // Listen to customer auth changes (login/logout)
+  window.addEventListener('customerAuthStateChanged', () => {
+    updateCheckoutAuthUI();
+  });
+}
+
+function updateCheckoutAuthUI() {
+  const noticeBanner = document.getElementById('checkoutAuthNotice');
+  const verifiedBanner = document.getElementById('checkoutAuthVerified');
+  const loggedEmailEl = document.getElementById('checkoutLoggedEmail');
+  const emailInput = document.getElementById('custEmail');
+  const nameInput = document.getElementById('custName');
+  const phoneInput = document.getElementById('custPhone');
+
+  const isLoggedIn = typeof isCustomerLoggedIn === 'function' && isCustomerLoggedIn();
+  const user = typeof getCustomerUser === 'function' ? getCustomerUser() : null;
+
+  if (isLoggedIn && user) {
+    if (noticeBanner) noticeBanner.style.display = 'none';
+    if (verifiedBanner) verifiedBanner.style.display = 'flex';
+    if (loggedEmailEl) loggedEmailEl.textContent = user.email || 'customer@example.com';
+
+    // Auto-fill customer details if fields are empty
+    if (emailInput && (!emailInput.value || emailInput.value !== user.email)) {
+      emailInput.value = user.email;
+    }
+    if (nameInput && !nameInput.value && user.name && user.name !== 'Valued Customer') {
+      nameInput.value = user.name;
+    }
+    if (phoneInput && !phoneInput.value && user.phone) {
+      phoneInput.value = user.phone;
+    }
+  } else {
+    if (noticeBanner) noticeBanner.style.display = 'flex';
+    if (verifiedBanner) verifiedBanner.style.display = 'none';
+  }
 }
 
 /**
@@ -228,6 +266,20 @@ function bindCheckoutForm() {
       return;
     }
 
+    // GATE: Customer MUST be logged in before placing an order
+    if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
+      if (typeof openCustomerAuthModal === 'function') {
+        openCustomerAuthModal((customer) => {
+          updateCheckoutAuthUI();
+          // After customer authenticates, auto-proceed with order placement
+          submitOrder();
+        });
+      } else {
+        alert('Please log in to your customer account to place an order.');
+      }
+      return;
+    }
+
     const subtotal = getCartSubtotal();
     const total = subtotal; // Free shipping
 
@@ -255,14 +307,31 @@ function bindCheckoutForm() {
       notes: notes
     };
 
+    const headers = { 'Content-Type': 'application/json' };
+    const customerToken = typeof getCustomerToken === 'function' ? getCustomerToken() : null;
+    if (customerToken) {
+      headers['Authorization'] = `Bearer ${customerToken}`;
+    }
+
     try {
       const response = await fetch(`${CART_API_BASE}/api/orders`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify(orderPayload)
       });
 
       const result = await response.json();
+
+      if (response.status === 401 && result.requiresLogin) {
+        if (desktopBtn) desktopBtn.disabled = false;
+        if (btnText) btnText.textContent = 'Place Order via UPI / Cash';
+        if (typeof openCustomerAuthModal === 'function') {
+          openCustomerAuthModal(() => submitOrder());
+        } else {
+          alert(result.message || 'Please log in to your customer account to place an order.');
+        }
+        return;
+      }
 
       if (response.ok && result.success) {
         // Success!

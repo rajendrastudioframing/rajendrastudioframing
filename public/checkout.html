@@ -64,6 +64,17 @@
             <span class="cart-badge" id="navbarCartBadge">0</span>
           </button>
 
+          <!-- Customer Sign In / Account Button -->
+          <div class="nav-customer-slot" id="navCustomerSlot">
+            <button type="button" class="btn btn-sm btn-outline cust-sign-in-btn" style="border-radius: 9999px; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; font-weight: 600;" onclick="openCustomerAuthModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>Sign In</span>
+            </button>
+          </div>
+
           <button type="button" class="btn btn-gold btn-sm shimmer-effect navbar-quote-btn" data-open-quote>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -153,6 +164,45 @@
             </svg>
             Customer &amp; Delivery Details
           </h2>
+
+          <!-- Customer Authentication Banner & Status -->
+          <div id="checkoutAuthNotice" class="checkout-auth-banner unauthenticated" style="margin-bottom: 20px; padding: 16px 18px; border-radius: 14px; background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 1.5px solid #FCD34D; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 40px; height: 40px; border-radius: 10px; background: #F59E0B; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                🔒
+              </div>
+              <div>
+                <div style="font-weight: 800; font-size: 0.9375rem; color: #92400E; margin-bottom: 2px;">
+                  Customer Login Required to Place Order
+                </div>
+                <div style="font-size: 0.8125rem; color: #B45309; line-height: 1.35;">
+                  Please sign in or create your customer account. Your items are saved and ready in your cart!
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-gold shimmer-effect" onclick="openCustomerAuthModal()" style="padding: 9px 18px; font-weight: 700; white-space: nowrap;">
+              <span>Sign In / Register →</span>
+            </button>
+          </div>
+
+          <div id="checkoutAuthVerified" class="checkout-auth-banner authenticated" style="display: none; margin-bottom: 20px; padding: 14px 18px; border-radius: 14px; background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1.5px solid #A7F3D0; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 38px; height: 38px; border-radius: 50%; background: #10B981; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;">
+                ✓
+              </div>
+              <div>
+                <div style="font-weight: 800; font-size: 0.9rem; color: #065F46;">
+                  Verified Customer Account
+                </div>
+                <div style="font-size: 0.8125rem; color: #047857;">
+                  Logged in as: <strong id="checkoutLoggedEmail" style="color: #064E3B;">user@example.com</strong>
+                </div>
+              </div>
+            </div>
+            <button type="button" onclick="logoutCustomer(true)" style="background: none; border: 1px solid #6EE7B7; color: #065F46; font-size: 0.75rem; font-weight: 700; padding: 5px 12px; border-radius: 8px; cursor: pointer;" onmouseover="this.style.background='#A7F3D0'" onmouseout="this.style.background='transparent'">
+              Sign Out
+            </button>
+          </div>
 
           <form id="checkoutOrderForm">
             <div class="checkout-form-grid">

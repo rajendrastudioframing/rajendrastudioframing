@@ -17,6 +17,7 @@ const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
 const MESSAGES_FILE = path.join(DATA_DIR, 'messages.json');
 const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
+const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
 
 // Ensure local data dir exists when running in local development
 if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
@@ -436,6 +437,76 @@ module.exports = {
     return writeJson(CONFIG_FILE, cfg);
   },
 
+  // --- CUSTOMER ACCOUNTS ---
+  async getCustomers() {
+    if (supabase) {
+      const { data, error } = await supabase.from('customers').select('*').order('registered_at', { ascending: false });
+      if (!error && data) return data;
+    }
+    return readJson(CUSTOMERS_FILE, []);
+  },
+
+  async saveCustomer(customer) {
+    if (supabase) {
+      const { error } = await supabase.from('customers').upsert(customer);
+      if (!error) return customer;
+    }
+    const customers = readJson(CUSTOMERS_FILE, []);
+    const idx = customers.findIndex(c => c.email && c.email.toLowerCase() === customer.email.toLowerCase());
+    if (idx !== -1) {
+      customers[idx] = { ...customers[idx], ...customer, updatedAt: new Date().toISOString() };
+    } else {
+      customers.unshift(customer);
+    }
+    writeJson(CUSTOMERS_FILE, customers);
+    return customer;
+  },
+
+  async recordCustomerLogin(email, name = '', phone = '') {
+    if (!email) return null;
+    const cleanEmail = email.trim().toLowerCase();
+    const customers = readJson(CUSTOMERS_FILE, []);
+    const nowIso = new Date().toISOString();
+    
+    let cust = customers.find(c => c.email && c.email.toLowerCase() === cleanEmail);
+    if (cust) {
+      cust.lastLoginAt = nowIso;
+      cust.loginCount = (cust.loginCount || 1) + 1;
+      if (name && name.trim()) cust.name = name.trim();
+      if (phone && phone.trim()) cust.phone = phone.trim();
+      cust.status = 'Active';
+    } else {
+      cust = {
+        id: 'CUST-' + String(customers.length + 1).padStart(4, '0'),
+        name: (name && name.trim()) || 'Valued Customer',
+        email: cleanEmail,
+        phone: (phone && phone.trim()) || '',
+        registeredAt: nowIso,
+        lastLoginAt: nowIso,
+        loginCount: 1,
+        totalOrders: 0,
+        totalSpent: 0,
+        status: 'Active'
+      };
+      customers.unshift(cust);
+    }
+    writeJson(CUSTOMERS_FILE, customers);
+    return cust;
+  },
+
+  async updateCustomerOrderStats(email, orderTotal = 0) {
+    if (!email) return;
+    const cleanEmail = email.trim().toLowerCase();
+    const customers = readJson(CUSTOMERS_FILE, []);
+    const cust = customers.find(c => c.email && c.email.toLowerCase() === cleanEmail);
+    if (cust) {
+      cust.totalOrders = (cust.totalOrders || 0) + 1;
+      cust.totalSpent = (cust.totalSpent || 0) + (Number(orderTotal) || 0);
+      cust.lastOrderAt = new Date().toISOString();
+      writeJson(CUSTOMERS_FILE, customers);
+    }
+  },
+
   // Local file references for legacy imports
   readJson,
   writeJson,
@@ -444,5 +515,6 @@ module.exports = {
   PRODUCTS_FILE,
   MESSAGES_FILE,
   ORDERS_FILE,
-  SESSIONS_FILE
+  SESSIONS_FILE,
+  CUSTOMERS_FILE
 };

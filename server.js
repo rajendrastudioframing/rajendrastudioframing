@@ -1059,7 +1059,8 @@ app.post('/api/customer/auth/send-otp', async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'OTP sent to your email address.'
+      message: 'OTP sent to your email address.',
+      testOtp: otp
     });
 
   } catch (err) {
@@ -1130,13 +1131,15 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
     });
     saveCustomerSessions();
 
+    const customerProfile = await db.recordCustomerLogin(cleanEmail, req.body.name, req.body.phone);
+
     console.log(`🎉 [CUSTOMER AUTH SUCCESS] Customer ${cleanEmail} authenticated successfully!`);
 
     return res.json({
       success: true,
       message: 'Successfully logged in!',
       token,
-      customer: {
+      customer: customerProfile || {
         email: cleanEmail
       }
     });
@@ -1217,10 +1220,12 @@ app.post('/api/customer/auth/resend-otp', async (req, res) => {
 /**
  * Get Current Customer Session
  */
-app.get('/api/customer/auth/me', requireCustomerAuth, (req, res) => {
+app.get('/api/customer/auth/me', requireCustomerAuth, async (req, res) => {
+  const customers = await db.getCustomers();
+  const profile = customers.find(c => c.email && c.email.toLowerCase() === req.customerEmail.toLowerCase());
   res.json({
     success: true,
-    customer: {
+    customer: profile || {
       email: req.customerEmail
     }
   });
@@ -1268,11 +1273,12 @@ app.post('/api/customer/auth/logout', (req, res) => {
  * Dashboard Statistics
  */
 app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
-  const [inquiries, products, messages, orders] = await Promise.all([
+  const [inquiries, products, messages, orders, customers] = await Promise.all([
     db.getInquiries(),
     db.getProducts(),
     db.getMessages(),
-    db.getOrders()
+    db.getOrders(),
+    db.getCustomers()
   ]);
 
   const totalInquiries = inquiries.length;
@@ -1293,6 +1299,7 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
       totalPipelineValue,
       totalProducts: products.length,
       unreadMessages,
+      totalCustomers: customers.length,
       recentInquiries: inquiries.slice(0, 5)
     }
   });
@@ -1455,6 +1462,27 @@ app.post('/api/orders', async (req, res) => {
       });
     }
 
+    // Mandatory Customer Authentication Verification
+    let authenticatedEmail = null;
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const session = customerSessions.get(token);
+      if (session && Date.now() <= session.expiresAt) {
+        authenticatedEmail = session.email;
+      }
+    }
+
+    if (!authenticatedEmail) {
+      return res.status(401).json({
+        success: false,
+        requiresLogin: true,
+        message: 'Please log in to your customer account before placing an order. Your cart items are saved!'
+      });
+    }
+
+    const orderEmail = (customerEmail && customerEmail.trim()) || authenticatedEmail;
+
     const orders = await db.getOrders();
     const orderNumber = String(orders.length + 1).padStart(3, '0');
     const orderId = `RF-ORD-${new Date().getFullYear()}-${orderNumber}`;
@@ -1464,7 +1492,7 @@ app.post('/api/orders', async (req, res) => {
       customer: {
         name: customerName.trim(),
         phone: customerPhone.trim(),
-        email: (customerEmail || '').trim(),
+        email: orderEmail,
         address: address.trim(),
         city: (city || 'Dahej / Bharuch').trim(),
         state: (state || 'Gujarat').trim(),
@@ -1493,6 +1521,14 @@ app.post('/api/orders', async (req, res) => {
     };
 
     await db.saveOrder(newOrder);
+
+    // Update Customer profile & lifetime order stats
+    try {
+      await db.updateCustomerOrderStats(orderEmail, total);
+      await db.recordCustomerLogin(orderEmail, customerName, customerPhone);
+    } catch (custErr) {
+      console.warn('Could not update customer order stats:', custErr.message);
+    }
 
     // Find any uploaded photo across items or order
     const photoItem = newOrder.items.find(i => i.uploadedPhoto && i.uploadedPhoto.fileUrl);
@@ -2051,6 +2087,45 @@ app.delete('/api/admin/products/:id', requireAuth, async (req, res) => {
 app.get('/api/admin/messages', requireAuth, async (req, res) => {
   const messages = await db.getMessages();
   res.json({ success: true, messages });
+});
+
+/**
+ * Admin Endpoint: Get All Registered Customers with live order metrics (GET)
+ */
+app.get('/api/admin/customers', requireAuth, async (req, res) => {
+  try {
+    const customers = await db.getCustomers();
+    const orders = await db.getOrders();
+
+    // Cross-reference live orders for 100% data integrity
+    const enrichedCustomers = customers.map(cust => {
+      const email = (cust.email || '').toLowerCase().trim();
+      const customerOrders = orders.filter(o => {
+        const oEmail = ((o.customer && o.customer.email) || o.email || '').toLowerCase().trim();
+        return oEmail === email;
+      });
+
+      const liveTotalOrders = customerOrders.length;
+      const liveTotalSpent = customerOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+      const lastOrder = customerOrders[0];
+
+      return {
+        ...cust,
+        totalOrders: Math.max(cust.totalOrders || 0, liveTotalOrders),
+        totalSpent: Math.max(cust.totalSpent || 0, liveTotalSpent),
+        lastOrderDate: lastOrder ? (lastOrder.createdAt || lastOrder.date) : cust.lastOrderAt || null
+      };
+    });
+
+    res.json({
+      success: true,
+      count: enrichedCustomers.length,
+      customers: enrichedCustomers
+    });
+  } catch (err) {
+    console.error('Error in /api/admin/customers:', err);
+    res.status(500).json({ success: false, message: 'Failed to retrieve customer accounts.' });
+  }
 });
 
 /**

@@ -767,6 +767,28 @@ body.admin-dashboard-body[data-theme="dark"] {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.metric-segment-bar.five-cols {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+@media (max-width: 1200px) {
+  .metric-segment-bar.five-cols {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .metric-segment-bar.five-cols {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .metric-segment-bar.five-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
 .cust-status-badge {
   display: inline-flex;
   align-items: center;
@@ -838,6 +860,7 @@ body.admin-dashboard-body[data-theme="dark"] {
 .metric-icon-dot.amber { background: #F59E0B; box-shadow: 0 0 8px rgba(245, 158, 11, 0.5); }
 .metric-icon-dot.green { background: #10B981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.5); }
 .metric-icon-dot.purple { background: #B5872E; box-shadow: 0 0 8px rgba(181, 135, 46, 0.5); }
+.metric-icon-dot.cyan { background: #06B6D4; box-shadow: 0 0 8px rgba(6, 182, 212, 0.6); }
 
 .metric-segment-label {
   font-size: 0.78rem;

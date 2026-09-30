@@ -14,6 +14,7 @@ let currentAdminUser = null;
 let allInquiries = [];
 let allProducts = [];
 let allMessages = [];
+let allCustomers = [];
 
 // Initialize Dashboard
 document.addEventListener('DOMContentLoaded', async () => {
@@ -31,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initLogout();
   initOrderFiltering();
   initLeadFiltering();
+  initCustomerFiltering();
   initProductModals();
   initNewOrderModal();
   initEditOrderModal();
@@ -41,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadDashboardStats();
   await loadInquiries();
   await loadProducts();
+  await loadCustomers();
   await loadMessages();
   await loadSettings();
 });
@@ -146,6 +149,7 @@ function initNavigation() {
     viewProducts: 'Products',
     viewOrders: 'Orders',
     viewLeads: 'Leads',
+    viewCustomers: 'Customers',
     viewMessages: 'Messages',
     viewSettings: 'Settings'
   };
@@ -162,6 +166,7 @@ function initNavigation() {
   const hash = window.location.hash.replace('#', '');
   if (hash === 'orders') switchTab('viewOrders');
   else if (hash === 'leads') switchTab('viewLeads');
+  else if (hash === 'customers') switchTab('viewCustomers');
   else if (hash === 'products') switchTab('viewProducts');
   else if (hash === 'messages') switchTab('viewMessages');
   else if (hash === 'settings') switchTab('viewSettings');
@@ -196,6 +201,7 @@ function initNavigation() {
     // Refresh specific section
     if (viewId === 'viewOverview') loadDashboardStats();
     if (viewId === 'viewOrders' || viewId === 'viewLeads') loadInquiries();
+    if (viewId === 'viewCustomers') loadCustomers();
     if (viewId === 'viewProducts') loadProducts();
     if (viewId === 'viewMessages') loadMessages();
     if (viewId === 'viewSettings') loadSettings();
@@ -311,6 +317,16 @@ async function loadDashboardStats() {
     if (badgeMessages) {
       badgeMessages.textContent = stats.unreadMessages;
       badgeMessages.style.display = stats.unreadMessages > 0 ? 'inline-block' : 'none';
+    }
+
+    const kpiCustomers = document.getElementById('kpiTotalCustomers');
+    const badgeCustomers = document.getElementById('sidebarCustomersBadge');
+    if (kpiCustomers && stats.totalCustomers !== undefined) {
+      kpiCustomers.textContent = stats.totalCustomers;
+    }
+    if (badgeCustomers && stats.totalCustomers !== undefined) {
+      badgeCustomers.textContent = stats.totalCustomers;
+      badgeCustomers.style.display = stats.totalCustomers > 0 ? 'inline-block' : 'none';
     }
 
   } catch (err) {
@@ -1665,6 +1681,159 @@ function getCategoryLabel(category) {
     case 'custom': return 'Custom Printing';
     default: return category;
   }
+}
+
+/* ==========================================================================
+   CUSTOMER ACCOUNTS & TRACKING DATA CONTROLLER
+   ========================================================================== */
+async function loadCustomers() {
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/customers`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!data.success) return;
+
+    allCustomers = data.customers || [];
+
+    // Update KPI badges and numbers
+    const kpiTotal = document.getElementById('custKpiTotal');
+    const kpiActiveBuyers = document.getElementById('custKpiActiveBuyers');
+    const kpiTotalRevenue = document.getElementById('custKpiTotalRevenue');
+    const kpiTotalLogins = document.getElementById('custKpiTotalLogins');
+    const sidebarBadge = document.getElementById('sidebarCustomersBadge');
+    const overviewKpi = document.getElementById('kpiTotalCustomers');
+
+    if (kpiTotal) kpiTotal.textContent = allCustomers.length;
+    if (overviewKpi) overviewKpi.textContent = allCustomers.length;
+
+    if (sidebarBadge) {
+      sidebarBadge.textContent = allCustomers.length;
+      sidebarBadge.style.display = allCustomers.length > 0 ? 'inline-block' : 'none';
+    }
+
+    const activeBuyers = allCustomers.filter(c => (Number(c.totalOrders) || 0) > 0).length;
+    if (kpiActiveBuyers) kpiActiveBuyers.textContent = activeBuyers;
+
+    const totalRevenue = allCustomers.reduce((sum, c) => sum + (Number(c.totalSpent) || 0), 0);
+    if (kpiTotalRevenue) kpiTotalRevenue.textContent = `₹${totalRevenue.toLocaleString('en-IN')}`;
+
+    const totalLogins = allCustomers.reduce((sum, c) => sum + (Number(c.loginCount) || 1), 0);
+    if (kpiTotalLogins) kpiTotalLogins.textContent = totalLogins;
+
+    renderCustomersTable(allCustomers);
+  } catch (err) {
+    console.error('Failed to load customers:', err);
+  }
+}
+
+function renderCustomersTable(customers) {
+  const tbody = document.getElementById('customersTableBody');
+  if (!tbody) return;
+
+  if (customers.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 36px;">
+          No customer accounts found matching your query.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const avatarColors = ['pink', 'blue', 'purple', 'green'];
+
+  tbody.innerHTML = customers.map((cust, idx) => {
+    const color = avatarColors[idx % avatarColors.length];
+    const initials = (cust.name || 'Customer')
+      .split(' ')
+      .map(p => p[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase() || 'CU';
+
+    const cleanPhone = (cust.phone || '').replace(/\D/g, '');
+    const regDate = cust.registeredAt ? new Date(cust.registeredAt) : null;
+    const regDateFormatted = regDate && !isNaN(regDate)
+      ? `${regDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}<br><span style="font-size: 0.72rem; color: var(--text-muted);">${regDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>`
+      : 'Verified User';
+
+    const lastLogin = cust.lastLoginAt ? new Date(cust.lastLoginAt) : null;
+    const lastLoginFormatted = lastLogin && !isNaN(lastLogin)
+      ? `${lastLogin.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}<br><span style="font-size: 0.72rem; color: var(--text-muted);">${lastLogin.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>`
+      : 'Active';
+
+    const waText = encodeURIComponent(`Hello ${cust.name || 'Customer'}, Rajesh Framing Studio here. Thank you for registering with us!`);
+    const totalOrders = Number(cust.totalOrders) || 0;
+    const totalSpent = Number(cust.totalSpent) || 0;
+    const logins = Number(cust.loginCount) || 1;
+
+    return `
+      <tr>
+        <td>
+          <div class="lead-cust-cell">
+            <div class="lead-avatar-circle ${color}">${initials}</div>
+            <div class="lead-cust-info">
+              <span class="lead-cust-name">${escapeHtml(cust.name || 'Registered Customer')}</span>
+              <span class="lead-cust-email">${escapeHtml(cust.email)}</span>
+            </div>
+          </div>
+        </td>
+        <td>
+          ${cust.phone ? `
+            <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" style="text-decoration: none; color: var(--text-main); font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+              <span style="color: #25D366; font-size: 0.95rem;">💬</span> ${escapeHtml(cust.phone)}
+            </a>
+          ` : `<span style="color: var(--text-muted); font-size: 0.82rem;">Not provided</span>`}
+        </td>
+        <td>
+          ${regDateFormatted}
+        </td>
+        <td>
+          ${lastLoginFormatted}
+        </td>
+        <td style="text-align: center;">
+          <span class="status-pill neutral" style="font-weight: 700; padding: 2px 8px;">${logins}</span>
+        </td>
+        <td style="text-align: center;">
+          <span class="status-pill ${totalOrders > 0 ? 'completed' : 'neutral'}" style="font-weight: 700; padding: 2px 8px;">
+            ${totalOrders}
+          </span>
+        </td>
+        <td>
+          <strong style="color: var(--text-main); font-size: 0.9rem;">₹${totalSpent.toLocaleString('en-IN')}</strong>
+        </td>
+        <td style="text-align: center;">
+          <span class="status-pill active" style="font-size: 0.72rem; padding: 3px 8px;">
+            <span class="status-dot"></span> Verified
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function initCustomerFiltering() {
+  const searchInput = document.getElementById('customerSearchInput');
+  if (!searchInput) return;
+
+  searchInput.addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase().trim();
+    if (!q) {
+      renderCustomersTable(allCustomers);
+      return;
+    }
+
+    const filtered = allCustomers.filter(c => {
+      const name = (c.name || '').toLowerCase();
+      const email = (c.email || '').toLowerCase();
+      const phone = (c.phone || '').toLowerCase();
+      return name.includes(q) || email.includes(q) || phone.includes(q);
+    });
+
+    renderCustomersTable(filtered);
+  });
 }
 
 /* ==========================================================================

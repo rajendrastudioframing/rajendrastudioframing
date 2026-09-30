@@ -1,0 +1,26 @@
+[
+  {
+    "id": "CUST-0001",
+    "name": "Kavya Tandel",
+    "email": "tandelkavya1002@gmail.com",
+    "phone": "+919328081006",
+    "registeredAt": "2026-09-26T11:45:20.094Z",
+    "lastLoginAt": "2026-09-26T11:45:20.094Z",
+    "loginCount": 1,
+    "totalOrders": 3,
+    "totalSpent": 1850,
+    "status": "Active"
+  },
+  {
+    "id": "CUST-0002",
+    "name": "Kavya Tandel",
+    "email": "rajeshframing0@gmail.com",
+    "phone": "9328081006",
+    "registeredAt": "2026-09-26T09:40:46.446Z",
+    "lastLoginAt": "2026-09-26T09:40:46.446Z",
+    "loginCount": 1,
+    "totalOrders": 2,
+    "totalSpent": 899,
+    "status": "Active"
+  }
+]
