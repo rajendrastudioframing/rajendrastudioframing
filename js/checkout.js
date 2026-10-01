@@ -8,6 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initCheckoutPage() {
+  // Ensure success modal is strictly hidden on initial page load
+  const successModal = document.getElementById('orderSuccessModal');
+  if (successModal) {
+    successModal.style.setProperty('display', 'none', 'important');
+    successModal.classList.remove('open');
+  }
+
   handleBuyNowQueryParam();
   renderCheckoutSummary();
   bindCheckoutForm();
@@ -376,10 +383,13 @@ function bindCheckoutForm() {
         // Clear cart
         clearCart();
 
-        // Show Modal
+        // Show Modal exclusively now that order is confirmed
         const modal = document.getElementById('orderSuccessModal');
         if (modal) {
+          modal.style.setProperty('display', 'flex', 'important');
           modal.classList.add('open');
+          document.body.style.overflow = 'hidden';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
       } else {
@@ -394,7 +404,12 @@ function bindCheckoutForm() {
       document.getElementById('successOrderId').textContent = fallbackId;
       document.getElementById('successOrderTotal').textContent = `₹${total.toLocaleString('en-IN')}`;
       clearCart();
-      document.getElementById('orderSuccessModal').classList.add('open');
+      const modal = document.getElementById('orderSuccessModal');
+      if (modal) {
+        modal.style.setProperty('display', 'flex', 'important');
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
     } finally {
       if (desktopBtn) desktopBtn.disabled = false;
       if (btnText) btnText.textContent = 'Place Order';

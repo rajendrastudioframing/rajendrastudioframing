@@ -1251,3 +1251,55 @@
   outline: none;
 }
 
+/* ==========================================================================
+   ORDER CONFIRMATION SUCCESS MODAL (CHECKOUT)
+   Must strictly stay completely hidden until an order is placed!
+   ========================================================================== */
+#orderSuccessModal,
+.order-success-modal-overlay {
+  display: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(15, 23, 42, 0.78) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 999999 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+#orderSuccessModal.open,
+.order-success-modal-overlay.open {
+  display: flex !important;
+}
+
+.order-success-dialog {
+  background: #FFFFFF !important;
+  border: 1px solid #E5E0D8 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(200, 155, 60, 0.2) !important;
+  max-width: 520px !important;
+  width: 100% !important;
+  text-align: center !important;
+  padding: 36px 28px !important;
+  position: relative !important;
+  margin: auto !important;
+  animation: orderModalPop 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes orderModalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+

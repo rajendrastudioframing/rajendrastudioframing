@@ -454,9 +454,10 @@
 
   <!-- ==========================================================================
        ORDER CONFIRMATION MODAL / SUCCESS OVERLAY
+       Strictly hidden by default; ONLY displayed after successful order placement!
        ========================================================================== -->
-  <div class="admin-modal-overlay" id="orderSuccessModal" style="z-index: 12000;">
-    <div class="admin-modal" style="max-width: 520px; text-align: center; padding: 36px 28px;">
+  <div class="order-success-modal-overlay" id="orderSuccessModal" style="display: none !important;" aria-modal="true" role="dialog">
+    <div class="order-success-dialog">
       
       <div style="width: 76px; height: 76px; background: #ECFDF5; color: #059669; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 2px solid #A7F3D0;">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -473,7 +474,7 @@
       <!-- Order ID Pill -->
       <div style="display: inline-block; background: #FAF7F2; border: 1px dashed var(--accent-gold); padding: 8px 18px; border-radius: 999px; margin-bottom: 24px;">
         <span style="font-size: 0.8rem; color: #6B7280;">Order Reference:</span>
-        <strong id="successOrderId" style="color: var(--accent-gold); font-size: 1rem; margin-left: 4px;">RF-ORD-2026-001</strong>
+        <strong id="successOrderId" style="color: var(--accent-gold); font-size: 1rem; margin-left: 4px;">Pending...</strong>
       </div>
 
       <div style="background: #FAF8F5; border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left; font-size: 0.875rem;">
