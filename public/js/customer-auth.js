@@ -104,11 +104,11 @@
       }
     },
 
-    async sendOtp(email) {
+    async sendOtp(email, name = '', phone = '') {
       const res = await requestApi('/api/customer/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email, name, phone })
       });
       return await parseResponseJson(res);
     },
@@ -162,15 +162,27 @@
 
     // Modal Control
     _onAuthSuccessCallback: null,
+    _activeContext: null,
 
-    openAuthModal(callback) {
+    openAuthModal(callback, context) {
       if (typeof callback === 'function') {
         this._onAuthSuccessCallback = callback;
       }
+      this._activeContext = (context && typeof context === 'object') ? context : null;
       ensureModalInDom();
       const modal = document.getElementById('customerAuthModal');
       if (modal) {
         resetModalState();
+        if (this._activeContext) {
+          if (this._activeContext.title) {
+            const titleEl = document.getElementById('custAuthModalTitle');
+            if (titleEl) titleEl.textContent = this._activeContext.title;
+          }
+          if (this._activeContext.subtitle) {
+            const subEl = document.getElementById('custAuthModalSubtitle');
+            if (subEl) subEl.textContent = this._activeContext.subtitle;
+          }
+        }
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
         setTimeout(() => {
@@ -193,7 +205,7 @@
   window.isCustomerLoggedIn = () => window.CustomerAuth.isCustomerLoggedIn();
   window.getCustomerToken = () => window.CustomerAuth.getCustomerToken();
   window.getCustomerUser = () => window.CustomerAuth.getCustomerUser();
-  window.openCustomerAuthModal = (cb) => window.CustomerAuth.openAuthModal(cb);
+  window.openCustomerAuthModal = (cb, context) => window.CustomerAuth.openAuthModal(cb, context);
   window.closeCustomerAuthModal = () => window.CustomerAuth.closeAuthModal();
   window.logoutCustomer = (redirect) => window.CustomerAuth.logoutCustomer(redirect);
 
@@ -589,8 +601,11 @@
     if (alertBox) alertBox.style.display = 'none';
     if (testBanner) testBanner.style.display = 'none';
 
-    document.getElementById('custAuthModalTitle').textContent = 'Customer Sign In';
-    document.getElementById('custAuthModalSubtitle').textContent = 'Sign in or create your account to place your order with Rajesh Framing Studio.';
+    const ctx = (window.CustomerAuth && window.CustomerAuth._activeContext) ? window.CustomerAuth._activeContext : null;
+    const titleEl = document.getElementById('custAuthModalTitle');
+    const subEl = document.getElementById('custAuthModalSubtitle');
+    if (titleEl) titleEl.textContent = (ctx && ctx.title) ? ctx.title : 'Customer Sign In';
+    if (subEl) subEl.textContent = (ctx && ctx.subtitle) ? ctx.subtitle : 'Sign in or create your account to place your order with Rajesh Framing Studio.';
 
     // Clear OTP inputs
     for (let i = 1; i <= 6; i++) {
@@ -640,7 +655,7 @@
         showModalAlert('success', 'Sending 6-digit passcode to your email...');
 
         try {
-          const res = await window.CustomerAuth.sendOtp(email);
+          const res = await window.CustomerAuth.sendOtp(email, name, phone);
           if (res.success) {
             activeEmailForVerification = email;
             activeNameForVerification = name;

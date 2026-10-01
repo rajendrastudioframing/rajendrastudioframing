@@ -53,6 +53,21 @@ function getCartSubtotal() {
 function addToCart(product, quantity = 1, openDrawer = true) {
   if (!product || !product.id) return;
 
+  // Customer Login Requirement: Must be logged in before adding to cart
+  if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
+    if (typeof openCustomerAuthModal === 'function') {
+      openCustomerAuthModal(() => {
+        addToCart(product, quantity, openDrawer);
+      }, {
+        title: 'Sign In to Add to Cart',
+        subtitle: 'Please sign in or create an account to add items to your cart.'
+      });
+    } else {
+      alert('Please log in to your account first.');
+    }
+    return;
+  }
+
   const cart = getCart();
   const qtyToAdd = Math.max(1, parseInt(quantity, 10) || 1);
   const size = product.size || 'Standard';
@@ -93,6 +108,23 @@ function addToCart(product, quantity = 1, openDrawer = true) {
  * Buy Now: Immediately add product and redirect to checkout
  */
 function buyNow(product, quantity = 1) {
+  if (!product || !product.id) return;
+
+  // Customer Login Requirement: Must be logged in before buying
+  if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
+    if (typeof openCustomerAuthModal === 'function') {
+      openCustomerAuthModal(() => {
+        buyNow(product, quantity);
+      }, {
+        title: 'Sign In to Buy Now',
+        subtitle: 'Please sign in or create an account to proceed directly to checkout.'
+      });
+    } else {
+      alert('Please log in to your account first.');
+    }
+    return;
+  }
+
   addToCart(product, quantity, false);
   window.location.href = 'checkout';
 }
@@ -434,6 +466,11 @@ function quickAddToCart(productId, event) {
   if (event) {
     if (typeof event.preventDefault === 'function') event.preventDefault();
     if (typeof event.stopPropagation === 'function') event.stopPropagation();
+  }
+
+  if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
+    handleProductCardAddToCart(productId, false, event);
+    return;
   }
 
   handleProductCardAddToCart(productId, false, event);

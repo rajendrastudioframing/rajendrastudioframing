@@ -462,7 +462,7 @@ module.exports = {
     return customer;
   },
 
-  async recordCustomerLogin(email, name = '', phone = '') {
+  async recordCustomerLogin(email, name = '', phone = '', isVerifiedLogin = true) {
     if (!email) return null;
     const cleanEmail = email.trim().toLowerCase();
     const customers = readJson(CUSTOMERS_FILE, []);
@@ -470,23 +470,29 @@ module.exports = {
     
     let cust = customers.find(c => c.email && c.email.toLowerCase() === cleanEmail);
     if (cust) {
-      cust.lastLoginAt = nowIso;
-      cust.loginCount = (cust.loginCount || 1) + 1;
-      if (name && name.trim()) cust.name = name.trim();
+      if (isVerifiedLogin) {
+        cust.lastLoginAt = nowIso;
+        cust.loginCount = (cust.loginCount || 1) + 1;
+        cust.status = 'Active';
+      }
+      if (name && name.trim() && name.trim() !== 'Valued Customer') cust.name = name.trim();
       if (phone && phone.trim()) cust.phone = phone.trim();
-      cust.status = 'Active';
     } else {
+      const defaultName = (name && name.trim() && name.trim() !== 'Valued Customer') 
+        ? name.trim() 
+        : (cleanEmail.split('@')[0] ? cleanEmail.split('@')[0].charAt(0).toUpperCase() + cleanEmail.split('@')[0].slice(1) : 'Customer');
+      
       cust = {
         id: 'CUST-' + String(customers.length + 1).padStart(4, '0'),
-        name: (name && name.trim()) || 'Valued Customer',
+        name: defaultName,
         email: cleanEmail,
         phone: (phone && phone.trim()) || '',
         registeredAt: nowIso,
-        lastLoginAt: nowIso,
-        loginCount: 1,
+        lastLoginAt: isVerifiedLogin ? nowIso : null,
+        loginCount: isVerifiedLogin ? 1 : 0,
         totalOrders: 0,
         totalSpent: 0,
-        status: 'Active'
+        status: isVerifiedLogin ? 'Active' : 'Registered'
       };
       customers.unshift(cust);
     }

@@ -1000,6 +1000,8 @@ app.post('/api/customer/auth/send-otp', async (req, res) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    const cleanName = (req.body.name && typeof req.body.name === 'string') ? req.body.name.trim() : '';
+    const cleanPhone = (req.body.phone && typeof req.body.phone === 'string') ? req.body.phone.trim() : '';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
       return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
@@ -1023,8 +1025,17 @@ app.post('/api/customer/auth/send-otp', async (req, res) => {
       otp,
       expiresAt,
       attempts: 0,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      name: cleanName,
+      phone: cleanPhone
     });
+
+    // Record / register customer account immediately in database
+    try {
+      await db.recordCustomerLogin(cleanEmail, cleanName, cleanPhone, false);
+    } catch (recordErr) {
+      console.warn('Could not stage customer record on send-otp:', recordErr.message);
+    }
 
     console.log(`🔐 [CUSTOMER OTP GENERATED] Recipient: ${cleanEmail} (Valid for 5 mins)`);
 
@@ -1131,7 +1142,9 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
     });
     saveCustomerSessions();
 
-    const customerProfile = await db.recordCustomerLogin(cleanEmail, req.body.name, req.body.phone);
+    const customerName = (req.body.name && req.body.name.trim()) || (stored && stored.name) || '';
+    const customerPhone = (req.body.phone && req.body.phone.trim()) || (stored && stored.phone) || '';
+    const customerProfile = await db.recordCustomerLogin(cleanEmail, customerName, customerPhone, true);
 
     console.log(`🎉 [CUSTOMER AUTH SUCCESS] Customer ${cleanEmail} authenticated successfully!`);
 

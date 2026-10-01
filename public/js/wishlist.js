@@ -43,6 +43,21 @@ function toggleWishlist(productId, event) {
 
   if (!productId) return;
 
+  // Customer Login Requirement: Must be logged in to save to wishlist
+  if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
+    if (typeof openCustomerAuthModal === 'function') {
+      openCustomerAuthModal(() => {
+        toggleWishlist(productId, null);
+      }, {
+        title: 'Sign In to Save Wishlist',
+        subtitle: 'Please sign in or create an account to save items to your wishlist.'
+      });
+    } else {
+      alert('Please log in to your account first.');
+    }
+    return;
+  }
+
   let list = getWishlist();
   const existingIdx = list.findIndex(item => item.id === productId);
 
@@ -97,6 +112,23 @@ function moveWishlistItemToCart(productId, event) {
     if (typeof event.stopPropagation === 'function') event.stopPropagation();
   }
 
+  if (!productId) return;
+
+  // Customer Login Requirement: Must be logged in to move items to cart
+  if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
+    if (typeof openCustomerAuthModal === 'function') {
+      openCustomerAuthModal(() => {
+        moveWishlistItemToCart(productId, null);
+      }, {
+        title: 'Sign In to Add to Cart',
+        subtitle: 'Please sign in or create an account to add items to your cart.'
+      });
+    } else {
+      alert('Please log in to your account first.');
+    }
+    return;
+  }
+
   let list = getWishlist();
   const item = list.find(p => p.id === productId);
   if (!item) return;
@@ -133,6 +165,21 @@ function moveWishlistItemToCart(productId, event) {
 function moveAllWishlistToCart() {
   const list = getWishlist();
   if (list.length === 0) return;
+
+  // Customer Login Requirement: Must be logged in to move items to cart
+  if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
+    if (typeof openCustomerAuthModal === 'function') {
+      openCustomerAuthModal(() => {
+        moveAllWishlistToCart();
+      }, {
+        title: 'Sign In to Add to Cart',
+        subtitle: 'Please sign in or create an account to add items to your cart.'
+      });
+    } else {
+      alert('Please log in to your account first.');
+    }
+    return;
+  }
 
   list.forEach(item => {
     if (window.addToCart) {
