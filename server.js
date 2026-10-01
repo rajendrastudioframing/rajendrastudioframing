@@ -1070,8 +1070,7 @@ app.post('/api/customer/auth/send-otp', async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'OTP sent to your email address.',
-      testOtp: otp
+      message: 'OTP sent to your email address. Please check your inbox to get your verification passcode.'
     });
 
   } catch (err) {

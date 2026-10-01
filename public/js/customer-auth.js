@@ -308,13 +308,6 @@
           <!-- Alert Banner -->
           <div id="custAuthAlert" class="cust-auth-alert" style="display: none;"></div>
 
-          <!-- Test OTP Preview Banner -->
-          <div id="custAuthTestOtpBanner" class="cust-auth-test-banner" style="display: none;">
-            <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.6px; color: #92400E;">Demo Passcode:</div>
-            <div style="font-size: 1.15rem; font-weight: 800; letter-spacing: 3px; color: #B45309;" id="custAuthTestOtpCode">000000</div>
-            <button type="button" class="btn-copy-test-otp" id="custAuthCopyTestOtpBtn" style="background:#FEF3C7; border:1px solid #FCD34D; color:#92400E; font-size:0.75rem; padding:3px 8px; border-radius:6px; cursor:pointer; font-weight:600;">Fill Code</button>
-          </div>
-
           <!-- Phase 1: Email & Optional Details Form -->
           <form id="custAuthEmailForm" class="cust-auth-form">
             <div class="cust-auth-input-group">
@@ -560,16 +553,6 @@
         color: #065F46;
         border: 1px solid #6EE7B7;
       }
-      .cust-auth-test-banner {
-        background: #FEF3C7;
-        border: 1.5px dashed #F59E0B;
-        border-radius: 12px;
-        padding: 10px 14px;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
       .auth-spinner {
         width: 16px;
         height: 16px;
@@ -594,12 +577,10 @@
     const emailForm = document.getElementById('custAuthEmailForm');
     const otpForm = document.getElementById('custAuthOtpForm');
     const alertBox = document.getElementById('custAuthAlert');
-    const testBanner = document.getElementById('custAuthTestOtpBanner');
 
     if (emailForm) emailForm.style.display = 'block';
     if (otpForm) otpForm.style.display = 'none';
     if (alertBox) alertBox.style.display = 'none';
-    if (testBanner) testBanner.style.display = 'none';
 
     const ctx = (window.CustomerAuth && window.CustomerAuth._activeContext) ? window.CustomerAuth._activeContext : null;
     const titleEl = document.getElementById('custAuthModalTitle');
@@ -627,7 +608,6 @@
     const otpForm = document.getElementById('custAuthOtpForm');
     const backBtn = document.getElementById('custAuthBackBtn');
     const resendBtn = document.getElementById('custAuthResendBtn');
-    const copyTestOtpBtn = document.getElementById('custAuthCopyTestOtpBtn');
 
     // 1. Submit Email Form
     if (emailForm) {
@@ -668,14 +648,7 @@
             document.getElementById('custAuthModalSubtitle').textContent = 'Enter the 6-digit verification code sent to your email inbox.';
             document.getElementById('custAuthTargetEmailLabel').textContent = email;
 
-            if (res.testOtp) {
-              const testBanner = document.getElementById('custAuthTestOtpBanner');
-              const testCodeEl = document.getElementById('custAuthTestOtpCode');
-              testCodeEl.textContent = res.testOtp;
-              testBanner.style.display = 'flex';
-            }
-
-            showModalAlert('success', res.message || 'Passcode sent! Please check your inbox.');
+            showModalAlert('success', res.message || 'Passcode sent! Please check your email inbox to get your verification code.');
             const firstBox = document.getElementById('cust-otp-1');
             if (firstBox) firstBox.focus();
 
@@ -736,20 +709,7 @@
       });
     });
 
-    // 3. Fill Test OTP Helper Button
-    if (copyTestOtpBtn) {
-      copyTestOtpBtn.addEventListener('click', () => {
-        const testCode = document.getElementById('custAuthTestOtpCode').textContent.trim();
-        if (testCode && testCode.length === 6) {
-          for (let i = 0; i < 6; i++) {
-            if (boxes[i]) boxes[i].value = testCode[i];
-          }
-          if (boxes[5]) boxes[5].focus();
-        }
-      });
-    }
-
-    // 4. Verify OTP Form Submit
+    // 3. Verify OTP Form Submit
     if (otpForm) {
       otpForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -820,11 +780,7 @@
         try {
           const res = await window.CustomerAuth.resendOtp(activeEmailForVerification);
           if (res.success) {
-            showModalAlert('success', res.message || 'New code sent to your email.');
-            if (res.testOtp) {
-              const testCodeEl = document.getElementById('custAuthTestOtpCode');
-              if (testCodeEl) testCodeEl.textContent = res.testOtp;
-            }
+            showModalAlert('success', res.message || 'New verification code sent! Please check your email inbox.');
           } else {
             showModalAlert('danger', res.message || 'Could not resend code.');
           }
