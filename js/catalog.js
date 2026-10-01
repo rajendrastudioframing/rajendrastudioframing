@@ -208,6 +208,9 @@ window.changeCatalogCardImage = function(productId, newImgSrc, swatchEl, event, 
     if (typeof event.stopPropagation === 'function') event.stopPropagation();
     if (typeof event.preventDefault === 'function') event.preventDefault();
   }
+  const products = (typeof PRODUCTS_DATA !== 'undefined' ? PRODUCTS_DATA : []);
+  const product = products.find(p => p.id === productId);
+
   const cards = document.querySelectorAll(`.product-card[data-id="${productId}"]`);
   cards.forEach(card => {
     if (finishId) card.setAttribute('data-selected-finish-id', finishId);
@@ -220,6 +223,17 @@ window.changeCatalogCardImage = function(productId, newImgSrc, swatchEl, event, 
     const cardTitleLink = card.querySelector('.capsule-title a');
     if (cardTitleLink) {
       cardTitleLink.setAttribute('href', targetUrl);
+    }
+
+    // Dynamic price update on card when finish/color is changed
+    if (product) {
+      const finish = product.finishes ? product.finishes.find(f => f.id === finishId) : null;
+      const finishDelta = (finish && typeof finish.priceDelta === 'number') ? finish.priceDelta : 0;
+      const cardPrice = product.price + finishDelta;
+      const priceEl = card.querySelector('.capsule-price');
+      if (priceEl) {
+        priceEl.textContent = `₹${cardPrice}`;
+      }
     }
 
     const img = card.querySelector('.product-image');

@@ -9,8 +9,8 @@ const PRODUCTS_DATA = [
     name: "Glass Photo Frame",
     category: "frames",
     categoryLabel: "Glass Frames",
-    price: 650,
-    priceDisplay: "Starting from ₹650",
+    price: 655,
+    priceDisplay: "Starting from ₹655",
     rating: 4.9,
     reviewsCount: 128,
     badge: "Bestseller",
@@ -20,17 +20,17 @@ const PRODUCTS_DATA = [
     material: "Optically Clear Float Glass (4mm / 6mm) with Diamond Beveled Edge",
     printingType: "12-Color Archival Pigment Print (Fade-resistant 50+ yrs)",
     sizes: [
-      { name: "6\" × 8\"", price: 650 },
-      { name: "8\" × 10\"", price: 950 },
-      { name: "10\" × 12\"", price: 1350 },
-      { name: "12\" × 18\"", price: 1850 },
-      { name: "Custom Size", price: 2200 }
+      { name: "6\" × 8\"", price: 655 },
+      { name: "8\" × 10\"", price: 955 },
+      { name: "10\" × 12\"", price: 1355 },
+      { name: "12\" × 18\"", price: 1855 },
+      { name: "Custom Size", price: 2255 }
     ],
     finishes: [
-      { id: "gold-standoffs", name: "Warm Gold Standoffs", color: "#C99A3D", image: "assets/images/glass_frame.jpg" },
-      { id: "royal-blue-glass", name: "Royal Sapphire Blue Accent", color: "#1E3A8A", image: "assets/images/glass_frame_blue.jpg" },
-      { id: "silver-standoffs", name: "Brushed Silver Standoffs", color: "#CBD5E1", image: "assets/images/glass_frame_silver.jpg" },
-      { id: "black-standoffs", name: "Matte Black Standoffs", color: "#111111", image: "assets/images/glass_frame_black.jpg" }
+      { id: "gold-standoffs", name: "Warm Gold Standoffs", color: "#C99A3D", image: "assets/images/glass_frame.jpg", priceDelta: 0 },
+      { id: "royal-blue-glass", name: "Royal Sapphire Blue Accent", color: "#1E3A8A", image: "assets/images/glass_frame_blue.jpg", priceDelta: 30 },
+      { id: "silver-standoffs", name: "Brushed Silver Standoffs", color: "#CBD5E1", image: "assets/images/glass_frame_silver.jpg", priceDelta: 60 },
+      { id: "black-standoffs", name: "Matte Black Standoffs", color: "#111111", image: "assets/images/glass_frame_black.jpg", priceDelta: 90 }
     ],
     features: [
       "Diamond-polished beveled edges for safe, lustrous finish",
@@ -45,8 +45,8 @@ const PRODUCTS_DATA = [
     name: "Plastic Photo Frame",
     category: "frames",
     categoryLabel: "Plastic Frames",
-    price: 450,
-    priceDisplay: "Starting from ₹450",
+    price: 439,
+    priceDisplay: "Starting from ₹439",
     rating: 4.8,
     reviewsCount: 94,
     badge: "Popular",
@@ -56,18 +56,18 @@ const PRODUCTS_DATA = [
     material: "High-density Engineered Polymer with Conservation Mat",
     printingType: "Ultra HD Fine Art Photographic Printing (300 DPI)",
     sizes: [
-      { name: "8\" × 10\"", price: 450 },
-      { name: "10\" × 12\"", price: 650 },
-      { name: "12\" × 18\"", price: 950 },
-      { name: "16\" × 24\"", price: 1500 },
-      { name: "20\" × 30\"", price: 2100 }
+      { name: "8\" × 10\"", price: 439 },
+      { name: "10\" × 12\"", price: 619 },
+      { name: "12\" × 18\"", price: 909 },
+      { name: "16\" × 24\"", price: 1439 },
+      { name: "20\" × 30\"", price: 2039 }
     ],
     finishes: [
-      { id: "matte-black", name: "Studio Matte Black", color: "#111111", image: "assets/images/plastic_frame_black.jpg" },
-      { id: "royal-blue", name: "Royal Sapphire Blue", color: "#1E3A8A", image: "assets/images/plastic_frame_blue.jpg" },
-      { id: "pure-white", name: "Gallery Pure White", color: "#F8FAFC", image: "assets/images/plastic_frame_white.jpg" },
-      { id: "warm-walnut", name: "Warm Walnut Grain", color: "#5C3A21", image: "assets/images/plastic_frame_walnut.jpg" },
-      { id: "champagne-gold", name: "Champagne Gold", color: "#C99A3D", image: "assets/images/plastic_frame_gold.jpg" }
+      { id: "matte-black", name: "Studio Matte Black", color: "#111111", image: "assets/images/plastic_frame_black.jpg", priceDelta: 0 },
+      { id: "royal-blue", name: "Royal Sapphire Blue", color: "#1E3A8A", image: "assets/images/plastic_frame_blue.jpg", priceDelta: 13 },
+      { id: "pure-white", name: "Gallery Pure White", color: "#F8FAFC", image: "assets/images/plastic_frame_white.jpg", priceDelta: 27 },
+      { id: "warm-walnut", name: "Warm Walnut Grain", color: "#5C3A21", image: "assets/images/plastic_frame_walnut.jpg", priceDelta: 41 },
+      { id: "champagne-gold", name: "Champagne Gold", color: "#C99A3D", image: "assets/images/plastic_frame_gold.jpg", priceDelta: 55 }
     ],
     features: [
       "100% moisture-proof, termite-resistant, and impact safe",
@@ -82,8 +82,8 @@ const PRODUCTS_DATA = [
     name: "Bottle Printing",
     category: "personalized",
     categoryLabel: "Personalized Printing",
-    price: 499,
-    priceDisplay: "Starting from ₹499",
+    price: 519,
+    priceDisplay: "Starting from ₹519",
     rating: 4.9,
     reviewsCount: 112,
     badge: "Trending",
@@ -93,14 +93,14 @@ const PRODUCTS_DATA = [
     material: "Food-Grade 304 Stainless Steel (Double-Wall Vacuum)",
     printingType: "Full 360° Rotary UV Color Print or Laser Engraving",
     sizes: [
-      { name: "500 ml Classic", price: 499 },
-      { name: "750 ml Active", price: 649 },
-      { name: "1000 ml Hydrate", price: 799 }
+      { name: "500 ml Classic", price: 519 },
+      { name: "750 ml Active", price: 679 },
+      { name: "1000 ml Hydrate", price: 829 }
     ],
     finishes: [
-      { id: "matte-black-bottle", name: "Matte Stealth Black", color: "#111111", image: "assets/images/printed_bottle_black.jpg" },
-      { id: "royal-blue-bottle", name: "Midnight Navy Blue", color: "#1E3A8A", image: "assets/images/printed_bottle_blue.jpg" },
-      { id: "brushed-silver-bottle", name: "Brushed Metallic Silver", color: "#94A3B8", image: "assets/images/printed_bottle_silver.jpg" }
+      { id: "matte-black-bottle", name: "Matte Stealth Black", color: "#111111", image: "assets/images/printed_bottle_black.jpg", priceDelta: 0 },
+      { id: "royal-blue-bottle", name: "Midnight Navy Blue", color: "#1E3A8A", image: "assets/images/printed_bottle_blue.jpg", priceDelta: 25 },
+      { id: "brushed-silver-bottle", name: "Brushed Metallic Silver", color: "#94A3B8", image: "assets/images/printed_bottle_silver.jpg", priceDelta: 50 }
     ],
     features: [
       "Keeps beverages chilled for 24 hours, steaming hot for 12 hours",
@@ -115,8 +115,8 @@ const PRODUCTS_DATA = [
     name: "Mug Printing",
     category: "personalized",
     categoryLabel: "Personalized Printing",
-    price: 249,
-    priceDisplay: "Starting from ₹249",
+    price: 251,
+    priceDisplay: "Starting from ₹251",
     rating: 4.9,
     reviewsCount: 230,
     badge: "Bestseller",
@@ -126,14 +126,14 @@ const PRODUCTS_DATA = [
     material: "Grade AAA Coated Ceramic (Microwave & Dishwasher Safe)",
     printingType: "Full-Surface High-Definition Heat Sublimation Transfer",
     sizes: [
-      { name: "Standard 325 ml (11 oz)", price: 249 },
-      { name: "Jumbo 450 ml (15 oz)", price: 349 },
-      { name: "Magic Color Changing (325 ml)", price: 399 }
+      { name: "Standard 325 ml (11 oz)", price: 251 },
+      { name: "Jumbo 450 ml (15 oz)", price: 351 },
+      { name: "Magic Color Changing (325 ml)", price: 421 }
     ],
     finishes: [
-      { id: "classic-white-mug", name: "Glossy Alpine White", color: "#FFFFFF", image: "assets/images/custom_mug.jpg" },
-      { id: "magic-black-mug", name: "Heat-Reactive Stealth Black", color: "#111111", image: "assets/images/custom_mug_black.jpg" },
-      { id: "navy-gold-mug", name: "Deep Navy with Gold Trim", color: "#1E3A8A", image: "assets/images/custom_mug.jpg" }
+      { id: "classic-white-mug", name: "Glossy Alpine White", color: "#FFFFFF", image: "assets/images/custom_mug.jpg", priceDelta: 0 },
+      { id: "magic-black-mug", name: "Heat-Reactive Stealth Black", color: "#111111", image: "assets/images/custom_mug_black.jpg", priceDelta: 22 },
+      { id: "navy-gold-mug", name: "Deep Navy with Gold Trim", color: "#1E3A8A", image: "assets/images/custom_mug.jpg", priceDelta: 44 }
     ],
     features: [
       "100% Dishwasher and microwave safe high-density ceramic",
@@ -148,8 +148,8 @@ const PRODUCTS_DATA = [
     name: "File Printing",
     category: "office",
     categoryLabel: "Office Printing",
-    price: 150,
-    priceDisplay: "Starting from ₹150",
+    price: 145,
+    priceDisplay: "Starting from ₹145",
     rating: 4.8,
     reviewsCount: 65,
     badge: "Office Essential",
@@ -159,14 +159,14 @@ const PRODUCTS_DATA = [
     material: "350-450 GSM Heavy Board / Polypropylene with Metal Clip",
     printingType: "High-Speed Offset & Screen Print with Matte Lamination",
     sizes: [
-      { name: "A4 Standard Document File", price: 150 },
-      { name: "Legal / Box File (2-Inch)", price: 240 },
-      { name: "Hospital Case File (Multi-Flap)", price: 190 }
+      { name: "A4 Standard Document File", price: 145 },
+      { name: "Hospital Case File (Multi-Flap)", price: 185 },
+      { name: "Legal / Box File (2-Inch)", price: 235 }
     ],
     finishes: [
-      { id: "navy-file", name: "Corporate Navy Blue", color: "#1E3A8A", image: "assets/images/printed_file.jpg" },
-      { id: "forest-file", name: "Forest Green", color: "#14532D", image: "assets/images/printed_file_green.jpg" },
-      { id: "black-file", name: "Executive Charcoal Black", color: "#111111", image: "assets/images/printed_file_black.jpg" }
+      { id: "navy-file", name: "Corporate Navy Blue", color: "#1E3A8A", image: "assets/images/printed_file.jpg", priceDelta: 0 },
+      { id: "forest-file", name: "Forest Green", color: "#14532D", image: "assets/images/printed_file_green.jpg", priceDelta: 14 },
+      { id: "black-file", name: "Executive Charcoal Black", color: "#111111", image: "assets/images/printed_file_black.jpg", priceDelta: 28 }
     ],
     features: [
       "Heavy-duty metal lever arch or spring clip mechanism",
@@ -181,8 +181,8 @@ const PRODUCTS_DATA = [
     name: "Folder Printing",
     category: "office",
     categoryLabel: "Office Printing",
-    price: 180,
-    priceDisplay: "Starting from ₹180",
+    price: 189,
+    priceDisplay: "Starting from ₹189",
     rating: 4.9,
     reviewsCount: 88,
     badge: "Corporate Choice",
@@ -192,14 +192,14 @@ const PRODUCTS_DATA = [
     material: "400 GSM Imperial Art Card / Textured Leatherette",
     printingType: "Metallic Hot Foil Stamping, Debossing & Spot UV",
     sizes: [
-      { name: "A4 Single Pocket Presentation Folder", price: 180 },
-      { name: "A4 Dual Pocket with Card Slits", price: 260 },
-      { name: "Luxury Padded Certificate Folio", price: 490 }
+      { name: "A4 Single Pocket Presentation Folder", price: 189 },
+      { name: "A4 Dual Pocket with Card Slits", price: 279 },
+      { name: "Luxury Padded Certificate Folio", price: 469 }
     ],
     finishes: [
-      { id: "gold-foil-navy", name: "Navy Blue with Gold Foil", color: "#1E3A8A", image: "assets/images/printed_folder_navy.jpg" },
-      { id: "forest-gold", name: "Forest Green with Gold Foil", color: "#14532D", image: "assets/images/printed_folder_green.jpg" },
-      { id: "charcoal-gold", name: "Charcoal with Gold Foil", color: "#111111", image: "assets/images/printed_folder_black.jpg" }
+      { id: "gold-foil-navy", name: "Navy Blue with Gold Foil", color: "#1E3A8A", image: "assets/images/printed_folder_navy.jpg", priceDelta: 0 },
+      { id: "forest-gold", name: "Forest Green with Gold Foil", color: "#14532D", image: "assets/images/printed_folder_green.jpg", priceDelta: 18 },
+      { id: "charcoal-gold", name: "Charcoal with Gold Foil", color: "#111111", image: "assets/images/printed_folder_black.jpg", priceDelta: 36 }
     ],
     features: [
       "Precision die-cut pockets hold 25-50 sheets securely",
@@ -214,8 +214,8 @@ const PRODUCTS_DATA = [
     name: "Custom Printing",
     category: "custom",
     categoryLabel: "Custom Printing",
-    price: 850,
-    priceDisplay: "Starting from ₹850",
+    price: 897,
+    priceDisplay: "Starting from ₹897",
     rating: 5.0,
     reviewsCount: 145,
     badge: "Artisanal",
@@ -225,15 +225,15 @@ const PRODUCTS_DATA = [
     material: "380 GSM Pure Cotton Canvas or 5mm Optical Cast Acrylic",
     printingType: "12-Color Giclée Fine Art Archival Printing (1440 DPI)",
     sizes: [
-      { name: "12\" × 18\" Gallery Wrap", price: 850 },
-      { name: "16\" × 24\" Gallery Wrap", price: 1450 },
-      { name: "20\" × 30\" Statement Canvas", price: 2200 },
-      { name: "24\" × 36\" Grand Canvas", price: 3400 }
+      { name: "12\" × 18\" Gallery Wrap", price: 897 },
+      { name: "16\" × 24\" Gallery Wrap", price: 1497 },
+      { name: "20\" × 30\" Statement Canvas", price: 2297 },
+      { name: "24\" × 36\" Grand Canvas", price: 3497 }
     ],
     finishes: [
-      { id: "gallery-wrap-1-5", name: "1.5\" Deep Gallery Wrap", color: "#78716C", image: "assets/images/custom_canvas.jpg" },
-      { id: "floating-black", name: "Floating Black Shadowbox", color: "#111111", image: "assets/images/custom_canvas.jpg" },
-      { id: "floating-gold", name: "Floating Warm Gold Shadowbox", color: "#C99A3D", image: "assets/images/custom_canvas.jpg" }
+      { id: "gallery-wrap-1-5", name: "1.5\" Deep Gallery Wrap", color: "#78716C", image: "assets/images/custom_canvas.jpg", priceDelta: 0 },
+      { id: "floating-black", name: "Floating Black Shadowbox", color: "#111111", image: "assets/images/custom_canvas.jpg", priceDelta: 140 },
+      { id: "floating-gold", name: "Floating Warm Gold Shadowbox", color: "#C99A3D", image: "assets/images/custom_canvas.jpg", priceDelta: 260 }
     ],
     features: [
       "100% pure cotton canvas sealed with UV protective archival varnish",

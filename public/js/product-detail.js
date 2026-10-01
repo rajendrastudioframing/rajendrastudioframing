@@ -313,6 +313,7 @@ function renderFinishOptions() {
 
       // Dynamically update product preview image & gallery thumbnail
       updateDetailImageForFinish(selectedFinish);
+      updatePriceDisplay();
     });
   });
 
@@ -386,7 +387,10 @@ function updatePriceDisplay() {
   const priceDisplay = document.getElementById('detailCurrentPrice');
   if (!priceDisplay) return;
 
-  const currentPrice = selectedSize ? selectedSize.price : currentProduct.price;
+  const basePrice = selectedSize ? selectedSize.price : (currentProduct ? currentProduct.price : 0);
+  const finishDelta = (selectedFinish && typeof selectedFinish.priceDelta === 'number') ? selectedFinish.priceDelta : 0;
+  const currentPrice = basePrice + finishDelta;
+
   priceDisplay.textContent = `₹${currentPrice.toLocaleString('en-IN')}`;
 }
 
@@ -434,7 +438,8 @@ function setupOptionInteractions() {
 
       const sizeStr = selectedSize ? selectedSize.name : 'Standard';
       const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
-      const activePrice = selectedSize ? selectedSize.price : currentProduct.price;
+      const finishDelta = (selectedFinish && typeof selectedFinish.priceDelta === 'number') ? selectedFinish.priceDelta : 0;
+      const activePrice = (selectedSize ? selectedSize.price : currentProduct.price) + finishDelta;
       const activeImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : currentProduct.image;
 
       if (window.addToCart) {
@@ -471,7 +476,8 @@ function setupOptionInteractions() {
 
       const sizeStr = selectedSize ? selectedSize.name : 'Standard';
       const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
-      const activePrice = selectedSize ? selectedSize.price : currentProduct.price;
+      const finishDelta = (selectedFinish && typeof selectedFinish.priceDelta === 'number') ? selectedFinish.priceDelta : 0;
+      const activePrice = (selectedSize ? selectedSize.price : currentProduct.price) + finishDelta;
       const activeImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : currentProduct.image;
 
       if (window.buyNow) {

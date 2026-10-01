@@ -502,13 +502,18 @@ function buyNowFromCard(productId, event) {
     return;
   }
   const card = event && event.target ? event.target.closest('.product-card') : document.querySelector(`.product-card[data-id="${productId}"]`);
+  const selectedFinishId = card ? card.getAttribute('data-selected-finish-id') : null;
   const selectedFinishName = card ? card.getAttribute('data-selected-finish-name') : null;
   const selectedFinishImg = card ? card.getAttribute('data-selected-finish-img') : null;
+
+  const selectedFinish = product.finishes ? product.finishes.find(f => f.id === selectedFinishId || f.name === selectedFinishName) : null;
+  const finishDelta = (selectedFinish && typeof selectedFinish.priceDelta === 'number') ? selectedFinish.priceDelta : 0;
+  const cardPrice = (Number(product.price) || 650) + finishDelta;
 
   buyNow({
     id: product.id,
     name: product.name,
-    price: Number(product.price) || 650,
+    price: cardPrice,
     image: selectedFinishImg || product.image,
     category: product.category,
     size: 'Standard',
@@ -524,13 +529,18 @@ function handleProductCardAddToCart(productId, openDrawer = false, event = null)
   if (!product) return;
 
   const card = event && event.target ? event.target.closest('.product-card') : document.querySelector(`.product-card[data-id="${productId}"]`);
+  const selectedFinishId = card ? card.getAttribute('data-selected-finish-id') : null;
   const selectedFinishName = card ? card.getAttribute('data-selected-finish-name') : null;
   const selectedFinishImg = card ? card.getAttribute('data-selected-finish-img') : null;
+
+  const selectedFinish = product.finishes ? product.finishes.find(f => f.id === selectedFinishId || f.name === selectedFinishName) : null;
+  const finishDelta = (selectedFinish && typeof selectedFinish.priceDelta === 'number') ? selectedFinish.priceDelta : 0;
+  const cardPrice = (Number(product.price) || 650) + finishDelta;
 
   addToCart({
     id: product.id,
     name: product.name,
-    price: Number(product.price) || 650,
+    price: cardPrice,
     image: selectedFinishImg || product.image,
     category: product.category,
     size: 'Standard',

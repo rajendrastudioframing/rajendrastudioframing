@@ -462,6 +462,19 @@ window.changeCatalogCardImage = function(productId, newImgSrc, swatchEl, event, 
       cardTitleLink.setAttribute('href', targetUrl);
     }
 
+    // Dynamic price update on card when finish/color is changed
+    const products = (typeof PRODUCTS_DATA !== 'undefined' ? PRODUCTS_DATA : []);
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      const finish = product.finishes ? product.finishes.find(f => f.id === finishId) : null;
+      const finishDelta = (finish && typeof finish.priceDelta === 'number') ? finish.priceDelta : 0;
+      const cardPrice = product.price + finishDelta;
+      const priceEl = card.querySelector('.capsule-price, .bento-price-val');
+      if (priceEl) {
+        priceEl.textContent = `₹${cardPrice}`;
+      }
+    }
+
     const img = card.querySelector('.product-image, .bento-product-img');
     if (img && newImgSrc) {
       img.style.transition = 'opacity 0.15s ease-out';
