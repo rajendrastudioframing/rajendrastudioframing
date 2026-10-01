@@ -124,13 +124,65 @@ module.exports = {
   supabase,
 
   // --- PRODUCTS ---
+  _productsSynced: false,
+
   async getProducts() {
+    const localProducts = readJson(PRODUCTS_FILE, []);
     if (supabase) {
+      if (!this._productsSynced) {
+        try {
+          for (const p of localProducts) {
+            await supabase.from('products').upsert({
+              id: p.id,
+              name: p.name,
+              category: p.category,
+              category_label: p.categoryLabel || p.category_label,
+              price: p.price,
+              price_display: p.priceDisplay || p.price_display,
+              rating: p.rating,
+              reviews_count: p.reviewsCount || p.reviews_count,
+              badge: p.badge,
+              image: p.image,
+              short_description: p.shortDescription || p.short_description,
+              description: p.description,
+              material: p.material,
+              printing_type: p.printingType || p.printing_type,
+              status: p.status,
+              lead_time: p.leadTime || p.lead_time,
+              sizes: p.sizes || [],
+              finishes: p.finishes || [],
+              features: p.features || []
+            }, { onConflict: 'id' });
+          }
+          this._productsSynced = true;
+          console.log('✅ [DATABASE] Synced latest catalog products & prices to Supabase');
+        } catch (syncErr) {
+          console.warn('⚠️ [DATABASE] Error syncing catalog to Supabase:', syncErr.message);
+        }
+      }
+
       const { data, error } = await supabase.from('products').select('*').order('name');
-      if (!error && data) return data;
+      if (!error && data && data.length > 0) {
+        return data.map(remote => {
+          const local = localProducts.find(l => l.id === remote.id) || {};
+          return {
+            ...local,
+            ...remote,
+            price: Number(remote.price) || local.price,
+            priceDisplay: remote.price_display || remote.priceDisplay || local.priceDisplay,
+            categoryLabel: remote.category_label || remote.categoryLabel || local.categoryLabel,
+            shortDescription: remote.short_description || remote.shortDescription || local.shortDescription,
+            printingType: remote.printing_type || remote.printingType || local.printingType,
+            leadTime: remote.lead_time || remote.leadTime || local.leadTime,
+            reviewsCount: remote.reviews_count || remote.reviewsCount || local.reviewsCount,
+            sizes: (remote.sizes && Array.isArray(remote.sizes) && remote.sizes.length > 0) ? remote.sizes : local.sizes,
+            finishes: (remote.finishes && Array.isArray(remote.finishes) && remote.finishes.length > 0) ? remote.finishes : local.finishes
+          };
+        });
+      }
       console.warn('Supabase getProducts error, falling back to local:', error?.message);
     }
-    return readJson(PRODUCTS_FILE, []);
+    return localProducts;
   },
 
   async saveProduct(product) {
