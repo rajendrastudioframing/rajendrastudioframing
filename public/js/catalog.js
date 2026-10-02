@@ -182,15 +182,20 @@ function renderCatalog() {
         </div>
         ${finishesHtml}
         <div class="capsule-bottom-row">
+          <div class="capsule-store-info">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <span>Rajesh Framing</span>
+          </div>
           <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="${product.id}" onclick="quickAddToCart('${product.id}', event);" title="Add to Cart">
-            <span>+ Cart</span>
+            <span>Add</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-          </button>
-          <button type="button" class="capsule-action-btn capsule-buy-btn" onclick="quickBuyNow('${product.id}', event);" title="Buy Now" style="margin-left: auto; background: var(--accent-gold); color: #111111; font-weight: 700; border-color: var(--accent-gold);">
-            <span>Buy Now</span>
           </button>
         </div>
       </div>
@@ -275,14 +280,3 @@ function resetFilters() {
 }
 
 window.resetFilters = resetFilters;
-
-window.quickBuyNow = function(productId, event) {
-  if (event) {
-    if (typeof event.stopPropagation === 'function') event.stopPropagation();
-    if (typeof event.preventDefault === 'function') event.preventDefault();
-  }
-  const card = document.querySelector(`.product-card[data-id="${productId}"]`);
-  const finishId = card ? card.getAttribute('data-selected-finish-id') : '';
-  const finishParam = finishId ? `&finish=${finishId}` : '';
-  window.location.href = `checkout.html?buyNow=${productId}${finishParam}`;
-};

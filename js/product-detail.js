@@ -236,8 +236,7 @@ function renderSizeOptions() {
 
   container.innerHTML = currentProduct.sizes.map((s, idx) => `
     <button type="button" class="size-chip ${idx === 0 ? 'active' : ''}" data-size-name="${s.name}" data-size-price="${s.price}">
-      <span class="chip-name">${s.name}</span>
-      <span class="chip-price" style="font-weight: 700; opacity: 0.85; font-size: 0.8rem; margin-left: 4px;">₹${s.price}</span>
+      ${s.name}
     </button>
   `).join('');
 
@@ -588,82 +587,63 @@ function setupPhotoUpload() {
     }
 
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const originalDataUrl = event.target.result;
+    reader.onload = async (event) => {
+      const dataUrl = event.target.result;
 
-      // Safe compression using offscreen canvas to prevent localStorage quota exhaustion
-      const img = new Image();
-      img.onload = async () => {
-        let maxDim = 800;
-        let width = img.width;
-        let height = img.height;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        const safeCompressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      // Format size label
+      const formattedSize = file.size > 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        : `${Math.round(file.size / 1024)} KB`;
 
-        // Update UI Immediately
-        if (thumbImg) thumbImg.src = safeCompressedDataUrl;
-        if (nameEl) nameEl.textContent = file.name;
-        if (sizeEl) sizeEl.textContent = formattedSize;
-        if (emptyState) emptyState.style.display = 'none';
-        if (previewState) previewState.style.display = 'block';
+      // Update UI Immediately
+      if (thumbImg) thumbImg.src = dataUrl;
+      if (nameEl) nameEl.textContent = file.name;
+      if (sizeEl) sizeEl.textContent = formattedSize;
+      if (emptyState) emptyState.style.display = 'none';
+      if (previewState) previewState.style.display = 'block';
 
-        // Update main product image preview inside chosen frame
-        const mainImg = document.getElementById('detailMainImg');
-        if (mainImg) {
-          mainImg.style.transition = 'opacity 0.2s ease-in-out';
-          mainImg.style.opacity = '0.35';
-          setTimeout(() => {
-            mainImg.src = safeCompressedDataUrl;
-            mainImg.style.objectFit = 'contain';
-            mainImg.style.background = '#F8FAFC';
-            mainImg.style.padding = '16px';
-            mainImg.style.opacity = '1';
-          }, 120);
-        }
+      // Update main product image to show user's uploaded photo inside the chosen frame
+      const mainImg = document.getElementById('detailMainImg');
+      if (mainImg) {
+        mainImg.style.transition = 'opacity 0.2s ease-in-out';
+        mainImg.style.opacity = '0.35';
+        setTimeout(() => {
+          mainImg.src = dataUrl;
+          mainImg.style.objectFit = 'contain';
+          mainImg.style.background = '#F8FAFC';
+          mainImg.style.padding = '16px';
+          mainImg.style.opacity = '1';
+        }, 120);
+      }
 
-        // Set safe local cart state (under 80KB so cart never overflows storage)
-        currentUploadedPhoto = {
-          originalName: file.name,
-          fileName: file.name,
-          fileSize: file.size,
-          fileUrl: safeCompressedDataUrl
-        };
-
-        // Upload to server asynchronously for permanent high-res link
-        try {
-          const response = await fetch('/api/upload-photo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              fileName: file.name,
-              fileData: safeCompressedDataUrl
-            })
-          });
-
-          const resData = await response.json();
-          if (response.ok && resData.success && resData.fileUrl) {
-            currentUploadedPhoto.fileUrl = resData.fileUrl;
-            currentUploadedPhoto.fileName = resData.fileName;
-            console.log('✅ Photo safely uploaded to server:', resData.fileUrl);
-          }
-        } catch (uploadErr) {
-          console.warn('Upload saved safely in compressed local state:', uploadErr);
-        }
+      // Set temporary state while uploading
+      currentUploadedPhoto = {
+        originalName: file.name,
+        fileName: file.name,
+        fileSize: file.size,
+        fileUrl: dataUrl // fallback to dataUrl
       };
-      img.src = originalDataUrl;
+
+      // Upload to server asynchronously
+      try {
+        const response = await fetch('/api/upload-photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileData: dataUrl
+          })
+        });
+
+        const resData = await response.json();
+        if (response.ok && resData.success) {
+          currentUploadedPhoto.fileUrl = resData.fileUrl;
+          currentUploadedPhoto.fileName = resData.fileName;
+          console.log('✅ Photo uploaded to server:', resData.fileUrl);
+        }
+      } catch (uploadErr) {
+        console.warn('Upload saved locally in memory:', uploadErr);
+      }
     };
 
     reader.readAsDataURL(file);
@@ -692,7 +672,7 @@ function setupPhotoUpload() {
 
       const message = `Hello Rajesh Framing!\n\nI am interested in ordering:\n• Product: ${currentProduct.name}\n• Category: ${currentProduct.categoryLabel}\n• Chosen Option: ${sizeStr}\n• Finish: ${finishStr}\n• Quantity: ${currentQuantity}\n• Price: ₹${currentPrice * currentQuantity}\n\nPlease share order details and design upload guidance.`;
 
-      const url = `https://wa.me/919328081006?text=${encodeURIComponent(message)}`;
+      const url = `https://wa.me/919876543210?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
     });
   }
@@ -702,19 +682,14 @@ function renderRelatedProducts() {
   const container = document.getElementById('relatedProductsGrid');
   if (!container) return;
 
-  // Filter products from same category first
-  let related = PRODUCTS_DATA.filter(p => p.id !== currentProduct.id && p.category === currentProduct.category);
-  if (related.length < 4) {
-    const others = PRODUCTS_DATA.filter(p => p.id !== currentProduct.id && p.category !== currentProduct.category);
-    related = [...related, ...others].slice(0, 8);
-  } else {
-    related = related.slice(0, 8);
-  }
+  const related = PRODUCTS_DATA
+    .filter(p => p.id !== currentProduct.id)
+    .slice(0, 3);
 
   container.innerHTML = related.map(p => {
     const priceFormatted = p.price ? `₹${p.price}` : p.priceDisplay;
     return `
-    <article class="product-card related-card" data-id="${p.id}" onclick="window.location.href='product-detail?id=${p.id}'" style="flex: 0 0 260px; min-width: 260px; scroll-snap-align: start;">
+    <article class="product-card" data-id="${p.id}" onclick="window.location.href='product-detail?id=${p.id}'">
       <div class="product-card-top">
         ${p.badge ? `<span class="product-badge-pill">${p.badge}</span>` : '<span></span>'}
         <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
@@ -737,7 +712,15 @@ function renderRelatedProducts() {
           <span class="capsule-price">${priceFormatted}</span>
         </div>
         <div class="capsule-bottom-row">
-          <button type="button" class="capsule-action-btn" onclick="event.stopPropagation(); window.location.href='product-detail?id=${p.id}'" style="margin-left: auto;">
+          <div class="capsule-store-info">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <span>Rajesh Framing</span>
+          </div>
+          <button type="button" class="capsule-action-btn" onclick="event.stopPropagation(); window.location.href='product-detail?id=${p.id}'">
             <span>View</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -748,20 +731,6 @@ function renderRelatedProducts() {
       </div>
     </article>
   `}).join('');
-
-  // Setup Prev/Next controls
-  const prevBtn = document.getElementById('relatedSliderPrev');
-  const nextBtn = document.getElementById('relatedSliderNext');
-  if (prevBtn) {
-    prevBtn.onclick = () => {
-      container.scrollBy({ left: -280, behavior: 'smooth' });
-    };
-  }
-  if (nextBtn) {
-    nextBtn.onclick = () => {
-      container.scrollBy({ left: 280, behavior: 'smooth' });
-    };
-  }
 }
 
 function setupTabs() {
@@ -1034,43 +1003,24 @@ function setupReviewFormHandlers() {
   const closeBtn = document.getElementById('btnCloseReviewForm');
   const cancelBtn = document.getElementById('btnCancelReview');
   const form = document.getElementById('productReviewForm');
-  const noticeEl = document.getElementById('reviewCustomerNotice');
-  const nameEl = document.getElementById('reviewCustomerLoggedInName');
-
-  function getLoggedInCustomer() {
-    try {
-      const u = localStorage.getItem('rajesh_customer_user');
-      if (u) return JSON.parse(u);
-    } catch (_) {}
-    return null;
-  }
 
   if (toggleBtn && card) {
     toggleBtn.addEventListener('click', () => {
-      const customer = getLoggedInCustomer();
-      if (!customer) {
-        if (typeof window.openCustomerAuthModal === 'function') {
-          window.openCustomerAuthModal('signin');
-        } else {
-          alert('Please sign in or create a customer account to submit a review.');
-        }
-        return;
-      }
-
       const isHidden = card.style.display === 'none' || !card.style.display;
       card.style.display = isHidden ? 'block' : 'none';
       if (isHidden) {
         card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        if (noticeEl) {
-          noticeEl.style.display = 'flex';
-          if (nameEl) nameEl.textContent = customer.name || 'Customer';
-        }
-        const authorInput = document.getElementById('reviewAuthor');
-        if (authorInput) {
-          authorInput.value = customer.name || '';
-          authorInput.readOnly = true;
-          authorInput.style.backgroundColor = '#F8FAFC';
-        }
+        // Auto-fill logged-in customer info if available
+        try {
+          const custUser = localStorage.getItem('rajesh_customer_user');
+          if (custUser) {
+            const parsed = JSON.parse(custUser);
+            const authorInput = document.getElementById('reviewAuthor');
+            if (authorInput && !authorInput.value && parsed.name) {
+              authorInput.value = parsed.name;
+            }
+          }
+        } catch (_) {}
       }
     });
   }
@@ -1118,24 +1068,15 @@ function setupReviewFormHandlers() {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const customer = getLoggedInCustomer();
-      if (!customer) {
-        alert('Please sign in to submit a verified customer review.');
-        if (typeof window.openCustomerAuthModal === 'function') {
-          window.openCustomerAuthModal('signin');
-        }
-        return;
-      }
-
-      const author = customer.name || (document.getElementById('reviewAuthor')?.value || '').trim() || 'Verified Customer';
+      const author = (document.getElementById('reviewAuthor')?.value || '').trim();
       const city = (document.getElementById('reviewCity')?.value || '').trim();
       const headline = (document.getElementById('reviewHeadline')?.value || '').trim();
       const comment = (document.getElementById('reviewComment')?.value || '').trim();
       const rating = selectedFormRating;
       const pId = currentProduct ? currentProduct.id : 'glass-frame-classic';
 
-      if (!headline || !comment) {
-        alert('Please write a headline and comments for your review.');
+      if (!author || !headline || !comment) {
+        alert('Please complete all required review fields.');
         return;
       }
 
@@ -1315,8 +1256,6 @@ function renderReviewsListOnly() {
     const dateFormatted = formatReviewDate(rev.date);
     const initials = getAuthorInitials(rev.author);
     const isVoted = votedReviews.includes(rev.id);
-    const isLong = rev.comment && rev.comment.length > 140;
-    const snippet = isLong ? rev.comment.slice(0, 135) + '...' : rev.comment;
 
     return `
       <div class="review-card" data-review-id="${rev.id}">
@@ -1347,13 +1286,7 @@ function renderReviewsListOnly() {
         </div>
 
         <div class="review-headline">${escapeHtml(rev.headline)}</div>
-        <div class="review-comment">
-          ${isLong ? `
-            <span id="revSnippet_${rev.id}">${escapeHtml(snippet)}</span>
-            <span id="revFull_${rev.id}" style="display: none;">${escapeHtml(rev.comment)}</span>
-            <button type="button" class="btn-review-readmore" onclick="toggleReviewReadMore('${rev.id}', this)" style="background: none; border: none; padding: 0 4px; color: var(--accent-gold); font-weight: 700; cursor: pointer; font-size: 0.82rem; text-decoration: underline;">Read More</button>
-          ` : `<span>${escapeHtml(rev.comment)}</span>`}
-        </div>
+        <div class="review-comment">${escapeHtml(rev.comment)}</div>
 
         <div class="review-card-footer">
           <span>Was this review helpful?</span>
@@ -1368,21 +1301,6 @@ function renderReviewsListOnly() {
     `;
   }).join('');
 }
-
-window.toggleReviewReadMore = function(reviewId, btn) {
-  const snip = document.getElementById(`revSnippet_${reviewId}`);
-  const full = document.getElementById(`revFull_${reviewId}`);
-  if (!snip || !full) return;
-  if (full.style.display === 'none') {
-    full.style.display = 'inline';
-    snip.style.display = 'none';
-    if (btn) btn.textContent = 'Show Less';
-  } else {
-    full.style.display = 'none';
-    snip.style.display = 'inline';
-    if (btn) btn.textContent = 'Read More';
-  }
-};
 
 window.voteReviewHelpful = function(reviewId) {
   const voted = JSON.parse(localStorage.getItem('rf_voted_reviews') || '[]');

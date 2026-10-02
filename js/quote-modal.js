@@ -43,7 +43,7 @@ function injectQuoteModalMarkup() {
               </div>
               <div class="form-group">
                 <label class="form-label" for="quotePhone">Mobile / WhatsApp Number <span class="required">*</span></label>
-                <input type="tel" id="quotePhone" class="form-input" placeholder="e.g. +91 93280 81006" required />
+                <input type="tel" id="quotePhone" class="form-input" placeholder="e.g. +91 98765 43210" required />
               </div>
             </div>
 
@@ -153,7 +153,7 @@ function injectQuoteModalMarkup() {
             </p>
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
               <button type="button" class="btn btn-primary" id="successDoneBtn">Done</button>
-              <a href="https://wa.me/919328081006" target="_blank" class="btn btn-whatsapp">
+              <a href="https://wa.me/919876543210" target="_blank" class="btn btn-whatsapp">
                 <span>Direct WhatsApp Follow-up</span>
               </a>
             </div>
@@ -390,7 +390,7 @@ function bindQuoteFormSubmit() {
 
       const msg = `Hello Rajesh Framing!\n\nI would like to request a quote:\n• Name: ${name}\n• Phone: ${phone}${email ? `\n• Email: ${email}` : ''}\n• Product/Service: ${product}\n• Quantity: ${qty}\n• Preferred Size: ${dimensions}\n• Requirements: ${req}\n\nLooking forward to hearing from you!`;
 
-      const whatsappUrl = `https://wa.me/919328081006?text=${encodeURIComponent(msg)}`;
+      const whatsappUrl = `https://wa.me/919876543210?text=${encodeURIComponent(msg)}`;
       window.open(whatsappUrl, '_blank');
     });
   }

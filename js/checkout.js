@@ -45,19 +45,13 @@ function updateCheckoutAuthUI() {
   if (isLoggedIn && user) {
     if (noticeBanner) noticeBanner.style.display = 'none';
     if (verifiedBanner) verifiedBanner.style.display = 'flex';
-    if (loggedEmailEl) {
-      if (user.name && user.name !== 'Valued Customer') {
-        loggedEmailEl.innerHTML = `<strong style="color: #064E3B; font-size: 0.95rem;">${escapeHtml(user.name)}</strong> <span style="font-weight: 500; opacity: 0.85;">(${escapeHtml(user.email || user.phone || '')})</span>`;
-      } else {
-        loggedEmailEl.textContent = user.email || user.phone || 'Customer';
-      }
-    }
+    if (loggedEmailEl) loggedEmailEl.textContent = user.email || 'customer@example.com';
 
     // Auto-fill customer details if fields are empty
     if (emailInput && (!emailInput.value || emailInput.value !== user.email)) {
-      emailInput.value = user.email || '';
+      emailInput.value = user.email;
     }
-    if (nameInput && (!nameInput.value || nameInput.value === 'Valued Customer') && user.name && user.name !== 'Valued Customer') {
+    if (nameInput && !nameInput.value && user.name && user.name !== 'Valued Customer') {
       nameInput.value = user.name;
     }
     if (phoneInput && !phoneInput.value && user.phone) {
@@ -378,7 +372,7 @@ function bindCheckoutForm() {
 
         const waBtn = document.getElementById('successWhatsAppBtn');
         if (waBtn) {
-          waBtn.href = `https://wa.me/919328081006?text=${waMsg}`;
+          waBtn.href = `https://wa.me/919876543210?text=${waMsg}`;
         }
 
         const trackBtn = document.getElementById('successTrackBtn');
@@ -404,34 +398,11 @@ function bindCheckoutForm() {
     } catch (err) {
       console.error('Order submission error:', err);
       // Fallback local confirmation if server unreachable
+      alert('Order noted! Connecting to WhatsApp studio...');
       const fallbackId = `RF-ORD-${Date.now().toString().slice(-4)}`;
       document.getElementById('successCustName').textContent = name;
       document.getElementById('successOrderId').textContent = fallbackId;
       document.getElementById('successOrderTotal').textContent = `₹${total.toLocaleString('en-IN')}`;
-
-      const itemNames = cart.map(i => `${i.name} (x${i.quantity})`).join(', ');
-      const waMsg = encodeURIComponent(
-        `Hello Rajesh Framing!\n\n` +
-        `I have placed an order on your website:\n` +
-        `• Order ID: ${fallbackId}\n` +
-        `• Name: ${name}\n` +
-        `• Phone: ${phone}\n` +
-        `• Items: ${itemNames}\n` +
-        `• Total Amount: ₹${total.toLocaleString('en-IN')}\n` +
-        `• Payment Method: ${paymentLabel}\n` +
-        (utr ? `• UPI Ref / UTR: ${utr}\n` : '') +
-        `• Delivery Address: ${address}, ${city} (${pincode})\n\n` +
-        `Please confirm my order and share the digital preview proof!`
-      );
-      const waBtn = document.getElementById('successWhatsAppBtn');
-      if (waBtn) {
-        waBtn.href = `https://wa.me/919328081006?text=${waMsg}`;
-      }
-      const trackBtn = document.getElementById('successTrackBtn');
-      if (trackBtn) {
-        trackBtn.href = `track-order?id=${encodeURIComponent(fallbackId)}`;
-      }
-
       clearCart();
       const modal = document.getElementById('orderSuccessModal');
       if (modal) {
