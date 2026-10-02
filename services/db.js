@@ -18,6 +18,7 @@ const MESSAGES_FILE = path.join(DATA_DIR, 'messages.json');
 const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
+const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json');
 
 // Ensure local data dir exists when running in local development
 if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
@@ -565,6 +566,71 @@ module.exports = {
     }
   },
 
+  // --- CUSTOMER REVIEWS ---
+  async getReviews(productId = null) {
+    if (supabase) {
+      try {
+        let query = supabase.from('reviews').select('*').order('created_at', { ascending: false });
+        if (productId) {
+          query = query.eq('product_id', productId);
+        }
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          return data.map(r => ({
+            id: r.id,
+            productId: r.product_id,
+            author: r.author,
+            city: r.city || 'Dahej / Bharuch',
+            rating: Number(r.rating) || 5,
+            date: r.date || '',
+            headline: r.headline || '',
+            comment: r.comment || '',
+            verified: Boolean(r.verified),
+            helpful: Number(r.helpful) || 0
+          }));
+        }
+      } catch (err) {
+        console.warn('Supabase getReviews error, falling back to local:', err.message);
+      }
+    }
+    const allReviews = readJson(REVIEWS_FILE, []);
+    if (productId) {
+      return allReviews.filter(r => r.productId === productId);
+    }
+    return allReviews;
+  },
+
+  async saveReview(review) {
+    if (supabase) {
+      try {
+        const dbRow = {
+          id: review.id,
+          product_id: review.productId,
+          author: review.author,
+          city: review.city || 'Dahej / Bharuch',
+          rating: Number(review.rating) || 5,
+          date: review.date || new Date().toISOString().split('T')[0],
+          headline: review.headline,
+          comment: review.comment,
+          verified: review.verified !== false,
+          helpful: Number(review.helpful) || 0
+        };
+        await supabase.from('reviews').upsert(dbRow, { onConflict: 'id' });
+      } catch (err) {
+        console.warn('Supabase saveReview error, writing local:', err.message);
+      }
+    }
+    const reviews = readJson(REVIEWS_FILE, []);
+    const idx = reviews.findIndex(r => r.id === review.id);
+    if (idx !== -1) {
+      reviews[idx] = { ...reviews[idx], ...review };
+    } else {
+      reviews.unshift(review);
+    }
+    writeJson(REVIEWS_FILE, reviews);
+    return review;
+  },
+
   // Local file references for legacy imports
   readJson,
   writeJson,
@@ -574,5 +640,6 @@ module.exports = {
   MESSAGES_FILE,
   ORDERS_FILE,
   SESSIONS_FILE,
-  CUSTOMERS_FILE
+  CUSTOMERS_FILE,
+  REVIEWS_FILE
 };

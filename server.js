@@ -215,7 +215,7 @@ function generateOtpEmailHtml(otp, recipientEmail) {
       </div>
       <div class="footer">
         Rajesh Framing Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
-        Direct Customer Support: +91 96015 74966 • help@dahejsupport.com
+        Direct Customer Support: +91 93280 81006 • rajeshframing0@gmail.com
       </div>
     </div>
   </body>
@@ -268,7 +268,7 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
       </div>
       <div class="footer">
         Rajesh Framing Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
-        Direct Customer Support: +91 96015 74966 • help@dahejsupport.com
+        Direct Customer Support: +91 93280 81006 • rajeshframing0@gmail.com
       </div>
     </div>
   </body>
@@ -482,11 +482,11 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
                   Our studio team is available Mon–Sat (9:00 AM – 9:00 PM).
                 </div>
                 <div>
-                  <a href="https://wa.me/919601574966?text=${encodeURIComponent('Hello Rajesh Framing, I am inquiring about my Order #' + orderId)}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);">
+                  <a href="https://wa.me/919328081006?text=${encodeURIComponent('Hello Rajesh Framing, I am inquiring about my Order #' + orderId)}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);">
                     💬 Chat on WhatsApp
                   </a>
-                  <a href="tel:+919601574966" style="display: inline-block; background-color: #111111; color: #FFFFFF; border: 1px solid #C99A3D; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px;">
-                    📞 +91 96015 74966
+                  <a href="tel:+919328081006" style="display: inline-block; background-color: #111111; color: #FFFFFF; border: 1px solid #C99A3D; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px;">
+                    📞 +91 93280 81006
                   </a>
                 </div>
                 <div style="margin-top: 20px; font-size: 11px; color: #A8A29E; line-height: 1.6;">
@@ -604,8 +604,8 @@ Total Amount: ₹${Number(total || 0).toLocaleString('en-IN')}
 Delivery To: ${address || 'Studio Pickup / Dahej & Bharuch'}
 
 If you have any questions, reach our studio:
-Phone: +91 96015 74966
-WhatsApp: https://wa.me/919601574966
+Phone: +91 93280 81006
+WhatsApp: https://wa.me/919328081006
 
 Rajesh Framing Studio
 Dahej GIDC, Bharuch, Gujarat 392130
@@ -2497,8 +2497,55 @@ const handleTestSmtp = async (req, res) => {
 app.post('/api/admin/test-smtp', requireAuth, handleTestSmtp);
 app.post('/api/admin/settings/smtp/test', requireAuth, handleTestSmtp);
 
+/**
+ * Customer Reviews Endpoints (GET & POST)
+ */
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const { productId } = req.query;
+    const reviews = await db.getReviews(productId || null);
+    res.json({ success: true, reviews });
+  } catch (err) {
+    console.error('Error fetching reviews:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch reviews.' });
+  }
+});
+
+app.post('/api/reviews', async (req, res) => {
+  try {
+    const { id, productId, author, city, rating, date, headline, comment, verified, helpful } = req.body;
+    if (!productId || !author || !headline || !comment) {
+      return res.status(400).json({ success: false, message: 'All review fields are required.' });
+    }
+
+    const review = {
+      id: id || `rev-${Date.now()}`,
+      productId,
+      author: author.trim(),
+      city: (city || 'Dahej / Bharuch').trim(),
+      rating: Number(rating) || 5,
+      date: date || new Date().toISOString().split('T')[0],
+      headline: headline.trim(),
+      comment: comment.trim(),
+      verified: verified !== false,
+      helpful: Number(helpful) || 0
+    };
+
+    await db.saveReview(review);
+    res.json({ success: true, message: 'Review submitted successfully!', review });
+  } catch (err) {
+    console.error('Error saving review:', err);
+    res.status(500).json({ success: false, message: 'Failed to save review.' });
+  }
+});
+
 // Start Server locally when executed directly
 if (require.main === module) {
+  // Sync to Supabase if credentials exist
+  try {
+    const syncSupabase = require('./scripts/sync-supabase');
+    syncSupabase().catch(e => console.warn('Supabase startup sync notice:', e.message));
+  } catch (_) {}
   app.listen(PORT, () => {
     console.log('\n======================================================');
     console.log(`🚀 RAJESH FRAMING ADMIN & API SERVER RUNNING`);
