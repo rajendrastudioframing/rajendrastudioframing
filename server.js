@@ -214,8 +214,8 @@ function generateOtpEmailHtml(otp, recipientEmail) {
         </div>
       </div>
       <div class="footer">
-        Rajesh Framing Studio • Station Road, Dahej / Bharuch, Gujarat 392130<br>
-        Direct Master Line: +91 98765 43210 • Confidential Administrative Notice
+        Rajesh Framing Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
+        Direct Customer Support: +91 96015 74966 • help@dahejsupport.com
       </div>
     </div>
   </body>
@@ -267,7 +267,7 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
         </div>
       </div>
       <div class="footer">
-        Rajesh Framing Studio • Station Road, Dahej &amp; Bharuch, Gujarat 392130<br>
+        Rajesh Framing Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
         Direct Customer Support: +91 96015 74966 • help@dahejsupport.com
       </div>
     </div>
@@ -490,7 +490,7 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
                   </a>
                 </div>
                 <div style="margin-top: 20px; font-size: 11px; color: #A8A29E; line-height: 1.6;">
-                  Rajesh Framing Studio &bull; Station Road, Dahej &amp; Bharuch, Gujarat 392130<br>
+                  Rajesh Framing Studio &bull; Dahej GIDC, Bharuch, Gujarat 392130<br>
                   This is an automated operational notification regarding your order with Rajesh Framing.
                 </div>
               </td>
@@ -608,7 +608,7 @@ Phone: +91 96015 74966
 WhatsApp: https://wa.me/919601574966
 
 Rajesh Framing Studio
-Station Road, Dahej & Bharuch, Gujarat 392130
+Dahej GIDC, Bharuch, Gujarat 392130
 `;
 
     await transporter.sendMail({

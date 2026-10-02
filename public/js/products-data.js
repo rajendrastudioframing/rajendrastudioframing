@@ -254,7 +254,7 @@ const BUSINESS_INFO = {
   whatsapp: "+91 96015 74966",
   whatsappNumber: "919601574966",
   email: "help@dahejsupport.com",
-  address: "Station Road, Opp. Central Plaza, Dahej / Bharuch, Gujarat 392130",
+  address: "Dahej GIDC, Bharuch, Gujarat 392130",
   workingHours: "Mon - Sat: 9:30 AM - 8:30 PM | Sun: 10:00 AM - 2:00 PM",
   establishedYear: 2008,
   framesCrafted: "25,000+",
