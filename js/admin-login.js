@@ -4,11 +4,11 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // If already logged in, redirect to admin.html
-  const existingToken = localStorage.getItem('rf_admin_token');
-  if (existingToken) {
-    checkExistingSession(existingToken);
-  }
+  // Clear any stale legacy tokens to ensure clean state
+  try {
+    localStorage.removeItem('rf_admin_token');
+    localStorage.removeItem('rf_admin_user');
+  } catch (_) {}
 
   initLoginCredentialsForm();
   initOtpVerificationForm();
@@ -335,12 +335,19 @@ function initOtpVerificationForm() {
         if (response && response.ok && result && result.success) {
           showAlert('success', 'Passcode verified! Redirecting to Dashboard...');
           
-          // Save session token in localStorage
-          localStorage.setItem('rf_admin_token', result.token);
-          localStorage.setItem('rf_admin_user', JSON.stringify(result.admin));
+          // Save session token in sessionStorage (active browser session)
+          sessionStorage.setItem('rf_admin_token', result.token);
+          sessionStorage.setItem('rf_admin_user', JSON.stringify(result.admin));
 
+          // Purge legacy persistent storage
+          try {
+            localStorage.removeItem('rf_admin_token');
+            localStorage.removeItem('rf_admin_user');
+          } catch (_) {}
+
+          const isFile = window.location.protocol === 'file:';
           setTimeout(() => {
-            window.location.href = 'admin';
+            window.location.href = isFile ? 'admin.html' : 'admin';
           }, 800);
 
         } else {

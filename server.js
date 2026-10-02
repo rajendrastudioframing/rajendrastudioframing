@@ -639,6 +639,44 @@ Station Road, Dahej & Bharuch, Gujarat 392130
   }
 }
 
+// Secure HMAC-Signed Admin Tokens & Revocation Storage
+const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'rajesh_framing_admin_secret_auth_sig_2026';
+const revokedAdminTokens = new Set();
+
+function generateAdminToken(email) {
+  const sessionExpiresAt = Date.now() + 12 * 60 * 60 * 1000; // 12 hours validity
+  const payload = {
+    email: email.trim().toLowerCase(),
+    createdAt: Date.now(),
+    expiresAt: sessionExpiresAt,
+    salt: crypto.randomBytes(8).toString('hex')
+  };
+  const payloadBase64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(payloadBase64).digest('hex');
+  return `rf_admin_${payloadBase64}.${signature}`;
+}
+
+function verifyAdminToken(token) {
+  if (!token || typeof token !== 'string' || !token.startsWith('rf_admin_')) return null;
+  const raw = token.slice('rf_admin_'.length);
+  const dotIndex = raw.lastIndexOf('.');
+  if (dotIndex === -1) return null;
+  const payloadBase64 = raw.substring(0, dotIndex);
+  const signature = raw.substring(dotIndex + 1);
+  
+  const expectedSignature = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(payloadBase64).digest('hex');
+  if (signature !== expectedSignature) return null;
+
+  try {
+    const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString('utf8'));
+    if (!payload || !payload.expiresAt || !payload.email) return null;
+    if (Date.now() > payload.expiresAt) return null; // Token expired
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+
 // Authentication Middleware
 async function requireAuth(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -647,32 +685,32 @@ async function requireAuth(req, res, next) {
   }
 
   const token = authHeader.split(' ')[1];
-  let session = activeSessions.get(token);
 
-  // Auto-recover valid admin session on server restart
-  if (!session && token && token.startsWith('rf_admin_')) {
-    const config = await db.getAdminConfig();
-    session = {
-      email: config.adminEmail || 'rajeshframing0@gmail.com',
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000
-    };
-    activeSessions.set(token, session);
-    saveSessions();
+  // 1. Check if token was explicitly revoked via logout
+  if (revokedAdminTokens.has(token)) {
+    return res.status(401).json({ success: false, message: 'Session has been logged out. Please log in again.' });
   }
 
-  if (!session) {
-    return res.status(401).json({ success: false, message: 'Session expired or invalid. Please log in again.' });
+  // 2. Cryptographic signature and expiration check
+  const tokenPayload = verifyAdminToken(token);
+  if (tokenPayload) {
+    req.adminEmail = tokenPayload.email;
+    return next();
   }
 
-  if (Date.now() > session.expiresAt) {
-    activeSessions.delete(token);
-    saveSessions();
-    return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
+  // 3. Fallback: check stored sessions with strict expiration check
+  const session = activeSessions.get(token);
+  if (session) {
+    if (Date.now() > session.expiresAt) {
+      activeSessions.delete(token);
+      saveSessions();
+      return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
+    }
+    req.adminEmail = session.email;
+    return next();
   }
 
-  req.adminEmail = session.email;
-  next();
+  return res.status(401).json({ success: false, message: 'Session expired or invalid. Please log in again.' });
 }
 
 /* ==========================================================================
@@ -824,10 +862,10 @@ app.post('/api/auth/verify-otp', async (req, res) => {
       });
     }
 
-    // Correct OTP! Clear OTP and generate secure session token
+    // Correct OTP! Clear OTP and generate secure signed session token
     activeOtps.delete(cleanEmail);
-    const token = 'rf_admin_' + crypto.randomBytes(32).toString('hex');
-    const sessionExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    const token = generateAdminToken(cleanEmail);
+    const sessionExpiresAt = Date.now() + 12 * 60 * 60 * 1000; // 12 hours
 
     activeSessions.set(token, {
       email: cleanEmail,
@@ -955,6 +993,7 @@ app.post('/api/auth/logout', (req, res) => {
   const authHeader = req.headers['authorization'];
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
+    revokedAdminTokens.add(token);
     activeSessions.delete(token);
     saveSessions();
   }

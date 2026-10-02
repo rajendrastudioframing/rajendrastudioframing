@@ -4,6 +4,27 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Studio | Rajesh Framing</title>
+  <!-- Security Shield & Immediate Auth Guard: Completely shields DOM until active admin session is verified -->
+  <style id="rf-auth-shield">html { display: none !important; }</style>
+  <script>
+    (function () {
+      // 1. Immediately hide document to prevent any unauthenticated UI flash
+      document.documentElement.style.display = 'none';
+
+      // 2. Strict check for active admin session token
+      var sessionToken = sessionStorage.getItem('rf_admin_token');
+      if (!sessionToken) {
+        // Clear any old legacy persistent storage to prevent bypasses
+        try {
+          localStorage.removeItem('rf_admin_token');
+          localStorage.removeItem('rf_admin_user');
+        } catch (_) {}
+        var isFile = window.location.protocol === 'file:';
+        var loginUrl = isFile ? 'admin-login.html' : 'admin-login';
+        window.location.replace(loginUrl);
+      }
+    })();
+  </script>
   <meta name="description" content="Rajesh Framing Studio OS - Track, manage, and update customer orders, custom frame inquiries, and catalog pricing efficiently." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

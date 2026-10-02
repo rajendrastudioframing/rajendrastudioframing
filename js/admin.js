@@ -9,7 +9,7 @@ let API_BASE = (window.location.origin.includes(':5500') || window.location.orig
   ? 'http://localhost:5000' 
   : window.location.origin;
 
-let token = localStorage.getItem('rf_admin_token');
+let token = sessionStorage.getItem('rf_admin_token');
 let currentAdminUser = null;
 let allInquiries = [];
 let allProducts = [];
@@ -18,13 +18,19 @@ let allCustomers = [];
 
 // Initialize Dashboard
 document.addEventListener('DOMContentLoaded', async () => {
+  token = sessionStorage.getItem('rf_admin_token');
   if (!token) {
-    window.location.href = 'admin-login';
+    handleAuthFailure();
     return;
   }
 
   const authenticated = await verifyAdminSession();
   if (!authenticated) return;
+
+  // Authentication successfully verified! Remove security shield and reveal dashboard
+  const shield = document.getElementById('rf-auth-shield');
+  if (shield) shield.remove();
+  document.documentElement.style.display = '';
 
   initNavigation();
   initSidebarToggle();
@@ -70,12 +76,18 @@ async function verifyAdminSession() {
       }
     }
 
+    if (!res || !res.ok) {
+      handleAuthFailure();
+      return false;
+    }
+
     let data;
     try {
       data = await res.json();
     } catch (jsonErr) {
       console.warn('Could not parse auth response JSON:', jsonErr);
-      data = { success: false };
+      handleAuthFailure();
+      return false;
     }
 
     if (data && data.success && data.admin) {
@@ -112,9 +124,15 @@ function updateAdminProfileUI(admin) {
 }
 
 function handleAuthFailure() {
-  localStorage.removeItem('rf_admin_token');
-  localStorage.removeItem('rf_admin_user');
-  window.location.href = 'admin-login';
+  sessionStorage.removeItem('rf_admin_token');
+  sessionStorage.removeItem('rf_admin_user');
+  try {
+    localStorage.removeItem('rf_admin_token');
+    localStorage.removeItem('rf_admin_user');
+  } catch (_) {}
+  document.documentElement.style.display = 'none';
+  const isFile = window.location.protocol === 'file:';
+  window.location.replace(isFile ? 'admin-login.html' : 'admin-login');
 }
 
 function initLogout() {
