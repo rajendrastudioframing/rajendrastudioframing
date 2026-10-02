@@ -167,51 +167,96 @@
     </section>
 
     <!-- Catalog Section -->
-    <section class="section">
-      <div class="container">
+    <section class="section" style="padding-top: 36px; padding-bottom: 72px;">
+      <div class="container catalog-layout-container">
 
-        <!-- Toolbar: Category Filters, Search, Sort -->
-        <div class="catalog-toolbar">
-          <!-- 5 Specific Category Filters -->
-          <div class="catalog-filters">
-            <button type="button" class="filter-btn active" data-filter="all">All</button>
-            <button type="button" class="filter-btn" data-filter="frames">Frames</button>
-            <button type="button" class="filter-btn" data-filter="personalized">Personalized Printing</button>
-            <button type="button" class="filter-btn" data-filter="office">Office Printing</button>
-            <button type="button" class="filter-btn" data-filter="custom">Custom Printing</button>
-          </div>
+        <div class="catalog-layout">
+          <!-- Left Sidebar: Search, Categories, Sort -->
+          <aside class="catalog-sidebar" aria-label="Catalog Filters">
+            <div class="catalog-sidebar-inner">
+              <div class="sidebar-header">
+                <h3 class="sidebar-title">Filters</h3>
+                <button type="button" class="sidebar-reset-btn" onclick="resetFilters()">Reset</button>
+              </div>
 
-          <!-- Search & Sort Controls -->
-          <div class="catalog-search-sort">
-            <div class="search-box">
-              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input type="text" id="catalogSearchInput" class="search-input" placeholder="Search frames, mugs, bottles..." />
+              <!-- Search Box -->
+              <div class="sidebar-group">
+                <label class="sidebar-label" for="catalogSearchInput">Search Catalog</label>
+                <div class="search-box sidebar-search-box">
+                  <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <input type="text" id="catalogSearchInput" class="search-input sidebar-search-input" placeholder="Search frames, mugs..." />
+                </div>
+              </div>
+
+              <!-- Categories -->
+              <div class="sidebar-group">
+                <label class="sidebar-label">Categories</label>
+                <div class="catalog-filters sidebar-filters">
+                  <button type="button" class="filter-btn sidebar-filter-btn active" data-filter="all">
+                    <span>All Products</span>
+                    <span class="filter-count-badge">7</span>
+                  </button>
+                  <button type="button" class="filter-btn sidebar-filter-btn" data-filter="frames">
+                    <span>Frames</span>
+                  </button>
+                  <button type="button" class="filter-btn sidebar-filter-btn" data-filter="personalized">
+                    <span>Personalized Printing</span>
+                  </button>
+                  <button type="button" class="filter-btn sidebar-filter-btn" data-filter="office">
+                    <span>Office Printing</span>
+                  </button>
+                  <button type="button" class="filter-btn sidebar-filter-btn" data-filter="custom">
+                    <span>Custom Printing</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Sort Option -->
+              <div class="sidebar-group">
+                <label class="sidebar-label" for="catalogSortSelect">Sort Products</label>
+                <select id="catalogSortSelect" class="sort-select sidebar-sort-select" aria-label="Sort products">
+                  <option value="featured">Sort: Featured</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                  <option value="rating">Highest Rated</option>
+                </select>
+              </div>
+
+              <!-- Custom Order Helper Card -->
+              <div class="sidebar-helper-card">
+                <div class="helper-card-badge">Bespoke Studio</div>
+                <h4 class="helper-card-title">Need Custom Millimeter Sizing?</h4>
+                <p class="helper-card-desc">We craft bespoke frames for any custom canvas or photo dimension.</p>
+                <a href="https://wa.me/919601574966?text=Hello%20Rajesh%20Framing,%20I%20need%20custom%20dimensions" target="_blank" class="helper-card-btn">
+                  <span>WhatsApp Specs</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Right / Main Content: Results Count & Products Grid (Moved Up) -->
+          <div class="catalog-main-content">
+            <!-- Filter Count Notification -->
+            <div class="catalog-results-header">
+              <span id="catalogResultsCount" class="results-count-text">
+                Showing all products
+              </span>
+              <span class="custom-sizes-pill">
+                ✓ Custom Sizes &amp; Bulk Orders Welcome
+              </span>
             </div>
 
-            <select id="catalogSortSelect" class="sort-select" aria-label="Sort products">
-              <option value="featured">Sort: Featured</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-              <option value="rating">Highest Rated</option>
-            </select>
+            <!-- Dynamic Products Grid (4 cards in one row on desktop) -->
+            <div class="products-grid" id="catalogProductsGrid"></div>
           </div>
         </div>
-
-        <!-- Filter Count Notification -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-          <span id="catalogResultsCount" style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary);">
-            Showing all products
-          </span>
-          <span style="font-size: 0.8125rem; color: var(--accent-gold); font-weight: 600;">
-            ✓ Custom Sizes &amp; Bulk Orders Welcome
-          </span>
-        </div>
-
-        <!-- Dynamic Products Grid (Populated by catalog.js with new luxury cards) -->
-        <div class="products-grid" id="catalogProductsGrid"></div>
 
       </div>
     </section>
