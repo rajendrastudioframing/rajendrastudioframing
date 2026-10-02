@@ -665,3 +665,138 @@
   }
 }
 
+/* ==========================================================================
+   TRACK ORDER TABS & MY ORDERS HISTORY
+   ========================================================================== */
+.track-tabs-bar {
+  display: inline-flex;
+  align-items: center;
+  background: #FFFFFF;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-subtle, #E5E0D8);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  margin: 0 auto 28px;
+  gap: 6px;
+}
+
+.track-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-muted, #76746E);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.track-tab-btn:hover {
+  color: var(--text-dark, #1A1A18);
+}
+
+.track-tab-btn.active {
+  background: linear-gradient(135deg, #111111 0%, #2A2A28 100%);
+  color: #C99A3D;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.my-orders-container {
+  max-width: 900px;
+  margin: 32px auto 60px;
+  padding: 0 16px;
+}
+
+.my-orders-empty-card {
+  background: #FFFFFF;
+  border: 1.5px solid var(--border-subtle, #E5E0D8);
+  border-radius: 20px;
+  padding: 48px 24px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.my-orders-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(201, 154, 61, 0.12);
+  color: #C99A3D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  font-size: 1.8rem;
+}
+
+.customer-order-card {
+  background: #FFFFFF;
+  border: 1.5px solid var(--border-subtle, #E5E0D8);
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.customer-order-card:hover {
+  border-color: #C99A3D;
+  box-shadow: 0 12px 32px rgba(201, 154, 61, 0.12);
+}
+
+.customer-order-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #F0ECE4;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.customer-order-id {
+  font-weight: 800;
+  font-size: 1.08rem;
+  color: #111111;
+  letter-spacing: 0.5px;
+}
+
+.customer-order-date {
+  font-size: 0.82rem;
+  color: #76746E;
+  margin-left: 8px;
+}
+
+.customer-order-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.customer-order-items {
+  font-size: 0.92rem;
+  color: #444442;
+  line-height: 1.5;
+  max-width: 540px;
+}
+
+.customer-order-meta-total {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #111111;
+}
+
+.customer-order-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+

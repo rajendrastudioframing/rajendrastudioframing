@@ -127,60 +127,88 @@
         </div>
         <h1 class="track-hero-title">Track Your Bespoke Order</h1>
         <p class="track-hero-desc">
-          Enter your Order ID below to view real-time studio production stages, framing inspection status, and delivery schedules.
+          View real-time studio production stages, framing inspection status, delivery updates, and your complete order history.
         </p>
 
-        <!-- Search Card -->
-        <form class="track-search-card" id="orderTrackForm">
-          <div class="track-search-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <!-- Tab Switcher Bar -->
+        <div class="track-tabs-bar" role="tablist">
+          <button type="button" class="track-tab-btn active" id="tabBtnTrackId" onclick="switchTrackTab('track-id')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-          </div>
-          <input 
-            type="text" 
-            class="track-search-input" 
-            id="trackOrderIdInput" 
-            placeholder="Enter Order ID (e.g. RF-ORD-2026-003)" 
-            autocomplete="off" 
-            required 
-          />
-          <button type="submit" class="track-search-btn">
-            <span>Track Order</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
+            <span>Track by Order ID</span>
           </button>
-        </form>
-
-        <div class="track-quick-pills">
-          <span>Try sample order:</span>
-          <button type="button" class="quick-order-pill" data-order-id="RF-ORD-2026-003">RF-ORD-2026-003</button>
+          <button type="button" class="track-tab-btn" id="tabBtnMyOrders" onclick="switchTrackTab('my-orders')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span>My Order History</span>
+          </button>
         </div>
+
+        <!-- Single Order Search Form (Visible in track-id tab) -->
+        <div id="trackSearchCardWrap">
+          <form class="track-search-card" id="orderTrackForm">
+            <div class="track-search-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              class="track-search-input" 
+              id="trackOrderIdInput" 
+              placeholder="Enter your Order ID (e.g. RF-ORD-1001)" 
+              autocomplete="off" 
+              required 
+            />
+            <button type="submit" class="track-search-btn">
+              <span>Track Order</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </form>
+        </div>
+
       </div>
     </section>
 
-    <!-- Tracking Results Section -->
-    <section class="track-content-section">
-      <div class="container">
-        <div class="track-result-wrap" id="trackingResultContainer">
-          <!-- Initial Placeholder state -->
-          <div style="text-align: center; padding: 60px 20px; background: #FFFFFF; border-radius: 20px; border: 1px dashed var(--border-subtle, #E5E0D8);">
-            <div style="font-size: 3rem; margin-bottom: 12px;">📦</div>
-            <h3 style="font-family: var(--font-heading, 'Playfair Display', serif); font-size: 1.4rem; color: #1A1A18; margin-bottom: 8px;">
-              Ready to Track Your Order
-            </h3>
-            <p style="font-size: 0.92rem; color: #76746E; max-width: 440px; margin: 0 auto 20px;">
-              Input your unique Order ID from your confirmation email or invoice above and click "Track Order".
-            </p>
-            <div style="font-size: 0.8rem; color: #8C6A1E; font-weight: 600;">
-              ✨ Live updates across Dahej, Bharuch &amp; Gujarat
+    <!-- Tracking Results Section (Single Order) -->
+    <div id="trackResultSection">
+      <section class="track-content-section">
+        <div class="container">
+          <div class="track-result-wrap" id="trackingResultContainer">
+            <!-- Initial Placeholder state -->
+            <div style="text-align: center; padding: 60px 20px; background: #FFFFFF; border-radius: 20px; border: 1px dashed var(--border-subtle, #E5E0D8);">
+              <div style="font-size: 3rem; margin-bottom: 12px;">📦</div>
+              <h3 style="font-family: var(--font-heading, 'Playfair Display', serif); font-size: 1.4rem; color: #1A1A18; margin-bottom: 8px;">
+                Ready to Track Your Order
+              </h3>
+              <p style="font-size: 0.92rem; color: #76746E; max-width: 440px; margin: 0 auto 20px;">
+                Input your unique Order ID from your confirmation email or invoice above and click "Track Order".
+              </p>
+              <div style="font-size: 0.8rem; color: #8C6A1E; font-weight: 600;">
+                ✨ Live updates across Dahej, Bharuch &amp; Gujarat
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
+
+    <!-- My Orders Section (Customer Order History) -->
+    <div id="myOrdersSection" style="display: none;">
+      <section class="my-orders-container">
+        <div id="myOrdersListContainer">
+          <!-- Populated by js/track-order.js -->
+        </div>
+      </section>
+    </div>
 
     <!-- Studio Quality Assurance Features -->
     <section style="background: #FAF8F5; padding: 50px 0; border-top: 1px solid var(--border-subtle, #E5E0D8);">

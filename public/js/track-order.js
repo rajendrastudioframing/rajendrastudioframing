@@ -12,24 +12,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('trackOrderIdInput');
   const resultContainer = document.getElementById('trackingResultContainer');
 
-  // Check URL query parameter (e.g. track-order?id=RF-ORD-2026-003)
+  // Check URL query parameter (e.g. track-order?id=RF-ORD-1001 or track-order?tab=my-orders)
   const urlParams = new URLSearchParams(window.location.search);
   const initialId = urlParams.get('id') || urlParams.get('orderId');
+  const requestedTab = urlParams.get('tab') || (window.location.hash === '#my-orders' ? 'my-orders' : '');
 
-  if (initialId && input) {
+  if (requestedTab === 'my-orders') {
+    switchTrackTab('my-orders');
+  } else if (initialId && input) {
     input.value = initialId.trim();
     trackOrder(initialId.trim());
   }
 
-  // Quick fill pills
-  document.querySelectorAll('.quick-order-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      const orderId = pill.getAttribute('data-order-id');
-      if (orderId && input) {
-        input.value = orderId;
-        trackOrder(orderId);
-      }
-    });
+  // Listen to customer auth changes to re-render my orders
+  window.addEventListener('customerAuthStateChanged', () => {
+    if (currentTrackTab === 'my-orders') {
+      renderMyOrdersHistory();
+    }
   });
 
   if (form) {
@@ -432,3 +431,177 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+/* ==========================================================================
+   TAB SWITCHING & CUSTOMER ORDER HISTORY
+   ========================================================================== */
+let currentTrackTab = 'track-id';
+
+window.switchTrackTab = function(tabName) {
+  currentTrackTab = tabName;
+  const tabBtnTrackId = document.getElementById('tabBtnTrackId');
+  const tabBtnMyOrders = document.getElementById('tabBtnMyOrders');
+  const trackSearchCardWrap = document.getElementById('trackSearchCardWrap');
+  const trackResultSection = document.getElementById('trackResultSection');
+  const myOrdersSection = document.getElementById('myOrdersSection');
+
+  if (tabName === 'my-orders') {
+    if (tabBtnTrackId) tabBtnTrackId.classList.remove('active');
+    if (tabBtnMyOrders) tabBtnMyOrders.classList.add('active');
+    if (trackSearchCardWrap) trackSearchCardWrap.style.display = 'none';
+    if (trackResultSection) trackResultSection.style.display = 'none';
+    if (myOrdersSection) myOrdersSection.style.display = 'block';
+    renderMyOrdersHistory();
+  } else {
+    if (tabBtnTrackId) tabBtnTrackId.classList.add('active');
+    if (tabBtnMyOrders) tabBtnMyOrders.classList.remove('active');
+    if (trackSearchCardWrap) trackSearchCardWrap.style.display = 'block';
+    if (trackResultSection) trackResultSection.style.display = 'block';
+    if (myOrdersSection) myOrdersSection.style.display = 'none';
+  }
+};
+
+window.renderMyOrdersHistory = async function() {
+  const container = document.getElementById('myOrdersListContainer');
+  if (!container) return;
+
+  const session = window.customerAuth && window.customerAuth.getSession ? window.customerAuth.getSession() : null;
+
+  if (!session || !session.email) {
+    container.innerHTML = `
+      <div class="my-orders-empty-card">
+        <div class="my-orders-empty-icon">🔐</div>
+        <h3 style="font-family: var(--font-heading); font-size: 1.35rem; color: #111; margin-bottom: 8px;">
+          Customer Account Required
+        </h3>
+        <p style="font-size: 0.92rem; color: #76746E; max-width: 440px; margin: 0 auto 24px;">
+          Sign in or create a quick account with your mobile number to view all your past and active bespoke framing orders in one place.
+        </p>
+        <button type="button" class="btn btn-gold" onclick="if(window.customerAuth) window.customerAuth.openModal('login');">
+          Sign In / Register
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="text-align: center; padding: 40px 0;">
+      <div class="track-spinner" style="margin: 0 auto 14px;"></div>
+      <p style="font-size: 0.92rem; color: #76746E;">Retrieving your orders for <strong>${escapeHtml(session.email)}</strong>...</p>
+    </div>
+  `;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/customer/orders`, {
+      headers: {
+        'Authorization': `Bearer ${session.token}`
+      }
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to load order history');
+    }
+
+    const orders = data.orders || [];
+
+    if (orders.length === 0) {
+      container.innerHTML = `
+        <div class="my-orders-empty-card">
+          <div class="my-orders-empty-icon">🛍️</div>
+          <h3 style="font-family: var(--font-heading); font-size: 1.35rem; color: #111; margin-bottom: 8px;">
+            No Orders Found
+          </h3>
+          <p style="font-size: 0.92rem; color: #76746E; max-width: 440px; margin: 0 auto 24px;">
+            You haven't placed any orders with <strong>${escapeHtml(session.email)}</strong> yet. Explore our bespoke frames and personalized drinkware today!
+          </p>
+          <a href="products" class="btn btn-gold">
+            Browse Products &amp; Frames
+          </a>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <h2 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 800; color: #111; margin: 0;">
+          Your Order History (${orders.length})
+        </h2>
+        <span style="font-size: 0.85rem; color: #76746E;">
+          Logged in as <strong>${escapeHtml(session.name || session.email)}</strong>
+        </span>
+      </div>
+      <div class="my-orders-list">
+        ${orders.map(ord => {
+          const statusClass = (ord.status || 'Placed').toLowerCase().replace(/\s+/g, '-');
+          const dateStr = ord.createdAt ? new Date(ord.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent';
+          const itemsSummary = (ord.items || []).map(i => `${escapeHtml(i.name || i.productName || 'Custom Item')} × ${i.quantity || 1}`).join(', ') || 'Custom Framing Order';
+          return `
+            <div class="customer-order-card">
+              <div class="customer-order-header">
+                <div>
+                  <span class="customer-order-id">#${escapeHtml(ord.orderId)}</span>
+                  <span class="customer-order-date">• Placed on ${dateStr}</span>
+                </div>
+                <span class="track-status-pill status-${statusClass}">
+                  ${escapeHtml(ord.status || 'Placed')}
+                </span>
+              </div>
+              <div class="customer-order-body">
+                <div>
+                  <div class="customer-order-items">
+                    <strong>Items:</strong> ${itemsSummary}
+                  </div>
+                  <div style="font-size: 0.82rem; color: #76746E; margin-top: 4px;">
+                    Payment: <strong>${escapeHtml(ord.paymentMethod || 'UPI')}</strong>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                  <div class="customer-order-meta-total">
+                    ₹${Number(ord.total || 0).toLocaleString('en-IN')}
+                  </div>
+                  <button type="button" class="btn btn-outline btn-sm" onclick="trackFromOrderCard('${escapeHtml(ord.orderId)}')">
+                    <span>Live Tracking</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+  } catch (err) {
+    console.error('Error fetching customer orders:', err);
+    container.innerHTML = `
+      <div class="my-orders-empty-card">
+        <div class="my-orders-empty-icon" style="color: #E53E3E; background: rgba(229, 62, 62, 0.1);">⚠️</div>
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: #111; margin-bottom: 8px;">
+          Unable to Load Orders
+        </h3>
+        <p style="font-size: 0.9rem; color: #76746E; max-width: 420px; margin: 0 auto 20px;">
+          ${escapeHtml(err.message || 'Network error occurred while fetching your order history.')}
+        </p>
+        <button type="button" class="btn btn-outline btn-sm" onclick="renderMyOrdersHistory()">
+          Try Again
+        </button>
+      </div>
+    `;
+  }
+};
+
+window.trackFromOrderCard = function(orderId) {
+  switchTrackTab('track-id');
+  const input = document.getElementById('trackOrderIdInput');
+  if (input) {
+    input.value = orderId;
+  }
+  trackOrder(orderId);
+  window.scrollTo({ top: 300, behavior: 'smooth' });
+};
+
