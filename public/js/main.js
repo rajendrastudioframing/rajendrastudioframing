@@ -132,7 +132,7 @@ function initProductSlider() {
   // Start with index 3 (Mug Printing - ₹249) in center, matching user design
   let currentIndex = 3;
   let autoSlideTimer = null;
-  const autoSlideInterval = 2000; // 2 seconds loop interval
+  const autoSlideInterval = 4000; // 4 seconds interval for smooth viewing
   const totalSlides = slides.length;
 
   // Create pagination dots
@@ -335,7 +335,14 @@ function initProductSlider() {
     startAutoSlide();
   }
 
-  // Keep rotating every 2s continuously without mouse hover interruption
+  // Pause slider on hover so user can interact with product card cleanly without stuck hover states
+  viewport.addEventListener('mouseenter', () => {
+    stopAutoSlide();
+  });
+
+  viewport.addEventListener('mouseleave', () => {
+    startAutoSlide();
+  });
 
   // Touch & Swipe Support for Mobile / Tablet
   let startX = 0;

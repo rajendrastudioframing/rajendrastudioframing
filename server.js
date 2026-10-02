@@ -142,8 +142,9 @@ function createTransporter(customConfig = null) {
   }
 
   // 2. Check provided or local config
-  const config = customConfig || readJson(CONFIG_FILE, {});
-  const smtp = config.smtp || {};
+  const localConfig = readJson(CONFIG_FILE, {});
+  const config = customConfig || localConfig;
+  const smtp = (config && config.smtp && config.smtp.pass) ? config.smtp : (localConfig.smtp || {});
 
   if (smtp.enabled && smtp.user && smtp.pass) {
     if (smtp.service === 'gmail') {
@@ -215,7 +216,7 @@ function generateOtpEmailHtml(otp, recipientEmail) {
       </div>
       <div class="footer">
         Rajesh Framing Studio • Station Road, Dahej / Bharuch, Gujarat 392130<br>
-        Direct Master Line: +91 98765 43210 • Confidential Administrative Notice
+        Direct Master Line: +91 93280 81006 • Confidential Administrative Notice
       </div>
     </div>
   </body>
@@ -643,6 +644,45 @@ Station Road, Dahej & Bharuch, Gujarat 392130
 const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'rajesh_framing_admin_secret_auth_sig_2026';
 const revokedAdminTokens = new Set();
 
+// Secure HMAC-Signed Customer Session Tokens (persists safely across serverless cold starts & page refreshes)
+const CUSTOMER_SESSION_SECRET = process.env.CUSTOMER_SESSION_SECRET || 'rajesh_framing_customer_auth_sig_2026';
+
+function generateCustomerToken(email, name = '', phone = '') {
+  const sessionExpiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days validity
+  const payload = {
+    email: email.trim().toLowerCase(),
+    name: (name || '').trim(),
+    phone: (phone || '').trim(),
+    createdAt: Date.now(),
+    expiresAt: sessionExpiresAt,
+    salt: crypto.randomBytes(8).toString('hex')
+  };
+  const payloadBase64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', CUSTOMER_SESSION_SECRET).update(payloadBase64).digest('hex');
+  return `rf_cust_${payloadBase64}.${signature}`;
+}
+
+function verifyCustomerToken(token) {
+  if (!token || typeof token !== 'string' || !token.startsWith('rf_cust_')) return null;
+  const raw = token.slice('rf_cust_'.length);
+  const dotIndex = raw.lastIndexOf('.');
+  if (dotIndex === -1) return null;
+  const payloadBase64 = raw.substring(0, dotIndex);
+  const signature = raw.substring(dotIndex + 1);
+
+  const expectedSignature = crypto.createHmac('sha256', CUSTOMER_SESSION_SECRET).update(payloadBase64).digest('hex');
+  if (signature !== expectedSignature) return null;
+
+  try {
+    const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString('utf8'));
+    if (!payload || !payload.expiresAt || !payload.email) return null;
+    if (Date.now() > payload.expiresAt) return null; // Token expired
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+
 function generateAdminToken(email) {
   const sessionExpiresAt = Date.now() + 12 * 60 * 60 * 1000; // 12 hours validity
   const payload = {
@@ -1012,20 +1052,29 @@ function requireCustomerAuth(req, res, next) {
   }
 
   const token = authHeader.split(' ')[1];
+
+  // 1. Verify stateless HMAC token
+  const verified = verifyCustomerToken(token);
+  if (verified && verified.email) {
+    req.customerEmail = verified.email;
+    req.customerUser = verified;
+    return next();
+  }
+
+  // 2. Fallback to in-memory/file map for legacy sessions
   let session = customerSessions.get(token);
-
-  if (!session) {
-    return res.status(401).json({ success: false, message: 'Session expired or invalid. Please request a new OTP.' });
+  if (session) {
+    if (Date.now() > session.expiresAt) {
+      customerSessions.delete(token);
+      saveCustomerSessions();
+      return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
+    }
+    req.customerEmail = session.email;
+    req.customerUser = session;
+    return next();
   }
 
-  if (Date.now() > session.expiresAt) {
-    customerSessions.delete(token);
-    saveCustomerSessions();
-    return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
-  }
-
-  req.customerEmail = session.email;
-  next();
+  return res.status(401).json({ success: false, message: 'Session expired or invalid. Please log in again.' });
 }
 
 /**
@@ -1044,6 +1093,18 @@ app.post('/api/customer/auth/send-otp', async (req, res) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
       return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+
+    // Check if new customer registration
+    const customers = await db.getCustomers();
+    const existingCust = customers.find(c => c.email && c.email.toLowerCase() === cleanEmail);
+    if (!existingCust) {
+      if (!cleanName) {
+        return res.status(400).json({ success: false, message: 'Your Full Name is compulsory for account registration.' });
+      }
+      if (!cleanPhone || cleanPhone.replace(/\D/g, '').length < 10) {
+        return res.status(400).json({ success: false, message: 'A valid 10-digit Mobile Number is compulsory for account registration.' });
+      }
     }
 
     // Rate limiting: 30s cooldown
@@ -1169,20 +1230,22 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
     // Correct OTP! Clear OTP immediately (single use only)
     customerOtps.delete(cleanEmail);
 
-    // Create secure customer session token
-    const token = 'rf_cust_' + crypto.randomBytes(32).toString('hex');
+    const customerName = (req.body.name && req.body.name.trim()) || (stored && stored.name) || '';
+    const customerPhone = (req.body.phone && req.body.phone.trim()) || (stored && stored.phone) || '';
+    const customerProfile = await db.recordCustomerLogin(cleanEmail, customerName, customerPhone, true);
+
+    // Create secure stateless HMAC customer session token
+    const token = generateCustomerToken(cleanEmail, customerProfile ? customerProfile.name : customerName, customerProfile ? customerProfile.phone : customerPhone);
     const sessionExpiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
 
     customerSessions.set(token, {
       email: cleanEmail,
+      name: customerProfile ? customerProfile.name : customerName,
+      phone: customerProfile ? customerProfile.phone : customerPhone,
       createdAt: Date.now(),
       expiresAt: sessionExpiresAt
     });
     saveCustomerSessions();
-
-    const customerName = (req.body.name && req.body.name.trim()) || (stored && stored.name) || '';
-    const customerPhone = (req.body.phone && req.body.phone.trim()) || (stored && stored.phone) || '';
-    const customerProfile = await db.recordCustomerLogin(cleanEmail, customerName, customerPhone, true);
 
     console.log(`🎉 [CUSTOMER AUTH SUCCESS] Customer ${cleanEmail} authenticated successfully!`);
 
@@ -1191,7 +1254,9 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
       message: 'Successfully logged in!',
       token,
       customer: customerProfile || {
-        email: cleanEmail
+        email: cleanEmail,
+        name: customerName,
+        phone: customerPhone
       }
     });
 
@@ -1277,7 +1342,9 @@ app.get('/api/customer/auth/me', requireCustomerAuth, async (req, res) => {
   res.json({
     success: true,
     customer: profile || {
-      email: req.customerEmail
+      email: req.customerEmail,
+      name: (req.customerUser && req.customerUser.name) || '',
+      phone: (req.customerUser && req.customerUser.phone) || ''
     }
   });
 });
@@ -1518,9 +1585,14 @@ app.post('/api/orders', async (req, res) => {
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      const session = customerSessions.get(token);
-      if (session && Date.now() <= session.expiresAt) {
-        authenticatedEmail = session.email;
+      const verified = verifyCustomerToken(token);
+      if (verified && verified.email) {
+        authenticatedEmail = verified.email;
+      } else {
+        const session = customerSessions.get(token);
+        if (session && Date.now() <= session.expiresAt) {
+          authenticatedEmail = session.email;
+        }
       }
     }
 
@@ -1615,17 +1687,28 @@ app.post('/api/orders', async (req, res) => {
     console.log(`📍 Address: ${newOrder.customer.address}, ${newOrder.customer.city}`);
     console.log(`======================================================\n`);
 
-    // Dispatch Order Placed confirmation email to customer (pending studio confirmation)
+    // Dispatch Order Placed confirmation email to customer (awaiting ensures serverless doesn't freeze before sending)
+    let emailStatus = { sent: false };
     if (newOrder.customer && newOrder.customer.email && newOrder.customer.email.includes('@')) {
-      sendCustomerOrderNotification(newOrder, 'Placed', 'Thank you! Your order has been placed successfully online. Our studio will review and confirm it shortly before production.', req)
-        .catch(err => console.warn('Order placed email error:', err.message));
+      try {
+        emailStatus = await sendCustomerOrderNotification(
+          newOrder,
+          'Placed',
+          'Thank you for ordering with Rajesh Framing! Your order has been placed successfully online and received by our studio. We will verify your specifications and prepare your order for production shortly.',
+          req
+        );
+        console.log(`📧 [ORDER PLACED EMAIL STATUS] ${orderId}:`, emailStatus);
+      } catch (emailErr) {
+        console.warn('⚠️ Order placed email error:', emailErr.message);
+      }
     }
 
     res.json({
       success: true,
       message: 'Order placed successfully with Rajesh Framing!',
       orderId,
-      order: newOrder
+      order: newOrder,
+      emailSent: emailStatus.sent
     });
 
   } catch (err) {

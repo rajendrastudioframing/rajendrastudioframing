@@ -94,12 +94,14 @@
           localStorage.setItem(USER_KEY, JSON.stringify(data.customer));
           this.notifyStateChange(true, data.customer);
           return true;
-        } else {
+        } else if (res && res.status === 401 && data && data.message && data.message.toLowerCase().includes('expired')) {
           this.logoutCustomer(false);
           return false;
         }
+        // Retain existing local session on temporary network issues
+        return true;
       } catch (e) {
-        // Retain local session if network temporarily drops
+        // Retain local session if network temporarily drops or serverless cold starts
         return true;
       }
     },
@@ -186,8 +188,22 @@
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
         setTimeout(() => {
+          const user = window.CustomerAuth.getCustomerUser();
           const emailInput = document.getElementById('custAuthEmail');
-          if (emailInput) emailInput.focus();
+          const nameInput = document.getElementById('custAuthName');
+          const phoneInput = document.getElementById('custAuthPhone');
+          if (user) {
+            if (emailInput && !emailInput.value && user.email) emailInput.value = user.email;
+            if (nameInput && !nameInput.value && user.name && user.name !== 'Valued Customer') nameInput.value = user.name;
+            if (phoneInput && !phoneInput.value && user.phone) phoneInput.value = user.phone;
+          }
+          if (emailInput) {
+            if (emailInput.value && nameInput && !nameInput.value) {
+              nameInput.focus();
+            } else {
+              emailInput.focus();
+            }
+          }
         }, 150);
       }
     },
@@ -225,9 +241,8 @@
     const customerBtns = document.querySelectorAll('.navbar-customer-btn, #navCustomerBtn, .nav-customer-slot');
     customerBtns.forEach(container => {
       if (loggedIn && user) {
-        const displayName = (user.name && user.name.trim() !== 'Valued Customer') 
-          ? user.name.split(' ')[0] 
-          : (user.email ? user.email.split('@')[0] : 'Account');
+        const fullName = (user.name && user.name.trim() !== 'Valued Customer') ? user.name.trim() : '';
+        const displayName = fullName || (user.email ? user.email.split('@')[0] : 'Account');
 
         container.innerHTML = `
           <div class="cust-account-dropdown-wrap" style="position: relative; display: inline-block;">
@@ -238,17 +253,18 @@
               <span>Hi, ${displayName}</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
-            <div class="cust-dropdown-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 6px); background: #ffffff; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.12); min-width: 200px; padding: 6px; z-index: 9999;">
-              <div style="padding: 8px 12px; border-bottom: 1px solid #F3F4F6;">
-                <div style="font-size: 0.75rem; color: #6B7280;">Signed in as</div>
-                <div style="font-size: 0.8125rem; font-weight: 700; color: #111827; word-break: break-all;">${user.email}</div>
+            <div class="cust-dropdown-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 6px); background: #ffffff; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.12); min-width: 220px; padding: 6px; z-index: 9999;">
+              <div style="padding: 10px 14px; border-bottom: 1px solid #F3F4F6;">
+                <div style="font-size: 0.875rem; font-weight: 700; color: #111827;">${fullName || 'Customer Account'}</div>
+                <div style="font-size: 0.78rem; color: #4B5563; word-break: break-all;">${user.email}</div>
+                ${user.phone ? `<div style="font-size: 0.75rem; color: #6B7280; margin-top: 3px;">📞 ${user.phone}</div>` : ''}
               </div>
-              <a href="track-order" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 0.8125rem; color: #374151; text-decoration: none; border-radius: 8px;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span>Track My Orders</span>
+              <a href="track-order.html?tab=my-orders" style="display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 0.8125rem; color: #374151; text-decoration: none; border-radius: 8px;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>My Orders</span>
               </a>
-              <button type="button" onclick="logoutCustomer(true)" style="width: 100%; text-align: left; display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 0.8125rem; color: #DC2626; background: none; border: none; cursor: pointer; border-radius: 8px;" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='transparent'">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              <button type="button" onclick="logoutCustomer(true)" style="width: 100%; text-align: left; display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 0.8125rem; color: #DC2626; background: none; border: none; cursor: pointer; border-radius: 8px;" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='transparent'">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                 <span>Sign Out</span>
               </button>
             </div>
@@ -308,7 +324,7 @@
           <!-- Alert Banner -->
           <div id="custAuthAlert" class="cust-auth-alert" style="display: none;"></div>
 
-          <!-- Phase 1: Email & Optional Details Form -->
+          <!-- Phase 1: Email & Details Form -->
           <form id="custAuthEmailForm" class="cust-auth-form">
             <div class="cust-auth-input-group">
               <label for="custAuthEmail" class="cust-auth-label">Email Address <span style="color:#DC2626;">*</span></label>
@@ -319,18 +335,18 @@
             </div>
 
             <div class="cust-auth-input-group">
-              <label for="custAuthName" class="cust-auth-label">Your Full Name <span style="color:#6B7280; font-weight: normal; font-size:0.75rem;">(Optional)</span></label>
+              <label for="custAuthName" class="cust-auth-label">Your Full Name <span style="color:#DC2626;">*</span></label>
               <div class="cust-auth-input-wrap">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cust-input-icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                <input type="text" id="custAuthName" class="cust-auth-input" placeholder="e.g. Rahul Sharma" autocomplete="name" />
+                <input type="text" id="custAuthName" class="cust-auth-input" placeholder="e.g. Rahul Sharma" required autocomplete="name" />
               </div>
             </div>
 
             <div class="cust-auth-input-group">
-              <label for="custAuthPhone" class="cust-auth-label">Mobile Number <span style="color:#6B7280; font-weight: normal; font-size:0.75rem;">(Optional)</span></label>
+              <label for="custAuthPhone" class="cust-auth-label">Mobile Number <span style="color:#DC2626;">*</span></label>
               <div class="cust-auth-input-wrap">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cust-input-icon"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                <input type="tel" id="custAuthPhone" class="cust-auth-input" placeholder="e.g. +91 98765 43210" autocomplete="tel" />
+                <input type="tel" id="custAuthPhone" class="cust-auth-input" placeholder="e.g. +91 93280 81006" required autocomplete="tel" />
               </div>
             </div>
 

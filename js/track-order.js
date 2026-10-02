@@ -12,24 +12,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('trackOrderIdInput');
   const resultContainer = document.getElementById('trackingResultContainer');
 
-  // Check URL query parameter (e.g. track-order?id=RF-ORD-2026-003)
+  // Check URL query parameter (e.g. track-order?id=RF-ORD-8492 or ?tab=my-orders)
   const urlParams = new URLSearchParams(window.location.search);
   const initialId = urlParams.get('id') || urlParams.get('orderId');
+  const initialTab = urlParams.get('tab') || (window.location.hash === '#my-orders' ? 'my-orders' : '');
 
-  if (initialId && input) {
+  if (initialTab === 'my-orders') {
+    switchTrackTab('my-orders');
+  } else if (initialId && input) {
     input.value = initialId.trim();
     trackOrder(initialId.trim());
   }
 
-  // Quick fill pills
-  document.querySelectorAll('.quick-order-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      const orderId = pill.getAttribute('data-order-id');
-      if (orderId && input) {
-        input.value = orderId;
-        trackOrder(orderId);
-      }
-    });
+  // Listen to customer authentication state changes
+  window.addEventListener('customerAuthStateChanged', () => {
+    if (typeof currentActiveTab !== 'undefined' && currentActiveTab === 'my-orders') {
+      renderMyOrdersHistory();
+    }
   });
 
   if (form) {
@@ -432,3 +431,188 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+/* ==========================================================================
+   TAB NAVIGATION & MY ORDERS HISTORY
+   ========================================================================== */
+let currentActiveTab = 'track';
+
+window.switchTrackTab = function(tabName) {
+  currentActiveTab = tabName;
+  const tabBtnTrack = document.getElementById('tabBtnTrack');
+  const tabBtnMyOrders = document.getElementById('tabBtnMyOrders');
+  const trackSearchWrap = document.getElementById('trackSearchWrap');
+  const trackResultSection = document.getElementById('trackResultSection');
+  const myOrdersSection = document.getElementById('myOrdersSection');
+
+  if (tabName === 'my-orders') {
+    if (tabBtnTrack) tabBtnTrack.classList.remove('active');
+    if (tabBtnMyOrders) tabBtnMyOrders.classList.add('active');
+    if (trackSearchWrap) trackSearchWrap.style.display = 'none';
+    if (trackResultSection) trackResultSection.style.display = 'none';
+    if (myOrdersSection) myOrdersSection.style.display = 'block';
+    renderMyOrdersHistory();
+  } else {
+    if (tabBtnTrack) tabBtnTrack.classList.add('active');
+    if (tabBtnMyOrders) tabBtnMyOrders.classList.remove('active');
+    if (trackSearchWrap) trackSearchWrap.style.display = 'block';
+    if (trackResultSection) trackResultSection.style.display = 'block';
+    if (myOrdersSection) myOrdersSection.style.display = 'none';
+  }
+};
+
+window.renderMyOrdersHistory = async function() {
+  const container = document.getElementById('myOrdersContent');
+  if (!container) return;
+
+  const isLoggedIn = typeof isCustomerLoggedIn === 'function' && isCustomerLoggedIn();
+  const token = typeof getCustomerToken === 'function' ? getCustomerToken() : null;
+  const user = typeof getCustomerUser === 'function' ? getCustomerUser() : null;
+
+  if (!isLoggedIn || !token) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 60px 24px; background: #FFFFFF; border-radius: 20px; border: 1.5px dashed var(--border-subtle, #E5E0D8); max-width: 580px; margin: 0 auto;">
+        <div style="width: 54px; height: 54px; border-radius: 50%; background: #FAF3E0; color: #C89B3C; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 16px;">
+          🔒
+        </div>
+        <h3 style="font-family: var(--font-heading, 'Playfair Display', serif); font-size: 1.4rem; color: #1A1A18; margin-bottom: 8px;">
+          Customer Sign In Required
+        </h3>
+        <p style="font-size: 0.92rem; color: #76746E; margin-bottom: 24px; line-height: 1.5;">
+          Please sign in or register to view your order history, delivery tracking, and digital proof approvals.
+        </p>
+        <button type="button" class="btn btn-gold shimmer-effect" onclick="openCustomerAuthModal('signin')" style="padding: 12px 28px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
+          <span>Sign In to Your Account →</span>
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="track-skeleton-card" style="max-width: 500px; margin: 0 auto;">
+      <div class="track-spinner"></div>
+      <div style="font-weight: 700; font-size: 1.05rem; color: #1A1A18; margin-bottom: 6px;">Loading Your Orders...</div>
+      <div style="font-size: 0.86rem; color: #76746E;">Fetching order history for ${escapeHtml(user.email || user.phone || 'your account')}</div>
+    </div>
+  `;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/customer/orders`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (res.status === 401) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 50px 20px; background: #FFFFFF; border-radius: 16px; border: 1px solid #E5E0D8; max-width: 500px; margin: 0 auto;">
+          <h4 style="margin-bottom: 10px;">Session Expired</h4>
+          <p style="font-size: 0.9rem; color: #76746E; margin-bottom: 20px;">Your session has expired. Please sign in again.</p>
+          <button type="button" class="btn btn-gold" onclick="openCustomerAuthModal('signin')">Sign In</button>
+        </div>
+      `;
+      return;
+    }
+
+    const data = await res.json();
+    const orders = (data && data.orders) ? data.orders : [];
+
+    if (!orders || orders.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 60px 24px; background: #FFFFFF; border-radius: 20px; border: 1.5px dashed var(--border-subtle, #E5E0D8); max-width: 580px; margin: 0 auto;">
+          <div style="font-size: 3rem; margin-bottom: 12px;">🖼️</div>
+          <h3 style="font-family: var(--font-heading, 'Playfair Display', serif); font-size: 1.4rem; color: #1A1A18; margin-bottom: 8px;">
+            No Orders Placed Yet
+          </h3>
+          <p style="font-size: 0.92rem; color: #76746E; margin-bottom: 24px; line-height: 1.5;">
+            You haven't placed any custom framing or printing orders yet with this account. Discover our collections to get started!
+          </p>
+          <a href="products" class="btn btn-gold shimmer-effect" style="padding: 12px 28px; font-weight: 700; display: inline-block;">
+            <span>Explore Catalog &amp; Products →</span>
+          </a>
+        </div>
+      `;
+      return;
+    }
+
+    // Sort newest first
+    orders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+    container.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <h2 style="font-family: var(--font-heading, 'Playfair Display', serif); font-size: 1.4rem; margin: 0; color: #111111;">
+          Your Order History (${orders.length})
+        </h2>
+        <span style="font-size: 0.85rem; color: #76746E;">Logged in as: <strong>${escapeHtml(user.name || user.email)}</strong></span>
+      </div>
+
+      <div class="my-orders-grid">
+        ${orders.map(o => {
+          const status = o.status || 'Placed';
+          const orderId = o.orderId || o.id;
+          const totalFormatted = `₹${(Number(o.total) || 0).toLocaleString('en-IN')}`;
+          const dateStr = o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent';
+          const items = Array.isArray(o.items) ? o.items : [];
+          const statusClass = status.toLowerCase().replace(/\\s+/g, '-');
+          const waMsg = encodeURIComponent(`Hello Rajesh Framing, I would like to inquire about my Order #${orderId}`);
+
+          return `
+            <div class="customer-order-card">
+              <div class="order-card-header">
+                <div>
+                  <div class="order-card-id">#${escapeHtml(orderId)}</div>
+                  <div class="order-card-date">Ordered on ${dateStr}</div>
+                </div>
+                <span class="track-status-pill ${statusClass}" style="margin: 0; font-size: 0.78rem;">
+                  <span class="status-indicator-dot"></span>
+                  ${escapeHtml(status)}
+                </span>
+              </div>
+
+              <div class="order-card-items-list">
+                ${items.map(it => `
+                  <div class="order-card-item-entry">
+                    <span>${escapeHtml(it.name || 'Custom Product')} ${it.size && it.size !== 'Standard' ? `(${escapeHtml(it.size)})` : ''}</span>
+                    <strong style="color: #111111; white-space: nowrap;">x${it.quantity || 1}</strong>
+                  </div>
+                `).join('')}
+              </div>
+
+              <div class="order-card-footer">
+                <div>
+                  <span style="font-size: 0.75rem; color: #76746E; display: block;">Total Amount</span>
+                  <span class="order-card-price">${totalFormatted}</span>
+                </div>
+                <div class="order-card-actions">
+                  <a href="https://wa.me/919328081006?text=${waMsg}" target="_blank" class="btn btn-outline btn-sm" title="Ask on WhatsApp" style="padding: 7px 10px; font-size: 0.8rem; display: inline-flex; align-items: center;">
+                    💬
+                  </a>
+                  <button type="button" class="btn btn-gold btn-sm" onclick="trackFromOrderCard('${escapeHtml(orderId)}')" style="padding: 7px 14px; font-size: 0.8rem; font-weight: 700;">
+                    Track Live →
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+  } catch (err) {
+    console.error('Error fetching customer orders:', err);
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px; background: #FFFFFF; border-radius: 16px; border: 1px solid #E5E0D8;">
+        <p style="color: #DC2626; margin-bottom: 12px;">Failed to load order history.</p>
+        <button type="button" class="btn btn-outline btn-sm" onclick="renderMyOrdersHistory()">Retry</button>
+      </div>
+    `;
+  }
+};
+
+window.trackFromOrderCard = function(orderId) {
+  const input = document.getElementById('trackOrderIdInput');
+  if (input) input.value = orderId;
+  switchTrackTab('track');
+  trackOrder(orderId);
+};
