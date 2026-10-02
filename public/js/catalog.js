@@ -181,21 +181,12 @@ function renderCatalog() {
           <span class="capsule-price">${priceFormatted}</span>
         </div>
         ${finishesHtml}
-        <div class="capsule-bottom-row">
-          <div class="capsule-store-info">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
-            <span>Rajesh Framing</span>
-          </div>
-          <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="${product.id}" onclick="quickAddToCart('${product.id}', event);" title="Add to Cart">
-            <span>Add</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
+        <div class="capsule-bottom-row" style="display: flex; gap: 8px; align-items: center; justify-content: space-between;">
+          <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="${product.id}" onclick="quickAddToCart('${product.id}', event);" title="Add to Cart" style="flex: 1; justify-content: center; padding: 6px 10px; font-size: 0.72rem;">
+            <span>+ Cart</span>
+          </button>
+          <button type="button" class="capsule-action-btn" onclick="event.stopPropagation(); window.quickBuyNow('${product.id}', event);" title="Buy Now" style="flex: 1; justify-content: center; padding: 6px 10px; font-size: 0.72rem; background: #111111 !important; border: 1px solid #C99A3D !important; color: #FFFFFF !important;">
+            <span>Buy Now</span>
           </button>
         </div>
       </div>

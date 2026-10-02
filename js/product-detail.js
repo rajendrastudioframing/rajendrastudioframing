@@ -711,17 +711,9 @@ function renderRelatedProducts() {
           </h4>
           <span class="capsule-price">${priceFormatted}</span>
         </div>
-        <div class="capsule-bottom-row">
-          <div class="capsule-store-info">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
-            <span>Rajesh Framing</span>
-          </div>
-          <button type="button" class="capsule-action-btn" onclick="event.stopPropagation(); window.location.href='product-detail?id=${p.id}'">
-            <span>View</span>
+        <div class="capsule-bottom-row" style="display: flex; gap: 8px;">
+          <button type="button" class="capsule-action-btn" onclick="event.stopPropagation(); window.location.href='product-detail?id=${p.id}'" style="width: 100%; justify-content: center; padding: 6px 12px; font-size: 0.72rem;">
+            <span>View Details</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>
