@@ -268,7 +268,7 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
       </div>
       <div class="footer">
         Rajesh Framing Studio • Station Road, Dahej &amp; Bharuch, Gujarat 392130<br>
-        Direct Customer Support: +91 9328081006 • rajeshframing0@gmail.com
+        Direct Customer Support: +91 96015 74966 • help@dahejsupport.com
       </div>
     </div>
   </body>
@@ -482,11 +482,11 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
                   Our studio team is available Mon–Sat (9:00 AM – 9:00 PM).
                 </div>
                 <div>
-                  <a href="https://wa.me/919328081006?text=${encodeURIComponent('Hello Rajesh Framing, I am inquiring about my Order #' + orderId)}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);">
+                  <a href="https://wa.me/919601574966?text=${encodeURIComponent('Hello Rajesh Framing, I am inquiring about my Order #' + orderId)}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);">
                     💬 Chat on WhatsApp
                   </a>
-                  <a href="tel:+919328081006" style="display: inline-block; background-color: #111111; color: #FFFFFF; border: 1px solid #C99A3D; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px;">
-                    📞 +91 9328081006
+                  <a href="tel:+919601574966" style="display: inline-block; background-color: #111111; color: #FFFFFF; border: 1px solid #C99A3D; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px;">
+                    📞 +91 96015 74966
                   </a>
                 </div>
                 <div style="margin-top: 20px; font-size: 11px; color: #A8A29E; line-height: 1.6;">
@@ -604,8 +604,8 @@ Total Amount: ₹${Number(total || 0).toLocaleString('en-IN')}
 Delivery To: ${address || 'Studio Pickup / Dahej & Bharuch'}
 
 If you have any questions, reach our studio:
-Phone: +91 9328081006
-WhatsApp: https://wa.me/919328081006
+Phone: +91 96015 74966
+WhatsApp: https://wa.me/919601574966
 
 Rajesh Framing Studio
 Station Road, Dahej & Bharuch, Gujarat 392130

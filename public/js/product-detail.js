@@ -672,7 +672,7 @@ function setupPhotoUpload() {
 
       const message = `Hello Rajesh Framing!\n\nI am interested in ordering:\n• Product: ${currentProduct.name}\n• Category: ${currentProduct.categoryLabel}\n• Chosen Option: ${sizeStr}\n• Finish: ${finishStr}\n• Quantity: ${currentQuantity}\n• Price: ₹${currentPrice * currentQuantity}\n\nPlease share order details and design upload guidance.`;
 
-      const url = `https://wa.me/919876543210?text=${encodeURIComponent(message)}`;
+      const url = `https://wa.me/919601574966?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
     });
   }

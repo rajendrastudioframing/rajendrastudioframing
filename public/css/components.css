@@ -2835,6 +2835,45 @@
   letter-spacing: -0.5px !important;
 }
 
+/* Bento Card Wishlist/Like Button */
+.product-card.bento-card .bento-wishlist-btn {
+  position: absolute !important;
+  top: 10px !important;
+  left: 10px !important;
+  z-index: 15 !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #111111 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.product-card.bento-card .bento-wishlist-btn:hover {
+  background: #FFF1F2 !important;
+  color: #E11D48 !important;
+  border-color: #FECDD3 !important;
+  transform: scale(1.12) !important;
+}
+
+.product-card.bento-card .bento-wishlist-btn.active {
+  background: #FFF1F2 !important;
+  color: #E11D48 !important;
+  border-color: #FECDD3 !important;
+}
+
+.product-card.bento-card .bento-wishlist-btn.active svg {
+  fill: #E11D48 !important;
+}
+
 /* Bottom Content Area: Name, 2-line Description, Full Width Buttons */
 .bento-content {
   width: 100% !important;

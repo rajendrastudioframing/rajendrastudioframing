@@ -335,7 +335,17 @@ function initProductSlider() {
     startAutoSlide();
   }
 
-  // Keep rotating every 2s continuously without mouse hover interruption
+  // Pause auto-sliding on mouse hover over product cards or slider
+  const sliderViewport = slider.querySelector('.slider-viewport') || track;
+  if (sliderViewport) {
+    sliderViewport.addEventListener('mouseenter', stopAutoSlide);
+    sliderViewport.addEventListener('mouseleave', startAutoSlide);
+  }
+
+  slides.forEach(slide => {
+    slide.addEventListener('mouseenter', stopAutoSlide);
+    slide.addEventListener('mouseleave', startAutoSlide);
+  });
 
   // Touch & Swipe Support for Mobile / Tablet
   let startX = 0;

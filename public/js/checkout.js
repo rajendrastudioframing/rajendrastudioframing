@@ -372,7 +372,7 @@ function bindCheckoutForm() {
 
         const waBtn = document.getElementById('successWhatsAppBtn');
         if (waBtn) {
-          waBtn.href = `https://wa.me/919876543210?text=${waMsg}`;
+          waBtn.href = `https://wa.me/919601574966?text=${waMsg}`;
         }
 
         const trackBtn = document.getElementById('successTrackBtn');
