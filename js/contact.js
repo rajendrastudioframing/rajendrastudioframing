@@ -83,7 +83,7 @@ function initContactForm() {
       const msgText = document.getElementById('contactMessage') ? document.getElementById('contactMessage').value.trim() : '';
 
       const query = `Hello Rajesh Framing!\n\nMy name is ${name || 'Customer'}.\nI am contacting you regarding: ${service}.\n\nMessage: ${msgText || 'I would like more information on your custom frames and personalized printing.'}`;
-      const url = `https://wa.me/919601574966?text=${encodeURIComponent(query)}`;
+      const url = `https://wa.me/919328081006?text=${encodeURIComponent(query)}`;
       window.open(url, '_blank');
     });
   }

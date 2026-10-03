@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/animations.css?v=card_redesign_v1" />
   <link rel="stylesheet" href="css/cart.css" />
 </head>
-<body>
+<body class="product-page-active">
 
 
 
@@ -143,8 +143,64 @@
           <!-- Thumbnails Row -->
           <div class="detail-thumbs-strip" id="detailThumbsContainer"></div>
 
+          <!-- Upload Photo for Custom Framing / Printing (Shifted under Image) -->
+          <div class="photo-upload-container" style="margin-top: 18px;">
+            <div class="photo-upload-header">
+              <span class="photo-upload-label">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+                Attach Photo for Framing / Printing
+              </span>
+              <span class="photo-upload-optional-pill">Optional</span>
+            </div>
+
+            <!-- Interactive Dropzone -->
+            <div class="photo-upload-dropzone" id="photoDropzone" role="button" tabindex="0" aria-label="Upload photo for custom framing">
+              <input type="file" id="photoFileInput" class="photo-upload-input" accept="image/jpeg,image/png,image/webp,image/heic,.jpg,.jpeg,.png,.webp,.heic,.pdf" />
+              
+              <div id="dropzoneEmptyState">
+                <div class="upload-icon-circle">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                </div>
+                <div class="upload-prompt-title">Click to <span>Browse Photo</span> or Drag &amp; Drop</div>
+                <div class="upload-prompt-subtitle">High-resolution JPG, PNG or WEBP (up to 25MB). You can also send photos directly on WhatsApp after ordering!</div>
+              </div>
+
+              <!-- Live Uploaded State -->
+              <div id="dropzonePreviewState" style="display: none;">
+                <div class="uploaded-photo-preview-card">
+                  <div class="uploaded-photo-thumb-wrap">
+                    <img src="" id="uploadedPhotoThumb" class="uploaded-photo-thumb" alt="Uploaded Preview" />
+                  </div>
+                  <div class="uploaded-photo-info">
+                    <div class="uploaded-photo-name" id="uploadedPhotoName">my_photo.jpg</div>
+                    <div class="uploaded-photo-meta">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      <span id="uploadedPhotoSize">1.2 MB</span> • Ready for Framing
+                    </div>
+                  </div>
+                  <button type="button" class="btn-remove-photo" id="btnRemoveUploadedPhoto" title="Remove photo" aria-label="Remove photo">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
           <!-- Safe Transit Guarantee Box -->
-          <div style="margin-top: 24px; padding: 18px; background: #FFFFFF; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+          <div style="margin-top: 18px; padding: 18px; background: #FFFFFF; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -178,90 +234,70 @@
             <span class="detail-current-price" id="detailCurrentPrice">₹655</span>
           </div>
 
-          <!-- Short Description -->
-          <p class="detail-desc-lead" id="detailDescLead">
-            Premium glass photo frames designed to give your memories an elegant and modern look. Hand-polished float glass with precision metallic standoffs.
-          </p>
-
-          <!-- Customization Options Box -->
+          <!-- Customization & Purchase Options Box -->
           <div class="detail-options-box">
             
             <!-- Available Sizes / Options -->
             <div class="option-group">
               <div class="option-header">
-                <span class="option-name">Available Sizes / Options:</span>
+                <span class="option-name">Available Size:</span>
                 <span class="option-value-selected" id="selectedSizeLabel">6" × 8"</span>
               </div>
               <div class="size-chips" id="detailSizesContainer"></div>
             </div>
 
-            <!-- Finish / Tone Swatches -->
+            <!-- Finish / Color Swatches -->
             <div class="option-group" style="margin-top: 20px;">
               <div class="option-header">
-                <span class="option-name" id="finishOptionTitle">Frame Color / Finish Option:</span>
-                <span class="option-value-selected" id="selectedFinishLabel">Studio Matte Black</span>
+                <span class="option-name" id="finishOptionTitle">Available Color:</span>
+                <span class="option-value-selected" id="selectedFinishLabel">Warm Gold Standoffs</span>
               </div>
               <div class="swatch-group" id="detailFinishesContainer"></div>
             </div>
 
-            <!-- Upload Photo for Custom Framing / Printing -->
-            <div class="photo-upload-container">
-              <div class="photo-upload-header">
-                <span class="photo-upload-label">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                    <circle cx="12" cy="13" r="4"></circle>
-                  </svg>
-                  Attach Photo for Framing / Printing
-                </span>
-                <span class="photo-upload-optional-pill">Optional</span>
-              </div>
-
-              <!-- Interactive Dropzone -->
-              <div class="photo-upload-dropzone" id="photoDropzone" role="button" tabindex="0" aria-label="Upload photo for custom framing">
-                <input type="file" id="photoFileInput" class="photo-upload-input" accept="image/jpeg,image/png,image/webp,image/heic,.jpg,.jpeg,.png,.webp,.heic,.pdf" />
-                
-                <div id="dropzoneEmptyState">
-                  <div class="upload-icon-circle">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="17 8 12 3 7 8"></polyline>
-                      <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                  </div>
-                  <div class="upload-prompt-title">Click to <span>Browse Photo</span> or Drag &amp; Drop</div>
-                  <div class="upload-prompt-subtitle">High-resolution JPG, PNG or WEBP (up to 25MB). You can also send photos directly on WhatsApp after ordering!</div>
-                </div>
-
-                <!-- Live Uploaded State -->
-                <div id="dropzonePreviewState" style="display: none;">
-                  <div class="uploaded-photo-preview-card">
-                    <div class="uploaded-photo-thumb-wrap">
-                      <img src="" id="uploadedPhotoThumb" class="uploaded-photo-thumb" alt="Uploaded Preview" />
-                    </div>
-                    <div class="uploaded-photo-info">
-                      <div class="uploaded-photo-name" id="uploadedPhotoName">my_photo.jpg</div>
-                      <div class="uploaded-photo-meta">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        <span id="uploadedPhotoSize">1.2 MB</span> • Ready for Framing
-                      </div>
-                    </div>
-                    <button type="button" class="btn-remove-photo" id="btnRemoveUploadedPhoto" title="Remove photo" aria-label="Remove photo">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-
+            <!-- Quantity Stepper -->
+            <div class="detail-qty-row" style="margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border-light);">
+              <span class="detail-qty-label">Quantity:</span>
+              <div class="detail-qty-stepper">
+                <button type="button" class="qty-btn" id="detailQtyMinus" aria-label="Decrease quantity">−</button>
+                <span class="qty-display" id="detailQtyValue">1</span>
+                <button type="button" class="qty-btn" id="detailQtyPlus" aria-label="Increase quantity">+</button>
               </div>
             </div>
 
+            <!-- Triple Action Buttons: Wishlist, Add to Cart, Buy Now -->
+            <div class="detail-purchase-actions">
+              <button type="button" class="btn-detail-wishlist" id="detailWishlistBtn" onclick="toggleWishlist(typeof currentProduct !== 'undefined' &amp;&amp; currentProduct ? currentProduct.id : 'glass-frame-classic', event);" title="Add to Wishlist">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span class="wishlist-btn-text">Wishlist</span>
+              </button>
+
+              <button type="button" class="btn-add-to-cart" id="detailAddToCartBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                <span>Add to Cart</span>
+              </button>
+
+              <button type="button" class="btn-buy-now" id="detailBuyNowBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span>Buy Now</span>
+              </button>
+            </div>
+
+            <!-- Short Description -->
+            <p class="detail-desc-lead" id="detailDescLead" style="margin-top: 20px; font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.6;">
+              Premium glass photo frames designed to give your memories an elegant and modern look. Hand-polished float glass with precision metallic standoffs.
+            </p>
+
             <!-- Key Product Attributes (Material, Printing, Customization, Turnaround) -->
-            <div class="detail-key-specs" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-light); display: grid; grid-template-columns: 1fr; gap: 12px; font-size: 0.875rem;">
+            <div class="detail-key-specs" style="margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border-light); display: grid; grid-template-columns: 1fr; gap: 10px; font-size: 0.875rem;">
               <div style="display: flex; align-items: flex-start; gap: 10px;">
                 <span style="font-weight: 700; color: var(--primary-black); min-width: 110px;">Material:</span>
                 <span id="detailMaterialLabel" style="color: var(--text-secondary); line-height: 1.5;">Optically Clear Float Glass (4mm / 6mm)</span>
@@ -280,43 +316,6 @@
               </div>
             </div>
 
-          </div>
-
-          <!-- Quantity Stepper & Instant Purchase Actions -->
-          <div class="detail-purchase-section">
-            <div class="detail-qty-row">
-              <span class="detail-qty-label">Select Quantity:</span>
-              <div class="detail-qty-stepper">
-                <button type="button" class="qty-btn" id="detailQtyMinus" aria-label="Decrease quantity">−</button>
-                <span class="qty-display" id="detailQtyValue">1</span>
-                <button type="button" class="qty-btn" id="detailQtyPlus" aria-label="Increase quantity">+</button>
-              </div>
-            </div>
-
-            <div class="detail-cart-actions">
-              <button type="button" class="btn-add-to-cart" id="detailAddToCartBtn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <circle cx="9" cy="21" r="1"></circle>
-                  <circle cx="20" cy="21" r="1"></circle>
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                </svg>
-                <span>Add to Cart</span>
-              </button>
-
-              <button type="button" class="btn-buy-now" id="detailBuyNowBtn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                </svg>
-                <span>Buy Now</span>
-              </button>
-
-              <button type="button" class="btn-detail-wishlist" id="detailWishlistBtn" onclick="toggleWishlist(typeof currentProduct !== 'undefined' &amp;&amp; currentProduct ? currentProduct.id : 'glass-frame-classic', event);" title="Add to Wishlist">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                </svg>
-                <span class="wishlist-btn-text">Wishlist</span>
-              </button>
-            </div>
           </div>
 
           <!-- Existing Consultation & Quote Actions -->
@@ -374,10 +373,12 @@
 
       <!-- BELOW SECTION 1: Product Details (In-depth Tabs) -->
       <div class="tabs-container" style="margin-top: 56px;">
-        <div class="tab-nav">
-          <button type="button" class="tab-trigger active" data-tab="tabOverview">Product Details</button>
-          <button type="button" class="tab-trigger" data-tab="tabSpecs">Specifications &amp; Materials</button>
-          <button type="button" class="tab-trigger" data-tab="tabCraft">Craftsmanship Process</button>
+        <div class="tab-nav-wrap">
+          <div class="tab-nav">
+            <button type="button" class="tab-trigger active" data-tab="tabOverview">Product Details</button>
+            <button type="button" class="tab-trigger" data-tab="tabSpecs">Specifications &amp; Materials</button>
+            <button type="button" class="tab-trigger" data-tab="tabCraft">Craftsmanship Process</button>
+          </div>
         </div>
 
         <!-- Tab 1: Overview Features -->
@@ -612,9 +613,59 @@
     </div>
   </main>
 
+  <!-- Fixed / Sticky Bottom Action Bar -->
+  <aside class="sticky-product-bar" id="stickyProductBar" aria-label="Quick order actions">
+    <div class="container sticky-bar-container">
+      <!-- Mini Product Info -->
+      <div class="sticky-product-info">
+        <img src="assets/images/glass_frame.jpg" id="stickyProductThumb" alt="Product thumbnail" class="sticky-product-thumb" />
+        <div class="sticky-product-meta">
+          <span class="sticky-product-name" id="stickyProductName">Glass Photo Frame</span>
+          <span class="sticky-product-price" id="stickyProductPrice">₹655</span>
+        </div>
+      </div>
+
+      <!-- Action Controls -->
+      <div class="sticky-actions-group">
+        <!-- Quantity Selector -->
+        <div class="sticky-qty-stepper">
+          <button type="button" class="sticky-qty-btn" id="stickyQtyMinus" aria-label="Decrease quantity">−</button>
+          <span class="sticky-qty-val" id="stickyQtyValue">1</span>
+          <button type="button" class="sticky-qty-btn" id="stickyQtyPlus" aria-label="Increase quantity">+</button>
+        </div>
+
+        <!-- Add to Wishlist -->
+        <button type="button" class="sticky-wishlist-btn" id="stickyWishlistBtn" aria-label="Add to wishlist" title="Add to Wishlist">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          <span class="sticky-wishlist-label">Wishlist</span>
+        </button>
+
+        <!-- Add to Cart -->
+        <button type="button" class="sticky-btn-cart" id="stickyAddToCartBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span>Add to Cart</span>
+        </button>
+
+        <!-- Buy Now -->
+        <button type="button" class="sticky-btn-buy" id="stickyBuyNowBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span>Buy Now</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
   <!-- Floating Actions (WhatsApp & Back to Top) -->
   <div class="floating-actions-wrap">
-    <a href="https://wa.me/919601574966?text=Hello%20Rajesh%20Framing!%20I%20have%20an%20enquiry%20regarding%20custom%20framing%20and%20printing%20services." target="_blank" class="floating-whatsapp-btn pulse-ring" aria-label="Chat on WhatsApp">
+    <a href="https://wa.me/919328081006?text=Hello%20Rajesh%20Framing!%20I%20have%20an%20enquiry%20regarding%20custom%20framing%20and%20printing%20services." target="_blank" class="floating-whatsapp-btn pulse-ring" aria-label="Chat on WhatsApp">
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.058-2.18-.553-1.638-.673-2.684-2.336-2.766-2.445-.082-.109-.661-.88-.661-1.678 0-.798.419-1.189.569-1.353.15-.164.33-.205.441-.205.111 0 .222.001.32.006.103.004.24-.039.375.285.144.344.49 1.196.533 1.284.043.088.072.19.014.305-.058.115-.087.186-.173.287-.087.1-.183.224-.262.301-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.174.232-.145.39-.087.159.058 1.009.477 1.182.564.173.087.289.13.332.204.043.074.043.431-.101.836z"></path>
       </svg>
@@ -670,13 +721,13 @@
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
               </svg>
-              <div><a href="tel:+919601574966">+91 96015 74966</a></div>
+              <div><a href="tel:+919328081006">+91 93280 81006</a></div>
             </div>
             <div class="contact-item">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.058-2.18-.553-1.638-.673-2.684-2.336-2.766-2.445-.082-.109-.661-.88-.661-1.678 0-.798.419-1.189.569-1.353.15-.164.33-.205.441-.205.111 0 .222.001.32.006.103.004.24-.039.375.285.144.344.49 1.196.533 1.284.043.088.072.19.014.305-.058.115-.087.186-.173.287-.087.1-.183.224-.262.301-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.174.232-.145.39-.087.159.058 1.009.477 1.182.564.173.087.289.13.332.204.043.074.043.431-.101.836z"></path>
               </svg>
-              <div><a href="https://wa.me/919601574966" target="_blank">+91 96015 74966</a></div>
+              <div><a href="https://wa.me/919328081006" target="_blank">+91 93280 81006</a></div>
             </div>
             <div class="contact-item">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

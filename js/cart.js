@@ -568,6 +568,7 @@ window.saveCart = saveCart;
 window.addToCart = addToCart;
 window.quickAddToCart = quickAddToCart;
 window.buyNowFromCard = buyNowFromCard;
+window.quickBuyNow = buyNowFromCard;
 window.handleProductCardAddToCart = handleProductCardAddToCart;
 window.handleViewCartClick = handleViewCartClick;
 window.buyNow = buyNow;

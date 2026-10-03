@@ -155,37 +155,94 @@ function populateProductData() {
     mainImg.alt = `${p.name} - ${selectedFinish ? selectedFinish.name : ''}`;
   }
 
-  // Thumbnails
+  // Thumbnails & Image Gallery
   const thumbsContainer = document.getElementById('detailThumbsContainer');
   if (thumbsContainer) {
-    const thumbs = [
-      initialImg,
-      'assets/images/workshop.jpg',
-      'assets/images/hero_showcase.jpg'
+    // Assemble rich image gallery from variant finish images + craft perspectives
+    const finishImages = (p.finishes && p.finishes.length)
+      ? p.finishes.map(f => ({ src: f.image || p.image, finishId: f.id, label: `${p.name} - ${f.name}` }))
+      : [{ src: p.image, finishId: '', label: p.name }];
+
+    const perspectiveImages = [
+      { src: 'assets/images/workshop.jpg', finishId: '', label: `${p.name} - Craft & Workshop Detail` },
+      { src: 'assets/images/hero_showcase.jpg', finishId: '', label: `${p.name} - Gallery Showcase` }
     ];
 
-    thumbsContainer.innerHTML = thumbs.map((src, index) => `
-      <div class="detail-thumb ${index === 0 ? 'active' : ''}" data-src="${src}">
-        <img src="${src}" alt="${p.name} perspective ${index + 1}" />
-      </div>
-    `).join('');
+    // Combine and deduplicate by source
+    const galleryItems = [];
+    const seenSrcs = new Set();
+    [...finishImages, ...perspectiveImages].forEach(item => {
+      if (item.src && !seenSrcs.has(item.src)) {
+        seenSrcs.add(item.src);
+        galleryItems.push(item);
+      }
+    });
+
+    thumbsContainer.innerHTML = galleryItems.map((item, index) => {
+      const isActive = (selectedFinish && item.finishId === selectedFinish.id) || (index === 0 && !selectedFinish);
+      return `
+        <div class="detail-thumb ${isActive ? 'active' : ''}" 
+             draggable="true" 
+             data-src="${item.src}" 
+             data-finish-id="${item.finishId || ''}" 
+             title="${item.label} (Click or drag onto preview to select)">
+          <img src="${item.src}" alt="${item.label}" />
+        </div>
+      `;
+    }).join('');
 
     thumbsContainer.querySelectorAll('.detail-thumb').forEach(thumb => {
+      // Click selection
       thumb.addEventListener('click', () => {
-        thumbsContainer.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
-        thumb.classList.add('active');
-        if (mainImg) {
-          const targetThumbSrc = thumb.getAttribute('data-src');
-          if (mainImg.getAttribute('src') !== targetThumbSrc) {
-            mainImg.style.transition = 'opacity 0.2s ease-in-out';
-            mainImg.style.opacity = '0.35';
-            setTimeout(() => {
-              mainImg.src = targetThumbSrc;
-              mainImg.style.opacity = '1';
-            }, 120);
-          }
-        }
+        selectGalleryThumbnail(thumb);
       });
+
+      // Drag start for dragging thumbnail onto main image
+      thumb.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', thumb.getAttribute('data-src'));
+        const fId = thumb.getAttribute('data-finish-id');
+        if (fId) e.dataTransfer.setData('application/x-finish-id', fId);
+        e.dataTransfer.effectAllowed = 'copyMove';
+      });
+    });
+  }
+
+  // Drag and drop onto main image box
+  const mainImgBox = document.querySelector('.detail-main-img-box');
+  if (mainImgBox) {
+    mainImgBox.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      mainImgBox.classList.add('drag-over-main');
+    });
+    mainImgBox.addEventListener('dragleave', (e) => {
+      mainImgBox.classList.remove('drag-over-main');
+    });
+    mainImgBox.addEventListener('drop', (e) => {
+      e.preventDefault();
+      mainImgBox.classList.remove('drag-over-main');
+
+      // Check if dropped file from user's computer
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        if (file.type && file.type.startsWith('image/')) {
+          if (typeof window.handleProductPhotoSelection === 'function') {
+            window.handleProductPhotoSelection(file);
+          }
+          return;
+        }
+      }
+
+      // Check if dropped from gallery thumbnails
+      const droppedSrc = e.dataTransfer.getData('text/plain');
+      if (droppedSrc && thumbsContainer) {
+        const matchingThumb = thumbsContainer.querySelector(`.detail-thumb[data-src="${droppedSrc}"]`);
+        if (matchingThumb) {
+          selectGalleryThumbnail(matchingThumb);
+        } else if (mainImg) {
+          mainImg.src = droppedSrc;
+        }
+      }
     });
   }
 
@@ -367,19 +424,71 @@ function updateDetailImageForFinish(finish) {
     mainImgBox.style.boxShadow = `0 10px 30px ${finish.color}44`;
   }
 
-  // Update primary thumbnail in strip
+  // Update active thumbnail in strip
   const thumbsContainer = document.getElementById('detailThumbsContainer');
   if (thumbsContainer) {
     const thumbs = thumbsContainer.querySelectorAll('.detail-thumb');
-    if (thumbs.length > 0) {
-      const firstThumb = thumbs[0];
-      firstThumb.setAttribute('data-src', targetSrc);
-      const thumbImg = firstThumb.querySelector('img');
-      if (thumbImg) thumbImg.src = targetSrc;
-
-      thumbs.forEach(t => t.classList.remove('active'));
-      firstThumb.classList.add('active');
+    let matched = false;
+    thumbs.forEach(t => {
+      if (t.getAttribute('data-src') === targetSrc || (finish.id && t.getAttribute('data-finish-id') === finish.id)) {
+        t.classList.add('active');
+        matched = true;
+      } else {
+        t.classList.remove('active');
+      }
+    });
+    if (!matched && thumbs.length > 0) {
+      thumbs[0].classList.add('active');
     }
+  }
+
+  // Update sticky product thumbnail
+  const stickyThumb = document.getElementById('stickyProductThumb');
+  if (stickyThumb) stickyThumb.src = targetSrc;
+}
+
+/**
+ * Handle gallery thumbnail selection via click or drop
+ */
+function selectGalleryThumbnail(thumb) {
+  if (!thumb) return;
+  const thumbsContainer = document.getElementById('detailThumbsContainer');
+  if (thumbsContainer) {
+    thumbsContainer.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
+    thumb.classList.add('active');
+  }
+
+  const targetSrc = thumb.getAttribute('data-src');
+  const finishId = thumb.getAttribute('data-finish-id');
+
+  // If this thumbnail corresponds to a known finish variant, activate that finish
+  if (finishId && currentProduct && currentProduct.finishes) {
+    const foundFinish = currentProduct.finishes.find(f => f.id === finishId);
+    if (foundFinish) {
+      selectedFinish = foundFinish;
+      const selectedDisplay = document.getElementById('selectedFinishLabel');
+      if (selectedDisplay) selectedDisplay.textContent = foundFinish.name;
+
+      const swatchContainer = document.getElementById('detailFinishesContainer');
+      if (swatchContainer) {
+        swatchContainer.querySelectorAll('.color-swatch-item').forEach(s => {
+          s.classList.toggle('active', s.getAttribute('data-finish-id') === finishId);
+        });
+      }
+      updatePriceDisplay();
+    }
+  }
+
+  const mainImg = document.getElementById('detailMainImg');
+  if (mainImg && mainImg.getAttribute('src') !== targetSrc) {
+    mainImg.style.transition = 'opacity 0.2s ease-in-out';
+    mainImg.style.opacity = '0.35';
+    setTimeout(() => {
+      mainImg.src = targetSrc;
+      mainImg.style.opacity = '1';
+      const stickyThumb = document.getElementById('stickyProductThumb');
+      if (stickyThumb) stickyThumb.src = targetSrc;
+    }, 120);
   }
 }
 
@@ -391,7 +500,14 @@ function updatePriceDisplay() {
   const finishDelta = (selectedFinish && typeof selectedFinish.priceDelta === 'number') ? selectedFinish.priceDelta : 0;
   const currentPrice = basePrice + finishDelta;
 
-  priceDisplay.textContent = `₹${currentPrice.toLocaleString('en-IN')}`;
+  const formattedPrice = `₹${currentPrice.toLocaleString('en-IN')}`;
+  priceDisplay.textContent = formattedPrice;
+
+  // Sync with Fixed Sticky Action Bar
+  const stickyPrice = document.getElementById('stickyProductPrice');
+  if (stickyPrice) {
+    stickyPrice.textContent = formattedPrice;
+  }
 }
 
 let currentQuantity = 1;
@@ -401,24 +517,68 @@ function setupOptionInteractions() {
   // Setup Photo Upload Dropzone
   setupPhotoUpload();
 
-  // Quantity Stepper
+  // Populate sticky bar product info
+  const stickyName = document.getElementById('stickyProductName');
+  const stickyThumb = document.getElementById('stickyProductThumb');
+  const stickyPrice = document.getElementById('stickyProductPrice');
+  if (stickyName && currentProduct) stickyName.textContent = currentProduct.name;
+  if (stickyThumb && currentProduct) {
+    stickyThumb.src = (selectedFinish && selectedFinish.image) ? selectedFinish.image : currentProduct.image;
+  }
+  if (stickyPrice && currentProduct) {
+    const initialBase = selectedSize ? selectedSize.price : currentProduct.price;
+    const initialDelta = (selectedFinish && selectedFinish.priceDelta) ? selectedFinish.priceDelta : 0;
+    stickyPrice.textContent = `₹${(initialBase + initialDelta).toLocaleString('en-IN')}`;
+  }
+
+  // Quantity Stepper (synced with sticky action bar)
   const minusBtn = document.getElementById('detailQtyMinus');
   const plusBtn = document.getElementById('detailQtyPlus');
   const qtyDisplay = document.getElementById('detailQtyValue');
+  const stickyMinusBtn = document.getElementById('stickyQtyMinus');
+  const stickyPlusBtn = document.getElementById('stickyQtyPlus');
+  const stickyQtyVal = document.getElementById('stickyQtyValue');
 
-  if (minusBtn && plusBtn && qtyDisplay) {
-    minusBtn.addEventListener('click', () => {
-      if (currentQuantity > 1) {
-        currentQuantity -= 1;
-        qtyDisplay.textContent = currentQuantity;
+  function updateQuantity(newQty) {
+    currentQuantity = Math.max(1, newQty);
+    if (qtyDisplay) qtyDisplay.textContent = currentQuantity;
+    if (stickyQtyVal) stickyQtyVal.textContent = currentQuantity;
+  }
+
+  if (minusBtn) minusBtn.addEventListener('click', () => updateQuantity(currentQuantity - 1));
+  if (plusBtn) plusBtn.addEventListener('click', () => updateQuantity(currentQuantity + 1));
+  if (stickyMinusBtn) stickyMinusBtn.addEventListener('click', () => updateQuantity(currentQuantity - 1));
+  if (stickyPlusBtn) stickyPlusBtn.addEventListener('click', () => updateQuantity(currentQuantity + 1));
+
+  // Sync Wishlist Button State
+  const stickyWishlistBtn = document.getElementById('stickyWishlistBtn');
+  if (stickyWishlistBtn) {
+    stickyWishlistBtn.addEventListener('click', (e) => {
+      if (typeof toggleWishlist === 'function' && currentProduct) {
+        toggleWishlist(currentProduct.id, e);
       }
     });
+  }
 
-    plusBtn.addEventListener('click', () => {
-      currentQuantity += 1;
-      qtyDisplay.textContent = currentQuantity;
+  function syncWishlistButtons() {
+    if (!currentProduct || typeof isProductInWishlist !== 'function') return;
+    const inWishlist = isProductInWishlist(currentProduct.id);
+    const mainWishBtn = document.getElementById('detailWishlistBtn');
+    const stickyWishBtn = document.getElementById('stickyWishlistBtn');
+
+    [mainWishBtn, stickyWishBtn].forEach(btn => {
+      if (btn) {
+        btn.classList.toggle('active', inWishlist);
+        const label = btn.querySelector('.wishlist-btn-text, .sticky-wishlist-label');
+        if (label) {
+          label.textContent = inWishlist ? 'In Wishlist' : (btn === stickyWishBtn ? 'Wishlist' : 'Add to Wishlist');
+        }
+      }
     });
   }
+
+  window.addEventListener('wishlistUpdated', syncWishlistButtons);
+  setTimeout(syncWishlistButtons, 120);
 
   // Add to Cart Button
   const addToCartBtn = document.getElementById('detailAddToCartBtn');
@@ -455,6 +615,14 @@ function setupOptionInteractions() {
           leadTime: currentProduct.leadTime || '24 - 48 Hours'
         }, currentQuantity, true);
       }
+    });
+  }
+
+  // Sticky Bar Add to Cart Button
+  const stickyAddToCartBtn = document.getElementById('stickyAddToCartBtn');
+  if (stickyAddToCartBtn && addToCartBtn) {
+    stickyAddToCartBtn.addEventListener('click', () => {
+      addToCartBtn.click();
     });
   }
 
@@ -495,6 +663,14 @@ function setupOptionInteractions() {
       } else {
         window.location.href = `checkout.html?buyNow=${currentProduct.id}&qty=${currentQuantity}&size=${encodeURIComponent(sizeStr)}&finish=${encodeURIComponent(finishStr)}&image=${encodeURIComponent(activeImg)}`;
       }
+    });
+  }
+
+  // Sticky Bar Buy Now Button
+  const stickyBuyNowBtn = document.getElementById('stickyBuyNowBtn');
+  if (stickyBuyNowBtn && buyNowBtn) {
+    stickyBuyNowBtn.addEventListener('click', () => {
+      buyNowBtn.click();
     });
   }
 }
@@ -649,6 +825,8 @@ function setupPhotoUpload() {
     reader.readAsDataURL(file);
   }
 
+  window.handleProductPhotoSelection = handlePhotoSelection;
+
   // Custom Quote Button
   const quoteBtn = document.getElementById('detailQuoteBtn');
   if (quoteBtn) {
@@ -672,7 +850,7 @@ function setupPhotoUpload() {
 
       const message = `Hello Rajesh Framing!\n\nI am interested in ordering:\n• Product: ${currentProduct.name}\n• Category: ${currentProduct.categoryLabel}\n• Chosen Option: ${sizeStr}\n• Finish: ${finishStr}\n• Quantity: ${currentQuantity}\n• Price: ₹${currentPrice * currentQuantity}\n\nPlease share order details and design upload guidance.`;
 
-      const url = `https://wa.me/919601574966?text=${encodeURIComponent(message)}`;
+      const url = `https://wa.me/919328081006?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
     });
   }

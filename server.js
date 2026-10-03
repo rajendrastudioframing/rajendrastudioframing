@@ -1617,7 +1617,7 @@ app.post('/api/orders', async (req, res) => {
 
     // Dispatch Order Placed confirmation email to customer (pending studio confirmation)
     if (newOrder.customer && newOrder.customer.email && newOrder.customer.email.includes('@')) {
-      sendCustomerOrderNotification(newOrder, 'Placed', 'Thank you! Your order has been placed successfully online. Our studio will review and confirm it shortly before production.', req)
+      await sendCustomerOrderNotification(newOrder, 'Placed', 'Thank you! Your order has been placed successfully online. Our studio will review and confirm it shortly before production.', req)
         .catch(err => console.warn('Order placed email error:', err.message));
     }
 
