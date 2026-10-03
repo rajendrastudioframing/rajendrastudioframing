@@ -858,19 +858,80 @@ function setupPhotoUpload() {
 
 function renderRelatedProducts() {
   const container = document.getElementById('relatedProductsGrid');
-  if (!container) return;
+  if (!container || !currentProduct) return;
 
-  const related = PRODUCTS_DATA
-    .filter(p => p.id !== currentProduct.id)
-    .slice(0, 3);
+  const allProducts = (typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) ? PRODUCTS_DATA : [];
+  if (!allProducts.length) return;
+
+  // Exclude current product
+  const candidates = allProducts.filter(p => p.id !== currentProduct.id);
+
+  // Categorization helpers
+  const isFrame = (p) => p.category === 'frames' || p.id.includes('frame');
+  const isCustomArt = (p) => p.category === 'custom' || p.id.includes('canvas') || p.id.includes('print');
+  const isDrinkware = (p) => p.category === 'personalized' || p.id.includes('bottle') || p.id.includes('mug');
+  const isOffice = (p) => p.category === 'office' || p.id.includes('file') || p.id.includes('folder');
+
+  // Compute relevance score for each candidate product
+  const scored = candidates.map(p => {
+    let score = 0;
+
+    // 1. Direct Category Match (Highest Priority)
+    if (p.category === currentProduct.category) {
+      score += 60;
+    }
+
+    // 2. Complementary Category Affinity / Natural Pairing
+    if (isFrame(currentProduct)) {
+      if (isFrame(p)) score += 50;
+      else if (isCustomArt(p)) score += 40; // Custom Fine Art Canvas & Floating Frames
+      else if (isDrinkware(p)) score += 10;
+    } else if (isDrinkware(currentProduct)) {
+      if (isDrinkware(p)) score += 50;
+      else if (isCustomArt(p)) score += 25;
+      else if (isOffice(p)) score += 20;
+    } else if (isOffice(currentProduct)) {
+      if (isOffice(p)) score += 50;
+      else if (isDrinkware(p)) score += 20;
+      else if (isCustomArt(p)) score += 15;
+    } else if (isCustomArt(currentProduct)) {
+      if (isFrame(p)) score += 45;
+      else if (isCustomArt(p)) score += 40;
+      else if (isDrinkware(p)) score += 15;
+    }
+
+    // 3. Keyword & Material Affinity
+    const currKeywords = `${currentProduct.name} ${currentProduct.categoryLabel || ''} ${currentProduct.material || ''}`.toLowerCase();
+    const targetKeywords = `${p.name} ${p.categoryLabel || ''} ${p.material || ''}`.toLowerCase();
+
+    ['frame', 'glass', 'photo', 'printing', 'print', 'custom', 'bottle', 'mug', 'ceramic', 'steel', 'folder', 'file', 'art', 'canvas', 'wall'].forEach(kw => {
+      if (currKeywords.includes(kw) && targetKeywords.includes(kw)) {
+        score += 12;
+      }
+    });
+
+    // 4. Rating & Popularity Bonus
+    if (p.rating >= 4.9) score += 6;
+    if (p.badge === 'Bestseller' || p.badge === 'Popular' || p.badge === 'Trending') score += 4;
+
+    return { product: p, score };
+  });
+
+  // Sort descending by relevance score
+  scored.sort((a, b) => b.score - a.score);
+
+  // Pick the top 4 most relevant products for a balanced row
+  const related = scored.slice(0, 4).map(item => item.product);
 
   container.innerHTML = related.map(p => {
     const priceFormatted = p.price ? `₹${p.price}` : p.priceDisplay;
+    const isWishlisted = (typeof isProductInWishlist === 'function') ? isProductInWishlist(p.id) : false;
+
     return `
     <article class="product-card" data-id="${p.id}" onclick="window.location.href='product-detail?id=${p.id}'">
       <div class="product-card-top">
         ${p.badge ? `<span class="product-badge-pill">${p.badge}</span>` : '<span></span>'}
-        <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist" onclick="event.stopPropagation(); this.classList.toggle('active');">
+        <button type="button" class="product-wishlist-btn ${isWishlisted ? 'active' : ''}" aria-label="Add to wishlist" onclick="event.stopPropagation(); if (typeof toggleWishlist === 'function') { toggleWishlist('${p.id}', event); } else { this.classList.toggle('active'); }">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
