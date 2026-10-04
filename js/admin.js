@@ -1508,65 +1508,350 @@ window.deleteInquiry = async (id) => {
 };
 
 /* ==========================================================================
-   EXPORT TO CSV (GRAPHURA FEATURE)
+   UNIVERSAL CSV EXPORT ENGINE (ALL ADMIN PAGES)
    ========================================================================== */
+
+/**
+ * Robust RFC-4180 CSV Downloader with UTF-8 BOM for Microsoft Excel / Google Sheets
+ */
+function downloadCSV(filename, headers, rows) {
+  const formatCell = (val) => {
+    if (val === null || val === undefined) return '""';
+    const str = String(val);
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
+  const csvRows = [
+    headers.map(h => formatCell(h)).join(','),
+    ...rows.map(row => row.map(c => formatCell(c)).join(','))
+  ];
+
+  const csvContent = csvRows.join('\r\n');
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1200);
+}
+
+function formatCSVDate(dateVal) {
+  if (!dateVal) return '';
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return String(dateVal);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * 1. EXPORT ORDERS TO CSV (Orders Management & Dashboard)
+ * Includes all customer choices: size, color/finish, email, address, photo, payment details
+ */
 window.exportOrdersToCSV = () => {
   if (!allInquiries || allInquiries.length === 0) {
     showToast('Export Alert', 'No order data available to export.', 'warning');
     return;
   }
 
-  const headers = ['Order ID', 'Date', 'Customer Name', 'Phone', 'Email', 'Product', 'Quantity', 'Amount (INR)', 'Status', 'Notes'];
-  const rows = allInquiries.map(inq => {
-    // Format Date cleanly as YYYY-MM-DD HH:mm:ss without unquoted commas that break CSV column alignment
-    let dateStr = '';
-    if (inq.createdAt) {
-      const d = new Date(inq.createdAt);
-      if (!isNaN(d.getTime())) {
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-        const seconds = String(d.getSeconds()).padStart(2, '0');
-        dateStr = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-      } else {
-        dateStr = String(inq.createdAt);
-      }
+  const orders = allInquiries.filter(i => 
+    i.id.startsWith('RF-ORD') || (i.product && i.product.includes('[ONLINE ORDER]'))
+  );
+  const exportList = orders.length > 0 ? orders : allInquiries;
+
+  const headers = [
+    'Order ID',
+    'Date & Time',
+    'Customer Name',
+    'Phone',
+    'Email',
+    'Delivery Address',
+    'Delivery Mode',
+    'Product Name',
+    'Selected Size',
+    'Frame Color / Finish',
+    'Quantity',
+    'Customer Photo Attached',
+    'Customer Photo URL',
+    'Payment Method',
+    'Payment Status',
+    'UPI UTR / Ref',
+    'Subtotal (INR)',
+    'Shipping (INR)',
+    'Total Amount (INR)',
+    'Fulfillment Status',
+    'Order Notes'
+  ];
+
+  const rows = exportList.map(order => {
+    const cleanPhone = (order.phone || (order.customer && order.customer.phone) || '').replace(/\D/g, '');
+    const custEmail = order.customerEmail || (order.customer && order.customer.email) || (order.email && order.email.includes('@') ? order.email : '');
+    const deliveryAddress = getOrderDeliveryAddress(order);
+    const trackingMode = (order.specs && order.specs.includes('Counter Pickup')) ? 'Studio Counter Pickup' : 'Doorstep Delivery';
+    const custPhoto = getOrderCustomerPhoto(order);
+
+    let itemSize = 'Standard';
+    let itemFinish = 'Standard';
+    let prodTitle = (order.product || 'Photo Frame').replace('[ONLINE ORDER]', '').trim();
+
+    if (Array.isArray(order.items) && order.items.length > 0) {
+      const first = order.items[0];
+      if (first.name) prodTitle = first.name;
+      if (first.size) itemSize = first.size;
+      if (first.finish) itemFinish = first.finish;
+    } else if (order.specs) {
+      const sizeMatch = order.specs.match(/(\d+[\s"x×]+[\d"'\s]+|[A-Za-z0-9]+\s*(?:Classic|Large|Small|Medium|Square|Mini|Portrait|Landscape))/i);
+      if (sizeMatch) itemSize = sizeMatch[1].trim();
+      const finishMatch = order.specs.match(/(?:in|with|finish|color|standoffs|black|gold|wood|white|silver)[\s:]*([^,•\n\r]+)/i);
+      if (finishMatch) itemFinish = finishMatch[1].trim();
     }
 
-    // Resolve Email reliably across inquiries and order objects
-    const email = (inq.customer && inq.customer.email) || inq.email || '';
-    const phone = (inq.customer && inq.customer.phone) || inq.phone || '';
-    const name = (inq.customer && inq.customer.name) || inq.name || '';
-    const product = inq.product || (inq.items && inq.items.map(it => `${it.name} (x${it.quantity})`).join('; ')) || '';
-    const notes = inq.notes || inq.specs || '';
+    const paymentMethod = order.paymentMethod || (order.specs && order.specs.includes('Instant UPI') ? 'Instant UPI Payment (QR Code)' : 'Pay on Delivery / COD');
+    const paymentStatus = order.status === 'Completed' || paymentMethod.includes('UPI') ? 'Paid Online' : 'Pending (Pay on Delivery)';
+    const upiUtr = order.upiUtr || '';
+    const subtotal = Number(order.subtotal || order.estimatedValue || 0);
+    const total = Number(order.total || order.estimatedValue || 0);
+    const shipping = Number(order.shipping || 0);
 
     return [
-      `"${String(inq.id || '').replace(/"/g, '""')}"`,
-      `"${dateStr.replace(/"/g, '""')}"`,
-      `"${String(name).replace(/"/g, '""')}"`,
-      `"${String(phone).replace(/"/g, '""')}"`,
-      `"${String(email).replace(/"/g, '""')}"`,
-      `"${String(product).replace(/"/g, '""')}"`,
-      inq.quantity || 1,
-      Number(inq.estimatedValue || inq.total || 0),
-      `"${String(inq.status || 'New').replace(/"/g, '""')}"`,
-      `"${String(notes).replace(/"/g, '""')}"`
+      order.id,
+      formatCSVDate(order.createdAt),
+      order.name || (order.customer && order.customer.name) || '',
+      cleanPhone || order.phone || '',
+      custEmail,
+      deliveryAddress,
+      trackingMode,
+      prodTitle,
+      itemSize,
+      itemFinish,
+      order.quantity || 1,
+      custPhoto ? 'Yes' : 'No',
+      custPhoto ? custPhoto.url : '',
+      paymentMethod,
+      paymentStatus,
+      upiUtr,
+      subtotal,
+      shipping,
+      total,
+      order.status || 'New',
+      order.notes || ''
     ];
   });
 
-  const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
-  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  const url = URL.createObjectURL(blob);
-  
-  link.setAttribute('href', url);
-  link.setAttribute('download', `Rajesh_Framing_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  showToast('Export Downloaded', `Successfully exported ${allInquiries.length} orders to CSV.`, 'info');
+  const today = new Date().toISOString().slice(0, 10);
+  downloadCSV(`Rajesh_Framing_Orders_${today}.csv`, headers, rows);
+  showToast('Orders Exported', `Successfully exported ${exportList.length} orders to CSV.`, 'success');
+};
+
+/**
+ * 2. EXPORT LEADS TO CSV (Leads & Inquiries View)
+ */
+window.exportLeadsToCSV = () => {
+  if (!allInquiries || allInquiries.length === 0) {
+    showToast('Export Alert', 'No lead inquiry data available to export.', 'warning');
+    return;
+  }
+
+  const leads = allInquiries.filter(i => 
+    !i.id.startsWith('RF-ORD') && (!i.product || !i.product.includes('[ONLINE ORDER]'))
+  );
+  const exportList = leads.length > 0 ? leads : allInquiries;
+
+  const headers = [
+    'Lead ID',
+    'Date & Time',
+    'Customer Name',
+    'Phone',
+    'Email',
+    'Inquiry Type',
+    'Specifications & Requirements',
+    'Lead Status',
+    'Photo Attached',
+    'Photo URL',
+    'Notes / Details'
+  ];
+
+  const rows = exportList.map(lead => {
+    const cleanPhone = (lead.phone || '').replace(/\D/g, '');
+    const inquiryType = lead.hasUpload ? 'Custom Frame Inquiry' : (lead.product || 'Product Inquiry');
+    const photo = getOrderCustomerPhoto(lead);
+
+    return [
+      lead.id,
+      formatCSVDate(lead.createdAt),
+      lead.name || '',
+      cleanPhone || lead.phone || '',
+      lead.email || '',
+      inquiryType,
+      lead.specs || '',
+      lead.status || 'New',
+      photo ? 'Yes' : 'No',
+      photo ? photo.url : '',
+      lead.notes || ''
+    ];
+  });
+
+  const today = new Date().toISOString().slice(0, 10);
+  downloadCSV(`Rajesh_Framing_Leads_${today}.csv`, headers, rows);
+  showToast('Leads Exported', `Successfully exported ${exportList.length} leads to CSV.`, 'success');
+};
+
+/**
+ * 3. EXPORT PRODUCTS TO CSV (Products & Pricing View)
+ */
+window.exportProductsToCSV = async () => {
+  try {
+    let prods = allProducts;
+    if (!prods || prods.length === 0) {
+      const res = await fetch(`${API_BASE}/api/admin/products`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.products) {
+        prods = data.products;
+        allProducts = prods;
+      }
+    }
+
+    if (!prods || prods.length === 0) {
+      showToast('Export Alert', 'No products available in catalog to export.', 'warning');
+      return;
+    }
+
+    const headers = [
+      'Product ID',
+      'Product Name',
+      'Category',
+      'Base Price (INR)',
+      'Compare Price (INR)',
+      'Stock Status',
+      'Customer Rating',
+      'Review Count',
+      'Marketing Badge',
+      'Production Lead Time',
+      'Short Description',
+      'Product Image URL'
+    ];
+
+    const rows = prods.map(p => [
+      p.id,
+      p.name || '',
+      p.categoryLabel || p.category || '',
+      Number(p.price || 0),
+      Number(p.comparePrice || p.originalPrice || 0),
+      p.status || 'In Stock',
+      p.rating || 5,
+      p.reviewCount || p.reviews || 0,
+      p.badge || '',
+      p.leadTime || '24 - 48 Hours',
+      p.description || '',
+      p.image || ''
+    ]);
+
+    const today = new Date().toISOString().slice(0, 10);
+    downloadCSV(`Rajesh_Framing_Products_${today}.csv`, headers, rows);
+    showToast('Products Exported', `Successfully exported ${prods.length} products to CSV.`, 'success');
+  } catch (err) {
+    console.error('Error exporting products:', err);
+    showToast('Export Error', 'Could not export products catalog.', 'danger');
+  }
+};
+
+/**
+ * 4. EXPORT CUSTOMERS TO CSV (Customers Accounts View)
+ */
+window.exportCustomersToCSV = async () => {
+  try {
+    let custs = allCustomers;
+    if (!custs || custs.length === 0) {
+      const res = await fetch(`${API_BASE}/api/admin/customers`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.customers) {
+        custs = data.customers;
+        allCustomers = custs;
+      }
+    }
+
+    if (!custs || custs.length === 0) {
+      showToast('Export Alert', 'No customer records available to export.', 'warning');
+      return;
+    }
+
+    const headers = [
+      'Customer ID',
+      'Customer Name',
+      'Phone',
+      'Email',
+      'Delivery Address',
+      'City',
+      'Pincode',
+      'Registered Date',
+      'Last Login Date',
+      'Login Count',
+      'Total Orders Placed',
+      'Total Lifetime Spent (INR)',
+      'Account Status'
+    ];
+
+    const rows = custs.map(c => [
+      c.id || c.phone || '',
+      c.name || 'Registered Customer',
+      c.phone || '',
+      c.email || '',
+      c.address || '',
+      c.city || '',
+      c.pincode || '',
+      formatCSVDate(c.registeredAt || c.createdAt),
+      formatCSVDate(c.lastLoginAt),
+      Number(c.loginCount || 1),
+      Number(c.totalOrders || 0),
+      Number(c.totalSpent || 0),
+      c.isVerified !== false ? 'Verified (Active)' : 'Unverified'
+    ]);
+
+    const today = new Date().toISOString().slice(0, 10);
+    downloadCSV(`Rajesh_Framing_Customers_${today}.csv`, headers, rows);
+    showToast('Customers Exported', `Successfully exported ${custs.length} customer accounts to CSV.`, 'success');
+  } catch (err) {
+    console.error('Error exporting customers:', err);
+    showToast('Export Error', 'Could not export customers list.', 'danger');
+  }
+};
+
+/**
+ * 5. EXPORT ALL STUDIO DATA (Consolidated Batch Export)
+ */
+window.exportAllStudioDataToCSV = async () => {
+  showToast('Starting Export', 'Preparing CSV downloads for Orders, Leads, Products, and Customers...', 'info');
+
+  // Export Orders immediately
+  window.exportOrdersToCSV();
+
+  // Export Leads
+  setTimeout(() => {
+    window.exportLeadsToCSV();
+  }, 400);
+
+  // Export Products
+  setTimeout(async () => {
+    await window.exportProductsToCSV();
+  }, 800);
+
+  // Export Customers
+  setTimeout(async () => {
+    await window.exportCustomersToCSV();
+    showToast('Studio Export Complete', 'All 4 studio datasets exported to CSV successfully!', 'success');
+  }, 1200);
 };
 
 /* ==========================================================================
