@@ -30,7 +30,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/admin.css?v=compact_order_v8" />
+  <link rel="stylesheet" href="css/admin.css?v=order_details_v9" />
 </head>
 <body class="admin-dashboard-body" data-theme="light">
 
@@ -938,6 +938,42 @@
   </div>
 
   <!-- ==========================================================================
+       MODAL: FULL CUSTOMER ORDER DETAILS & SPECIFICATIONS SHEET
+       ========================================================================== -->
+  <div class="admin-modal-overlay" id="orderDetailsModal">
+    <div class="admin-modal" style="max-width: 820px; width: 95%;">
+      <div class="admin-modal-header" style="justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <h4 class="admin-modal-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+            <span style="color: var(--primary);">Order Details</span>
+            <span id="orderDetailModalId" style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">#RF-ORD-000</span>
+          </h4>
+          <span id="orderDetailModalStatusBadge" class="status-pill new">New</span>
+        </div>
+        <button type="button" class="admin-modal-close" onclick="closeOrderDetailsModal()">&times;</button>
+      </div>
+
+      <div class="admin-modal-body" id="orderDetailsModalBody" style="padding: 20px;">
+        <!-- Dynamically rendered by JS -->
+      </div>
+
+      <div class="admin-modal-footer" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="btn-sub-action outline" onclick="printCurrentOrderReceipt()">
+            🖨️ Print Order Slip
+          </button>
+          <a href="#" id="orderDetailModalWaBtn" target="_blank" class="btn-sub-action primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            💬 WhatsApp Invoice
+          </a>
+        </div>
+        <button type="button" class="btn-sub-action outline" onclick="closeOrderDetailsModal()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
        MODAL: INQUIRY / ORDER DETAILS
        ========================================================================== -->
   <div class="admin-modal-overlay" id="inquiryDetailModal">
@@ -1488,6 +1524,6 @@
   <!-- Modern Floating Toast Container -->
   <div class="admin-toast-container" id="adminToastContainer"></div>
 
-  <script src="js/admin.js?v=compact_order_v8"></script>
+  <script src="js/admin.js?v=order_details_v9"></script>
 </body>
 </html>

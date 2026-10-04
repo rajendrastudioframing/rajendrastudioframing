@@ -1512,11 +1512,52 @@ app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
         }
       }
 
+      // Customer details & contact
+      const customerEmail = (matchedOrder && matchedOrder.customer && matchedOrder.customer.email) || inq.email || null;
+      const customerPhone = (matchedOrder && matchedOrder.customer && matchedOrder.customer.phone) || inq.phone || null;
+      const customerName = (matchedOrder && matchedOrder.customer && matchedOrder.customer.name) || inq.name || null;
+
+      // Extract itemized products with sizes, finishes, photos
+      let items = (matchedOrder && Array.isArray(matchedOrder.items) && matchedOrder.items.length) ? matchedOrder.items : [];
+      if (!items.length) {
+        let size = 'Standard';
+        let finish = 'Standard';
+        if (inq.specs) {
+          const sizeMatch = inq.specs.match(/(\d+[\s"x×]+[\d"'\s]+|[A-Za-z0-9]+\s*(?:Classic|Large|Small|Medium|Square|Mini|Portrait|Landscape))/i);
+          if (sizeMatch) size = sizeMatch[1].trim();
+          const finishMatch = inq.specs.match(/(?:in|with|finish|color|standoffs|black|gold|wood|white|silver)[\s:]*([^,•\n\r]+)/i);
+          if (finishMatch) finish = finishMatch[1].trim();
+        }
+        items = [{
+          name: (inq.product || 'Photo Frame').replace('[ONLINE ORDER]', '').trim(),
+          quantity: inq.quantity || 1,
+          size: inq.size || size,
+          finish: inq.finish || finish,
+          price: inq.estimatedValue || 0,
+          lineTotal: inq.estimatedValue || 0,
+          image: inq.image || 'assets/images/glass_frame.jpg',
+          uploadedPhoto: customerPhotoUrl ? { fileUrl: customerPhotoUrl, fileName: customerPhotoName || 'Customer Photo' } : null
+        }];
+      }
+
+      const paymentMethod = (matchedOrder && matchedOrder.paymentMethod) || (inq.specs && inq.specs.includes('Instant UPI') ? 'Instant UPI Payment (QR Code)' : 'Pay on Delivery / COD');
+      const upiUtr = (matchedOrder && matchedOrder.upiUtr) || (inq.specs && inq.specs.match(/UTR:\s*([^\]]+)/) ? inq.specs.match(/UTR:\s*([^\]]+)/)[1] : null);
+
       return {
         ...inq,
+        name: customerName,
+        phone: customerPhone,
+        email: customerEmail,
+        customerEmail,
         deliveryAddress: deliveryAddress || null,
         customerPhotoUrl: customerPhotoUrl || inq.uploadedFileUrl || null,
-        customerPhotoName: customerPhotoName || inq.uploadFileName || null
+        customerPhotoName: customerPhotoName || inq.uploadFileName || null,
+        items,
+        paymentMethod,
+        upiUtr,
+        subtotal: (matchedOrder && matchedOrder.subtotal) || inq.estimatedValue || 0,
+        shipping: (matchedOrder && matchedOrder.shipping) || 0,
+        total: (matchedOrder && matchedOrder.total) || inq.estimatedValue || 0
       };
     });
 

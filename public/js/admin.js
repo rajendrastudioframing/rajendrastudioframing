@@ -575,7 +575,7 @@ function createOrderCardRowHTML(order) {
     .trim();
 
   // Payment Status & Delivery Status Derivations
-  const isOnlinePayment = (order.specs && order.specs.toLowerCase().includes('instant upi')) || false;
+  const isOnlinePayment = (order.specs && order.specs.toLowerCase().includes('instant upi')) || (order.paymentMethod && order.paymentMethod.toLowerCase().includes('upi')) || false;
   const paymentStatus = isOnlinePayment ? 'Paid' : (order.status === 'Completed' ? 'Paid' : 'Pending');
   const paymentClass = paymentStatus.toLowerCase();
   const paymentMethod = isOnlinePayment ? 'Online UPI' : 'Pay on Delivery';
@@ -593,17 +593,39 @@ function createOrderCardRowHTML(order) {
 
   const waText = encodeURIComponent(`Hello ${order.name}, Rajesh Framing here regarding your Order #${order.id} for ${cleanTitle}. Total: ₹${order.estimatedValue}.`);
 
+  const custEmail = order.customerEmail || (order.customer && order.customer.email) || (order.email && order.email.includes('@') ? order.email : '');
+
+  // Extract selected frame size and finish/color
+  let itemSize = '';
+  let itemFinish = '';
+  let extraItemsCount = 0;
+  if (Array.isArray(order.items) && order.items.length > 0) {
+    const firstItem = order.items[0];
+    if (firstItem.size && firstItem.size.toLowerCase() !== 'standard') {
+      itemSize = firstItem.size;
+    }
+    if (firstItem.finish && firstItem.finish.toLowerCase() !== 'standard') {
+      itemFinish = firstItem.finish;
+    }
+    extraItemsCount = order.items.length - 1;
+  } else if (order.specs) {
+    const sizeMatch = order.specs.match(/(\d+[\s"x×]+[\d"'\s]+|[A-Za-z0-9]+\s*(?:Classic|Large|Small|Medium|Square|Mini|Portrait|Landscape))/i);
+    if (sizeMatch) itemSize = sizeMatch[1].trim();
+    const finishMatch = order.specs.match(/(?:in|with|finish|color|standoffs|black|gold|wood|white|silver)[\s:]*([^,•\n\r]+)/i);
+    if (finishMatch) itemFinish = finishMatch[1].trim();
+  }
+
   return `
     <div class="order-card-row" id="orderRow_${escapeHtml(order.id)}">
       <div class="order-card-body">
         <!-- 1. Thumbnail -->
-        <div class="order-thumb-wrap" title="${escapeHtml(cleanTitle)}">
+        <div class="order-thumb-wrap" title="${escapeHtml(cleanTitle)}" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')">
           <img src="${thumb}" alt="${escapeHtml(cleanTitle)}" class="order-thumb-img" onerror="this.src='assets/images/glass_frame.jpg'" />
         </div>
 
         <!-- 2. Order ID & Date -->
         <div class="order-col-info order-col-id">
-          <span class="order-id-num" onclick="copyToClipboard('${escapeHtml(order.id)}', 'Order ID')" title="Click to copy Order ID">#${escapeHtml(order.id)}</span>
+          <span class="order-id-num" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="Click to view complete order sheet">#${escapeHtml(order.id)}</span>
           <span class="order-timestamp">${dateFormatted}</span>
         </div>
 
@@ -614,13 +636,19 @@ function createOrderCardRowHTML(order) {
           <span class="cust-phone-text">
             <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" title="Chat on WhatsApp">💬 ${escapeHtml(order.phone)}</a>
           </span>
+          ${custEmail ? `<span class="cust-email-text" title="${escapeHtml(custEmail)}">✉️ ${escapeHtml(custEmail)}</span>` : ''}
         </div>
 
         <!-- 4. Product -->
         <div class="order-col-info order-col-prod">
           <span class="col-field-label">Product</span>
           <span class="prod-name-text" title="${escapeHtml(cleanTitle)}">${escapeHtml(cleanTitle)}</span>
-          <span class="prod-qty-text">Qty: ${order.quantity || 1}</span>
+          <div class="order-prod-specs-tags">
+            <span class="prod-qty-text">Qty: ${order.quantity || 1}</span>
+            ${itemSize ? `<span class="prod-spec-chip size" title="Customer Selected Size">📏 ${escapeHtml(itemSize)}</span>` : ''}
+            ${itemFinish ? `<span class="prod-spec-chip finish" title="Customer Selected Frame Color / Finish">🎨 ${escapeHtml(itemFinish)}</span>` : ''}
+            ${extraItemsCount > 0 ? `<span class="prod-extra-chip" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="Click to view all items">+${extraItemsCount} more</span>` : ''}
+          </div>
         </div>
 
         <!-- 5. Customer Photo (Dedicated Column) -->
@@ -700,6 +728,11 @@ function createOrderCardRowHTML(order) {
             </select>
           </div>
 
+          <!-- View Details Action Button -->
+          <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${order.id}')" title="View complete order specifications & customer choices">
+            👁️ View Details
+          </button>
+
           <!-- Contextual Primary Workflow Actions -->
           ${order.status === 'New' || order.status === 'Pending' ? `
             <button type="button" class="btn-card-action accept" onclick="acceptOrderQuick('${order.id}')" title="Confirm order & move to production">
@@ -754,6 +787,378 @@ function createOrderCardRowHTML(order) {
     </div>
   `;
 }
+
+/* ==========================================================================
+   FULL ORDER DETAILS & SPECIFICATIONS MODAL CONTROLLER
+   ========================================================================== */
+let currentViewingOrder = null;
+
+window.openOrderDetailsModal = (orderId) => {
+  const order = allInquiries.find(i => i.id === orderId);
+  if (!order) return;
+
+  const modal = document.getElementById('orderDetailsModal');
+  const idEl = document.getElementById('orderDetailModalId');
+  const badgeEl = document.getElementById('orderDetailModalStatusBadge');
+  const bodyEl = document.getElementById('orderDetailsModalBody');
+  const waBtn = document.getElementById('orderDetailModalWaBtn');
+  if (!modal || !bodyEl) return;
+
+  currentViewingOrder = order;
+
+  if (idEl) idEl.textContent = `#${order.id}`;
+
+  const statusClass = (order.status || 'New').toLowerCase().replace(/\s+/g, '-');
+  if (badgeEl) {
+    badgeEl.className = `status-pill ${statusClass}`;
+    badgeEl.innerHTML = `<span class="status-dot"></span> ${escapeHtml(order.status || 'New')}`;
+  }
+
+  const cleanPhone = (order.phone || '').replace(/\D/g, '');
+  const deliveryAddress = getOrderDeliveryAddress(order);
+  const custPhoto = getOrderCustomerPhoto(order);
+  const custEmail = order.customerEmail || (order.customer && order.customer.email) || (order.email && order.email.includes('@') ? order.email : 'Not provided');
+  const paymentMethod = order.paymentMethod || (order.specs && order.specs.includes('Instant UPI') ? 'Instant UPI Payment (QR Code)' : 'Pay on Delivery / COD');
+  const upiUtr = order.upiUtr || (order.specs && order.specs.match(/UTR:\s*([^\]]+)/) ? order.specs.match(/UTR:\s*([^\]]+)/)[1] : null);
+  const trackingMode = (order.specs && order.specs.includes('Deliver to:')) || deliveryAddress.length > 5 ? 'Doorstep Delivery' : 'Studio Pickup';
+
+  const dateObj = new Date(order.createdAt);
+  const dateFormatted = isNaN(dateObj) ? 'Recent' : dateObj.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const waText = encodeURIComponent(`Hello ${order.name}, Rajesh Framing here regarding your Order #${order.id} for ${order.product}. Status: ${order.status}. Total: ₹${order.estimatedValue}.`);
+  if (waBtn) waBtn.href = `https://wa.me/${cleanPhone}?text=${waText}`;
+
+  // Structured items list
+  let items = Array.isArray(order.items) && order.items.length ? order.items : [];
+  if (!items.length) {
+    let size = 'Standard';
+    let finish = 'Standard';
+    if (order.specs) {
+      const sm = order.specs.match(/(\d+[\s"x×]+[\d"'\s]+|[A-Za-z0-9]+\s*(?:Classic|Large|Small|Medium|Square|Mini|Portrait|Landscape))/i);
+      if (sm) size = sm[1].trim();
+      const fm = order.specs.match(/(?:in|with|finish|color|standoffs|black|gold|wood|white|silver)[\s:]*([^,•\n\r]+)/i);
+      if (fm) finish = fm[1].trim();
+    }
+    items = [{
+      name: (order.product || 'Photo Frame').replace('[ONLINE ORDER]', '').trim(),
+      quantity: order.quantity || 1,
+      size: order.size || size,
+      finish: order.finish || finish,
+      price: order.estimatedValue || 0,
+      lineTotal: order.estimatedValue || 0,
+      image: getProductThumbnail(order.product),
+      uploadedPhoto: custPhoto ? { fileUrl: custPhoto.url, fileName: custPhoto.name } : null
+    }];
+  }
+
+  const itemsRowsHTML = items.map(it => {
+    const itemImg = it.image || getProductThumbnail(it.name);
+    const itemPhoto = it.uploadedPhoto ? (it.uploadedPhoto.fileUrl || it.uploadedPhoto) : (custPhoto ? custPhoto.url : null);
+    const itemPhotoName = it.uploadedPhoto ? (it.uploadedPhoto.fileName || it.uploadedPhoto.originalName || 'Customer Photo') : (custPhoto ? custPhoto.name : null);
+    const itemSize = it.size || 'Standard';
+    const itemFinish = it.finish || 'Standard';
+    const lineTotal = Number(it.lineTotal || (it.price * it.quantity) || 0).toLocaleString('en-IN');
+
+    return `
+      <tr class="order-detail-item-row">
+        <td>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="${itemImg}" alt="${escapeHtml(it.name)}" class="order-detail-item-thumb" onerror="this.src='assets/images/glass_frame.jpg'" />
+            <div>
+              <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">${escapeHtml(it.name)}</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Item ID: ${escapeHtml(it.id || 'std')}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="order-detail-spec-badge size">📏 ${escapeHtml(itemSize)}</span>
+        </td>
+        <td>
+          <span class="order-detail-spec-badge finish">🎨 ${escapeHtml(itemFinish)}</span>
+        </td>
+        <td>
+          ${itemPhoto ? `
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <img src="${escapeHtml(itemPhoto)}" alt="Photo" class="order-detail-photo-mini" onclick="openCustomerPhotoModal('${escapeHtml(itemPhoto)}', '${escapeHtml(order.id)}', '${escapeHtml(order.name)}', '${escapeHtml(itemPhotoName)}')" title="Click to view full photo" />
+              <button type="button" class="btn-detail-view-photo" onclick="openCustomerPhotoModal('${escapeHtml(itemPhoto)}', '${escapeHtml(order.id)}', '${escapeHtml(order.name)}', '${escapeHtml(itemPhotoName)}')">🔍 View</button>
+            </div>
+          ` : `
+            <span style="font-size: 0.72rem; color: var(--text-muted);">No Custom Photo</span>
+          `}
+        </td>
+        <td style="text-align: center; font-weight: 600;">${it.quantity || 1}</td>
+        <td style="text-align: right; font-weight: 600;">₹${Number(it.price || 0).toLocaleString('en-IN')}</td>
+        <td style="text-align: right; font-weight: 800; color: var(--primary);">₹${lineTotal}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const subtotalVal = Number(order.subtotal || order.estimatedValue || 0).toLocaleString('en-IN');
+  const totalVal = Number(order.total || order.estimatedValue || 0).toLocaleString('en-IN');
+
+  bodyEl.innerHTML = `
+    <!-- Top 3 Info Cards -->
+    <div class="order-detail-cards-grid">
+      <!-- 1. Customer & Contact -->
+      <div class="order-detail-card">
+        <div class="order-detail-card-title">👤 CUSTOMER &amp; CONTACT</div>
+        <div class="order-detail-card-name">${escapeHtml(order.name)}</div>
+        <div class="order-detail-card-row">
+          <span>📞 Phone:</span>
+          <a href="tel:${cleanPhone}" style="color: var(--primary); text-decoration: none; font-weight: 600;">${escapeHtml(order.phone)}</a>
+          <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" class="order-detail-wa-link" title="Open WhatsApp Chat">💬 Chat</a>
+        </div>
+        <div class="order-detail-card-row">
+          <span>✉️ Email:</span>
+          <a href="mailto:${escapeHtml(custEmail)}" style="color: var(--text-secondary); text-decoration: none;">${escapeHtml(custEmail)}</a>
+        </div>
+        <div class="order-detail-card-row" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+          <span>🕒 Ordered:</span> <span>${dateFormatted}</span>
+        </div>
+      </div>
+
+      <!-- 2. Delivery & Destination -->
+      <div class="order-detail-card">
+        <div class="order-detail-card-title">📍 DELIVERY &amp; DESTINATION</div>
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+          <span class="order-detail-delivery-pill">${trackingMode === 'Doorstep Delivery' ? '🚚 Deliver to Doorstep' : '🏢 Studio Counter Pickup'}</span>
+        </div>
+        <div class="order-detail-card-address">${escapeHtml(deliveryAddress)}</div>
+      </div>
+
+      <!-- 3. Payment & Settlement -->
+      <div class="order-detail-card">
+        <div class="order-detail-card-title">💳 PAYMENT &amp; SETTLEMENT</div>
+        <div class="order-detail-card-row">
+          <span>Method:</span>
+          <strong>${escapeHtml(paymentMethod)}</strong>
+        </div>
+        <div class="order-detail-card-row">
+          <span>Status:</span>
+          <span class="status-pill ${order.status === 'Completed' || paymentMethod.includes('UPI') ? 'paid' : 'pending'}" style="font-size: 0.68rem; padding: 2px 7px;">
+            <span class="status-dot"></span> ${paymentMethod.includes('UPI') ? 'Paid Online' : 'Pending (Pay on Delivery)'}
+          </span>
+        </div>
+        ${upiUtr ? `
+          <div class="order-detail-card-row">
+            <span>UTR / Ref:</span>
+            <code style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">${escapeHtml(upiUtr)}</code>
+          </div>
+        ` : ''}
+        <div class="order-detail-card-row" style="margin-top: 4px; border-top: 1px dashed var(--border-subtle); padding-top: 4px;">
+          <span>Total Value:</span>
+          <strong style="color: var(--primary); font-size: 1.1rem;">₹${totalVal}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items Table -->
+    <div style="margin-top: 20px;">
+      <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px;">
+        📦 ORDERED PRODUCTS &amp; CUSTOM SPECIFICATIONS (${items.length} item${items.length > 1 ? 's' : ''})
+      </div>
+      <div class="order-detail-table-wrap">
+        <table class="order-detail-table">
+          <thead>
+            <tr>
+              <th>Product Ordered</th>
+              <th>Selected Size</th>
+              <th>Frame Color / Finish</th>
+              <th>Customer Photo</th>
+              <th style="text-align: center;">Qty</th>
+              <th style="text-align: right;">Price</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsRowsHTML}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Order Notes Callout -->
+    ${order.notes && order.notes.trim() && !order.notes.toLowerCase().includes('none') ? `
+      <div class="order-detail-note-box">
+        <span style="font-size: 1.1rem; flex-shrink: 0;">📝</span>
+        <div>
+          <strong style="color: var(--primary); font-size: 0.75rem; text-transform: uppercase; display: block; margin-bottom: 2px;">Customer Special Instructions / Notes:</strong>
+          <span style="font-size: 0.84rem; color: var(--text-main);">${escapeHtml(order.notes)}</span>
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- Financial Breakdown -->
+    <div class="order-detail-summary-grid">
+      <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; color: var(--text-muted);">
+        <div>✓ Museum Archival Grade Quality Framing</div>
+        <div>✓ 12-Color HD Custom Printing Included</div>
+        <div>✓ GST &amp; Taxes Included</div>
+      </div>
+      <div class="order-detail-totals-box">
+        <div class="order-detail-total-line">
+          <span>Items Subtotal:</span>
+          <span>₹${subtotalVal}</span>
+        </div>
+        <div class="order-detail-total-line">
+          <span>Shipping &amp; Transit Packaging:</span>
+          <span style="color: #10B981; font-weight: 700;">FREE</span>
+        </div>
+        <div class="order-detail-total-line grand-total">
+          <span>Grand Total:</span>
+          <span>₹${totalVal}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('open');
+};
+
+window.closeOrderDetailsModal = () => {
+  const modal = document.getElementById('orderDetailsModal');
+  if (modal) modal.classList.remove('open');
+};
+
+window.printCurrentOrderReceipt = () => {
+  if (!currentViewingOrder) return;
+  const order = currentViewingOrder;
+  const deliveryAddress = getOrderDeliveryAddress(order);
+  const custEmail = order.customerEmail || (order.customer && order.customer.email) || order.email || 'N/A';
+  const paymentMethod = order.paymentMethod || (order.specs && order.specs.includes('Instant UPI') ? 'Instant UPI Payment (QR Code)' : 'Pay on Delivery / COD');
+  const upiUtr = order.upiUtr || '';
+  
+  let items = Array.isArray(order.items) && order.items.length ? order.items : [];
+  if (!items.length) {
+    items = [{
+      name: (order.product || 'Photo Frame').replace('[ONLINE ORDER]', '').trim(),
+      quantity: order.quantity || 1,
+      size: order.size || 'Standard',
+      finish: order.finish || 'Standard',
+      price: order.estimatedValue || 0,
+      lineTotal: order.estimatedValue || 0
+    }];
+  }
+
+  const itemsHtml = items.map((it, idx) => `
+    <tr>
+      <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">${idx + 1}</td>
+      <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">
+        <strong>${escapeHtml(it.name)}</strong>
+        <div style="font-size: 11px; color: #64748b;">Size: ${escapeHtml(it.size || 'Standard')} | Finish: ${escapeHtml(it.finish || 'Standard')}</div>
+      </td>
+      <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${it.quantity || 1}</td>
+      <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹${Number(it.price || 0).toLocaleString('en-IN')}</td>
+      <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold;">₹${Number(it.lineTotal || (it.price * it.quantity) || 0).toLocaleString('en-IN')}</td>
+    </tr>
+  `).join('');
+
+  const printWindow = window.open('', '_blank', 'width=800,height=900');
+  if (!printWindow) return;
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Order Receipt #${escapeHtml(order.id)} - Rajesh Framing</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; padding: 32px; margin: 0; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #C99A3D; padding-bottom: 16px; margin-bottom: 24px; }
+        .brand { font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+        .brand span { color: #C99A3D; }
+        .order-meta { text-align: right; font-size: 13px; color: #475569; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+        .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; font-size: 13px; }
+        .card-title { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; letter-spacing: 0.5px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 12px; text-align: left; font-weight: 700; color: #334155; border-bottom: 1px solid #cbd5e1; }
+        .total-box { margin-left: auto; width: 280px; font-size: 13px; }
+        .total-row { display: flex; justify-content: space-between; padding: 6px 0; }
+        .grand-total { border-top: 2px solid #0f172a; padding-top: 8px; font-size: 16px; font-weight: 800; color: #C99A3D; }
+        .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+        @media print { body { padding: 16px; } }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div>
+          <div class="brand">RAJESH <span>FRAMING</span></div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Custom Framing &amp; Archival Printing Studio</div>
+          <div style="font-size: 11px; color: #94a3b8;">Near Railway Station, Dahej / Bharuch, Gujarat • Tel: +91 96015 74966</div>
+        </div>
+        <div class="order-meta">
+          <div style="font-size: 18px; font-weight: 800; color: #0f172a;">#${escapeHtml(order.id)}</div>
+          <div>Date: ${new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+          <div>Status: <strong>${escapeHtml(order.status)}</strong></div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="card-title">CUSTOMER DETAILS</div>
+          <div style="font-weight: 700; font-size: 14px;">${escapeHtml(order.name)}</div>
+          <div>Phone: ${escapeHtml(order.phone)}</div>
+          <div>Email: ${escapeHtml(custEmail)}</div>
+        </div>
+        <div class="card">
+          <div class="card-title">DELIVERY &amp; PAYMENT</div>
+          <div><strong>Deliver to:</strong> ${escapeHtml(deliveryAddress)}</div>
+          <div style="margin-top: 4px;"><strong>Payment:</strong> ${escapeHtml(paymentMethod)} ${upiUtr ? '[UTR: ' + escapeHtml(upiUtr) + ']' : ''}</div>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 30px;">#</th>
+            <th>Item &amp; Specifications</th>
+            <th style="text-align: center; width: 60px;">Qty</th>
+            <th style="text-align: right; width: 90px;">Rate</th>
+            <th style="text-align: right; width: 100px;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHtml}
+        </tbody>
+      </table>
+
+      <div class="total-box">
+        <div class="total-row">
+          <span>Items Total:</span>
+          <span>₹${Number(order.subtotal || order.estimatedValue || 0).toLocaleString('en-IN')}</span>
+        </div>
+        <div class="total-row">
+          <span>Shipping:</span>
+          <span>FREE</span>
+        </div>
+        <div class="total-row grand-total">
+          <span>Total Payable:</span>
+          <span>₹${Number(order.total || order.estimatedValue || 0).toLocaleString('en-IN')}</span>
+        </div>
+      </div>
+
+      ${order.notes && order.notes.trim() ? `
+        <div style="margin-top: 20px; padding: 10px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; font-size: 12px;">
+          <strong>Order Notes:</strong> ${escapeHtml(order.notes)}
+        </div>
+      ` : ''}
+
+      <div class="footer">
+        Thank you for choosing Rajesh Framing Studio! For inquiries or re-prints, WhatsApp us at +91 96015 74966.
+      </div>
+      <script>
+        window.onload = function() { window.print(); };
+      </script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+};
 
 /* ==========================================================================
    RENDER: GRAPHURA LEADS TABLE (IMAGE 3)
