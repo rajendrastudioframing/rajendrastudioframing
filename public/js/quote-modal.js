@@ -153,7 +153,7 @@ function injectQuoteModalMarkup() {
             </p>
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
               <button type="button" class="btn btn-primary" id="successDoneBtn">Done</button>
-              <a href="https://wa.me/919328081006?text=Hello%20Rajesh%20Framing,%20following%20up%20on%20my%20enquiry" target="_blank" class="btn btn-whatsapp">
+              <a href="https://wa.me/919601574966?text=Hello%20Rajesh%20Framing,%20following%20up%20on%20my%20enquiry" target="_blank" class="btn btn-whatsapp">
                 <span>Direct WhatsApp Follow-up</span>
               </a>
             </div>
@@ -390,7 +390,7 @@ function bindQuoteFormSubmit() {
 
       const msg = `Hello Rajesh Framing!\n\nI would like to make an enquiry:\n• Name: ${name}\n• Phone: ${phone}${email ? `\n• Email: ${email}` : ''}\n• Product/Service: ${product}\n• Quantity: ${qty}\n• Preferred Size: ${dimensions}\n• Requirements: ${req}\n\nLooking forward to hearing from you!`;
 
-      const whatsappUrl = `https://wa.me/919328081006?text=${encodeURIComponent(msg)}`;
+      const whatsappUrl = `https://wa.me/919601574966?text=${encodeURIComponent(msg)}`;
       window.open(whatsappUrl, '_blank');
     });
   }

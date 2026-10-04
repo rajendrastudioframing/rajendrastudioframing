@@ -395,8 +395,8 @@ ON CONFLICT (id) DO UPDATE SET
 -- Seed Initial Customer Accounts
 INSERT INTO public.customers (id, name, email, phone, registered_at, last_login_at, login_count, total_orders, total_spent, status)
 VALUES
-('CUST-0001', 'Kavya Tandel', 'tandelkavya1002@gmail.com', '+919328081006', '2026-09-26T11:45:20.094Z', NOW(), 1, 3, 1850, 'Active'),
-('CUST-0002', 'Kavya Tandel', 'rajeshframing0@gmail.com', '9328081006', '2026-09-26T09:40:46.446Z', NOW(), 1, 2, 899, 'Active')
+('CUST-0001', 'Kavya Tandel', 'tandelkavya1002@gmail.com', '+919601574966', '2026-09-26T11:45:20.094Z', NOW(), 1, 3, 1850, 'Active'),
+('CUST-0002', 'Kavya Tandel', 'rajeshframing0@gmail.com', '9601574966', '2026-09-26T09:40:46.446Z', NOW(), 1, 2, 899, 'Active')
 ON CONFLICT (email) DO UPDATE SET
   name = EXCLUDED.name,
   phone = EXCLUDED.phone,
