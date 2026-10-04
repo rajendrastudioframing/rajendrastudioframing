@@ -125,6 +125,70 @@ function saveCustomerSessions() {
   }
 }
 
+// Secure HMAC-Signed Customer Tokens & Stateless Session Verification
+const CUSTOMER_SESSION_SECRET = process.env.CUSTOMER_SESSION_SECRET || 'rajesh_framing_customer_auth_sig_2026';
+const revokedCustomerTokens = new Set();
+
+function generateCustomerToken(email, name = '', phone = '') {
+  const sessionExpiresAt = Date.now() + 60 * 24 * 60 * 60 * 1000; // 60 days validity
+  const payload = {
+    email: email.trim().toLowerCase(),
+    name: name || '',
+    phone: phone || '',
+    createdAt: Date.now(),
+    expiresAt: sessionExpiresAt,
+    salt: crypto.randomBytes(8).toString('hex')
+  };
+  const payloadBase64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', CUSTOMER_SESSION_SECRET).update(payloadBase64).digest('hex');
+  return `rf_cust_${payloadBase64}.${signature}`;
+}
+
+function verifyCustomerToken(token) {
+  if (!token || typeof token !== 'string' || !token.startsWith('rf_cust_')) return null;
+  const raw = token.slice('rf_cust_'.length);
+  const dotIndex = raw.lastIndexOf('.');
+  if (dotIndex === -1) return null;
+  const payloadBase64 = raw.substring(0, dotIndex);
+  const signature = raw.substring(dotIndex + 1);
+  
+  const expectedSignature = crypto.createHmac('sha256', CUSTOMER_SESSION_SECRET).update(payloadBase64).digest('hex');
+  if (signature !== expectedSignature) return null;
+
+  try {
+    const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString('utf8'));
+    if (!payload || !payload.expiresAt || !payload.email) return null;
+    if (Date.now() > payload.expiresAt) return null; // Token expired
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+
+function getCustomerSession(token) {
+  if (!token || typeof token !== 'string') return null;
+  if (revokedCustomerTokens.has(token)) return null;
+
+  // 1. HMAC signature verification (Stateless - works across restarts & Vercel lambdas)
+  const tokenPayload = verifyCustomerToken(token);
+  if (tokenPayload) {
+    return tokenPayload;
+  }
+
+  // 2. Legacy token fallback (e.g. random hex in customerSessions)
+  const session = customerSessions.get(token);
+  if (session) {
+    if (Date.now() > session.expiresAt) {
+      customerSessions.delete(token);
+      saveCustomerSessions();
+      return null;
+    }
+    return session;
+  }
+
+  return null;
+}
+
 // Nodemailer Transporter Factory (Supports Cloud Env Vars + Supabase Config + Local)
 function createTransporter(customConfig = null) {
   // 1. Check environment variables first (ideal for Vercel & Production)
@@ -1012,19 +1076,19 @@ function requireCustomerAuth(req, res, next) {
   }
 
   const token = authHeader.split(' ')[1];
-  let session = customerSessions.get(token);
+  const session = getCustomerSession(token);
 
   if (!session) {
-    return res.status(401).json({ success: false, message: 'Session expired or invalid. Please request a new OTP.' });
-  }
-
-  if (Date.now() > session.expiresAt) {
-    customerSessions.delete(token);
-    saveCustomerSessions();
-    return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
+    return res.status(401).json({ 
+      success: false, 
+      revoked: revokedCustomerTokens.has(token),
+      message: 'Session expired or invalid. Please request a new OTP.' 
+    });
   }
 
   req.customerEmail = session.email;
+  req.customerName = session.name || '';
+  req.customerPhone = session.phone || '';
   next();
 }
 
@@ -1044,6 +1108,15 @@ app.post('/api/customer/auth/send-otp', async (req, res) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
       return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+
+    if (!cleanName) {
+      return res.status(400).json({ success: false, message: 'Your full name is compulsory. Please enter your name.' });
+    }
+
+    const phoneDigits = cleanPhone.replace(/\D/g, '');
+    if (!cleanPhone || phoneDigits.length < 10) {
+      return res.status(400).json({ success: false, message: 'A valid 10-digit mobile number is compulsory. Please enter your mobile number.' });
     }
 
     // Rate limiting: 30s cooldown
@@ -1076,7 +1149,7 @@ app.post('/api/customer/auth/send-otp', async (req, res) => {
       console.warn('Could not stage customer record on send-otp:', recordErr.message);
     }
 
-    console.log(`🔐 [CUSTOMER OTP GENERATED] Recipient: ${cleanEmail} (Valid for 5 mins)`);
+    console.log(`🔐 [CUSTOMER OTP GENERATED] Recipient: ${cleanEmail} | Passcode: ${otp} (Valid for 5 mins)`);
 
     const config = await db.getAdminConfig();
     const transporter = createTransporter(config);
@@ -1169,19 +1242,22 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
     // Correct OTP! Clear OTP immediately (single use only)
     customerOtps.delete(cleanEmail);
 
-    // Create secure customer session token
-    const token = 'rf_cust_' + crypto.randomBytes(32).toString('hex');
-    const sessionExpiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
+    const customerName = (req.body.name && req.body.name.trim()) || (stored && stored.name) || '';
+    const customerPhone = (req.body.phone && req.body.phone.trim()) || (stored && stored.phone) || '';
+
+    // Create cryptographically signed customer session token (60 days validity)
+    const token = generateCustomerToken(cleanEmail, customerName, customerPhone);
+    const sessionExpiresAt = Date.now() + 60 * 24 * 60 * 60 * 1000;
 
     customerSessions.set(token, {
       email: cleanEmail,
+      name: customerName,
+      phone: customerPhone,
       createdAt: Date.now(),
       expiresAt: sessionExpiresAt
     });
     saveCustomerSessions();
 
-    const customerName = (req.body.name && req.body.name.trim()) || (stored && stored.name) || '';
-    const customerPhone = (req.body.phone && req.body.phone.trim()) || (stored && stored.phone) || '';
     const customerProfile = await db.recordCustomerLogin(cleanEmail, customerName, customerPhone, true);
 
     console.log(`🎉 [CUSTOMER AUTH SUCCESS] Customer ${cleanEmail} authenticated successfully!`);
@@ -1191,7 +1267,9 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
       message: 'Successfully logged in!',
       token,
       customer: customerProfile || {
-        email: cleanEmail
+        email: cleanEmail,
+        name: customerName,
+        phone: customerPhone
       }
     });
 
@@ -1272,14 +1350,27 @@ app.post('/api/customer/auth/resend-otp', async (req, res) => {
  * Get Current Customer Session
  */
 app.get('/api/customer/auth/me', requireCustomerAuth, async (req, res) => {
-  const customers = await db.getCustomers();
-  const profile = customers.find(c => c.email && c.email.toLowerCase() === req.customerEmail.toLowerCase());
-  res.json({
-    success: true,
-    customer: profile || {
-      email: req.customerEmail
-    }
-  });
+  try {
+    const customers = await db.getCustomers();
+    const profile = customers.find(c => c.email && c.email.toLowerCase() === req.customerEmail.toLowerCase());
+    res.json({
+      success: true,
+      customer: profile || {
+        email: req.customerEmail,
+        name: req.customerName || '',
+        phone: req.customerPhone || ''
+      }
+    });
+  } catch (err) {
+    res.json({
+      success: true,
+      customer: {
+        email: req.customerEmail,
+        name: req.customerName || '',
+        phone: req.customerPhone || ''
+      }
+    });
+  }
 });
 
 /**
@@ -1310,6 +1401,7 @@ app.post('/api/customer/auth/logout', (req, res) => {
   const authHeader = req.headers['authorization'];
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
+    revokedCustomerTokens.add(token);
     customerSessions.delete(token);
     saveCustomerSessions();
   }
@@ -1518,8 +1610,8 @@ app.post('/api/orders', async (req, res) => {
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      const session = customerSessions.get(token);
-      if (session && Date.now() <= session.expiresAt) {
+      const session = getCustomerSession(token);
+      if (session) {
         authenticatedEmail = session.email;
       }
     }

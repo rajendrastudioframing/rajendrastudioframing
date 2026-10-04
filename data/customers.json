@@ -1,5 +1,29 @@
 [
   {
+    "id": "CUST-0004",
+    "name": "Rahul Sharma",
+    "email": "test@example.com",
+    "phone": "9876543210",
+    "registeredAt": "2026-10-04T04:57:15.807Z",
+    "lastLoginAt": null,
+    "loginCount": 0,
+    "totalOrders": 0,
+    "totalSpent": 0,
+    "status": "Registered"
+  },
+  {
+    "id": "CUST-0003",
+    "name": "Kavya",
+    "email": "kavya@gmail.com",
+    "phone": "9876543210",
+    "registeredAt": "2026-10-03T18:37:56.394Z",
+    "lastLoginAt": null,
+    "loginCount": 0,
+    "totalOrders": 0,
+    "totalSpent": 0,
+    "status": "Registered"
+  },
+  {
     "id": "CUST-0001",
     "name": "Kavya Tandel",
     "email": "tandelkavya1002@gmail.com",

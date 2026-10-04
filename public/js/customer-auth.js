@@ -66,7 +66,22 @@
   // Public Auth API Object
   window.CustomerAuth = {
     isCustomerLoggedIn() {
-      return Boolean(localStorage.getItem(TOKEN_KEY));
+      const token = this.getCustomerToken();
+      if (!token) return false;
+      try {
+        if (token.startsWith('rf_cust_')) {
+          const rawPayload = token.slice('rf_cust_'.length).split('.')[0];
+          if (rawPayload) {
+            const decoded = JSON.parse(atob(rawPayload.replace(/-/g, '+').replace(/_/g, '/')));
+            if (decoded && decoded.expiresAt && Date.now() > decoded.expiresAt) {
+              localStorage.removeItem(TOKEN_KEY);
+              localStorage.removeItem(USER_KEY);
+              return false;
+            }
+          }
+        }
+      } catch (e) {}
+      return true;
     },
 
     getCustomerToken() {
@@ -76,10 +91,42 @@
     getCustomerUser() {
       try {
         const raw = localStorage.getItem(USER_KEY);
-        return raw ? JSON.parse(raw) : null;
+        if (raw) return JSON.parse(raw);
+
+        // Fallback: decode directly from stateless HMAC token payload
+        const token = this.getCustomerToken();
+        if (token && token.startsWith('rf_cust_')) {
+          const rawPayload = token.slice('rf_cust_'.length).split('.')[0];
+          if (rawPayload) {
+            const decoded = JSON.parse(atob(rawPayload.replace(/-/g, '+').replace(/_/g, '/')));
+            if (decoded && decoded.email) {
+              const recovered = {
+                email: decoded.email,
+                name: decoded.name || '',
+                phone: decoded.phone || ''
+              };
+              localStorage.setItem(USER_KEY, JSON.stringify(recovered));
+              return recovered;
+            }
+          }
+        }
+        return null;
       } catch (e) {
         return null;
       }
+    },
+
+    getSession() {
+      const token = this.getCustomerToken();
+      const user = this.getCustomerUser();
+      if (!token) return null;
+      return {
+        token,
+        email: user?.email || '',
+        name: user?.name || '',
+        phone: user?.phone || '',
+        ...user
+      };
     },
 
     async checkSession() {
@@ -89,15 +136,22 @@
         const res = await requestApi('/api/customer/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        if (!res || !res.ok) {
+          // Keep session active on server restart, cold start, or network hiccups
+          return true;
+        }
         const data = await parseResponseJson(res);
         if (data && data.success && data.customer) {
           localStorage.setItem(USER_KEY, JSON.stringify(data.customer));
           this.notifyStateChange(true, data.customer);
           return true;
-        } else {
+        } else if (res.status === 401 && data && (data.revoked || data.code === 'REVOKED')) {
+          // Explicit token revocation from logout only
           this.logoutCustomer(false);
           return false;
         }
+        // In all other cases, retain local session
+        return true;
       } catch (e) {
         // Retain local session if network temporarily drops
         return true;
@@ -198,10 +252,19 @@
         modal.classList.remove('open');
         document.body.style.overflow = '';
       }
+    },
+
+    openModal(mode, cb) {
+      this.openAuthModal(typeof mode === 'function' ? mode : cb);
+    },
+
+    closeModal() {
+      this.closeAuthModal();
     }
   };
 
   // Aliases for convenient usage
+  window.customerAuth = window.CustomerAuth;
   window.isCustomerLoggedIn = () => window.CustomerAuth.isCustomerLoggedIn();
   window.getCustomerToken = () => window.CustomerAuth.getCustomerToken();
   window.getCustomerUser = () => window.CustomerAuth.getCustomerUser();
@@ -210,10 +273,36 @@
   window.logoutCustomer = (redirect) => window.CustomerAuth.logoutCustomer(redirect);
 
   /* --- DOM Setup & Event Listeners --- */
-  document.addEventListener('DOMContentLoaded', () => {
+  function initCustomerAuthUI() {
     ensureModalInDom();
     updateNavbarCustomerUI();
     window.CustomerAuth.checkSession();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCustomerAuthUI);
+  } else {
+    initCustomerAuthUI();
+  }
+
+  // Cross-tab synchronization
+  window.addEventListener('storage', (e) => {
+    if (e.key === TOKEN_KEY || e.key === USER_KEY) {
+      updateNavbarCustomerUI();
+      window.dispatchEvent(new CustomEvent('customerAuthStateChanged', {
+        detail: {
+          isLoggedIn: window.CustomerAuth.isCustomerLoggedIn(),
+          customer: window.CustomerAuth.getCustomerUser()
+        }
+      }));
+    }
+  });
+
+  // Global click listener to close customer dropdown menu
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.cust-dropdown-menu').forEach(m => {
+      m.style.display = 'none';
+    });
   });
 
   /* --- Navbar UI Integration --- */
@@ -222,18 +311,19 @@
     const user = window.CustomerAuth.getCustomerUser();
 
     // Look for all customer action buttons or containers across navbar
-    const customerBtns = document.querySelectorAll('.navbar-customer-btn, #navCustomerBtn, .nav-customer-slot');
+    const customerBtns = document.querySelectorAll('.navbar-customer-btn, #navCustomerBtn, .nav-customer-slot, #navCustomerSlot');
     customerBtns.forEach(container => {
       if (loggedIn && user) {
         const displayName = (user.name && user.name.trim() !== 'Valued Customer') 
           ? user.name.split(' ')[0] 
           : (user.email ? user.email.split('@')[0] : 'Account');
+        const firstLetter = (displayName.charAt(0) || 'A').toUpperCase();
 
         container.innerHTML = `
           <div class="cust-account-dropdown-wrap" style="position: relative; display: inline-block;">
             <button type="button" class="btn btn-sm btn-outline cust-nav-profile-btn" style="border-radius: 9999px; padding: 7px 16px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.8125rem; font-weight: 600;">
               <span style="width: 22px; height: 22px; border-radius: 50%; background: #C99A3D; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700;">
-                ${displayName.charAt(0).toUpperCase()}
+                ${firstLetter}
               </span>
               <span>Hi, ${displayName}</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -241,7 +331,7 @@
             <div class="cust-dropdown-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 6px); background: #ffffff; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.12); min-width: 200px; padding: 6px; z-index: 9999;">
               <div style="padding: 8px 12px; border-bottom: 1px solid #F3F4F6;">
                 <div style="font-size: 0.75rem; color: #6B7280;">Signed in as</div>
-                <div style="font-size: 0.8125rem; font-weight: 700; color: #111827; word-break: break-all;">${user.email}</div>
+                <div style="font-size: 0.8125rem; font-weight: 700; color: #111827; word-break: break-all;">${user.email || ''}</div>
               </div>
               <a href="track-order" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 0.8125rem; color: #374151; text-decoration: none; border-radius: 8px;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -261,10 +351,9 @@
         if (btn && menu) {
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-          });
-          document.addEventListener('click', () => {
-            menu.style.display = 'none';
+            const isOpen = menu.style.display === 'block';
+            document.querySelectorAll('.cust-dropdown-menu').forEach(m => m.style.display = 'none');
+            menu.style.display = isOpen ? 'none' : 'block';
           });
         }
 
@@ -319,18 +408,18 @@
             </div>
 
             <div class="cust-auth-input-group">
-              <label for="custAuthName" class="cust-auth-label">Your Full Name <span style="color:#6B7280; font-weight: normal; font-size:0.75rem;">(Optional)</span></label>
+              <label for="custAuthName" class="cust-auth-label">Your Full Name <span style="color:#DC2626;">*</span></label>
               <div class="cust-auth-input-wrap">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cust-input-icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                <input type="text" id="custAuthName" class="cust-auth-input" placeholder="e.g. Rahul Sharma" autocomplete="name" />
+                <input type="text" id="custAuthName" class="cust-auth-input" placeholder="e.g. Rahul Sharma" required autocomplete="name" />
               </div>
             </div>
 
             <div class="cust-auth-input-group">
-              <label for="custAuthPhone" class="cust-auth-label">Mobile Number <span style="color:#6B7280; font-weight: normal; font-size:0.75rem;">(Optional)</span></label>
+              <label for="custAuthPhone" class="cust-auth-label">Mobile Number <span style="color:#DC2626;">*</span></label>
               <div class="cust-auth-input-wrap">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cust-input-icon"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                <input type="tel" id="custAuthPhone" class="cust-auth-input" placeholder="e.g. +91 98765 43210" autocomplete="tel" />
+                <input type="tel" id="custAuthPhone" class="cust-auth-input" placeholder="e.g. +91 98765 43210" required autocomplete="tel" />
               </div>
             </div>
 
@@ -620,12 +709,26 @@
         const sendBtnText = document.getElementById('custAuthSendBtnText');
         const spinner = document.getElementById('custAuthSendSpinner');
 
-        const email = emailInput.value.trim();
+        const email = emailInput ? emailInput.value.trim() : '';
         const name = nameInput ? nameInput.value.trim() : '';
         const phone = phoneInput ? phoneInput.value.trim() : '';
 
         if (!email) {
           showModalAlert('danger', 'Please enter your email address.');
+          if (emailInput) emailInput.focus();
+          return;
+        }
+
+        if (!name) {
+          showModalAlert('danger', 'Please enter your full name (compulsory).');
+          if (nameInput) nameInput.focus();
+          return;
+        }
+
+        const phoneDigits = phone.replace(/\D/g, '');
+        if (!phone || phoneDigits.length < 10) {
+          showModalAlert('danger', 'Please enter a valid 10-digit mobile number (compulsory).');
+          if (phoneInput) phoneInput.focus();
           return;
         }
 
