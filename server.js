@@ -1452,8 +1452,79 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
  * Inquiries List (GET)
  */
 app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
-  const inquiries = await db.getInquiries();
-  res.json({ success: true, inquiries });
+  try {
+    const [inquiries, orders] = await Promise.all([
+      db.getInquiries(),
+      db.getOrders()
+    ]);
+
+    const ordersMap = new Map();
+    if (Array.isArray(orders)) {
+      orders.forEach(o => {
+        if (o && o.orderId) {
+          ordersMap.set(o.orderId.toLowerCase().trim(), o);
+        }
+      });
+    }
+
+    const enrichedInquiries = inquiries.map(inq => {
+      const cleanId = (inq.id || '').toLowerCase().trim();
+      const matchedOrder = ordersMap.get(cleanId);
+      
+      let deliveryAddress = '';
+      let customerPhotoUrl = inq.uploadedFileUrl || null;
+      let customerPhotoName = inq.uploadFileName || null;
+
+      if (matchedOrder) {
+        if (matchedOrder.customer) {
+          const addrParts = [
+            matchedOrder.customer.address,
+            matchedOrder.customer.city,
+            matchedOrder.customer.state,
+            matchedOrder.customer.pincode
+          ].filter(Boolean);
+          if (addrParts.length > 0) {
+            deliveryAddress = addrParts.join(', ');
+          }
+        }
+
+        if (!customerPhotoUrl && Array.isArray(matchedOrder.items)) {
+          const itWithPhoto = matchedOrder.items.find(it => it && it.uploadedPhoto && (it.uploadedPhoto.fileUrl || typeof it.uploadedPhoto === 'string'));
+          if (itWithPhoto) {
+            customerPhotoUrl = itWithPhoto.uploadedPhoto.fileUrl || itWithPhoto.uploadedPhoto;
+            customerPhotoName = itWithPhoto.uploadedPhoto.fileName || itWithPhoto.uploadedPhoto.originalName || 'Customer Photo';
+          }
+        }
+        if (!customerPhotoUrl && matchedOrder.orderPhoto && (matchedOrder.orderPhoto.fileUrl || typeof matchedOrder.orderPhoto === 'string')) {
+          customerPhotoUrl = matchedOrder.orderPhoto.fileUrl || matchedOrder.orderPhoto;
+          customerPhotoName = matchedOrder.orderPhoto.fileName || 'Customer Photo';
+        }
+      }
+
+      // Fallback address parsing from inq.notes or inq.specs
+      if (!deliveryAddress) {
+        if (inq.notes && inq.notes.toLowerCase().includes('full address:')) {
+          const match = inq.notes.match(/full\s*address:\s*([^.\n\r]+)/i);
+          if (match && match[1]) deliveryAddress = match[1].trim();
+        } else if (inq.specs && inq.specs.toLowerCase().includes('deliver to:')) {
+          const match = inq.specs.match(/deliver\s*to:\s*([^•\n\r]+)/i);
+          if (match && match[1]) deliveryAddress = match[1].trim();
+        }
+      }
+
+      return {
+        ...inq,
+        deliveryAddress: deliveryAddress || null,
+        customerPhotoUrl: customerPhotoUrl || inq.uploadedFileUrl || null,
+        customerPhotoName: customerPhotoName || inq.uploadFileName || null
+      };
+    });
+
+    res.json({ success: true, inquiries: enrichedInquiries });
+  } catch (err) {
+    console.error('Error fetching admin inquiries:', err);
+    res.status(500).json({ success: false, message: 'Failed to retrieve inquiries.' });
+  }
 });
 
 /**
@@ -1694,6 +1765,10 @@ app.post('/api/orders', async (req, res) => {
         status: 'New',
         hasUpload: Boolean(photoUrl),
         uploadFileName: photoName,
+        uploadedFileUrl: photoUrl,
+        customerPhotoUrl: photoUrl,
+        customerPhotoName: photoName,
+        deliveryAddress: `${newOrder.customer.address}, ${newOrder.customer.city} (${newOrder.customer.pincode})`,
         createdAt: newOrder.createdAt
       });
     } catch (inqErr) {

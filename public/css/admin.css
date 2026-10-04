@@ -1107,13 +1107,13 @@ body.admin-dashboard-body[data-theme="dark"] {
   box-shadow: var(--shadow-hover);
 }
 
-/* Top 7-Column Grid */
+/* Top 9-Column Grid (incorporating Customer Photo & Deliver To Destination) */
 .order-card-body {
   display: grid;
-  grid-template-columns: 58px 145px 185px 190px 150px 175px 1fr;
+  grid-template-columns: 54px 135px 145px 155px 110px minmax(160px, 1.2fr) 130px 135px 95px;
   align-items: center;
-  gap: 18px;
-  padding: 16px 22px;
+  gap: 14px;
+  padding: 16px 20px;
 }
 
 /* Thumbnail Wrap */
@@ -1244,6 +1244,145 @@ body.admin-dashboard-body[data-theme="dark"] {
   text-align: right;
   letter-spacing: -0.3px;
   font-variant-numeric: tabular-nums;
+}
+
+/* Customer Photo Column Styles */
+.order-col-photo {
+  align-items: flex-start;
+}
+
+.cust-photo-preview-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1.5px solid var(--primary);
+  background: var(--bg-hover);
+  position: relative;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cust-photo-preview-box:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(201, 154, 61, 0.3);
+  border-color: var(--primary-hover);
+}
+
+.cust-photo-mini-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cust-photo-hover-tag {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 1px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.cust-photo-preview-box:hover .cust-photo-hover-tag {
+  opacity: 1;
+}
+
+.photo-attached-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #10b981;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+.photo-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 5px rgba(16, 185, 129, 0.6);
+  flex-shrink: 0;
+}
+
+.cust-photo-none-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  border: 1px dashed var(--border-medium);
+  background: var(--bg-card-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--text-subtle);
+  font-size: 0.58rem;
+  font-weight: 600;
+}
+
+.photo-none-tag {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+/* Deliver To Column Styles */
+.order-col-delivery {
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.order-delivery-address {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.35;
+  max-width: 100%;
+}
+
+.delivery-pin-icon {
+  font-size: 0.82rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.delivery-address-text {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.delivery-type-tag {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 /* Status Badges with Glowing Dot Indicators */

@@ -10,9 +10,10 @@
     "estimatedValue": 450,
     "notes": "Order cancelled by studio. Reason: Material / Frame stock unavailable.",
     "status": "Cancelled",
-    "hasUpload": false,
-    "uploadedFileUrl": null,
-    "uploadedFileName": null,
+    "hasUpload": true,
+    "uploadedFileUrl": "assets/images/custom_canvas.jpg",
+    "uploadedFileName": "kavya_family_portrait.jpg",
+    "deliveryAddress": "g.h.patel college of engineering, anand (388120)",
     "createdAt": "2026-09-26T11:45:20.094Z",
     "updatedAt": "2026-09-26T11:46:53.925Z"
   },

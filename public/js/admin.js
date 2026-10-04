@@ -457,6 +457,90 @@ function renderAllOrders(orders) {
   container.innerHTML = orders.map(order => createOrderCardRowHTML(order)).join('');
 }
 
+function getOrderDeliveryAddress(order) {
+  if (order.deliveryAddress && typeof order.deliveryAddress === 'string' && order.deliveryAddress.trim() && !order.deliveryAddress.includes('undefined')) {
+    return order.deliveryAddress.trim();
+  }
+  if (order.customer && typeof order.customer === 'object') {
+    const parts = [
+      order.customer.address,
+      order.customer.city,
+      order.customer.state,
+      order.customer.pincode ? `(${order.customer.pincode})` : ''
+    ].filter(Boolean);
+    if (parts.length > 0) return parts.join(', ');
+  }
+  if (order.notes && typeof order.notes === 'string') {
+    const fullMatch = order.notes.match(/full\s*address:\s*([^.\n\r]+)/i);
+    if (fullMatch && fullMatch[1] && fullMatch[1].trim()) {
+      return fullMatch[1].trim();
+    }
+  }
+  if (order.specs && typeof order.specs === 'string') {
+    const delMatch = order.specs.match(/deliver\s*to:\s*([^•\n\r]+)/i);
+    if (delMatch && delMatch[1] && delMatch[1].trim()) {
+      return delMatch[1].trim();
+    }
+  }
+  if (order.specs && order.specs.includes('Deliver to:')) {
+    return 'Doorstep Delivery';
+  }
+  return 'Studio Pickup / Counter';
+}
+
+function getOrderCustomerPhoto(order) {
+  if (order.customerPhotoUrl && typeof order.customerPhotoUrl === 'string') {
+    return { url: order.customerPhotoUrl, name: order.customerPhotoName || 'Customer Photo' };
+  }
+  if (order.uploadedFileUrl && typeof order.uploadedFileUrl === 'string') {
+    return { url: order.uploadedFileUrl, name: order.uploadFileName || order.uploadedFileName || 'Customer Photo' };
+  }
+  if (order.uploadedPhoto && order.uploadedPhoto.fileUrl) {
+    return { url: order.uploadedPhoto.fileUrl, name: order.uploadedPhoto.fileName || 'Customer Photo' };
+  }
+  if (order.orderPhoto && order.orderPhoto.fileUrl) {
+    return { url: order.orderPhoto.fileUrl, name: order.orderPhoto.fileName || 'Customer Photo' };
+  }
+  if (Array.isArray(order.items)) {
+    const it = order.items.find(i => i && i.uploadedPhoto && (i.uploadedPhoto.fileUrl || typeof i.uploadedPhoto === 'string'));
+    if (it) {
+      return {
+        url: it.uploadedPhoto.fileUrl || it.uploadedPhoto,
+        name: it.uploadedPhoto.fileName || it.uploadedPhoto.originalName || 'Customer Photo'
+      };
+    }
+  }
+  if (order.hasUpload && order.uploadFileName) {
+    if (order.uploadFileName.startsWith('http') || order.uploadFileName.startsWith('assets/') || order.uploadFileName.startsWith('/')) {
+      return { url: order.uploadFileName, name: order.uploadFileName.split('/').pop() };
+    }
+    return { url: `assets/images/uploads/${order.uploadFileName}`, name: order.uploadFileName };
+  }
+  return null;
+}
+
+window.openCustomerPhotoModal = (photoUrl, orderId, customerName, fileName) => {
+  const modal = document.getElementById('viewCustomerPhotoModal');
+  const img = document.getElementById('photoModalImg');
+  const orderIdEl = document.getElementById('photoModalOrderId');
+  const nameEl = document.getElementById('photoModalCustName');
+  const fileEl = document.getElementById('photoModalFileName');
+  const openTab = document.getElementById('photoModalOpenTab');
+
+  if (img) img.src = photoUrl;
+  if (orderIdEl) orderIdEl.textContent = `#${orderId}`;
+  if (nameEl) nameEl.textContent = customerName || 'Customer';
+  if (fileEl) fileEl.textContent = fileName || 'Customer Uploaded Photo';
+  if (openTab) openTab.href = photoUrl;
+
+  if (modal) modal.classList.add('open');
+};
+
+window.closeCustomerPhotoModal = () => {
+  const modal = document.getElementById('viewCustomerPhotoModal');
+  if (modal) modal.classList.remove('open');
+};
+
 function createOrderCardRowHTML(order) {
   const thumb = getProductThumbnail(order.product);
   const cleanPhone = (order.phone || '').replace(/\D/g, '');
@@ -483,6 +567,9 @@ function createOrderCardRowHTML(order) {
   const trackingText = order.specs && order.specs.includes('Deliver to:') 
     ? 'Doorstep Delivery' 
     : 'Studio Pickup';
+
+  const deliveryAddress = getOrderDeliveryAddress(order);
+  const custPhoto = getOrderCustomerPhoto(order);
 
   const noteText = order.notes && !order.notes.includes('None')
     ? escapeHtml(order.notes)
@@ -520,7 +607,41 @@ function createOrderCardRowHTML(order) {
           <span class="prod-qty-text">Qty: ${order.quantity || 1}</span>
         </div>
 
-        <!-- 5. Payment Status -->
+        <!-- 5. Customer Photo (NEW COLUMN) -->
+        <div class="order-col-info order-col-photo">
+          <span class="col-field-label">Customer Photo</span>
+          ${custPhoto ? `
+            <div class="cust-photo-preview-box" onclick="openCustomerPhotoModal('${escapeHtml(custPhoto.url)}', '${escapeHtml(order.id)}', '${escapeHtml(order.name)}', '${escapeHtml(custPhoto.name)}')" title="Click to view full photo">
+              <img src="${escapeHtml(custPhoto.url)}" alt="${escapeHtml(custPhoto.name)}" class="cust-photo-mini-img" onerror="this.onerror=null; this.src='assets/images/custom_canvas.jpg';" />
+              <span class="cust-photo-hover-tag">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                View
+              </span>
+            </div>
+            <span class="photo-attached-tag" title="${escapeHtml(custPhoto.name)}">
+              <span class="photo-dot"></span>
+              Photo Attached
+            </span>
+          ` : `
+            <div class="cust-photo-none-box" title="Standard product order without custom photo">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              <span>No Photo</span>
+            </div>
+            <span class="photo-none-tag">Standard Item</span>
+          `}
+        </div>
+
+        <!-- 6. Deliver To (NEW COLUMN) -->
+        <div class="order-col-info order-col-delivery">
+          <span class="col-field-label">Deliver To</span>
+          <div class="order-delivery-address" title="${escapeHtml(deliveryAddress)}">
+            <span class="delivery-pin-icon">📍</span>
+            <span class="delivery-address-text">${escapeHtml(deliveryAddress)}</span>
+          </div>
+          <span class="delivery-type-tag">${trackingText}</span>
+        </div>
+
+        <!-- 7. Payment Status -->
         <div class="order-col-info">
           <span class="col-field-label">Payment Status</span>
           <span class="status-pill ${paymentClass}">
@@ -530,7 +651,7 @@ function createOrderCardRowHTML(order) {
           <span class="sub-meta-text">${paymentMethod}</span>
         </div>
 
-        <!-- 6. Delivery Status -->
+        <!-- 8. Delivery Status -->
         <div class="order-col-info">
           <span class="col-field-label">Delivery Status</span>
           <span class="status-pill ${deliveryClass}">
@@ -540,7 +661,7 @@ function createOrderCardRowHTML(order) {
           <span class="sub-meta-text">${trackingText}</span>
         </div>
 
-        <!-- 7. Amount -->
+        <!-- 9. Amount -->
         <div class="order-col-info" style="align-items: flex-end;">
           <span class="col-field-label">Amount</span>
           <span class="order-amount-text">₹${Number(order.estimatedValue || 0).toLocaleString('en-IN')}</span>

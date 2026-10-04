@@ -19,7 +19,10 @@
         "size": "8\" × 10\"",
         "finish": "Studio Matte Black",
         "image": "assets/images/plastic_frame.jpg",
-        "uploadedPhoto": null,
+        "uploadedPhoto": {
+          "fileUrl": "assets/images/custom_canvas.jpg",
+          "fileName": "kavya_family_portrait.jpg"
+        },
         "lineTotal": 450
       }
     ],
@@ -27,7 +30,10 @@
     "shipping": 0,
     "total": 450,
     "notes": "Order cancelled by studio. Reason: Material / Frame stock unavailable.",
-    "orderPhoto": null,
+    "orderPhoto": {
+      "fileUrl": "assets/images/custom_canvas.jpg",
+      "fileName": "kavya_family_portrait.jpg"
+    },
     "paymentMethod": "Instant UPI Payment (QR Code)",
     "upiUtr": "0",
     "status": "Cancelled",
