@@ -471,7 +471,7 @@ function getOrderDeliveryAddress(order) {
     if (parts.length > 0) return parts.join(', ');
   }
   if (order.notes && typeof order.notes === 'string') {
-    const fullMatch = order.notes.match(/full\s*address:\s*([^.\n\r]+)/i);
+    const fullMatch = order.notes.match(/full\s*address:\s*(.+)$/im);
     if (fullMatch && fullMatch[1] && fullMatch[1].trim()) {
       return fullMatch[1].trim();
     }
@@ -486,6 +486,23 @@ function getOrderDeliveryAddress(order) {
     return 'Doorstep Delivery';
   }
   return 'Studio Pickup / Counter';
+}
+
+function getOrderCustomerNote(order) {
+  let raw = (order.notes || '').trim();
+  if (!raw || raw.toLowerCase() === 'none' || raw.toLowerCase() === 'standard studio packaging') {
+    return '';
+  }
+  // If note contains "Full address:", extract only the genuine customer instruction preceding it
+  if (raw.toLowerCase().includes('full address:')) {
+    const notePart = raw.replace(/full\s*address:\s*.*$/i, '').trim();
+    const cleaned = notePart.replace(/^order\s*notes:\s*/i, '').trim().replace(/\.+$/, '');
+    if (cleaned && cleaned.toLowerCase() !== 'none' && cleaned.toLowerCase() !== 'standard studio packaging') {
+      return cleaned;
+    }
+    return '';
+  }
+  return raw.replace(/^order\s*notes:\s*/i, '').trim();
 }
 
 function getOrderCustomerPhoto(order) {
@@ -570,113 +587,158 @@ function createOrderCardRowHTML(order) {
 
   const deliveryAddress = getOrderDeliveryAddress(order);
   const custPhoto = getOrderCustomerPhoto(order);
+  const userNote = getOrderCustomerNote(order);
 
-  const noteText = order.notes && !order.notes.includes('None')
-    ? escapeHtml(order.notes)
-    : (order.specs ? escapeHtml(order.specs) : 'Standard Studio Packaging');
+  let cleanSpecs = '';
+  if (order.specs && typeof order.specs === 'string' && !order.specs.toLowerCase().includes('deliver to:')) {
+    cleanSpecs = order.specs.trim();
+  }
 
   const waText = encodeURIComponent(`Hello ${order.name}, Rajesh Framing here regarding your Order #${order.id} for ${cleanTitle}. Total: ₹${order.estimatedValue}.`);
 
   return `
     <div class="order-card-row" id="orderRow_${escapeHtml(order.id)}">
-      <div class="order-card-body">
-        <!-- 1. Thumbnail -->
-        <div class="order-thumb-wrap" title="${escapeHtml(cleanTitle)}">
-          <img src="${thumb}" alt="${escapeHtml(cleanTitle)}" class="order-thumb-img" onerror="this.src='assets/images/glass_frame.jpg'" />
-        </div>
-
-        <!-- 2. Order ID & Date -->
-        <div class="order-col-info">
-          <span class="order-id-num" onclick="copyToClipboard('${escapeHtml(order.id)}', 'Order ID')" title="Click to copy Order ID">#${escapeHtml(order.id)}</span>
-          <span class="order-timestamp">${dateFormatted}</span>
-        </div>
-
-        <!-- 3. Customer -->
-        <div class="order-col-info">
-          <span class="col-field-label">Customer</span>
-          <span class="cust-name-text">${escapeHtml(order.name)}</span>
-          <span class="cust-phone-text">
-            <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" title="Chat on WhatsApp">💬 ${escapeHtml(order.phone)}</a>
-          </span>
-        </div>
-
-        <!-- 4. Product -->
-        <div class="order-col-info">
-          <span class="col-field-label">Product</span>
-          <span class="prod-name-text" title="${escapeHtml(cleanTitle)}">${escapeHtml(cleanTitle)}</span>
-          <span class="prod-qty-text">Qty: ${order.quantity || 1}</span>
-        </div>
-
-        <!-- 5. Customer Photo (NEW COLUMN) -->
-        <div class="order-col-info order-col-photo">
-          <span class="col-field-label">Customer Photo</span>
-          ${custPhoto ? `
-            <div class="cust-photo-preview-box" onclick="openCustomerPhotoModal('${escapeHtml(custPhoto.url)}', '${escapeHtml(order.id)}', '${escapeHtml(order.name)}', '${escapeHtml(custPhoto.name)}')" title="Click to view full photo">
-              <img src="${escapeHtml(custPhoto.url)}" alt="${escapeHtml(custPhoto.name)}" class="cust-photo-mini-img" onerror="this.onerror=null; this.src='assets/images/custom_canvas.jpg';" />
-              <span class="cust-photo-hover-tag">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-                View
-              </span>
-            </div>
-            <span class="photo-attached-tag" title="${escapeHtml(custPhoto.name)}">
-              <span class="photo-dot"></span>
-              Photo Attached
-            </span>
-          ` : `
-            <div class="cust-photo-none-box" title="Standard product order without custom photo">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-              <span>No Photo</span>
-            </div>
-            <span class="photo-none-tag">Standard Item</span>
-          `}
-        </div>
-
-        <!-- 6. Deliver To (NEW COLUMN) -->
-        <div class="order-col-info order-col-delivery">
-          <span class="col-field-label">Deliver To</span>
-          <div class="order-delivery-address" title="${escapeHtml(deliveryAddress)}">
-            <span class="delivery-pin-icon">📍</span>
-            <span class="delivery-address-text">${escapeHtml(deliveryAddress)}</span>
+      <!-- 1. Top Order Header Bar: ID, Date, Status Badges (Left) & Total Amount (Right) -->
+      <div class="order-card-header">
+        <div class="order-header-left">
+          <div class="order-id-badge" onclick="copyToClipboard('${escapeHtml(order.id)}', 'Order ID')" title="Click to copy Order ID #${escapeHtml(order.id)}">
+            <span class="order-id-hash">#</span><span class="order-id-val">${escapeHtml(order.id)}</span>
+            <svg class="order-copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
           </div>
-          <span class="delivery-type-tag">${trackingText}</span>
-        </div>
-
-        <!-- 7. Payment Status -->
-        <div class="order-col-info">
-          <span class="col-field-label">Payment Status</span>
-          <span class="status-pill ${paymentClass}">
-            <span class="status-dot"></span>
-            ${paymentStatus}
+          <span class="order-header-date">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            ${dateFormatted}
           </span>
-          <span class="sub-meta-text">${paymentMethod}</span>
+          <div class="order-header-badges">
+            <span class="status-pill ${deliveryClass}">
+              <span class="status-dot"></span>
+              ${order.status}
+            </span>
+            <span class="status-pill ${paymentClass}">
+              <span class="status-dot"></span>
+              ${paymentStatus} • ${paymentMethod}
+            </span>
+            <span class="order-fulfillment-badge ${trackingText === 'Doorstep Delivery' ? 'doorstep' : 'pickup'}">
+              ${trackingText === 'Doorstep Delivery' ? '🚚 Doorstep Delivery' : '🏪 Studio Pickup'}
+            </span>
+          </div>
         </div>
 
-        <!-- 8. Delivery Status -->
-        <div class="order-col-info">
-          <span class="col-field-label">Delivery Status</span>
-          <span class="status-pill ${deliveryClass}">
-            <span class="status-dot"></span>
-            ${order.status}
-          </span>
-          <span class="sub-meta-text">${trackingText}</span>
-        </div>
-
-        <!-- 9. Amount -->
-        <div class="order-col-info" style="align-items: flex-end;">
-          <span class="col-field-label">Amount</span>
-          <span class="order-amount-text">₹${Number(order.estimatedValue || 0).toLocaleString('en-IN')}</span>
+        <div class="order-header-right">
+          <div class="order-amount-display">
+            <span class="order-amount-label">ORDER TOTAL</span>
+            <span class="order-amount-price">₹${Number(order.estimatedValue || 0).toLocaleString('en-IN')}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Order Footer Bar -->
-      <div class="order-card-footer">
-        <div class="order-note-block" title="${noteText}">
-          <span class="order-note-icon">📝</span>
-          <span class="order-note-label">Order Note:</span>
-          <span>${noteText}</span>
+      <!-- 2. Main Order Details Grid: 4 Dedicated Information Blocks -->
+      <div class="order-card-body-redesign">
+        <!-- Block 1: Product Ordered -->
+        <div class="order-block order-block-product">
+          <div class="order-block-label">
+            <span>📦</span> PRODUCT ORDERED
+          </div>
+          <div class="order-product-content">
+            <div class="order-thumb-wrap" title="${escapeHtml(cleanTitle)}">
+              <img src="${thumb}" alt="${escapeHtml(cleanTitle)}" class="order-thumb-img" onerror="this.src='assets/images/glass_frame.jpg'" />
+            </div>
+            <div class="order-product-meta">
+              <div class="order-product-name" title="${escapeHtml(cleanTitle)}">${escapeHtml(cleanTitle)}</div>
+              <div class="order-product-tags">
+                <span class="order-qty-chip">Qty: <strong>${order.quantity || 1}</strong></span>
+                ${cleanSpecs ? `<span class="order-specs-chip">${escapeHtml(cleanSpecs)}</span>` : ''}
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="order-action-buttons">
-          <!-- Direct Status Switcher (Always accessible for all orders) -->
+
+        <!-- Block 2: Customer & Contact -->
+        <div class="order-block order-block-customer">
+          <div class="order-block-label">
+            <span>👤</span> CUSTOMER &amp; CONTACT
+          </div>
+          <div class="order-customer-info">
+            <div class="order-cust-name-row">
+              <span class="order-cust-avatar">${(order.name || 'C').charAt(0).toUpperCase()}</span>
+              <span class="order-cust-fullname">${escapeHtml(order.name || 'Guest Customer')}</span>
+            </div>
+            <div class="order-cust-contact-actions">
+              <a href="tel:${cleanPhone}" class="order-phone-link" title="Call Customer">
+                📞 ${escapeHtml(order.phone || 'No phone')}
+              </a>
+              <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" class="order-wa-link" title="Chat on WhatsApp">
+                💬 WhatsApp Chat
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Block 3: Deliver To Destination (Complete Address, No Ellipsis) -->
+        <div class="order-block order-block-delivery">
+          <div class="order-block-label">
+            <span>📍</span> DELIVER TO (DESTINATION)
+          </div>
+          <div class="order-delivery-card">
+            <div class="order-delivery-icon-col">📍</div>
+            <div class="order-delivery-detail">
+              <div class="order-delivery-address-full">${escapeHtml(deliveryAddress)}</div>
+              <div class="order-delivery-mode-pill">
+                ${trackingText === 'Doorstep Delivery' ? '🚚 Deliver to Doorstep' : '🏪 Customer Studio Pickup'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Block 4: Customer Photo Uploaded -->
+        <div class="order-block order-block-photo">
+          <div class="order-block-label">
+            <span>📷</span> CUSTOMER PHOTO
+          </div>
+          ${custPhoto ? `
+            <div class="order-photo-active-card">
+              <div class="order-photo-preview-wrap" onclick="openCustomerPhotoModal('${escapeHtml(custPhoto.url)}', '${escapeHtml(order.id)}', '${escapeHtml(order.name)}', '${escapeHtml(custPhoto.name)}')" title="Click to view full photo">
+                <img src="${escapeHtml(custPhoto.url)}" alt="${escapeHtml(custPhoto.name)}" class="order-photo-img" onerror="this.onerror=null; this.src='assets/images/custom_canvas.jpg';" />
+                <div class="order-photo-zoom-overlay">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                </div>
+              </div>
+              <div class="order-photo-meta">
+                <span class="order-photo-badge success">
+                  <span class="photo-dot"></span> Photo Attached
+                </span>
+                <button type="button" class="btn-view-photo-modal" onclick="openCustomerPhotoModal('${escapeHtml(custPhoto.url)}', '${escapeHtml(order.id)}', '${escapeHtml(order.name)}', '${escapeHtml(custPhoto.name)}')">
+                  🔍 View Full Photo
+                </button>
+              </div>
+            </div>
+          ` : `
+            <div class="order-photo-none-card">
+              <div class="order-photo-empty-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              </div>
+              <div class="order-photo-empty-text">
+                <strong>No Custom Photo</strong>
+                <span>Standard Catalog Frame</span>
+              </div>
+            </div>
+          `}
+        </div>
+      </div>
+
+      <!-- 3. Customer Order Note / Special Instructions (if present) -->
+      ${userNote ? `
+        <div class="order-card-note-bar">
+          <span class="note-bar-icon">📝</span>
+          <span class="note-bar-label">Order Note:</span>
+          <span class="note-bar-text">${escapeHtml(userNote)}</span>
+        </div>
+      ` : ''}
+
+      <!-- 4. Order Action Footer Bar -->
+      <div class="order-card-footer">
+        <div class="order-footer-left">
+          <span class="footer-control-label">Status:</span>
           <div class="order-quick-status-wrap" title="Quick change fulfillment status">
             <select class="order-quick-status-select" onchange="changeOrderStatusDirectly('${order.id}', this.value)">
               <option value="New" ${order.status === 'New' || order.status === 'Pending' ? 'selected' : ''}>🔵 New Order (Pending)</option>
@@ -687,7 +749,9 @@ function createOrderCardRowHTML(order) {
               <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>🔴 Cancelled</option>
             </select>
           </div>
+        </div>
 
+        <div class="order-action-buttons">
           <!-- Contextual Primary Workflow Actions -->
           ${order.status === 'New' || order.status === 'Pending' ? `
             <button type="button" class="btn-card-action accept" onclick="acceptOrderQuick('${order.id}')" title="Confirm order & move to production">

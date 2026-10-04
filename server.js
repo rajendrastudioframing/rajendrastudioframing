@@ -1504,7 +1504,7 @@ app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
       // Fallback address parsing from inq.notes or inq.specs
       if (!deliveryAddress) {
         if (inq.notes && inq.notes.toLowerCase().includes('full address:')) {
-          const match = inq.notes.match(/full\s*address:\s*([^.\n\r]+)/i);
+          const match = inq.notes.match(/full\s*address:\s*(.+)$/im);
           if (match && match[1]) deliveryAddress = match[1].trim();
         } else if (inq.specs && inq.specs.toLowerCase().includes('deliver to:')) {
           const match = inq.specs.match(/deliver\s*to:\s*([^•\n\r]+)/i);
