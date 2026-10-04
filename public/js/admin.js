@@ -168,7 +168,6 @@ function initNavigation() {
     viewOrders: 'Orders',
     viewLeads: 'Leads',
     viewCustomers: 'Customers',
-    viewMessages: 'Messages',
     viewSettings: 'Settings'
   };
 
@@ -186,7 +185,6 @@ function initNavigation() {
   else if (hash === 'leads') switchTab('viewLeads');
   else if (hash === 'customers') switchTab('viewCustomers');
   else if (hash === 'products') switchTab('viewProducts');
-  else if (hash === 'messages') switchTab('viewMessages');
   else if (hash === 'settings') switchTab('viewSettings');
 
   window.switchTab = (viewId) => {
@@ -221,7 +219,6 @@ function initNavigation() {
     if (viewId === 'viewOrders' || viewId === 'viewLeads') loadInquiries();
     if (viewId === 'viewCustomers') loadCustomers();
     if (viewId === 'viewProducts') loadProducts();
-    if (viewId === 'viewMessages') loadMessages();
     if (viewId === 'viewSettings') loadSettings();
   };
 }
