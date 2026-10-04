@@ -131,10 +131,10 @@
         <span class="current" id="productBreadcrumbCurrent">Product Details</span>
       </nav>
 
-      <!-- Product Detail Main Grid -->
+      <!-- Product Detail Main Grid (Single Frame Above The Fold) -->
       <div class="product-detail-layout">
 
-        <!-- LEFT: Large Product Image / Gallery -->
+        <!-- LEFT: Product Image / Gallery & Compact Uploader -->
         <div class="detail-gallery">
           <div class="detail-main-img-box">
             <img src="assets/images/glass_frame.jpg" alt="Product Image" id="detailMainImg" class="detail-main-img" />
@@ -143,11 +143,11 @@
           <!-- Thumbnails Row -->
           <div class="detail-thumbs-strip" id="detailThumbsContainer"></div>
 
-          <!-- Upload Photo for Custom Framing / Printing (Shifted under Image) -->
-          <div class="photo-upload-container" style="margin-top: 18px;">
+          <!-- Upload Photo for Custom Framing / Printing -->
+          <div class="photo-upload-container">
             <div class="photo-upload-header">
               <span class="photo-upload-label">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                   <circle cx="12" cy="13" r="4"></circle>
                 </svg>
@@ -162,14 +162,13 @@
               
               <div id="dropzoneEmptyState">
                 <div class="upload-icon-circle">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
                     <line x1="12" y1="3" x2="12" y2="15"></line>
                   </svg>
                 </div>
                 <div class="upload-prompt-title">Click to <span>Browse Photo</span> or Drag &amp; Drop</div>
-                <div class="upload-prompt-subtitle">High-resolution JPG, PNG or WEBP (up to 25MB). You can also send photos directly on WhatsApp after ordering!</div>
               </div>
 
               <!-- Live Uploaded State -->
@@ -188,7 +187,7 @@
                     </div>
                   </div>
                   <button type="button" class="btn-remove-photo" id="btnRemoveUploadedPhoto" title="Remove photo" aria-label="Remove photo">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
                       <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -200,68 +199,59 @@
           </div>
 
           <!-- Quality Badges (Under Upload Photo Section) -->
-          <div class="guarantee-list" style="margin: 18px 0 0;">
+          <div class="guarantee-list">
             <div class="guarantee-item">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
               <span>Museum Archival Quality</span>
             </div>
             <div class="guarantee-item">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
               </svg>
               <span>50+ Year Fade Resistance</span>
             </div>
             <div class="guarantee-item">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
               <span>Quick 24-48h Studio Turnaround</span>
             </div>
             <div class="guarantee-item">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
               </svg>
               <span>Customized to Any Size</span>
             </div>
           </div>
 
-          <!-- Safe Transit Guarantee Box -->
-          <div style="margin-top: 18px; padding: 18px; background: #FFFFFF; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-              </svg>
-              <span style="font-size: 0.875rem; font-weight: 700; color: var(--primary-black);">Safe Transit &amp; Shatter-Proof Packaging</span>
-            </div>
-            <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5;">
-              Every glass and framed product is cushioned in high-density air bubble wrap with reinforced corner guards for zero-damage arrival.
-            </p>
-          </div>
         </div>
 
         <!-- RIGHT: Product Details, Customization Options, & Actions -->
         <div class="detail-info">
           
-          <div class="detail-badge-wrap">
-            <span class="badge badge-gold" id="detailBadge">Bestseller</span>
-            <span class="badge badge-dark" id="detailCategoryTag">Glass Frame</span>
-          </div>
+          <div class="detail-header-compact">
+            <div class="detail-badge-wrap" style="display: flex; gap: 8px; margin-bottom: 4px;">
+              <span class="badge badge-gold" id="detailBadge">Bestseller</span>
+              <span class="badge badge-dark" id="detailCategoryTag">Glass Frame</span>
+            </div>
 
-          <h1 class="detail-title" id="detailProductTitle">Glass Photo Frame</h1>
+            <h1 class="detail-title" id="detailProductTitle">Glass Photo Frame</h1>
 
-          <div class="detail-rating-row">
-            <div class="stars-group" style="color: var(--accent-gold);">★★★★★</div>
-            <span class="rating-score-text" id="detailRatingScore">4.9 / 5.0</span>
-            <a href="#customerReviewsSection" class="reviews-count-link" id="detailReviewCount" style="text-decoration: underline; cursor: pointer;">(128 customer reviews)</a>
-          </div>
+            <div class="detail-rating-row">
+              <div class="stars-group" style="color: var(--accent-gold);">★★★★★</div>
+              <span class="rating-score-text" id="detailRatingScore">4.9 / 5.0</span>
+              <a href="#customerReviewsSection" class="reviews-count-link" id="detailReviewCount" style="text-decoration: underline; cursor: pointer;">(128 customer reviews)</a>
+            </div>
 
-          <!-- Pricing Display -->
-          <div class="detail-price-wrap">
-            <span class="detail-current-price" id="detailCurrentPrice">₹655</span>
+            <!-- Pricing Display -->
+            <div class="detail-price-wrap">
+              <span class="detail-current-price" id="detailCurrentPrice">₹655</span>
+              <span class="detail-price-tax-badge">Includes Framing, Custom Print &amp; GST</span>
+            </div>
           </div>
 
           <!-- Customization & Purchase Options Box -->
@@ -277,35 +267,30 @@
             </div>
 
             <!-- Finish / Color Swatches -->
-            <div class="option-group" style="margin-top: 20px;">
+            <div class="option-group" style="margin-top: 12px;">
               <div class="option-header">
-                <span class="option-name" id="finishOptionTitle">Available Color:</span>
+                <span class="option-name" id="finishOptionTitle">Available Color / Finish:</span>
                 <span class="option-value-selected" id="selectedFinishLabel">Warm Gold Standoffs</span>
               </div>
               <div class="swatch-group" id="detailFinishesContainer"></div>
             </div>
 
-            <!-- Quantity Stepper -->
-            <div class="detail-qty-row" style="margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border-light);">
-              <span class="detail-qty-label">Quantity:</span>
+            <!-- Primary Action Row: Stepper + Wishlist + Add to Cart + Buy Now -->
+            <div class="detail-primary-actions-row">
               <div class="detail-qty-stepper">
                 <button type="button" class="qty-btn" id="detailQtyMinus" aria-label="Decrease quantity">−</button>
                 <span class="qty-display" id="detailQtyValue">1</span>
                 <button type="button" class="qty-btn" id="detailQtyPlus" aria-label="Increase quantity">+</button>
               </div>
-            </div>
 
-            <!-- Triple Action Buttons: Wishlist, Add to Cart, Buy Now -->
-            <div class="detail-purchase-actions">
               <button type="button" class="btn-detail-wishlist" id="detailWishlistBtn" onclick="toggleWishlist(typeof currentProduct !== 'undefined' &amp;&amp; currentProduct ? currentProduct.id : 'glass-frame-classic', event);" title="Add to Wishlist">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                 </svg>
-                <span class="wishlist-btn-text">Wishlist</span>
               </button>
 
-              <button type="button" class="btn-add-to-cart" id="detailAddToCartBtn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <button type="button" class="btn btn-gold shimmer-effect btn-add-to-cart" id="detailAddToCartBtn">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                   <circle cx="9" cy="21" r="1"></circle>
                   <circle cx="20" cy="21" r="1"></circle>
                   <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -313,62 +298,57 @@
                 <span>Add to Cart</span>
               </button>
 
-              <button type="button" class="btn-buy-now" id="detailBuyNowBtn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <button type="button" class="btn btn-dark shimmer-effect btn-buy-now" id="detailBuyNowBtn">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                 </svg>
                 <span>Buy Now</span>
               </button>
             </div>
 
-            <!-- Short Description -->
-            <p class="detail-desc-lead" id="detailDescLead" style="margin-top: 20px; font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.6;">
-              Premium glass photo frames designed to give your memories an elegant and modern look. Hand-polished float glass with precision metallic standoffs.
-            </p>
-
-            <!-- Key Product Attributes (Material, Printing, Customization, Turnaround) -->
-            <div class="detail-key-specs" style="margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border-light); display: grid; grid-template-columns: 1fr; gap: 10px; font-size: 0.875rem;">
-              <div style="display: flex; align-items: flex-start; gap: 10px;">
-                <span style="font-weight: 700; color: var(--primary-black); min-width: 110px;">Material:</span>
-                <span id="detailMaterialLabel" style="color: var(--text-secondary); line-height: 1.5;">Optically Clear Float Glass (4mm / 6mm)</span>
-              </div>
-              <div style="display: flex; align-items: flex-start; gap: 10px;">
-                <span style="font-weight: 700; color: var(--primary-black); min-width: 110px;">Printing:</span>
-                <span id="detailPrintingLabel" style="color: var(--text-secondary); line-height: 1.5;">12-Color Archival Pigment Print</span>
-              </div>
-              <div style="display: flex; align-items: flex-start; gap: 10px;">
-                <span style="font-weight: 700; color: var(--primary-black); min-width: 110px;">Customization:</span>
-                <span id="detailCustomizationLabel" style="color: var(--text-secondary); line-height: 1.5;">Custom Sizing, Photo Prints & Text Personalization</span>
-              </div>
-              <div style="display: flex; align-items: flex-start; gap: 10px;">
-                <span style="font-weight: 700; color: var(--primary-black); min-width: 110px;">Turnaround:</span>
-                <span id="detailLeadTimeLabel" style="color: var(--accent-gold); font-weight: 600; line-height: 1.5;">24 - 48 Hours</span>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Existing Consultation & Quote Actions -->
-          <div class="detail-actions-bar" style="margin-top: 16px;">
-            <div class="detail-actions-row">
-              <button type="button" class="btn btn-gold shimmer-effect" id="detailQuoteBtn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                </svg>
-                <span>Custom Quote</span>
-              </button>
-
+            <!-- Secondary Actions: WhatsApp + Quick Enquiry -->
+            <div class="detail-secondary-actions-row">
               <button type="button" class="btn btn-whatsapp" id="detailWhatsAppBtn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.058-2.18-.553-1.638-.673-2.684-2.336-2.766-2.445-.082-.109-.661-.88-.661-1.678 0-.798.419-1.189.569-1.353.15-.164.33-.205.441-.205.111 0 .222.001.32.006.103.004.24-.039.375.285.144.344.49 1.196.533 1.284.043.088.072.19.014.305-.058.115-.087.186-.173.287-.087.1-.183.224-.262.301-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.174.232-.145.39-.087.159.058 1.009.477 1.182.564.173.087.289.13.332.204.043.074.043.431-.101.836z"></path>
                 </svg>
                 <span>WhatsApp Enquiry</span>
               </button>
+
+              <button type="button" class="btn btn-outline" id="detailQuoteBtn" data-open-quote>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>Quick Enquiry</span>
+              </button>
             </div>
+
+            <!-- Short Description -->
+            <p class="detail-desc-lead" id="detailDescLead">
+              Premium handcrafted photo frames designed to give your memories an elegant and timeless look.
+            </p>
+
+            <!-- Compact Key Specs Strip -->
+            <div class="detail-key-specs-compact">
+              <span><strong>Material:</strong> <span id="detailMaterialLabel">Float Glass</span></span>
+              <span>•</span>
+              <span><strong>Print:</strong> <span id="detailPrintingLabel">12-Color HD</span></span>
+              <span>•</span>
+              <span><strong>Customization:</strong> <span id="detailCustomizationLabel">Custom Sizes &amp; Text</span></span>
+              <span>•</span>
+              <span><strong>Turnaround:</strong> <span id="detailLeadTimeLabel" style="color: var(--accent-gold); font-weight: 700;">24-48h</span></span>
+            </div>
+
           </div>
 
-
+          <!-- Safe Transit Guarantee Bar (Minimal Strip) -->
+          <div class="transit-guarantee-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold); flex-shrink: 0;">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span><strong>Safe Transit Guarantee:</strong> 100% zero-damage arrival with reinforced air bubble &amp; corner guards.</span>
+          </div>
 
         </div>
       </div>
