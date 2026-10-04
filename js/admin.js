@@ -1648,7 +1648,7 @@ window.exportOrdersToCSV = () => {
 
   const today = new Date().toISOString().slice(0, 10);
   downloadCSV(`Rajesh_Framing_Orders_${today}.csv`, headers, rows);
-  showToast('Orders Exported', `Successfully exported ${exportList.length} orders to CSV.`, 'success');
+  showToast('Orders Exported', `Successfully exported ${exportList.length} orders.`, 'success');
 };
 
 /**
@@ -1701,7 +1701,7 @@ window.exportLeadsToCSV = () => {
 
   const today = new Date().toISOString().slice(0, 10);
   downloadCSV(`Rajesh_Framing_Leads_${today}.csv`, headers, rows);
-  showToast('Leads Exported', `Successfully exported ${exportList.length} leads to CSV.`, 'success');
+  showToast('Leads Exported', `Successfully exported ${exportList.length} leads.`, 'success');
 };
 
 /**
@@ -1758,7 +1758,7 @@ window.exportProductsToCSV = async () => {
 
     const today = new Date().toISOString().slice(0, 10);
     downloadCSV(`Rajesh_Framing_Products_${today}.csv`, headers, rows);
-    showToast('Products Exported', `Successfully exported ${prods.length} products to CSV.`, 'success');
+    showToast('Products Exported', `Successfully exported ${prods.length} products.`, 'success');
   } catch (err) {
     console.error('Error exporting products:', err);
     showToast('Export Error', 'Could not export products catalog.', 'danger');
@@ -1821,7 +1821,7 @@ window.exportCustomersToCSV = async () => {
 
     const today = new Date().toISOString().slice(0, 10);
     downloadCSV(`Rajesh_Framing_Customers_${today}.csv`, headers, rows);
-    showToast('Customers Exported', `Successfully exported ${custs.length} customer accounts to CSV.`, 'success');
+    showToast('Customers Exported', `Successfully exported ${custs.length} customer accounts.`, 'success');
   } catch (err) {
     console.error('Error exporting customers:', err);
     showToast('Export Error', 'Could not export customers list.', 'danger');
@@ -1850,7 +1850,7 @@ window.exportAllStudioDataToCSV = async () => {
   // Export Customers
   setTimeout(async () => {
     await window.exportCustomersToCSV();
-    showToast('Studio Export Complete', 'All 4 studio datasets exported to CSV successfully!', 'success');
+    showToast('Studio Export Complete', 'All 4 studio datasets exported successfully!', 'success');
   }, 1200);
 };
 

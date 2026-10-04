@@ -30,7 +30,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/admin.css?v=csv_export_v10" />
+  <link rel="stylesheet" href="css/admin.css?v=export_clean_v11" />
 </head>
 <body class="admin-dashboard-body" data-theme="light">
 
@@ -232,7 +232,7 @@
                 Track, Manage and update customer orders efficiently.
               </div>
               <div class="subheader-actions">
-                <button type="button" class="btn-sub-action outline" onclick="exportOrdersToCSV()" title="Export customer orders to CSV file">
+                <button type="button" class="btn-sub-action outline" onclick="exportOrdersToCSV()" title="Export customer orders">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
@@ -240,11 +240,11 @@
                   </svg>
                   <span>Export Orders</span>
                 </button>
-                <button type="button" class="btn-sub-action outline" onclick="exportAllStudioDataToCSV()" title="Export all studio data (Orders, Leads, Products, Customers) to CSV">
+                <button type="button" class="btn-sub-action outline" onclick="exportAllStudioDataToCSV()" title="Export all studio data">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                   </svg>
-                  <span>Export All (CSV)</span>
+                  <span>Export All</span>
                 </button>
                 <button type="button" class="btn-sub-action outline" onclick="switchTab('viewOrders')">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -353,13 +353,13 @@
                 Track, Manage and update customer orders efficiently.
               </div>
               <div class="subheader-actions">
-                <button type="button" class="btn-sub-action outline" onclick="exportOrdersToCSV()" title="Export all customer orders to CSV file">
+                <button type="button" class="btn-sub-action outline" onclick="exportOrdersToCSV()" title="Export all customer orders">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
                     <line x1="12" y1="3" x2="12" y2="15"></line>
                   </svg>
-                  <span>Export Orders (CSV)</span>
+                  <span>Export Orders</span>
                 </button>
                 <button type="button" class="btn-sub-action outline" id="toggleOrderFiltersBtn">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -488,13 +488,13 @@
                 Manage customer inquiries and capture new business opportunities.
               </div>
               <div class="subheader-actions">
-                <button type="button" class="btn-sub-action outline" onclick="exportLeadsToCSV()" title="Export customer inquiries and leads to CSV file">
+                <button type="button" class="btn-sub-action outline" onclick="exportLeadsToCSV()" title="Export customer inquiries and leads">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
                     <line x1="12" y1="3" x2="12" y2="15"></line>
                   </svg>
-                  <span>Export Leads (CSV)</span>
+                  <span>Export Leads</span>
                 </button>
                 <button type="button" class="btn-sub-action outline">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -625,13 +625,13 @@
                 Control live pricing, stock availability, and marketing badges across your store.
               </div>
               <div class="subheader-actions">
-                <button type="button" class="btn-sub-action outline" onclick="exportProductsToCSV()" title="Export products catalog and pricing to CSV file">
+                <button type="button" class="btn-sub-action outline" onclick="exportProductsToCSV()" title="Export products catalog and pricing">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
                     <line x1="12" y1="3" x2="12" y2="15"></line>
                   </svg>
-                  <span>Export Products (CSV)</span>
+                  <span>Export Products</span>
                 </button>
                 <button type="button" class="btn-sub-action primary" id="openAddProductModalBtn" onclick="openAddProductModal()">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -734,13 +734,13 @@
                 Manage registered customer accounts, check verified login sessions, and monitor customer lifetime value.
               </div>
               <div class="subheader-actions">
-                <button type="button" class="btn-sub-action outline" onclick="exportCustomersToCSV()" title="Export registered customer accounts to CSV file">
+                <button type="button" class="btn-sub-action outline" onclick="exportCustomersToCSV()" title="Export registered customer accounts">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
                     <line x1="12" y1="3" x2="12" y2="15"></line>
                   </svg>
-                  <span>Export Customers (CSV)</span>
+                  <span>Export Customers</span>
                 </button>
                 <button type="button" class="btn-sub-action secondary" onclick="loadCustomers()">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1546,6 +1546,6 @@
   <!-- Modern Floating Toast Container -->
   <div class="admin-toast-container" id="adminToastContainer"></div>
 
-  <script src="js/admin.js?v=csv_export_v10"></script>
+  <script src="js/admin.js?v=export_clean_v11"></script>
 </body>
 </html>
