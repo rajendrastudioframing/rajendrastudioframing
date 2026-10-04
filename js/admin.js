@@ -1610,9 +1610,11 @@ function initProductModals() {
     document.getElementById('editProductId').value = prod.id;
     document.getElementById('editProductName').value = prod.name;
     document.getElementById('editProductPrice').value = prod.price;
-    document.getElementById('editProductBadge').value = prod.badge || '';
+    const badgeEl = document.getElementById('editProductBadge');
+    if (badgeEl) badgeEl.value = prod.badge || '';
     document.getElementById('editProductStatus').value = prod.status || 'In Stock';
-    document.getElementById('editProductLeadTime').value = prod.leadTime || '';
+    const leadTimeEl = document.getElementById('editProductLeadTime');
+    if (leadTimeEl) leadTimeEl.value = prod.leadTime || '';
     document.getElementById('editProductDesc').value = prod.shortDescription || '';
 
     editModal.classList.add('open');
@@ -1626,11 +1628,14 @@ function initProductModals() {
     editForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const id = document.getElementById('editProductId').value;
+      const prod = allProducts.find(p => p.id === id);
       const name = document.getElementById('editProductName').value.trim();
       const price = document.getElementById('editProductPrice').value;
-      const badge = document.getElementById('editProductBadge').value.trim();
+      const badgeEl = document.getElementById('editProductBadge');
+      const badge = badgeEl ? badgeEl.value.trim() : (prod && prod.badge ? prod.badge : '');
       const status = document.getElementById('editProductStatus').value;
-      const leadTime = document.getElementById('editProductLeadTime').value.trim();
+      const leadTimeEl = document.getElementById('editProductLeadTime');
+      const leadTime = leadTimeEl ? leadTimeEl.value.trim() : (prod && prod.leadTime ? prod.leadTime : '24 - 48 Hours');
       const desc = document.getElementById('editProductDesc').value.trim();
 
       try {

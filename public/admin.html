@@ -1060,26 +1060,15 @@
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
             <div class="setting-row">
-              <label class="setting-label">Starting Price (₹)</label>
+              <label class="setting-label">Price (₹) *</label>
               <input type="number" class="setting-input" id="editProductPrice" min="0" required />
             </div>
-            <div class="setting-row">
-              <label class="setting-label">Badge Label</label>
-              <input type="text" class="setting-input" id="editProductBadge" placeholder="e.g. Bestseller, Trending" />
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
             <div class="setting-row">
               <label class="setting-label">Stock Status</label>
               <select class="setting-select" id="editProductStatus">
                 <option value="In Stock">In Stock</option>
                 <option value="Out of Stock">Out of Stock</option>
               </select>
-            </div>
-            <div class="setting-row">
-              <label class="setting-label">Estimated Turnaround</label>
-              <input type="text" class="setting-input" id="editProductLeadTime" placeholder="24 - 48 Hours" />
             </div>
           </div>
 
@@ -1104,7 +1093,7 @@
        MODAL: ADD NEW PRODUCT
        ========================================================================== -->
   <div class="admin-modal-overlay" id="addProductModal">
-    <div class="admin-modal" style="max-width: 620px;">
+    <div class="admin-modal" style="max-width: 580px;">
       <div class="admin-modal-header">
         <div>
           <h4 class="admin-modal-title">Add New Product &amp; Stock</h4>
@@ -1114,13 +1103,13 @@
       </div>
       <form id="addProductForm">
         <div class="admin-modal-body">
-          <div class="setting-row">
+          <div class="setting-row" style="margin-bottom: 12px;">
             <label class="setting-label">Product / Stock Name *</label>
             <input type="text" class="setting-input" id="newProductName" placeholder="e.g. Acrylic Floating Wall Block" required />
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div class="setting-row">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="setting-row" style="margin-bottom: 0;">
               <label class="setting-label">Category *</label>
               <select class="setting-select" id="newProductCategory" required>
                 <option value="frames">Frames (Glass &amp; Plastic)</option>
@@ -1129,63 +1118,53 @@
                 <option value="custom">Custom Printing (Canvas, Acrylic)</option>
               </select>
             </div>
-            <div class="setting-row">
-              <label class="setting-label">Starting Price (₹) *</label>
+            <div class="setting-row" style="margin-bottom: 0;">
+              <label class="setting-label">Price (₹) *</label>
               <input type="number" class="setting-input" id="newProductPrice" placeholder="599" min="1" required />
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div class="setting-row">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="setting-row" style="margin-bottom: 0;">
               <label class="setting-label">Stock Status *</label>
               <select class="setting-select" id="newProductStatus">
                 <option value="In Stock" selected>In Stock (Available)</option>
                 <option value="Out of Stock">Out of Stock</option>
               </select>
             </div>
-            <div class="setting-row">
+            <div class="setting-row" style="margin-bottom: 0;">
               <label class="setting-label">Initial Stock Available (Units)</label>
               <input type="number" class="setting-input" id="newProductStockQty" placeholder="100" value="100" min="0" />
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div class="setting-row">
-              <label class="setting-label">Marketing Badge</label>
-              <input type="text" class="setting-input" id="newProductBadge" placeholder="e.g. Bestseller, Trending, New" />
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="setting-row" style="margin-bottom: 0;">
+              <label class="setting-label">Product Image Preset</label>
+              <select class="setting-select" id="newProductImagePreset">
+                <option value="assets/images/glass_frame.jpg">Classic Glass Photo Frame</option>
+                <option value="assets/images/plastic_frame.jpg">Matte Black Plastic Frame</option>
+                <option value="assets/images/printed_bottle.jpg">Insulated Steel Bottle (Black)</option>
+                <option value="assets/images/printed_bottle_blue.jpg">Insulated Steel Bottle (Navy Blue)</option>
+                <option value="assets/images/printed_bottle_silver.jpg">Insulated Steel Bottle (Silver)</option>
+                <option value="assets/images/custom_mug.jpg">Ceramic Coffee Mug (White)</option>
+                <option value="assets/images/custom_mug_black.jpg">Magic Coffee Mug (Black)</option>
+                <option value="assets/images/printed_file.jpg">Office File Binder (Navy Blue)</option>
+                <option value="assets/images/printed_file_green.jpg">Office File Binder (Forest Green)</option>
+                <option value="assets/images/printed_file_black.jpg">Office File Binder (Charcoal Black)</option>
+                <option value="assets/images/printed_folder_navy.jpg">Executive Presentation Folder (Navy)</option>
+                <option value="assets/images/printed_folder_green.jpg">Executive Presentation Folder (Green)</option>
+                <option value="assets/images/printed_folder_black.jpg">Executive Presentation Folder (Black)</option>
+                <option value="assets/images/custom_canvas.jpg" selected>Fine Art Canvas Gallery Wrap</option>
+              </select>
             </div>
-            <div class="setting-row">
-              <label class="setting-label">Turnaround Time</label>
-              <input type="text" class="setting-input" id="newProductLeadTime" placeholder="24 - 48 Hours" />
+            <div class="setting-row" style="margin-bottom: 0;">
+              <label class="setting-label">Primary Material</label>
+              <input type="text" class="setting-input" id="newProductMaterial" placeholder="Optic Cast Acrylic / Archival Pigments" />
             </div>
           </div>
 
-          <div class="setting-row">
-            <label class="setting-label">Product Image Preset</label>
-            <select class="setting-select" id="newProductImagePreset">
-              <option value="assets/images/glass_frame.jpg">Classic Glass Photo Frame</option>
-              <option value="assets/images/plastic_frame.jpg">Matte Black Plastic Frame</option>
-              <option value="assets/images/printed_bottle.jpg">Insulated Steel Bottle (Black)</option>
-              <option value="assets/images/printed_bottle_blue.jpg">Insulated Steel Bottle (Navy Blue)</option>
-              <option value="assets/images/printed_bottle_silver.jpg">Insulated Steel Bottle (Silver)</option>
-              <option value="assets/images/custom_mug.jpg">Ceramic Coffee Mug (White)</option>
-              <option value="assets/images/custom_mug_black.jpg">Magic Coffee Mug (Black)</option>
-              <option value="assets/images/printed_file.jpg">Office File Binder (Navy Blue)</option>
-              <option value="assets/images/printed_file_green.jpg">Office File Binder (Forest Green)</option>
-              <option value="assets/images/printed_file_black.jpg">Office File Binder (Charcoal Black)</option>
-              <option value="assets/images/printed_folder_navy.jpg">Executive Presentation Folder (Navy)</option>
-              <option value="assets/images/printed_folder_green.jpg">Executive Presentation Folder (Green)</option>
-              <option value="assets/images/printed_folder_black.jpg">Executive Presentation Folder (Black)</option>
-              <option value="assets/images/custom_canvas.jpg" selected>Fine Art Canvas Gallery Wrap</option>
-            </select>
-          </div>
-
-          <div class="setting-row">
-            <label class="setting-label">Primary Material</label>
-            <input type="text" class="setting-input" id="newProductMaterial" placeholder="Optic Cast Acrylic / Archival Pigments" />
-          </div>
-
-          <div class="setting-row">
+          <div class="setting-row" style="margin-bottom: 0;">
             <label class="setting-label">Short Description</label>
             <textarea class="setting-input" id="newProductDesc" rows="2" placeholder="Brief summary displayed on catalog card..."></textarea>
           </div>
@@ -1194,8 +1173,12 @@
           <button type="button" class="btn-sub-action outline" onclick="closeAddProductModal()">
             Cancel
           </button>
-          <button type="submit" class="btn-sub-action primary">
-            Add Product &amp; Stock
+          <button type="submit" class="btn-sub-action primary" style="gap: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Add Product &amp; Stock</span>
           </button>
         </div>
       </form>
