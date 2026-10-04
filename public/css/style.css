@@ -1447,7 +1447,7 @@ ul, ol {
   .menu-toggle {
     display: block;
   }
-  /* Remove "Get a Quote" from top navbar in phone/mobile layout */
+  /* Remove "Quick Enquiry" from top navbar in phone/mobile layout */
   .navbar-quote-btn,
   .navbar-actions .btn,
   .navbar-actions [data-open-quote] {

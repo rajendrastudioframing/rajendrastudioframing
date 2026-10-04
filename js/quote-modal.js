@@ -28,7 +28,7 @@ function injectQuoteModalMarkup() {
               <line x1="16" y1="17" x2="8" y2="17"></line>
               <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
-            <span>Request a Custom Quote</span>
+            <span>Custom Framing &amp; Print Enquiry</span>
           </div>
           <button class="modal-close-btn" id="closeModalBtn" aria-label="Close modal">&times;</button>
         </div>
@@ -125,7 +125,7 @@ function injectQuoteModalMarkup() {
                   <line x1="22" y1="2" x2="11" y2="13"></line>
                   <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
-                <span>Request a Quote</span>
+                <span>Submit Enquiry</span>
               </button>
 
               <button type="button" class="btn btn-whatsapp" id="quoteWhatsAppBtn" style="flex: 1; min-width: 200px;">
@@ -147,13 +147,13 @@ function injectQuoteModalMarkup() {
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
             </div>
-            <h3 class="success-title">Quote Request Received!</h3>
+            <h3 class="success-title">Enquiry Received!</h3>
             <p class="success-desc">
               Thank you, <strong id="successCustomerName">Customer</strong>. Our framing and printing specialists at <strong>Rajesh Framing</strong> will review your specifications and contact you shortly with accurate pricing and a digital mock-up.
             </p>
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
               <button type="button" class="btn btn-primary" id="successDoneBtn">Done</button>
-              <a href="https://wa.me/919328081006?text=Hello%20Rajesh%20Framing,%20following%20up%20on%20my%20quote%20request" target="_blank" class="btn btn-whatsapp">
+              <a href="https://wa.me/919328081006?text=Hello%20Rajesh%20Framing,%20following%20up%20on%20my%20enquiry" target="_blank" class="btn btn-whatsapp">
                 <span>Direct WhatsApp Follow-up</span>
               </a>
             </div>
@@ -388,7 +388,7 @@ function bindQuoteFormSubmit() {
       const dimensions = document.getElementById('quoteDimensions').value.trim() || 'Standard';
       const req = document.getElementById('quoteRequirements').value.trim() || 'Please share pricing details.';
 
-      const msg = `Hello Rajesh Framing!\n\nI would like to request a quote:\n• Name: ${name}\n• Phone: ${phone}${email ? `\n• Email: ${email}` : ''}\n• Product/Service: ${product}\n• Quantity: ${qty}\n• Preferred Size: ${dimensions}\n• Requirements: ${req}\n\nLooking forward to hearing from you!`;
+      const msg = `Hello Rajesh Framing!\n\nI would like to make an enquiry:\n• Name: ${name}\n• Phone: ${phone}${email ? `\n• Email: ${email}` : ''}\n• Product/Service: ${product}\n• Quantity: ${qty}\n• Preferred Size: ${dimensions}\n• Requirements: ${req}\n\nLooking forward to hearing from you!`;
 
       const whatsappUrl = `https://wa.me/919328081006?text=${encodeURIComponent(msg)}`;
       window.open(whatsappUrl, '_blank');
