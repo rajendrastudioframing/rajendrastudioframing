@@ -1672,6 +1672,17 @@ app.post('/api/upload-photo', async (req, res) => {
 
     const mimeType = matches[1];
     const base64Data = matches[2];
+    
+    // Validate maximum 2MB size limit
+    const rawBuffer = Buffer.from(base64Data, 'base64');
+    const MAX_PHOTO_SIZE = 2 * 1024 * 1024; // 2MB
+    if (rawBuffer.length > MAX_PHOTO_SIZE) {
+      return res.status(400).json({
+        success: false,
+        message: 'Photo exceeds maximum allowed size of 2MB. Please upload an image under 2MB.'
+      });
+    }
+
     const uploadResult = await db.uploadPhoto(fileName, base64Data, mimeType);
 
     console.log(`📸 [CUSTOMER PHOTO UPLOADED] ${uploadResult.fileName} (${(uploadResult.fileSize / 1024).toFixed(1)} KB)`);

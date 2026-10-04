@@ -30,7 +30,21 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/admin.css?v=export_clean_v11" />
+  <link rel="stylesheet" href="css/admin.css?v=v13_remove_turnaround" />
+  <style id="rf-active-badge-guard">
+    /* Instant guard: Never show notification badge on active / open sidebar section */
+    .sidebar-link.active .sidebar-badge {
+      display: none !important;
+    }
+    /* Stop background page scroll when any modal is open */
+    html:has(.admin-modal-overlay.open),
+    body:has(.admin-modal-overlay.open),
+    body.modal-open {
+      overflow: hidden !important;
+      height: 100vh !important;
+      touch-action: none;
+    }
+  </style>
 </head>
 <body class="admin-dashboard-body" data-theme="light">
 
@@ -100,7 +114,7 @@
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
           </svg>
           <span>Orders</span>
-          <span class="sidebar-badge" id="sidebarNewInquiriesBadge">0</span>
+          <span class="sidebar-badge" id="sidebarNewInquiriesBadge" style="display: none;">0</span>
         </a>
 
         <a href="#leads" class="sidebar-link" data-view="viewLeads">
@@ -1346,15 +1360,9 @@
             <input type="text" class="setting-input" id="newProductCustomVariants" style="margin-top: 8px; font-size: 0.8rem;" placeholder="Custom variant styles (comma separated, e.g. Beveled Edge, Acrylic Stand-off)" />
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-            <div class="setting-row" style="margin-bottom: 0;">
-              <label class="setting-label">Primary Material</label>
-              <input type="text" class="setting-input" id="newProductMaterial" placeholder="Optic Cast Acrylic / Archival Pigments" />
-            </div>
-            <div class="setting-row" style="margin-bottom: 0;">
-              <label class="setting-label">Turnaround Time</label>
-              <input type="text" class="setting-input" id="newProductLeadTime" placeholder="24 - 48 Hours" value="24 - 48 Hours" />
-            </div>
+          <div class="setting-row" style="margin-bottom: 12px;">
+            <label class="setting-label">Primary Material</label>
+            <input type="text" class="setting-input" id="newProductMaterial" placeholder="Optic Cast Acrylic / Archival Pigments" />
           </div>
 
           <div class="setting-row" style="margin-bottom: 0;">
@@ -1546,6 +1554,17 @@
   <!-- Modern Floating Toast Container -->
   <div class="admin-toast-container" id="adminToastContainer"></div>
 
-  <script src="js/admin.js?v=export_clean_v11"></script>
+  <script src="js/admin.js?v=v13_remove_turnaround"></script>
+  <script>
+    // Direct click safeguard: Instantly hide badge when clicking any sidebar link
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.sidebar-link').forEach(function (link) {
+        link.addEventListener('click', function () {
+          var b = link.querySelector('.sidebar-badge');
+          if (b) b.style.setProperty('display', 'none', 'important');
+        });
+      });
+    });
+  </script>
 </body>
 </html>

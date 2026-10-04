@@ -16,6 +16,188 @@ let allProducts = [];
 let allMessages = [];
 let allCustomers = [];
 
+/* ==========================================================================
+   SIDEBAR NOTIFICATION BADGE CONTROLLER
+   - Shows badge count only when there are new unread updates
+   - Hides badge completely when section is currently open (active)
+   - Marks updates as seen when user opens that section
+   ========================================================================== */
+let currentActiveView = 'viewOverview';
+
+const STORAGE_SEEN_ORDERS = 'rf_admin_seen_orders';
+const STORAGE_SEEN_LEADS = 'rf_admin_seen_leads';
+const STORAGE_SEEN_CUSTOMERS = 'rf_admin_seen_customers';
+
+function getSeenIds(storageKey) {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveSeenIds(storageKey, ids) {
+  try {
+    const trimmed = Array.isArray(ids) ? ids.slice(-500) : [];
+    localStorage.setItem(storageKey, JSON.stringify(trimmed));
+  } catch (e) {
+    console.warn('Could not persist seen IDs:', e);
+  }
+}
+
+function markSectionAsSeen(viewId) {
+  if (viewId === 'viewOrders') {
+    const orders = (allInquiries || []).filter(i => 
+      i && i.id && (i.id.startsWith('RF-ORD') || (i.product && i.product.includes('[ONLINE ORDER]')))
+    );
+    const seen = new Set(getSeenIds(STORAGE_SEEN_ORDERS));
+    orders.forEach(o => { if (o.id) seen.add(o.id); });
+    saveSeenIds(STORAGE_SEEN_ORDERS, Array.from(seen));
+  } else if (viewId === 'viewLeads') {
+    const leads = (allInquiries || []).filter(i => 
+      i && i.id && !i.id.startsWith('RF-ORD') && (!i.product || !i.product.includes('[ONLINE ORDER]'))
+    );
+    const seen = new Set(getSeenIds(STORAGE_SEEN_LEADS));
+    leads.forEach(l => { if (l.id) seen.add(l.id); });
+    saveSeenIds(STORAGE_SEEN_LEADS, Array.from(seen));
+  } else if (viewId === 'viewCustomers') {
+    const seen = new Set(getSeenIds(STORAGE_SEEN_CUSTOMERS));
+    (allCustomers || []).forEach(c => {
+      const key = c.id || c.email || c.phone;
+      if (key) seen.add(String(key).toLowerCase().trim());
+    });
+    saveSeenIds(STORAGE_SEEN_CUSTOMERS, Array.from(seen));
+  }
+}
+
+function updateNotificationBadges() {
+  const badgeOrders = document.getElementById('sidebarNewInquiriesBadge');
+  const badgeLeads = document.getElementById('sidebarLeadsBadge');
+  const badgeCustomers = document.getElementById('sidebarCustomersBadge');
+  const headerDot = document.getElementById('headerNotifyDot');
+
+  // If current section is open, mark its contents as seen immediately
+  if (currentActiveView) {
+    markSectionAsSeen(currentActiveView);
+  }
+
+  // 1. ORDERS BADGE
+  let unseenOrders = 0;
+  if (currentActiveView !== 'viewOrders') {
+    const seenOrders = new Set(getSeenIds(STORAGE_SEEN_ORDERS));
+    const newOrders = (allInquiries || []).filter(i => 
+      i && i.id && 
+      (i.id.startsWith('RF-ORD') || (i.product && i.product.includes('[ONLINE ORDER]'))) &&
+      (i.status === 'New' || i.status === 'Pending')
+    );
+    unseenOrders = newOrders.filter(o => !seenOrders.has(o.id)).length;
+  }
+  if (badgeOrders) {
+    if (currentActiveView === 'viewOrders' || unseenOrders <= 0) {
+      badgeOrders.textContent = '0';
+      badgeOrders.style.display = 'none';
+    } else {
+      badgeOrders.textContent = unseenOrders;
+      badgeOrders.style.display = 'inline-block';
+    }
+  }
+
+  // 2. LEADS BADGE
+  let unseenLeads = 0;
+  if (currentActiveView !== 'viewLeads') {
+    const seenLeads = new Set(getSeenIds(STORAGE_SEEN_LEADS));
+    const newLeads = (allInquiries || []).filter(i => 
+      i && i.id && 
+      !i.id.startsWith('RF-ORD') && 
+      (!i.product || !i.product.includes('[ONLINE ORDER]')) &&
+      i.status === 'New'
+    );
+    unseenLeads = newLeads.filter(l => !seenLeads.has(l.id)).length;
+  }
+  if (badgeLeads) {
+    if (currentActiveView === 'viewLeads' || unseenLeads <= 0) {
+      badgeLeads.textContent = '0';
+      badgeLeads.style.display = 'none';
+    } else {
+      badgeLeads.textContent = unseenLeads;
+      badgeLeads.style.display = 'inline-block';
+    }
+  }
+
+  // 3. CUSTOMERS BADGE
+  let unseenCustomers = 0;
+  if (currentActiveView !== 'viewCustomers') {
+    const seenCustomers = new Set(getSeenIds(STORAGE_SEEN_CUSTOMERS));
+    if (localStorage.getItem(STORAGE_SEEN_CUSTOMERS) !== null) {
+      unseenCustomers = (allCustomers || []).filter(c => {
+        const key = c.id || c.email || c.phone;
+        return key && !seenCustomers.has(String(key).toLowerCase().trim());
+      }).length;
+    } else {
+      unseenCustomers = 0;
+    }
+  }
+  if (badgeCustomers) {
+    if (currentActiveView === 'viewCustomers' || unseenCustomers <= 0) {
+      badgeCustomers.textContent = '0';
+      badgeCustomers.style.display = 'none';
+    } else {
+      badgeCustomers.textContent = unseenCustomers;
+      badgeCustomers.style.display = 'inline-block';
+    }
+  }
+
+  // 4. HEADER NOTIFICATION DOT
+  if (headerDot) {
+    const totalUnseen = (currentActiveView !== 'viewOrders' ? unseenOrders : 0) +
+                        (currentActiveView !== 'viewLeads' ? unseenLeads : 0) +
+                        (currentActiveView !== 'viewCustomers' ? unseenCustomers : 0);
+    headerDot.style.display = totalUnseen > 0 ? 'inline-block' : 'none';
+  }
+}
+
+/* ==========================================================================
+   MODAL BACKGROUND SCROLL LOCK CONTROLLER
+   - Freezes background page scroll whenever any modal is open
+   - Restores background page scroll when all modals are closed
+   ========================================================================== */
+function syncModalScrollLock() {
+  const hasOpenModal = !!document.querySelector('.admin-modal-overlay.open');
+  if (hasOpenModal) {
+    document.body.classList.add('modal-open');
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.classList.remove('modal-open');
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  }
+}
+
+function initModalScrollLock() {
+  syncModalScrollLock();
+  if (window.MutationObserver) {
+    const observer = new MutationObserver(() => {
+      syncModalScrollLock();
+    });
+    document.querySelectorAll('.admin-modal-overlay').forEach(modal => {
+      observer.observe(modal, { attributes: true, attributeFilter: ['class', 'style'] });
+    });
+  }
+
+  // Click & ESC key fallbacks
+  document.addEventListener('click', () => {
+    setTimeout(syncModalScrollLock, 40);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      setTimeout(syncModalScrollLock, 40);
+    }
+  });
+}
+
 // Initialize Dashboard
 document.addEventListener('DOMContentLoaded', async () => {
   token = sessionStorage.getItem('rf_admin_token');
@@ -44,6 +226,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initEditOrderModal();
   initCancelOrderModal();
   initSettingsForms();
+  initModalScrollLock();
 
   // Initial Data Load
   await loadDashboardStats();
@@ -52,6 +235,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadCustomers();
   await loadMessages();
   await loadSettings();
+
+  // Background live update sync (checks every 20 seconds for new orders/inquiries)
+  setInterval(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/inquiries`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.inquiries)) {
+        allInquiries = data.inquiries;
+        const orders = allInquiries.filter(i => 
+          i.id.startsWith('RF-ORD') || (i.product && i.product.includes('[ONLINE ORDER]'))
+        );
+        const leads = allInquiries.filter(i => 
+          !i.id.startsWith('RF-ORD') && (!i.product || !i.product.includes('[ONLINE ORDER]'))
+        );
+        updateOrdersKPIs(orders);
+        updateLeadsKPIs(leads);
+        updateNotificationBadges();
+      }
+    } catch (e) {
+      // Background sync quiet
+    }
+  }, 20000);
 });
 
 /* ==========================================================================
@@ -186,8 +394,11 @@ function initNavigation() {
   else if (hash === 'customers') switchTab('viewCustomers');
   else if (hash === 'products') switchTab('viewProducts');
   else if (hash === 'settings') switchTab('viewSettings');
+  else switchTab('viewOverview');
 
   window.switchTab = (viewId) => {
+    currentActiveView = viewId;
+
     navLinks.forEach(l => {
       if (l.getAttribute('data-view') === viewId) {
         l.classList.add('active');
@@ -207,6 +418,10 @@ function initNavigation() {
     if (titleEl && titles[viewId]) {
       titleEl.textContent = titles[viewId];
     }
+
+    // Mark current section as seen and immediately update notification badges
+    markSectionAsSeen(viewId);
+    updateNotificationBadges();
 
     // Close mobile drawer
     const sidebar = document.getElementById('adminSidebar');
@@ -318,31 +533,17 @@ async function loadDashboardStats() {
     const kpiProcessing = document.getElementById('kpiProcessingOrders');
     const kpiCompleted = document.getElementById('kpiCompletedOrders');
     const kpiPipeline = document.getElementById('kpiPipelineValue');
-    const badgeInquiries = document.getElementById('sidebarNewInquiriesBadge');
-    const badgeMessages = document.getElementById('sidebarUnreadMessagesBadge');
 
     if (kpiNew) kpiNew.textContent = stats.newInquiries || 0;
     if (kpiPipeline) kpiPipeline.textContent = `₹${(stats.totalPipelineValue || 0).toLocaleString('en-IN')}`;
 
-    if (badgeInquiries) {
-      badgeInquiries.textContent = stats.newInquiries;
-      badgeInquiries.style.display = stats.newInquiries > 0 ? 'inline-block' : 'none';
-    }
-
-    if (badgeMessages) {
-      badgeMessages.textContent = stats.unreadMessages;
-      badgeMessages.style.display = stats.unreadMessages > 0 ? 'inline-block' : 'none';
-    }
-
     const kpiCustomers = document.getElementById('kpiTotalCustomers');
-    const badgeCustomers = document.getElementById('sidebarCustomersBadge');
     if (kpiCustomers && stats.totalCustomers !== undefined) {
       kpiCustomers.textContent = stats.totalCustomers;
     }
-    if (badgeCustomers && stats.totalCustomers !== undefined) {
-      badgeCustomers.textContent = stats.totalCustomers;
-      badgeCustomers.style.display = stats.totalCustomers > 0 ? 'inline-block' : 'none';
-    }
+
+    // Refresh smart notification badges (hides for active/seen sections)
+    updateNotificationBadges();
 
   } catch (err) {
     console.error('Failed to load dashboard stats:', err);
@@ -405,6 +606,9 @@ function updateOrdersKPIs(orders) {
 
   if (elOverProc) elOverProc.textContent = processingCount;
   if (elOverComp) elOverComp.textContent = completedCount;
+
+  // Refresh smart notification badges
+  updateNotificationBadges();
 }
 
 function updateLeadsKPIs(leads) {
@@ -417,17 +621,14 @@ function updateLeadsKPIs(leads) {
   const elAct = document.getElementById('leadsKpiActive');
   const elClo = document.getElementById('leadsKpiClosed');
   const elNew = document.getElementById('leadsKpiNew');
-  const badgeLeads = document.getElementById('sidebarLeadsBadge');
 
   if (elTot) elTot.textContent = total;
   if (elAct) elAct.textContent = active;
   if (elClo) elClo.textContent = closed;
   if (elNew) elNew.textContent = newInq;
 
-  if (badgeLeads) {
-    badgeLeads.textContent = newInq;
-    badgeLeads.style.display = newInq > 0 ? 'inline-block' : 'none';
-  }
+  // Refresh smart notification badges
+  updateNotificationBadges();
 }
 
 /* ==========================================================================
@@ -2716,16 +2917,17 @@ async function loadCustomers() {
     const kpiActiveBuyers = document.getElementById('custKpiActiveBuyers');
     const kpiTotalRevenue = document.getElementById('custKpiTotalRevenue');
     const kpiTotalLogins = document.getElementById('custKpiTotalLogins');
-    const sidebarBadge = document.getElementById('sidebarCustomersBadge');
     const overviewKpi = document.getElementById('kpiTotalCustomers');
 
     if (kpiTotal) kpiTotal.textContent = allCustomers.length;
     if (overviewKpi) overviewKpi.textContent = allCustomers.length;
 
-    if (sidebarBadge) {
-      sidebarBadge.textContent = allCustomers.length;
-      sidebarBadge.style.display = allCustomers.length > 0 ? 'inline-block' : 'none';
+    // If customers seen storage not initialized, initialize it so total customers count isn't treated as new unread
+    if (localStorage.getItem(STORAGE_SEEN_CUSTOMERS) === null && allCustomers.length > 0) {
+      const initialSeen = allCustomers.map(c => String(c.id || c.email || c.phone).toLowerCase().trim()).filter(Boolean);
+      saveSeenIds(STORAGE_SEEN_CUSTOMERS, initialSeen);
     }
+    updateNotificationBadges();
 
     const activeBuyers = allCustomers.filter(c => (Number(c.totalOrders) || 0) > 0).length;
     if (kpiActiveBuyers) kpiActiveBuyers.textContent = activeBuyers;

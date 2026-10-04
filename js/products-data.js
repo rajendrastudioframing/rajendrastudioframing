@@ -60,7 +60,8 @@ const PRODUCTS_DATA = [
       { name: "10\" × 12\"", price: 619 },
       { name: "12\" × 18\"", price: 909 },
       { name: "16\" × 24\"", price: 1439 },
-      { name: "20\" × 30\"", price: 2039 }
+      { name: "20\" × 30\"", price: 2039 },
+      { name: "Custom Size", price: 1899 }
     ],
     finishes: [
       { id: "matte-black", name: "Studio Matte Black", color: "#111111", image: "assets/images/plastic_frame_black.jpg", priceDelta: 0 },
@@ -228,7 +229,8 @@ const PRODUCTS_DATA = [
       { name: "12\" × 18\" Gallery Wrap", price: 897 },
       { name: "16\" × 24\" Gallery Wrap", price: 1497 },
       { name: "20\" × 30\" Statement Canvas", price: 2297 },
-      { name: "24\" × 36\" Grand Canvas", price: 3497 }
+      { name: "24\" × 36\" Grand Canvas", price: 3497 },
+      { name: "Custom Size", price: 2799 }
     ],
     finishes: [
       { id: "gallery-wrap-1-5", name: "1.5\" Deep Gallery Wrap", color: "#78716C", image: "assets/images/custom_canvas.jpg", priceDelta: 0 },

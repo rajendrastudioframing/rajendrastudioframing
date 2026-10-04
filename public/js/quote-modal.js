@@ -101,7 +101,7 @@ function injectQuoteModalMarkup() {
                   <line x1="12" y1="3" x2="12" y2="15"></line>
                 </svg>
                 <p class="dropzone-title">Click to upload or drag & drop photo</p>
-                <p class="dropzone-desc">JPG, PNG, PDF up to 25MB (Preview provided)</p>
+                <p class="dropzone-desc">JPG, PNG, PDF up to 2MB (Preview provided)</p>
               </div>
               
               <div class="upload-preview-card" id="uploadPreviewCard">
@@ -287,6 +287,15 @@ function initFileUploadDropzone() {
   }
 
   function handleSelectedFile(file) {
+    if (!file) return;
+
+    // Check maximum 2MB size limit
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Photo is too large. Please select an image under 2MB.');
+      if (fileInput) fileInput.value = '';
+      return;
+    }
+
     selectedFileObject = file;
     previewName.textContent = file.name;
     previewSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';

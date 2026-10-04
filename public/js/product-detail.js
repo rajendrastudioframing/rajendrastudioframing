@@ -287,6 +287,149 @@ function populateProductData() {
   updatePriceDisplay();
 }
 
+let customSizeBuilderInitialized = false;
+
+function initCustomSizeBuilder() {
+  const csbBox = document.getElementById('customSizeBuilderBox');
+  if (!csbBox) return;
+
+  const widthInput = document.getElementById('customSizeWidth');
+  const heightInput = document.getElementById('customSizeHeight');
+  const unitSelect = document.getElementById('customSizeUnit');
+  const presetChips = document.getElementById('customSizePresets');
+
+  if (customSizeBuilderInitialized) return;
+  customSizeBuilderInitialized = true;
+
+  if (widthInput) {
+    widthInput.addEventListener('input', () => {
+      deactivatePresetButtons();
+      updateCustomSizeValues();
+    });
+  }
+
+  if (heightInput) {
+    heightInput.addEventListener('input', () => {
+      deactivatePresetButtons();
+      updateCustomSizeValues();
+    });
+  }
+
+  if (unitSelect) {
+    unitSelect.addEventListener('change', () => {
+      const u = unitSelect.value;
+      const widthTag = document.getElementById('customWidthUnitTag');
+      const heightTag = document.getElementById('customHeightUnitTag');
+      if (widthTag) widthTag.textContent = u;
+      if (heightTag) heightTag.textContent = u;
+      deactivatePresetButtons();
+      updateCustomSizeValues();
+    });
+  }
+
+  if (presetChips) {
+    presetChips.querySelectorAll('.csb-preset-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        presetChips.querySelectorAll('.csb-preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const w = parseFloat(btn.getAttribute('data-w'));
+        const h = parseFloat(btn.getAttribute('data-h'));
+        const u = btn.getAttribute('data-u') || 'in';
+
+        if (widthInput) widthInput.value = w;
+        if (heightInput) heightInput.value = h;
+        if (unitSelect) {
+          unitSelect.value = u;
+          const widthTag = document.getElementById('customWidthUnitTag');
+          const heightTag = document.getElementById('customHeightUnitTag');
+          if (widthTag) widthTag.textContent = u;
+          if (heightTag) heightTag.textContent = u;
+        }
+
+        updateCustomSizeValues();
+      });
+    });
+  }
+}
+
+function deactivatePresetButtons() {
+  const presetChips = document.getElementById('customSizePresets');
+  if (presetChips) {
+    presetChips.querySelectorAll('.csb-preset-btn').forEach(b => b.classList.remove('active'));
+  }
+}
+
+function updateCustomSizeValues() {
+  const widthInput = document.getElementById('customSizeWidth');
+  const heightInput = document.getElementById('customSizeHeight');
+  const unitSelect = document.getElementById('customSizeUnit');
+  const summaryText = document.getElementById('customSizeSummaryText');
+  const selectedDisplay = document.getElementById('selectedSizeLabel');
+
+  let w = widthInput ? parseFloat(widthInput.value) : 14;
+  let h = heightInput ? parseFloat(heightInput.value) : 20;
+  let unit = unitSelect ? unitSelect.value : 'in';
+
+  if (isNaN(w) || w <= 0) w = 14;
+  if (isNaN(h) || h <= 0) h = 20;
+
+  // Convert dimensions to square inches for fair proportional pricing
+  let sqInches = 0;
+  if (unit === 'in') {
+    sqInches = w * h;
+  } else if (unit === 'cm') {
+    sqInches = (w / 2.54) * (h / 2.54);
+  } else if (unit === 'mm') {
+    sqInches = (w / 25.4) * (h / 25.4);
+  } else if (unit === 'ft') {
+    sqInches = (w * 12) * (h * 12);
+  }
+
+  // Base custom price from product sizes catalog or starting price
+  const customSizeObj = (currentProduct && currentProduct.sizes) 
+    ? currentProduct.sizes.find(s => s.name.toLowerCase().includes('custom'))
+    : null;
+  const customBasePrice = customSizeObj ? customSizeObj.price : (currentProduct ? currentProduct.price * 1.5 : 2000);
+  const minPrice = currentProduct ? currentProduct.price : 450;
+
+  // Realistic dynamic pricing formula based on area (benchmark: 14x20 = 280 sq. in.)
+  const areaRatio = sqInches / 280;
+  const calculatedCustomPrice = Math.max(minPrice, Math.round(customBasePrice * (0.35 + 0.65 * areaRatio)));
+
+  // Formatted size strings
+  let unitSymbol = unit === 'in' ? '"' : unit;
+  let sizeLabelFormatted = `${w}${unitSymbol} × ${h}${unitSymbol}`;
+  if (unit !== 'in') {
+    const wIn = (w / (unit === 'cm' ? 2.54 : (unit === 'mm' ? 25.4 : 1/12))).toFixed(1);
+    const hIn = (h / (unit === 'cm' ? 2.54 : (unit === 'mm' ? 25.4 : 1/12))).toFixed(1);
+    sizeLabelFormatted = `${w}${unit} × ${h}${unit} (${wIn}" × ${hIn}")`;
+  }
+
+  const customSizeName = `Custom: ${sizeLabelFormatted}`;
+  
+  if (summaryText) {
+    summaryText.textContent = `Custom Dimensions: ${sizeLabelFormatted} (~${Math.round(sqInches)} sq. in.)`;
+  }
+
+  if (selectedDisplay) {
+    selectedDisplay.textContent = customSizeName;
+  }
+
+  // Update selectedSize object
+  selectedSize = {
+    name: customSizeName,
+    price: calculatedCustomPrice,
+    width: w,
+    height: h,
+    unit: unit,
+    sqInches: Math.round(sqInches)
+  };
+
+  updatePriceDisplay();
+}
+
 function renderSizeOptions() {
   const container = document.getElementById('detailSizesContainer');
   if (!container || !currentProduct.sizes) return;
@@ -306,15 +449,34 @@ function renderSizeOptions() {
       const sizePrice = parseFloat(chip.getAttribute('data-size-price'));
       selectedSize = { name: sizeName, price: sizePrice };
 
-      const selectedDisplay = document.getElementById('selectedSizeLabel');
-      if (selectedDisplay) selectedDisplay.textContent = sizeName;
-
-      updatePriceDisplay();
+      const csbBox = document.getElementById('customSizeBuilderBox');
+      if (sizeName.toLowerCase().includes('custom')) {
+        if (csbBox) {
+          csbBox.style.display = 'block';
+          updateCustomSizeValues();
+        }
+      } else {
+        if (csbBox) csbBox.style.display = 'none';
+        const selectedDisplay = document.getElementById('selectedSizeLabel');
+        if (selectedDisplay) selectedDisplay.textContent = sizeName;
+        updatePriceDisplay();
+      }
     });
   });
 
-  const selectedDisplay = document.getElementById('selectedSizeLabel');
-  if (selectedDisplay && selectedSize) selectedDisplay.textContent = selectedSize.name;
+  // Init custom size builder inputs and presets
+  initCustomSizeBuilder();
+
+  // Initial display setup
+  const csbBox = document.getElementById('customSizeBuilderBox');
+  if (selectedSize && selectedSize.name.toLowerCase().includes('custom')) {
+    if (csbBox) csbBox.style.display = 'block';
+    updateCustomSizeValues();
+  } else {
+    if (csbBox) csbBox.style.display = 'none';
+    const selectedDisplay = document.getElementById('selectedSizeLabel');
+    if (selectedDisplay && selectedSize) selectedDisplay.textContent = selectedSize.name;
+  }
 }
 
 function renderFinishOptions() {
@@ -756,9 +918,10 @@ function setupPhotoUpload() {
   function handlePhotoSelection(file) {
     if (!file) return;
 
-    // Check size <= 25MB
-    if (file.size > 25 * 1024 * 1024) {
-      alert('Photo is too large. Please select an image under 25MB.');
+    // Check size <= 2MB
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Photo is too large. Please select an image under 2MB.');
+      if (fileInput) fileInput.value = '';
       return;
     }
 
@@ -811,11 +974,16 @@ function setupPhotoUpload() {
           })
         });
 
-        const resData = await response.json();
+        const resData = await response.json().catch(() => ({}));
         if (response.ok && resData.success) {
           currentUploadedPhoto.fileUrl = resData.fileUrl;
           currentUploadedPhoto.fileName = resData.fileName;
           console.log('✅ Photo uploaded to server:', resData.fileUrl);
+        } else if (!response.ok && resData.message) {
+          alert(resData.message);
+          const removeBtn = document.getElementById('btnRemoveUploadedPhoto');
+          if (removeBtn) removeBtn.click();
+          return;
         }
       } catch (uploadErr) {
         console.warn('Upload saved locally in memory:', uploadErr);

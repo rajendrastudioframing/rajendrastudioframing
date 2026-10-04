@@ -169,6 +169,7 @@
                   </svg>
                 </div>
                 <div class="upload-prompt-title">Click to <span>Browse Photo</span> or Drag &amp; Drop</div>
+                <div class="upload-prompt-subtitle" style="font-size: 0.76rem; color: var(--text-muted, #94a3b8); margin-top: 3px;">Max file size: 2MB (JPG, PNG, WEBP)</div>
               </div>
 
               <!-- Live Uploaded State -->
@@ -264,6 +265,76 @@
                 <span class="option-value-selected" id="selectedSizeLabel">6" × 8"</span>
               </div>
               <div class="size-chips" id="detailSizesContainer"></div>
+
+              <!-- Custom Size Builder Container (Shows when "Custom Size" is active) -->
+              <div class="custom-size-builder-box" id="customSizeBuilderBox" style="display: none;">
+                <div class="csb-header">
+                  <div class="csb-title-wrap">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--accent-gold);">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="3" y1="9" x2="21" y2="9"></line>
+                      <line x1="9" y1="21" x2="9" y2="9"></line>
+                    </svg>
+                    <span>Customize Your Exact Dimensions</span>
+                  </div>
+                  <span class="csb-badge">Custom Cut &amp; Fit</span>
+                </div>
+
+                <!-- Input Row: Width, "×", Height, and Unit -->
+                <div class="csb-inputs-grid">
+                  <div class="csb-input-group">
+                    <label for="customSizeWidth" class="csb-label">Width</label>
+                    <div class="csb-input-wrap">
+                      <input type="number" id="customSizeWidth" class="csb-input" min="3" max="100" step="0.5" value="14" placeholder="14" />
+                      <span class="csb-unit-tag" id="customWidthUnitTag">in</span>
+                    </div>
+                  </div>
+
+                  <div class="csb-multiplier-sign">×</div>
+
+                  <div class="csb-input-group">
+                    <label for="customSizeHeight" class="csb-label">Height</label>
+                    <div class="csb-input-wrap">
+                      <input type="number" id="customSizeHeight" class="csb-input" min="3" max="100" step="0.5" value="20" placeholder="20" />
+                      <span class="csb-unit-tag" id="customHeightUnitTag">in</span>
+                    </div>
+                  </div>
+
+                  <div class="csb-input-group csb-unit-group">
+                    <label for="customSizeUnit" class="csb-label">Unit</label>
+                    <select id="customSizeUnit" class="csb-select">
+                      <option value="in" selected>Inches (in)</option>
+                      <option value="cm">Centimeters (cm)</option>
+                      <option value="mm">Millimeters (mm)</option>
+                      <option value="ft">Feet (ft)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Quick Preset Dimension Buttons -->
+                <div class="csb-presets-row">
+                  <span class="csb-presets-label">Popular Custom Dimensions:</span>
+                  <div class="csb-preset-chips" id="customSizePresets">
+                    <button type="button" class="csb-preset-btn" data-w="8" data-h="12" data-u="in">8" × 12"</button>
+                    <button type="button" class="csb-preset-btn active" data-w="14" data-h="20" data-u="in">14" × 20"</button>
+                    <button type="button" class="csb-preset-btn" data-w="16" data-h="24" data-u="in">16" × 24"</button>
+                    <button type="button" class="csb-preset-btn" data-w="18" data-h="24" data-u="in">18" × 24"</button>
+                    <button type="button" class="csb-preset-btn" data-w="20" data-h="30" data-u="in">20" × 30"</button>
+                    <button type="button" class="csb-preset-btn" data-w="24" data-h="36" data-u="in">24" × 36"</button>
+                  </div>
+                </div>
+
+                <!-- Live Summary Pill & Note -->
+                <div class="csb-summary-row">
+                  <div class="csb-summary-pill">
+                    <span class="csb-summary-dot"></span>
+                    <span class="csb-summary-text" id="customSizeSummaryText">Custom Dimensions: 14" × 20" (280 sq. in.)</span>
+                  </div>
+                  <div class="csb-note-text">
+                    Precision diamond-cut &amp; archival mounting to your exact custom specifications.
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Finish / Color Swatches -->

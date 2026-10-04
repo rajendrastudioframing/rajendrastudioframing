@@ -375,6 +375,12 @@ body.admin-dashboard-body[data-theme="dark"] {
   font-weight: 700;
   padding: 1px 7px;
   border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+/* Hide notification badge when section is currently open / active */
+.sidebar-link.active .sidebar-badge {
+  display: none !important;
 }
 
 [data-theme="light"] .sidebar-link:not(.active) .sidebar-badge {
@@ -2131,6 +2137,15 @@ body.admin-dashboard-body[data-theme="dark"] {
 /* ==========================================================================
    MODALS ARCHITECTURE
    ========================================================================== */
+/* Prevent background page scroll when any admin modal is open */
+html:has(.admin-modal-overlay.open),
+body:has(.admin-modal-overlay.open),
+body.modal-open {
+  overflow: hidden !important;
+  height: 100vh !important;
+  touch-action: none;
+}
+
 .admin-modal-overlay {
   position: fixed;
   inset: 0;
@@ -2142,6 +2157,7 @@ body.admin-dashboard-body[data-theme="dark"] {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  overscroll-behavior: contain;
 }
 
 .admin-modal-overlay.open {
@@ -2216,6 +2232,7 @@ body.admin-dashboard-body[data-theme="dark"] {
   flex: 1;
   max-height: calc(90vh - 120px);
   scrollbar-width: thin;
+  overscroll-behavior: contain;
 }
 
 .admin-modal-body .setting-row {
