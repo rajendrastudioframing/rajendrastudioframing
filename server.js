@@ -2140,7 +2140,7 @@ app.get('/api/admin/products', requireAuth, async (req, res) => {
  * Add New Product (POST)
  */
 app.post('/api/admin/products', requireAuth, async (req, res) => {
-  const { name, category, categoryLabel, price, badge, shortDescription, description, material, printingType, leadTime, image, status, stockQty } = req.body;
+  const { name, category, categoryLabel, price, badge, shortDescription, description, material, printingType, leadTime, image, status, stockQty, sizes, finishes, colors, variants } = req.body;
 
   if (!name || !price) {
     return res.status(400).json({ success: false, message: 'Product name and price are required.' });
@@ -2148,13 +2148,93 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
 
   const idSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `product-${Date.now()}`;
 
-  // Default fallback image by category if none provided
+  // Handle uploaded base64 image save to disk
   let resolvedImage = image;
+  if (resolvedImage && resolvedImage.startsWith('data:image/')) {
+    try {
+      const matches = resolvedImage.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+      if (matches) {
+        const ext = matches[1] === 'png' ? '.png' : (matches[1] === 'webp' ? '.webp' : '.jpg');
+        const buffer = Buffer.from(matches[2], 'base64');
+        const uploadDir = path.join(__dirname, 'assets', 'images', 'uploads');
+        const pubUploadDir = path.join(__dirname, 'public', 'assets', 'images', 'uploads');
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        if (!fs.existsSync(pubUploadDir)) fs.mkdirSync(pubUploadDir, { recursive: true });
+        const cleanName = `prod_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${ext}`;
+        fs.writeFileSync(path.join(uploadDir, cleanName), buffer);
+        fs.writeFileSync(path.join(pubUploadDir, cleanName), buffer);
+        resolvedImage = `assets/images/uploads/${cleanName}`;
+      }
+    } catch (e) {
+      console.warn('Error saving uploaded image to disk:', e.message);
+    }
+  }
+
+  // Default fallback image by category if none provided
   if (!resolvedImage) {
     if (category === 'frames') resolvedImage = 'assets/images/glass_frame.jpg';
     else if (category === 'personalized') resolvedImage = 'assets/images/printed_bottle.jpg';
     else if (category === 'office') resolvedImage = 'assets/images/printed_file.jpg';
     else resolvedImage = 'assets/images/custom_canvas.jpg';
+  }
+
+  // Resolve sizes
+  let resolvedSizes = [];
+  if (Array.isArray(sizes) && sizes.length > 0) {
+    resolvedSizes = sizes;
+  } else if (typeof sizes === 'string' && sizes.trim()) {
+    resolvedSizes = sizes.split(',').map(s => s.trim()).filter(Boolean).map((s, idx) => ({
+      name: s,
+      price: Math.round(Number(price) * (1 + (idx * 0.25)))
+    }));
+  }
+  if (!resolvedSizes.length) {
+    resolvedSizes = [
+      { name: '8" × 10"', price: Number(price) },
+      { name: '10" × 12"', price: Math.round(Number(price) * 1.35) },
+      { name: '12" × 18"', price: Math.round(Number(price) * 1.8) }
+    ];
+  }
+
+  // Resolve finishes (colors & variants)
+  let resolvedFinishes = [];
+  if (Array.isArray(finishes) && finishes.length > 0) {
+    resolvedFinishes = finishes;
+  } else {
+    const colorList = Array.isArray(colors) ? colors : (typeof colors === 'string' && colors ? colors.split(',').map(c => c.trim()).filter(Boolean) : []);
+    const variantList = Array.isArray(variants) ? variants : (typeof variants === 'string' && variants ? variants.split(',').map(v => v.trim()).filter(Boolean) : []);
+
+    if (colorList.length > 0) {
+      resolvedFinishes = colorList.map((c, i) => {
+        let cName = typeof c === 'object' ? c.name : c;
+        let cCode = typeof c === 'object' ? c.color : '#C99A3D';
+        if (typeof c === 'string' && c.includes(':')) {
+          const parts = c.split(':');
+          cName = parts[0].trim();
+          cCode = parts[1].trim();
+        }
+        return {
+          id: `color-${i + 1}`,
+          name: cName,
+          color: cCode,
+          image: resolvedImage,
+          priceDelta: 0
+        };
+      });
+    } else if (variantList.length > 0) {
+      resolvedFinishes = variantList.map((v, i) => ({
+        id: `variant-${i + 1}`,
+        name: v,
+        color: '#C99A3D',
+        image: resolvedImage,
+        priceDelta: 0
+      }));
+    } else {
+      resolvedFinishes = [
+        { id: 'gold-standoffs', name: 'Warm Gold', color: '#C99A3D', image: resolvedImage, priceDelta: 0 },
+        { id: 'black-standoffs', name: 'Matte Black', color: '#111111', image: resolvedImage, priceDelta: 0 }
+      ];
+    }
   }
 
   const newProduct = {
@@ -2166,7 +2246,7 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     priceDisplay: `Starting from ₹${Number(price)}`,
     rating: 5.0,
     reviewsCount: 1,
-    badge: badge || 'New',
+    badge: badge || '',
     image: resolvedImage,
     shortDescription: shortDescription || `${name.trim()} customized by Rajesh Framing Studio.`,
     description: description || shortDescription || `${name.trim()} handcrafted with premium materials and archival printing standards.`,
@@ -2175,6 +2255,8 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     status: status || 'In Stock',
     stockQty: Number(stockQty || 100),
     leadTime: leadTime || '24 - 48 Hours',
+    sizes: resolvedSizes,
+    finishes: resolvedFinishes,
     createdAt: new Date().toISOString()
   };
 
@@ -2210,6 +2292,8 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
   if (updates.description) target.description = updates.description;
   if (updates.leadTime) target.leadTime = updates.leadTime;
   if (updates.image) target.image = updates.image;
+  if (updates.sizes) target.sizes = updates.sizes;
+  if (updates.finishes) target.finishes = updates.finishes;
 
   await db.saveProduct(target);
   res.json({ success: true, message: 'Product updated successfully.', product: target });

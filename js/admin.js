@@ -1507,8 +1507,146 @@ function initProductModals() {
   const addModal = document.getElementById('addProductModal');
   const addForm = document.getElementById('addProductForm');
 
+  let uploadedProductImageBase64 = null;
+  let adminImageMode = 'upload'; // 'upload' or 'preset'
+
+  window.switchAdminImageMode = (mode) => {
+    adminImageMode = mode;
+    const tabUpload = document.getElementById('tabUploadImage');
+    const tabPreset = document.getElementById('tabPresetImage');
+    const boxUpload = document.getElementById('adminImageUploadBox');
+    const boxPreset = document.getElementById('adminImagePresetBox');
+
+    if (mode === 'upload') {
+      if (tabUpload) tabUpload.classList.add('active');
+      if (tabPreset) tabPreset.classList.remove('active');
+      if (boxUpload) boxUpload.style.display = 'block';
+      if (boxPreset) boxPreset.style.display = 'none';
+    } else {
+      if (tabPreset) tabPreset.classList.add('active');
+      if (tabUpload) tabUpload.classList.remove('active');
+      if (boxPreset) boxPreset.style.display = 'block';
+      if (boxUpload) boxUpload.style.display = 'none';
+    }
+  };
+
+  window.handleAdminImageUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Invalid File', 'Please select an image file (PNG, JPG, WEBP).', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (loadEvt) => {
+      uploadedProductImageBase64 = loadEvt.target.result;
+      const previewImg = document.getElementById('adminDropzonePreviewImg');
+      const previewBox = document.getElementById('adminDropzonePreview');
+      const emptyBox = document.getElementById('adminDropzoneEmpty');
+      const fileNameEl = document.getElementById('adminDropzoneFileName');
+      const fileSizeEl = document.getElementById('adminDropzoneFileSize');
+
+      if (previewImg) previewImg.src = uploadedProductImageBase64;
+      if (fileNameEl) fileNameEl.textContent = file.name;
+      if (fileSizeEl) fileSizeEl.textContent = (file.size / 1024 < 1024) ? `${Math.round(file.size / 1024)} KB` : `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+      if (emptyBox) emptyBox.style.display = 'none';
+      if (previewBox) previewBox.style.display = 'flex';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  window.removeAdminImage = (e) => {
+    if (e) e.stopPropagation();
+    uploadedProductImageBase64 = null;
+    const fileInput = document.getElementById('newProductImageFile');
+    if (fileInput) fileInput.value = '';
+    const previewBox = document.getElementById('adminDropzonePreview');
+    const emptyBox = document.getElementById('adminDropzoneEmpty');
+    const previewImg = document.getElementById('adminDropzonePreviewImg');
+    if (previewImg) previewImg.src = '';
+    if (previewBox) previewBox.style.display = 'none';
+    if (emptyBox) emptyBox.style.display = 'flex';
+  };
+
+  // Drag and drop for dropzone
+  const dropzone = document.getElementById('adminImageDropzone');
+  if (dropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('dragover');
+      });
+    });
+    dropzone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt ? dt.files : null;
+      if (files && files.length > 0) {
+        const fileInput = document.getElementById('newProductImageFile');
+        if (fileInput) {
+          fileInput.files = files;
+          window.handleAdminImageUpload({ target: { files } });
+        }
+      }
+    });
+  }
+
+  window.toggleAdminPill = (btn) => {
+    if (btn) btn.classList.toggle('active');
+  };
+
+  window.toggleAdminColor = (btn) => {
+    if (btn) btn.classList.toggle('active');
+  };
+
+  window.addCustomAdminColor = () => {
+    const picker = document.getElementById('newProductCustomColorPicker');
+    const nameInput = document.getElementById('newProductCustomColorName');
+    const swatches = document.getElementById('adminColorSwatches');
+    if (!swatches) return;
+
+    const hex = picker ? picker.value : '#C99A3D';
+    let name = nameInput ? nameInput.value.trim() : '';
+    if (!name) name = hex.toUpperCase();
+
+    // Check if duplicate name exists
+    const existing = Array.from(swatches.querySelectorAll('.admin-color-chip')).find(
+      el => el.getAttribute('data-name').toLowerCase() === name.toLowerCase()
+    );
+    if (existing) {
+      existing.classList.add('active');
+      if (nameInput) nameInput.value = '';
+      return;
+    }
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'admin-color-chip active';
+    btn.setAttribute('data-name', name);
+    btn.setAttribute('data-color', hex);
+    btn.onclick = function() { window.toggleAdminColor(this); };
+    btn.innerHTML = `
+      <span class="color-dot" style="background-color: ${hex};"></span>
+      <span>${name}</span>
+      <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    `;
+    swatches.appendChild(btn);
+    if (nameInput) nameInput.value = '';
+  };
+
   window.openAddProductModal = () => {
     if (addForm) addForm.reset();
+    window.removeAdminImage();
+    window.switchAdminImageMode('upload');
     if (addModal) addModal.classList.add('open');
   };
 
@@ -1560,7 +1698,38 @@ function initProductModals() {
       const leadTime = document.getElementById('newProductLeadTime') ? document.getElementById('newProductLeadTime').value.trim() : '24 - 48 Hours';
       const material = document.getElementById('newProductMaterial') ? document.getElementById('newProductMaterial').value.trim() : 'Premium Material';
       const desc = document.getElementById('newProductDesc') ? document.getElementById('newProductDesc').value.trim() : '';
-      const imagePreset = document.getElementById('newProductImagePreset') ? document.getElementById('newProductImagePreset').value : '';
+
+      // Sizes
+      const activeSizePills = Array.from(document.querySelectorAll('#adminSizePills .admin-choice-pill.active')).map(p => p.getAttribute('data-size')).filter(Boolean);
+      const customSizesVal = document.getElementById('newProductCustomSizes') ? document.getElementById('newProductCustomSizes').value.trim() : '';
+      if (customSizesVal) {
+        customSizesVal.split(',').map(s => s.trim()).filter(Boolean).forEach(s => {
+          if (!activeSizePills.includes(s)) activeSizePills.push(s);
+        });
+      }
+
+      // Colors
+      const activeColorChips = Array.from(document.querySelectorAll('#adminColorSwatches .admin-color-chip.active')).map(c => ({
+        name: c.getAttribute('data-name'),
+        color: c.getAttribute('data-color')
+      })).filter(c => c.name);
+
+      // Variants
+      const activeVariantPills = Array.from(document.querySelectorAll('#adminVariantPills .admin-choice-pill.active')).map(v => v.getAttribute('data-variant')).filter(Boolean);
+      const customVariantsVal = document.getElementById('newProductCustomVariants') ? document.getElementById('newProductCustomVariants').value.trim() : '';
+      if (customVariantsVal) {
+        customVariantsVal.split(',').map(v => v.trim()).filter(Boolean).forEach(v => {
+          if (!activeVariantPills.includes(v)) activeVariantPills.push(v);
+        });
+      }
+
+      // Image
+      let finalImage = '';
+      if (adminImageMode === 'upload' && uploadedProductImageBase64) {
+        finalImage = uploadedProductImageBase64;
+      } else {
+        finalImage = document.getElementById('newProductImagePreset') ? document.getElementById('newProductImagePreset').value : '';
+      }
 
       try {
         const res = await fetch(`${API_BASE}/api/admin/products`, {
@@ -1581,7 +1750,10 @@ function initProductModals() {
             material,
             shortDescription: desc,
             description: desc,
-            image: imagePreset
+            image: finalImage,
+            sizes: activeSizePills,
+            colors: activeColorChips,
+            variants: activeVariantPills
           })
         });
 
