@@ -400,13 +400,11 @@
 
           <!-- Header -->
           <div class="cust-auth-modal-header">
-            <div class="cust-auth-brand-badge">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-              </svg>
+            <div class="cust-auth-brand-badge" style="background: transparent; border: none; box-shadow: none; display: flex; align-items: center; justify-content: center;">
+              <img src="assets/images/logo-icon.png" alt="Dahej Support" style="height: 48px; width: auto; object-fit: contain;" />
             </div>
             <h3 class="cust-auth-title" id="custAuthModalTitle">Customer Sign In</h3>
-            <p class="cust-auth-subtitle" id="custAuthModalSubtitle">Sign in or create your account to place your order with Rajesh Framing Studio.</p>
+            <p class="cust-auth-subtitle" id="custAuthModalSubtitle">Sign in or create your account to place your order with Dahej Support.</p>
           </div>
 
           <!-- Alert Banner -->
@@ -698,7 +696,7 @@
     const titleEl = document.getElementById('custAuthModalTitle');
     const subEl = document.getElementById('custAuthModalSubtitle');
     if (titleEl) titleEl.textContent = (ctx && ctx.title) ? ctx.title : 'Customer Sign In';
-    if (subEl) subEl.textContent = (ctx && ctx.subtitle) ? ctx.subtitle : 'Sign in or create your account to place your order with Rajesh Framing Studio.';
+    if (subEl) subEl.textContent = (ctx && ctx.subtitle) ? ctx.subtitle : 'Sign in or create your account to place your order with Dahej Support.';
 
     // Clear OTP inputs
     for (let i = 1; i <= 6; i++) {

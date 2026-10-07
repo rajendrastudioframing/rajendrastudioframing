@@ -856,7 +856,7 @@ function createOrderCardRowHTML(order) {
 
   const noteText = userNote || (order.notes && !order.notes.includes('None') ? order.notes : 'Standard Studio Packaging');
 
-  const waText = encodeURIComponent(`Hello ${order.name}, Rajesh Framing here regarding your Order #${order.id} for ${cleanTitle}. Total: ₹${order.estimatedValue}.`);
+  const waText = encodeURIComponent(`Hello ${order.name}, Dahej Support here regarding your Order #${order.id} for ${cleanTitle}. Total: ₹${order.estimatedValue}.`);
 
   const custEmail = order.customerEmail || (order.customer && order.customer.email) || (order.email && order.email.includes('@') ? order.email : '');
 
@@ -1096,7 +1096,7 @@ window.openOrderDetailsModal = (orderId) => {
     minute: '2-digit'
   });
 
-  const waText = encodeURIComponent(`Hello ${order.name}, Rajesh Framing here regarding your Order #${order.id} for ${order.product}. Status: ${order.status}. Total: ₹${order.estimatedValue}.`);
+  const waText = encodeURIComponent(`Hello ${order.name}, Dahej Support here regarding your Order #${order.id} for ${order.product}. Status: ${order.status}. Total: ₹${order.estimatedValue}.`);
   if (waBtn) waBtn.href = `https://wa.me/${cleanPhone}?text=${waText}`;
 
   // Structured items list
@@ -1330,7 +1330,7 @@ window.printCurrentOrderReceipt = () => {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Order Receipt #${escapeHtml(order.id)} - Rajesh Framing</title>
+      <title>Order Receipt #${escapeHtml(order.id)} - Dahej Support</title>
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; padding: 32px; margin: 0; }
         .header { display: flex; justify-content: space-between; border-bottom: 2px solid #C99A3D; padding-bottom: 16px; margin-bottom: 24px; }
@@ -1414,7 +1414,7 @@ window.printCurrentOrderReceipt = () => {
       ` : ''}
 
       <div class="footer">
-        Thank you for choosing Rajesh Framing Studio! For inquiries or re-prints, WhatsApp us at +91 96015 74966.
+        Thank you for choosing Dahej Support Studio! For inquiries or re-prints, WhatsApp us at +91 96015 74966.
       </div>
       <script>
         window.onload = function() { window.print(); };
@@ -1457,7 +1457,7 @@ function renderAllLeads(leads) {
     const dateFormatted = isNaN(dateObj) ? '12 Jun 2026<br><span style="font-size: 0.72rem; color: var(--text-muted);">10:45 AM</span>' : `${dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}<br><span style="font-size: 0.72rem; color: var(--text-muted);">${dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>`;
 
     const inquiryType = lead.hasUpload ? 'Custom Frame' : (lead.product || 'Product Inquiry');
-    const waText = encodeURIComponent(`Hello ${lead.name}, Rajesh Framing here regarding your inquiry for ${inquiryType}.`);
+    const waText = encodeURIComponent(`Hello ${lead.name}, Dahej Support here regarding your inquiry for ${inquiryType}.`);
 
     return `
       <tr>
@@ -2440,7 +2440,7 @@ window.viewInquiryDetail = (id) => {
   titleEl.textContent = `Order / Inquiry #${inq.id}`;
 
   const cleanPhone = (inq.phone || '').replace(/\D/g, '');
-  const waText = encodeURIComponent(`Hello ${inq.name}, Rajesh Framing here regarding your Order #${inq.id} for ${inq.product}.`);
+  const waText = encodeURIComponent(`Hello ${inq.name}, Dahej Support here regarding your Order #${inq.id} for ${inq.product}.`);
   if (waBtn) waBtn.href = `https://wa.me/${cleanPhone}?text=${waText}`;
 
   bodyEl.innerHTML = `
@@ -3254,7 +3254,7 @@ window.viewMessageDetail = (id) => {
 
   const cleanPhone = (msg.phone || '').replace(/\D/g, '');
   const subject = msg.subject || msg.service || 'General Inquiry';
-  const waText = encodeURIComponent(`Hello ${msg.name}, Rajesh Framing here regarding your message about ${subject}.`);
+  const waText = encodeURIComponent(`Hello ${msg.name}, Dahej Support here regarding your message about ${subject}.`);
   if (waBtn) waBtn.href = `https://wa.me/${cleanPhone}?text=${waText}`;
 
   bodyEl.innerHTML = `

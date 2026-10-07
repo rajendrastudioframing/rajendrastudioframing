@@ -149,7 +149,7 @@ function injectQuoteModalMarkup() {
             </div>
             <h3 class="success-title">Enquiry Received!</h3>
             <p class="success-desc">
-              Thank you, <strong id="successCustomerName">Customer</strong>. Our framing and printing specialists at <strong>Rajesh Framing</strong> will review your specifications and contact you shortly with accurate pricing and a digital mock-up.
+              Thank you, <strong id="successCustomerName">Customer</strong>. Our framing and printing specialists at <strong>Dahej Support</strong> will review your specifications and contact you shortly with accurate pricing and a digital mock-up.
             </p>
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
               <button type="button" class="btn btn-primary" id="successDoneBtn">Done</button>
@@ -397,7 +397,7 @@ function bindQuoteFormSubmit() {
       const dimensions = document.getElementById('quoteDimensions').value.trim() || 'Standard';
       const req = document.getElementById('quoteRequirements').value.trim() || 'Please share pricing details.';
 
-      const msg = `Hello Rajesh Framing!\n\nI would like to make an enquiry:\n• Name: ${name}\n• Phone: ${phone}${email ? `\n• Email: ${email}` : ''}\n• Product/Service: ${product}\n• Quantity: ${qty}\n• Preferred Size: ${dimensions}\n• Requirements: ${req}\n\nLooking forward to hearing from you!`;
+      const msg = `Hello Dahej Support!\n\nI would like to make an enquiry:\n• Name: ${name}\n• Phone: ${phone}${email ? `\n• Email: ${email}` : ''}\n• Product/Service: ${product}\n• Quantity: ${qty}\n• Preferred Size: ${dimensions}\n• Requirements: ${req}\n\nLooking forward to hearing from you!`;
 
       const whatsappUrl = `https://wa.me/919601574966?text=${encodeURIComponent(msg)}`;
       window.open(whatsappUrl, '_blank');

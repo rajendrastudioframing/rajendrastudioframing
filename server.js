@@ -260,13 +260,13 @@ function generateOtpEmailHtml(otp, recipientEmail) {
   <body>
     <div class="container">
       <div class="header">
-        <h1 class="brand-title">RAJESH <span>FRAMING</span></h1>
+        <h1 class="brand-title">DAHEJ <span style="color: #EA6A00;">SUPPORT</span></h1>
         <div class="brand-sub">Admin Portal • Two-Factor Authentication</div>
       </div>
       <div class="content">
         <h2 class="headline">Your One-Time Passcode (OTP)</h2>
         <p class="subtext">
-          A login attempt was initiated for the Rajesh Framing Admin Dashboard with email: <strong>${recipientEmail}</strong>.<br>
+          A login attempt was initiated for the Dahej Support Admin Dashboard with email: <strong>${recipientEmail}</strong>.<br>
           Use the secure 6-digit passcode below to complete your authentication.
         </p>
         <div class="otp-box">
@@ -274,11 +274,11 @@ function generateOtpEmailHtml(otp, recipientEmail) {
           <div class="timer-note">Expires in <strong>5 minutes</strong></div>
         </div>
         <div class="security-warning">
-          <strong>Security Notice:</strong> Never share this OTP with anyone. Rajesh Framing staff will never ask for your authentication passcode. If you did not initiate this login request, please change your admin password immediately.
+          <strong>Security Notice:</strong> Never share this OTP with anyone. Dahej Support staff will never ask for your authentication passcode. If you did not initiate this login request, please change your admin password immediately.
         </div>
       </div>
       <div class="footer">
-        Rajesh Framing Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
+        Dahej Support Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
         Direct Customer Support: +91 96015 74966 • rajeshframing0@gmail.com
       </div>
     </div>
@@ -314,13 +314,13 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
   <body>
     <div class="container">
       <div class="header">
-        <h1 class="brand-title">RAJESH <span>FRAMING</span></h1>
+        <h1 class="brand-title">DAHEJ <span style="color: #EA6A00;">SUPPORT</span></h1>
         <div class="brand-sub">Frames &amp; Custom Prints • Customer Account</div>
       </div>
       <div class="content">
         <h2 class="headline">Your Customer Login Passcode</h2>
         <p class="subtext">
-          Use the secure 6-digit One-Time Passcode below to sign in to your Rajesh Framing account for <strong>${recipientEmail}</strong>.
+          Use the secure 6-digit One-Time Passcode below to sign in to your Dahej Support account for <strong>${recipientEmail}</strong>.
         </p>
         <div class="otp-box">
           <div class="otp-code">${otp}</div>
@@ -331,7 +331,7 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
         </div>
       </div>
       <div class="footer">
-        Rajesh Framing Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
+        Dahej Support Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
         Direct Customer Support: +91 96015 74966 • rajeshframing0@gmail.com
       </div>
     </div>
@@ -361,21 +361,21 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
     badgeColor = '#B45309';
     badgeBorder = '#FDE68A';
     headline = 'Your Order Has Been Placed Successfully!';
-    primaryMessage = 'Thank you for placing your order with Rajesh Framing! We have received your order details and payment information. Our studio team is currently reviewing your order specifications and will officially confirm your order shortly before framing production begins.';
+    primaryMessage = 'Thank you for placing your order with Dahej Support! We have received your order details and payment information. Our studio team is currently reviewing your order specifications and will officially confirm your order shortly before framing production begins.';
   } else if (isAccepted) {
     badgeText = '✓ ORDER CONFIRMED & IN PRODUCTION';
     badgeBg = '#FEF9EE';
     badgeColor = '#92400E';
     badgeBorder = '#FDE68A';
     headline = 'Great news! Your Order is Confirmed & In Production';
-    primaryMessage = 'We are excited to let you know that your order has been officially verified and confirmed by Rajesh Framing Studio! Our master craftsmen have queued your piece for precision framing and custom assembly.';
+    primaryMessage = 'We are excited to let you know that your order has been officially verified and confirmed by Dahej Support Studio! Our master craftsmen have queued your piece for precision framing and custom assembly.';
   } else if (isCancelled) {
     badgeText = '⚠️ ORDER CANCELLED';
     badgeBg = '#FEF2F2';
     badgeColor = '#991B1B';
     badgeBorder = '#FECACA';
     headline = 'Important Notice: Order Cancelled';
-    primaryMessage = 'We are writing to inform you that your order has been cancelled by Rajesh Framing Studio. If this cancellation was requested by you, no further action is needed.';
+    primaryMessage = 'We are writing to inform you that your order has been cancelled by Dahej Support Studio. If this cancellation was requested by you, no further action is needed.';
   } else if (isShipped) {
     badgeText = '🚚 DISPATCHED & OUT FOR DELIVERY';
     badgeBg = '#F0FDF4';
@@ -388,8 +388,8 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
     badgeBg = '#ECFDF5';
     badgeColor = '#047857';
     badgeBorder = '#A7F3D0';
-    headline = 'Order Delivered! Thank You for Choosing Rajesh Framing';
-    primaryMessage = 'Your order has been marked as completed/delivered. We hope you enjoy your custom framed memory! Thank you for trusting Rajesh Framing Studio.';
+    headline = 'Order Delivered! Thank You for Choosing Dahej Support';
+    primaryMessage = 'Your order has been marked as completed/delivered. We hope you enjoy your custom framed memory! Thank you for trusting Dahej Support Studio.';
   }
 
   // Items rows
@@ -416,7 +416,7 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order #${orderId} - Rajesh Framing</title>
+    <title>Order #${orderId} - Dahej Support</title>
   </head>
   <body style="margin: 0; padding: 0; background-color: #F8F6F0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111111; -webkit-font-smoothing: antialiased;">
     <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8F6F0; padding: 30px 15px;">
@@ -555,7 +555,7 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
                 </div>
                 <div style="margin-top: 20px; font-size: 11px; color: #A8A29E; line-height: 1.6;">
                   Rajesh Framing Studio &bull; Dahej GIDC, Bharuch, Gujarat 392130<br>
-                  This is an automated operational notification regarding your order with Rajesh Framing.
+                  This is an automated operational notification regarding your order with Dahej Support.
                 </div>
               </td>
             </tr>
@@ -625,17 +625,17 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
     const address = (orderOrInquiry.customer && orderOrInquiry.customer.address) || orderOrInquiry.specs || '';
 
     // Spam-safe subject lines (avoiding exclamation marks or emojis that spam filters flag)
-    let subject = `Order #${orderId} Status Update: ${newStatus} - Rajesh Framing`;
+    let subject = `Order #${orderId} Status Update: ${newStatus} - Dahej Support`;
     if (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed') {
-      subject = `Order #${orderId} Placed: Received & Pending Studio Review - Rajesh Framing`;
+      subject = `Order #${orderId} Placed: Received & Pending Studio Review - Dahej Support`;
     } else if (newStatus === 'In Progress' || newStatus === 'Confirmed' || newStatus === 'Accepted') {
-      subject = `Order #${orderId} Confirmed - Rajesh Framing Studio`;
+      subject = `Order #${orderId} Confirmed - Dahej Support Studio`;
     } else if (newStatus === 'Cancelled') {
-      subject = `Order #${orderId} Cancellation Notice - Rajesh Framing Studio`;
+      subject = `Order #${orderId} Cancellation Notice - Dahej Support Studio`;
     } else if (newStatus === 'Shipped' || newStatus === 'Dispatched') {
-      subject = `Order #${orderId} Dispatched for Delivery - Rajesh Framing`;
+      subject = `Order #${orderId} Dispatched for Delivery - Dahej Support`;
     } else if (newStatus === 'Completed' || newStatus === 'Delivered') {
-      subject = `Order #${orderId} Delivered - Thank You - Rajesh Framing`;
+      subject = `Order #${orderId} Delivered - Thank You - Dahej Support`;
     }
 
     const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
@@ -646,7 +646,7 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
     } else if (newStatus === 'Confirmed' || newStatus === 'In Progress' || newStatus === 'Accepted') {
       introText = `Great news! Your order #${orderId} has been officially confirmed by Rajesh Framing Studio and is now in production.`;
     } else if (newStatus === 'Cancelled') {
-      introText = `Your order #${orderId} has been cancelled by Rajesh Framing Studio.`;
+      introText = `Your order #${orderId} has been cancelled by Dahej Support Studio.`;
     } else if (newStatus === 'Shipped' || newStatus === 'Dispatched') {
       introText = `Your order #${orderId} has been dispatched and is on its way to you!`;
     } else if (newStatus === 'Completed' || newStatus === 'Delivered') {

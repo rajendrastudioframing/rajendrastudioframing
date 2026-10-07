@@ -88,7 +88,7 @@ function populateProductData() {
   const p = currentProduct;
 
   // Title & Breadcrumb
-  document.title = `${p.name} | Rajesh Framing`;
+  document.title = `${p.name} | Dahej Support`;
   const breadcrumbEl = document.getElementById('productBreadcrumbCurrent');
   if (breadcrumbEl) breadcrumbEl.textContent = p.name;
 
@@ -1016,7 +1016,7 @@ function setupPhotoUpload() {
       const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
       const currentPrice = selectedSize ? selectedSize.price : currentProduct.price;
 
-      const message = `Hello Rajesh Framing!\n\nI am interested in ordering:\n• Product: ${currentProduct.name}\n• Category: ${currentProduct.categoryLabel}\n• Chosen Option: ${sizeStr}\n• Finish: ${finishStr}\n• Quantity: ${currentQuantity}\n• Price: ₹${currentPrice * currentQuantity}\n\nPlease share order details and design upload guidance.`;
+      const message = `Hello Dahej Support!\n\nI am interested in ordering:\n• Product: ${currentProduct.name}\n• Category: ${currentProduct.categoryLabel}\n• Chosen Option: ${sizeStr}\n• Finish: ${finishStr}\n• Quantity: ${currentQuantity}\n• Price: ₹${currentPrice * currentQuantity}\n\nPlease share order details and design upload guidance.`;
 
       const url = `https://wa.me/919601574966?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
@@ -1176,7 +1176,7 @@ const SEED_PRODUCT_REVIEWS = {
       rating: 5,
       date: '2026-09-20',
       headline: 'Fast 24-hr turnaround for our corporate executive awards',
-      comment: 'We needed 10 glass award frames customized with company logos on short notice. Rajesh Framing delivered all 10 within 24 hours. The archival print vibrant colors didn\'t smudge or bleed. Exceptional studio service!',
+      comment: 'We needed 10 glass award frames customized with company logos on short notice. Dahej Support delivered all 10 within 24 hours. The archival print vibrant colors didn\'t smudge or bleed. Exceptional studio service!',
       verified: true,
       helpful: 12
     },
@@ -1278,7 +1278,7 @@ const SEED_PRODUCT_REVIEWS = {
       rating: 5,
       date: '2026-09-19',
       headline: 'Bulk corporate mugs delivered on time',
-      comment: '50 custom branded mugs ordered for our Dahej logistics facility. Every single logo print is centered and color-accurate to our brand hex codes. Thank you Rajesh Framing!',
+      comment: '50 custom branded mugs ordered for our Dahej logistics facility. Every single logo print is centered and color-accurate to our brand hex codes. Thank you Dahej Support!',
       verified: true,
       helpful: 14
     }
@@ -1292,7 +1292,7 @@ const SEED_PRODUCT_REVIEWS = {
       rating: 5,
       date: '2026-09-18',
       headline: 'Durable 450 GSM board files with heavy metal clips',
-      comment: 'We order all our legal files and audit binders from Rajesh Framing. Heavy duty clips don\'t bend and the matte lamination prevents edge tearing.',
+      comment: 'We order all our legal files and audit binders from Dahej Support. Heavy duty clips don\'t bend and the matte lamination prevents edge tearing.',
       verified: true,
       helpful: 13
     }
@@ -1375,7 +1375,7 @@ async function initProductReviews() {
           rating: 5,
           date: '2026-09-20',
           headline: 'Exceptional craftsmanship and swift turnaround',
-          comment: 'The materials, print fidelity, and bespoke finishing from Rajesh Framing were top notch. Seamless process from ordering to doorstep delivery.',
+          comment: 'The materials, print fidelity, and bespoke finishing from Dahej Support were top notch. Seamless process from ordering to doorstep delivery.',
           verified: true,
           helpful: 10
         }
