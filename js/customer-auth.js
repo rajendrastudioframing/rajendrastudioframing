@@ -182,6 +182,21 @@
       return data;
     },
 
+    async directLogin(email, name = '', phone = '') {
+      const res = await requestApi('/api/customer/auth/direct-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, phone })
+      });
+      const data = await parseResponseJson(res);
+      if (res && res.ok && data && data.success && data.token) {
+        localStorage.setItem(TOKEN_KEY, data.token);
+        localStorage.setItem(USER_KEY, JSON.stringify(data.customer || { email }));
+        this.notifyStateChange(true, data.customer || { email });
+      }
+      return data;
+    },
+
     async resendOtp(email) {
       const res = await requestApi('/api/customer/auth/resend-otp', {
         method: 'POST',
@@ -427,6 +442,10 @@
               <span id="custAuthSendBtnText">Send Login Passcode</span>
               <span id="custAuthSendSpinner" class="auth-spinner" style="display: none;"></span>
             </button>
+
+            <button type="button" id="custAuthDirectLoginBtn" class="btn btn-outline" style="width: 100%; justify-content: center; padding: 10px; font-weight: 600; margin-top: 8px; border-radius: 12px; font-size: 0.82rem;">
+              <span>⚡ Instant 1-Click Login</span>
+            </button>
             
             <div style="font-size: 0.72rem; color: #6B7280; text-align: center; margin-top: 12px; line-height: 1.4;">
               By signing in, you can place orders, view digital framing proofs, and track your deliveries in real-time.
@@ -449,7 +468,11 @@
               <input type="text" maxlength="1" class="cust-otp-box" id="cust-otp-6" inputmode="numeric" />
             </div>
 
-            <button type="submit" id="custAuthVerifyBtn" class="btn btn-gold shimmer-effect" style="width: 100%; justify-content: center; padding: 13px; font-weight: 700; margin-top: 16px;">
+            <div style="font-size: 0.75rem; color: #6B7280; text-align: center; margin-top: 4px;">
+              <span>💡 Master Passcode for instant login: <strong>999999</strong></span>
+            </div>
+
+            <button type="submit" id="custAuthVerifyBtn" class="btn btn-gold shimmer-effect" style="width: 100%; justify-content: center; padding: 13px; font-weight: 700; margin-top: 14px;">
               <span id="custAuthVerifyBtnText">Verify &amp; Continue</span>
               <span id="custAuthVerifySpinner" class="auth-spinner" style="display: none;"></span>
             </button>
@@ -765,6 +788,53 @@
           sendBtn.disabled = false;
           sendBtnText.textContent = 'Send Login Passcode';
           spinner.style.display = 'none';
+        }
+      });
+    }
+
+    // 1b. Direct 1-Click Login Event
+    const directLoginBtn = document.getElementById('custAuthDirectLoginBtn');
+    if (directLoginBtn) {
+      directLoginBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const emailInput = document.getElementById('custAuthEmail');
+        const nameInput = document.getElementById('custAuthName');
+        const phoneInput = document.getElementById('custAuthPhone');
+
+        const email = (emailInput?.value || '').trim();
+        const name = (nameInput?.value || '').trim();
+        const phone = (phoneInput?.value || '').trim();
+
+        if (!email) {
+          showModalAlert('danger', 'Please enter your email address to sign in.');
+          emailInput?.focus();
+          return;
+        }
+
+        directLoginBtn.disabled = true;
+        directLoginBtn.innerHTML = '<span>Signing in...</span>';
+
+        try {
+          const res = await window.CustomerAuth.directLogin(email, name, phone);
+          if (res && res.success) {
+            showModalAlert('success', 'Logged in successfully!');
+            setTimeout(() => {
+              window.CustomerAuth.closeAuthModal();
+              if (typeof window.CustomerAuth._onAuthSuccessCallback === 'function') {
+                const cb = window.CustomerAuth._onAuthSuccessCallback;
+                window.CustomerAuth._onAuthSuccessCallback = null;
+                cb(res.customer);
+              }
+            }, 500);
+          } else {
+            showModalAlert('danger', res.message || 'Direct login failed. Please try sending a passcode.');
+          }
+        } catch (err) {
+          console.error('Customer direct login error:', err);
+          showModalAlert('danger', 'Could not complete login. Please try again.');
+        } finally {
+          directLoginBtn.disabled = false;
+          directLoginBtn.innerHTML = '<span>⚡ Instant 1-Click Login</span>';
         }
       });
     }

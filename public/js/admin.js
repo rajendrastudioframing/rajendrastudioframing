@@ -270,10 +270,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateLeadsKPIs(leads);
         updateNotificationBadges();
       }
+      // Also background sync live customer accounts & metrics
+      loadCustomers();
+      loadDashboardStats();
     } catch (e) {
       // Background sync quiet
     }
-  }, 20000);
+  }, 15000);
 });
 
 /* ==========================================================================
@@ -2982,11 +2985,9 @@ function getCategoryLabel(category) {
    ========================================================================== */
 async function loadCustomers() {
   try {
-    const res = await fetch(`${API_BASE}/api/admin/customers`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const res = await apiFetch('/api/admin/customers');
     const data = await res.json();
-    if (!data.success) return;
+    if (!data || !data.success) return;
 
     allCustomers = data.customers || [];
 
@@ -3057,7 +3058,7 @@ function renderCustomersTable(customers) {
     const lastLogin = cust.lastLoginAt ? new Date(cust.lastLoginAt) : null;
     const lastLoginFormatted = lastLogin && !isNaN(lastLogin)
       ? `${lastLogin.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}<br><span style="font-size: 0.72rem; color: var(--text-muted);">${lastLogin.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>`
-      : 'Active';
+      : 'Just now';
 
     const waText = encodeURIComponent(`Hello ${cust.name || 'Customer'}, Rajesh Framing Studio here. Thank you for registering with us!`);
     const totalOrders = Number(cust.totalOrders) || 0;
@@ -3068,7 +3069,10 @@ function renderCustomersTable(customers) {
       <tr>
         <td>
           <div class="lead-cust-cell">
-            <div class="lead-avatar-circle ${color}">${initials}</div>
+            <div class="lead-avatar-circle ${color}" style="position: relative;">
+              ${initials}
+              ${cust.isOnline ? `<span style="position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; border-radius: 50%; background: #10B981; border: 2px solid #fff;" title="Online Now"></span>` : ''}
+            </div>
             <div class="lead-cust-info">
               <span class="lead-cust-name">${escapeHtml(cust.name || 'Registered Customer')}</span>
               <span class="lead-cust-email">${escapeHtml(cust.email)}</span>
@@ -3100,9 +3104,15 @@ function renderCustomersTable(customers) {
           <strong style="color: var(--text-main); font-size: 0.9rem;">₹${totalSpent.toLocaleString('en-IN')}</strong>
         </td>
         <td style="text-align: center;">
-          <span class="status-pill active" style="font-size: 0.72rem; padding: 3px 8px;">
-            <span class="status-dot"></span> Verified
-          </span>
+          ${cust.isOnline ? `
+            <span class="status-pill completed" style="font-size: 0.72rem; padding: 3px 8px; background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700;">
+              <span class="status-dot pulse" style="background: #10B981;"></span> Online Now
+            </span>
+          ` : `
+            <span class="status-pill ${cust.status === 'Active' ? 'active' : 'neutral'}" style="font-size: 0.72rem; padding: 3px 8px;">
+              <span class="status-dot"></span> ${escapeHtml(cust.status || 'Active')}
+            </span>
+          `}
         </td>
       </tr>
     `;

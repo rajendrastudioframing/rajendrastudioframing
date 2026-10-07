@@ -523,9 +523,9 @@ module.exports = {
     
     let cust = customers.find(c => c.email && c.email.toLowerCase() === cleanEmail);
     if (cust) {
+      cust.lastLoginAt = nowIso;
+      cust.loginCount = (cust.loginCount || 0) + (isVerifiedLogin ? 1 : 0);
       if (isVerifiedLogin) {
-        cust.lastLoginAt = nowIso;
-        cust.loginCount = (cust.loginCount || 1) + 1;
         cust.status = 'Active';
       }
       if (name && name.trim() && name.trim() !== 'Valued Customer') cust.name = name.trim();
@@ -541,8 +541,8 @@ module.exports = {
         email: cleanEmail,
         phone: (phone && phone.trim()) || '',
         registeredAt: nowIso,
-        lastLoginAt: isVerifiedLogin ? nowIso : null,
-        loginCount: isVerifiedLogin ? 1 : 0,
+        lastLoginAt: nowIso,
+        loginCount: isVerifiedLogin ? 1 : 1,
         totalOrders: 0,
         totalSpent: 0,
         status: isVerifiedLogin ? 'Active' : 'Registered'
@@ -550,6 +550,27 @@ module.exports = {
       customers.unshift(cust);
     }
     writeJson(CUSTOMERS_FILE, customers);
+
+    if (supabase) {
+      try {
+        await supabase.from('customers').upsert({
+          id: cust.id,
+          name: cust.name,
+          email: cust.email,
+          phone: cust.phone,
+          registered_at: cust.registeredAt,
+          last_login_at: cust.lastLoginAt,
+          login_count: cust.loginCount,
+          total_orders: cust.totalOrders,
+          total_spent: cust.totalSpent,
+          status: cust.status,
+          updated_at: nowIso
+        }, { onConflict: 'email' });
+      } catch (err) {
+        console.warn('Could not sync customer to Supabase:', err.message);
+      }
+    }
+
     return cust;
   },
 
