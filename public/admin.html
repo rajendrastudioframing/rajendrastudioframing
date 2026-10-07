@@ -11,16 +11,13 @@
       // 1. Immediately hide document to prevent any unauthenticated UI flash
       document.documentElement.style.display = 'none';
 
-      // 2. Strict check for active admin session token
-      var sessionToken = sessionStorage.getItem('rf_admin_token');
-      if (!sessionToken) {
-        // Clear any old legacy persistent storage to prevent bypasses
-        try {
-          localStorage.removeItem('rf_admin_token');
-          localStorage.removeItem('rf_admin_user');
-        } catch (_) {}
-        var isFile = window.location.protocol === 'file:';
-        var loginUrl = isFile ? 'admin-login.html' : 'admin-login';
+      // 2. Check for active admin session token (sessionStorage or persistent localStorage)
+      var sessionToken = sessionStorage.getItem('rf_admin_token') || localStorage.getItem('rf_admin_token');
+      if (sessionToken) {
+        sessionStorage.setItem('rf_admin_token', sessionToken);
+      } else {
+        var hasHtml = window.location.pathname.endsWith('.html') || window.location.protocol === 'file:';
+        var loginUrl = hasHtml ? 'admin-login.html' : 'admin-login';
         window.location.replace(loginUrl);
       }
     })();

@@ -42,7 +42,7 @@
         </span>
         <h1 class="login-title" id="formHeaderTitle">Admin Login</h1>
         <p class="login-subtitle" id="formHeaderSubtitle">
-          Enter your authorized credentials to receive an authentication OTP on your email.
+          Enter your authorized credentials to sign in directly or verify with a secure OTP.
         </p>
       </div>
 
@@ -53,22 +53,27 @@
       </div>
 
       <!-- Test Mode OTP Preview Banner (Shown automatically when OTP is generated) -->
-      <div class="login-alert info" id="testOtpBanner" style="display: none; flex-direction: column; gap: 6px; cursor: pointer;" title="Click to auto-fill this OTP">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
-          <strong>Authentication Passcode:</strong>
+      <div class="login-alert info" id="testOtpBanner" style="display: none; flex-direction: column; gap: 8px;" title="Click to auto-fill this OTP">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <strong>Authentication Passcode:</strong>
+          </div>
+          <button type="button" id="useMasterPinBtn" style="background: rgba(245, 158, 11, 0.2); border: 1px solid #F59E0B; color: #F59E0B; border-radius: 4px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+            ⚡ Use Master PIN (999999)
+          </button>
         </div>
-        <div style="font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+        <div style="font-size: 0.95rem; display: flex; align-items: center; gap: 8px; cursor: pointer;" id="autoFillOtpRow">
           <span>6-Digit OTP:</span>
           <code id="testOtpCode" style="font-size: 1.2rem; color: #111111; background: #C99A3D; padding: 3px 10px; border-radius: 5px; font-weight: 800; letter-spacing: 3px;">------</code>
           <span style="font-size: 0.75rem; color: #9CA3AF;">(Click to Auto-Fill)</span>
         </div>
         <div style="font-size: 0.74rem; color: #9CA3AF;">
-          💡 Master Emergency PIN: <strong style="color: #F59E0B;">999999</strong> (Always works)
+          💡 Master Emergency PIN: <strong style="color: #F59E0B;">999999</strong> (Guaranteed instant entry)
         </div>
       </div>
 
@@ -78,9 +83,14 @@
           <span class="autofill-badge">
             <span class="autofill-bolt">⚡</span> Quick Credentials
           </span>
-          <button type="button" class="btn-autofill-trigger" id="autoFillBtn" title="Click to auto-fill credentials">
-            <span class="autofill-bolt">⚡</span> Auto Fill
-          </button>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="btn-autofill-trigger" id="autoFillBtn" title="Click to auto-fill credentials">
+              <span class="autofill-bolt">⚡</span> Fill
+            </button>
+            <button type="button" class="btn-autofill-trigger" id="autoFillAndSubmitBtn" style="background: #C99A3D; color: #111111; border-color: #C99A3D; font-weight: 700;" title="Fill credentials and sign in immediately">
+              <span>🚀 1-Click Login</span>
+            </button>
+          </div>
         </div>
         <div class="login-autofill-creds">
           <div class="autofill-cred-row">
@@ -144,10 +154,16 @@
           </div>
         </div>
 
-        <button type="submit" class="btn-admin-gold" id="sendOtpBtn">
-          <span id="sendOtpBtnText">Send Login OTP</span>
-          <div class="admin-spinner" id="sendOtpSpinner" style="display: none;"></div>
-        </button>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 18px;">
+          <button type="button" class="btn-admin-gold" id="directLoginBtn" style="width: 100%;">
+            <span id="directLoginBtnText">⚡ Instant Sign In</span>
+            <div class="admin-spinner" id="directLoginSpinner" style="display: none;"></div>
+          </button>
+          <button type="submit" class="btn-admin-outline" id="sendOtpBtn" style="width: 100%; border: 1px solid rgba(201, 154, 61, 0.4); color: #E5B558; font-weight: 600; padding: 11px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span id="sendOtpBtnText">📩 Sign In via Email OTP</span>
+            <div class="admin-spinner" id="sendOtpSpinner" style="display: none;"></div>
+          </button>
+        </div>
       </form>
 
       <!-- ==========================================

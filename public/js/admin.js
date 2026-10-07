@@ -5,11 +5,26 @@
  */
 
 const CLOUD_API_FALLBACK = 'https://rajesh-framing.vercel.app';
-let API_BASE = (window.location.origin.includes(':5500') || window.location.origin.includes(':3000')) 
-  ? 'http://localhost:5000' 
-  : window.location.origin;
 
-let token = sessionStorage.getItem('rf_admin_token');
+function resolveApiBase() {
+  const isLocalDev = window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1' || 
+                     window.location.protocol === 'file:';
+  if (window.location.protocol === 'file:' || window.location.origin === 'null' || !window.location.origin) {
+    return CLOUD_API_FALLBACK;
+  }
+  if (isLocalDev && window.location.port !== '5000') {
+    return 'http://localhost:5000';
+  }
+  return window.location.origin;
+}
+
+let API_BASE = resolveApiBase();
+
+let token = sessionStorage.getItem('rf_admin_token') || localStorage.getItem('rf_admin_token');
+if (token) {
+  sessionStorage.setItem('rf_admin_token', token);
+}
 let currentAdminUser = null;
 let allInquiries = [];
 let allProducts = [];
@@ -200,11 +215,12 @@ function initModalScrollLock() {
 
 // Initialize Dashboard
 document.addEventListener('DOMContentLoaded', async () => {
-  token = sessionStorage.getItem('rf_admin_token');
+  token = sessionStorage.getItem('rf_admin_token') || localStorage.getItem('rf_admin_token');
   if (!token) {
     handleAuthFailure();
     return;
   }
+  sessionStorage.setItem('rf_admin_token', token);
 
   const authenticated = await verifyAdminSession();
   if (!authenticated) return;
@@ -240,9 +256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setInterval(async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${API_BASE}/api/admin/inquiries`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await apiFetch(`${API_BASE}/api/admin/inquiries`);
       const data = await res.json();
       if (data && data.success && Array.isArray(data.inquiries)) {
         allInquiries = data.inquiries;
@@ -265,6 +279,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 /* ==========================================================================
    AUTHENTICATION & SESSION VERIFICATION
    ========================================================================== */
+/**
+ * Resilient API fetch wrapper with automatic live cloud fallback
+ */
+async function apiFetch(urlOrEndpoint, options = {}) {
+  const fullUrl = urlOrEndpoint.startsWith('http') ? urlOrEndpoint : `${API_BASE}${urlOrEndpoint}`;
+  const headers = Object.assign({
+    'Authorization': `Bearer ${token}`
+  }, options.headers || {});
+  const opts = Object.assign({}, options, { headers });
+
+  try {
+    return await fetch(fullUrl, opts);
+  } catch (err) {
+    if (API_BASE !== CLOUD_API_FALLBACK) {
+      console.warn(`Local API request failed (${fullUrl}). Auto-switching API_BASE to cloud fallback: ${CLOUD_API_FALLBACK}`);
+      API_BASE = CLOUD_API_FALLBACK;
+      const retryUrl = urlOrEndpoint.startsWith('http') 
+        ? urlOrEndpoint.replace(/http:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, CLOUD_API_FALLBACK)
+        : `${API_BASE}${urlOrEndpoint}`;
+      return await fetch(retryUrl, opts);
+    }
+    throw err;
+  }
+}
+
 async function verifyAdminSession() {
   try {
     let res;
@@ -273,14 +312,26 @@ async function verifyAdminSession() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
     } catch (networkErr) {
-      if (API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1')) {
-        console.warn('Local API at ' + API_BASE + ' unreachable. Falling back to live cloud API: ' + CLOUD_API_FALLBACK);
+      if (API_BASE !== CLOUD_API_FALLBACK) {
+        console.warn('API at ' + API_BASE + ' unreachable. Falling back to live cloud API: ' + CLOUD_API_FALLBACK);
         API_BASE = CLOUD_API_FALLBACK;
         res = await fetch(`${API_BASE}/api/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
       } else {
         throw networkErr;
+      }
+    }
+
+    if (!res || !res.ok) {
+      if (API_BASE !== CLOUD_API_FALLBACK) {
+        try {
+          console.warn('API returned ' + (res ? res.status : 'null') + '. Trying live cloud fallback: ' + CLOUD_API_FALLBACK);
+          API_BASE = CLOUD_API_FALLBACK;
+          res = await fetch(`${API_BASE}/api/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        } catch (_) {}
       }
     }
 
@@ -339,25 +390,32 @@ function handleAuthFailure() {
     localStorage.removeItem('rf_admin_user');
   } catch (_) {}
   document.documentElement.style.display = 'none';
-  const isFile = window.location.protocol === 'file:';
-  window.location.replace(isFile ? 'admin-login.html' : 'admin-login');
+  const hasHtml = window.location.pathname.endsWith('.html') || window.location.protocol === 'file:';
+  window.location.replace(hasHtml ? 'admin-login.html' : 'admin-login');
 }
 
 function initLogout() {
-  const logoutBtn = document.getElementById('logoutBtn');
+  const logoutBtn = document.getElementById('logoutBtn') || document.getElementById('sidebarLogoutBtn');
   if (!logoutBtn) return;
 
-  logoutBtn.addEventListener('click', async () => {
+  logoutBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
     if (confirm('Are you sure you want to end your administrative session?')) {
       try {
-        await fetch(`${API_BASE}/api/auth/logout`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
+        await apiFetch('/api/auth/logout', {
+          method: 'POST'
         });
       } catch (e) {
         console.warn('Logout notification error:', e);
       }
-      handleAuthFailure();
+      sessionStorage.removeItem('rf_admin_token');
+      sessionStorage.removeItem('rf_admin_user');
+      try {
+        localStorage.removeItem('rf_admin_token');
+        localStorage.removeItem('rf_admin_user');
+      } catch (_) {}
+      const hasHtml = window.location.pathname.endsWith('.html') || window.location.protocol === 'file:';
+      window.location.href = (hasHtml ? 'admin-login.html' : 'admin-login') + '?logout=true';
     }
   });
 }
@@ -379,24 +437,8 @@ function initNavigation() {
     viewSettings: 'Settings'
   };
 
-  navLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const targetViewId = link.getAttribute('data-view');
-      switchTab(targetViewId);
-    });
-  });
-
-  // Handle URL hash on load
-  const hash = window.location.hash.replace('#', '');
-  if (hash === 'orders') switchTab('viewOrders');
-  else if (hash === 'leads') switchTab('viewLeads');
-  else if (hash === 'customers') switchTab('viewCustomers');
-  else if (hash === 'products') switchTab('viewProducts');
-  else if (hash === 'settings') switchTab('viewSettings');
-  else switchTab('viewOverview');
-
-  window.switchTab = (viewId) => {
+  function switchTab(viewId) {
+    if (!viewId) return;
     currentActiveView = viewId;
 
     navLinks.forEach(l => {
@@ -435,7 +477,26 @@ function initNavigation() {
     if (viewId === 'viewCustomers') loadCustomers();
     if (viewId === 'viewProducts') loadProducts();
     if (viewId === 'viewSettings') loadSettings();
-  };
+  }
+
+  window.switchTab = switchTab;
+
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetViewId = link.getAttribute('data-view');
+      switchTab(targetViewId);
+    });
+  });
+
+  // Handle URL hash on load
+  const hash = (window.location.hash || '').replace('#', '');
+  if (hash === 'orders') switchTab('viewOrders');
+  else if (hash === 'leads') switchTab('viewLeads');
+  else if (hash === 'customers') switchTab('viewCustomers');
+  else if (hash === 'products') switchTab('viewProducts');
+  else if (hash === 'settings') switchTab('viewSettings');
+  else switchTab('viewOverview');
 }
 
 function initSidebarToggle() {
@@ -2450,16 +2511,33 @@ window.closeInquiryModal = () => {
    ========================================================================== */
 async function loadProducts() {
   try {
-    const res = await fetch(`${API_BASE}/api/admin/products`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-    if (!data.success) return;
+    let data;
+    try {
+      const res = await apiFetch('/api/admin/products');
+      data = await res.json();
+    } catch (_) {}
 
-    allProducts = data.products || [];
-    renderAdminProducts(allProducts);
+    if (!data || !data.success) {
+      const fallbackRes = await fetch(`${API_BASE}/api/products`);
+      data = await fallbackRes.json();
+    }
+
+    if (data && (data.success || Array.isArray(data.products))) {
+      allProducts = data.products || [];
+      renderAdminProducts(allProducts);
+    }
   } catch (err) {
     console.error('Failed to load products:', err);
+    try {
+      const fallbackRes = await fetch(`${API_BASE}/api/products`);
+      const data = await fallbackRes.json();
+      if (data && (data.success || Array.isArray(data.products))) {
+        allProducts = data.products || [];
+        renderAdminProducts(allProducts);
+      }
+    } catch (e2) {
+      console.error('Public products fallback also failed:', e2);
+    }
   }
 }
 

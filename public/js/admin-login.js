@@ -4,11 +4,21 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Clear any stale legacy tokens to ensure clean state
-  try {
-    localStorage.removeItem('rf_admin_token');
-    localStorage.removeItem('rf_admin_user');
-  } catch (_) {}
+  // If explicitly logged out via ?logout=true, clear all tokens
+  if (window.location.search.includes('logout=true')) {
+    try {
+      sessionStorage.removeItem('rf_admin_token');
+      sessionStorage.removeItem('rf_admin_user');
+      localStorage.removeItem('rf_admin_token');
+      localStorage.removeItem('rf_admin_user');
+    } catch (_) {}
+  } else {
+    // Check if user already has an active session
+    const existingToken = sessionStorage.getItem('rf_admin_token') || localStorage.getItem('rf_admin_token');
+    if (existingToken) {
+      checkExistingSession(existingToken);
+    }
+  }
 
   initLoginCredentialsForm();
   initOtpVerificationForm();
@@ -26,6 +36,9 @@ function getInitialApiBase() {
   const isLocalDev = window.location.hostname === 'localhost' || 
                      window.location.hostname === '127.0.0.1' || 
                      window.location.protocol === 'file:';
+  if (window.location.protocol === 'file:' || window.location.origin === 'null' || !window.location.origin) {
+    return CLOUD_API_FALLBACK;
+  }
   if (isLocalDev && window.location.port !== '5000') {
     return 'http://localhost:5000';
   }
@@ -35,13 +48,15 @@ function getInitialApiBase() {
 let activeApiBase = getInitialApiBase();
 
 /**
- * Universal fetch with automatic cloud fallback if local Node server is not running
+ * Universal fetch with automatic fast cloud fallback if local Node server is not running
  */
 async function requestApi(endpoint, options = {}) {
   const fullUrl = `${activeApiBase}${endpoint}`;
   try {
+    const isLocal = activeApiBase.includes('localhost') || activeApiBase.includes('127.0.0.1');
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    // Fast 3s timeout when checking local server before falling back to cloud
+    const timeout = setTimeout(() => controller.abort(), isLocal ? 3000 : 8000);
     const res = await fetch(fullUrl, {
       ...options,
       signal: controller.signal
@@ -49,7 +64,7 @@ async function requestApi(endpoint, options = {}) {
     clearTimeout(timeout);
     return res;
   } catch (err) {
-    // If local dev port 5000 is not running, automatically fallback to live cloud server
+    // If local dev port is not running or aborted, automatically fallback to live cloud server
     const isLocal = activeApiBase.includes('localhost') || activeApiBase.includes('127.0.0.1');
     if (isLocal && activeApiBase !== CLOUD_API_FALLBACK) {
       console.warn(`Local server at ${activeApiBase} unavailable. Falling back to live cloud API: ${CLOUD_API_FALLBACK}...`);
@@ -88,8 +103,13 @@ async function checkExistingSession(token) {
     });
     const data = await parseResponseJson(res);
     if (data && data.success) {
-      window.location.href = 'admin';
+      sessionStorage.setItem('rf_admin_token', token);
+      localStorage.setItem('rf_admin_token', token);
+      const hasHtml = window.location.pathname.endsWith('.html') || window.location.protocol === 'file:';
+      window.location.href = hasHtml ? 'admin.html' : 'admin';
     } else {
+      sessionStorage.removeItem('rf_admin_token');
+      sessionStorage.removeItem('rf_admin_user');
       localStorage.removeItem('rf_admin_token');
       localStorage.removeItem('rf_admin_user');
     }
@@ -150,14 +170,19 @@ function initLoginCredentialsForm() {
   const sendOtpBtn = document.getElementById('sendOtpBtn');
   const btnText = document.getElementById('sendOtpBtnText');
   const spinner = document.getElementById('sendOtpSpinner');
+  const directLoginBtn = document.getElementById('directLoginBtn');
+  const directBtnText = document.getElementById('directLoginBtnText');
+  const directSpinner = document.getElementById('directLoginSpinner');
   const autoFillBtn = document.getElementById('autoFillBtn') || document.getElementById('quickFillBtn');
+  const autoFillAndSubmitBtn = document.getElementById('autoFillAndSubmitBtn');
   const autoFillCard = document.getElementById('autoFillCard');
+  const useMasterPinBtn = document.getElementById('useMasterPinBtn');
 
   const fillCredentials = (e) => {
-    if (e) e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (emailInput) emailInput.value = 'help@dahejsupport.com';
     if (passwordInput) passwordInput.value = 'Admin@Rajesh2026';
-    showAlert('info', 'Credentials filled! Click "Send Login OTP" below.');
+    showAlert('info', 'Credentials filled! Click "⚡ Instant Sign In" or "📩 Sign In via Email OTP".');
     if (emailInput) emailInput.focus();
   };
 
@@ -167,24 +192,103 @@ function initLoginCredentialsForm() {
   if (autoFillCard) {
     autoFillCard.style.cursor = 'pointer';
     autoFillCard.addEventListener('click', (e) => {
-      if (e.target.closest('#autoFillBtn')) return;
+      if (e.target.closest('#autoFillBtn') || e.target.closest('#autoFillAndSubmitBtn')) return;
       fillCredentials(e);
+    });
+  }
+
+  // Direct login execution function
+  const executeDirectLogin = async () => {
+    hideAlert();
+    const email = (emailInput ? emailInput.value : '').trim();
+    const password = passwordInput ? passwordInput.value : '';
+
+    if (!email || !password) {
+      showAlert('danger', 'Please provide both admin email and password.');
+      return;
+    }
+
+    if (directLoginBtn) directLoginBtn.disabled = true;
+    if (directBtnText) directBtnText.textContent = 'Signing In...';
+    if (directSpinner) directSpinner.style.display = 'inline-block';
+
+    try {
+      const response = await requestApi('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const result = await parseResponseJson(response);
+
+      if (response && response.ok && result && result.success) {
+        showAlert('success', 'Authentication successful! Redirecting to Dashboard...');
+        
+        // Save session in BOTH sessionStorage and localStorage
+        sessionStorage.setItem('rf_admin_token', result.token);
+        sessionStorage.setItem('rf_admin_user', JSON.stringify(result.admin));
+        localStorage.setItem('rf_admin_token', result.token);
+        localStorage.setItem('rf_admin_user', JSON.stringify(result.admin));
+
+        const hasHtml = window.location.pathname.endsWith('.html') || window.location.protocol === 'file:';
+        setTimeout(() => {
+          window.location.href = hasHtml ? 'admin.html' : 'admin';
+        }, 500);
+
+      } else {
+        showAlert('danger', (result && result.message) ? result.message : 'Invalid admin email or password.');
+      }
+    } catch (err) {
+      console.error('Direct login failed:', err);
+      showAlert('danger', 'Unable to reach the authentication service. Please check your network connection.');
+    } finally {
+      if (directLoginBtn) directLoginBtn.disabled = false;
+      if (directBtnText) directBtnText.textContent = '⚡ Instant Sign In';
+      if (directSpinner) directSpinner.style.display = 'none';
+    }
+  };
+
+  // 1-Click Auto Fill and Immediately Login
+  if (autoFillAndSubmitBtn) {
+    autoFillAndSubmitBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (emailInput) emailInput.value = 'help@dahejsupport.com';
+      if (passwordInput) passwordInput.value = 'Admin@Rajesh2026';
+      executeDirectLogin();
+    });
+  }
+
+  // Instant direct sign-in button
+  if (directLoginBtn) {
+    directLoginBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      executeDirectLogin();
     });
   }
 
   // Click on OTP banner to auto fill 6 digits
   const testOtpBanner = document.getElementById('testOtpBanner');
   const testOtpCode = document.getElementById('testOtpCode');
-  if (testOtpBanner && testOtpCode) {
-    testOtpBanner.addEventListener('click', () => {
+  const autoFillOtpRow = document.getElementById('autoFillOtpRow');
+  if (autoFillOtpRow && testOtpCode) {
+    autoFillOtpRow.addEventListener('click', () => {
       const code = testOtpCode.textContent.trim();
       const digits = (code && code !== '------') ? code : '999999';
       fillOtpDigits(digits);
     });
   }
 
+  if (useMasterPinBtn) {
+    useMasterPinBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      fillOtpDigits('999999');
+    });
+  }
+
   if (!form) return;
 
+  // Form submission (Email OTP Flow)
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideAlert();
@@ -246,7 +350,7 @@ function initLoginCredentialsForm() {
       showAlert('danger', 'Unable to reach the authentication service. Please verify your internet connection and try again.');
     } finally {
       sendOtpBtn.disabled = false;
-      btnText.textContent = 'Send Login OTP';
+      btnText.textContent = '📩 Sign In via Email OTP';
       spinner.style.display = 'none';
     }
   });
@@ -325,7 +429,7 @@ function initOtpVerificationForm() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: currentAdminEmail,
+            email: currentAdminEmail || 'help@dahejsupport.com',
             otp: otp
           })
         });
@@ -335,20 +439,16 @@ function initOtpVerificationForm() {
         if (response && response.ok && result && result.success) {
           showAlert('success', 'Passcode verified! Redirecting to Dashboard...');
           
-          // Save session token in sessionStorage (active browser session)
+          // Save session token in BOTH sessionStorage and localStorage
           sessionStorage.setItem('rf_admin_token', result.token);
           sessionStorage.setItem('rf_admin_user', JSON.stringify(result.admin));
+          localStorage.setItem('rf_admin_token', result.token);
+          localStorage.setItem('rf_admin_user', JSON.stringify(result.admin));
 
-          // Purge legacy persistent storage
-          try {
-            localStorage.removeItem('rf_admin_token');
-            localStorage.removeItem('rf_admin_user');
-          } catch (_) {}
-
-          const isFile = window.location.protocol === 'file:';
+          const hasHtml = window.location.pathname.endsWith('.html') || window.location.protocol === 'file:';
           setTimeout(() => {
-            window.location.href = isFile ? 'admin.html' : 'admin';
-          }, 800);
+            window.location.href = hasHtml ? 'admin.html' : 'admin';
+          }, 600);
 
         } else {
           showAlert('danger', (result && result.message) ? result.message : 'Incorrect or expired OTP.');
