@@ -1303,3 +1303,55 @@
   }
 }
 
+
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE CART & CHECKOUT POLISH
+   ========================================================================== */
+@media (max-width: 600px) {
+  .upi-qr-content-box {
+    grid-template-columns: 1fr !important;
+    text-align: center;
+    gap: 16px;
+  }
+  .upi-qr-card {
+    margin: 0 auto;
+    padding: 10px;
+  }
+  .upi-qr-card img {
+    width: 140px !important;
+    height: 140px !important;
+  }
+  .upi-scan-steps ol {
+    text-align: left;
+    display: inline-block;
+    margin: 6px auto 0;
+  }
+  .upi-copy-row {
+    justify-content: center;
+    margin: 0 auto;
+    max-width: 280px;
+  }
+  .btn-upi-intent {
+    width: 100%;
+    justify-content: center;
+  }
+  .payment-brand-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .payment-option-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .cart-drawer {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+  .checkout-card {
+    padding: 16px 12px !important;
+  }
+}

@@ -1624,42 +1624,46 @@ ul, ol {
     gap: 10px;
   }
   .hero-visual-stage {
-    min-height: 340px;
-    margin-top: 8px;
+    min-height: 320px;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
   }
   .hero-scene-wrap {
-    height: 330px;
-    max-width: 330px;
-    transform: scale(0.8);
-    transform-origin: center center;
+    height: auto;
+    max-width: 320px;
+    width: 100%;
+    transform: none;
+    position: relative;
+    padding: 24px 8px 32px !important;
+    margin: 0 auto;
+    box-sizing: border-box;
   }
   .layer-main-anchor {
-    width: 240px;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: rotate(-1deg) !important;
+    width: 100% !important;
+    max-width: 285px !important;
+    margin: 0 auto !important;
+    z-index: 5;
   }
-  .layer-top-right {
-    width: 140px;
-    right: -12px;
+  .layer-main-anchor .main-img-box img {
+    height: 185px !important;
   }
-  .layer-bottom-left {
-    width: 135px;
-    left: -12px;
-  }
-  .layer-bottom-right {
-    width: 130px;
-    right: -6px;
-  }
-  .layer-mug-accent {
-    width: 115px;
-    left: -6px;
-  }
-  .badge-archival {
-    right: -4px;
-    top: 130px;
-    padding: 7px 10px;
-  }
+  /* Hide overlapping secondary cards and badges on phone screens so main frame card is 100% clean and unobstructed */
+  .layer-top-right,
+  .layer-bottom-left,
+  .layer-bottom-right,
+  .layer-mug-accent,
+  .hero-stat-floating-badge,
+  .badge-archival,
   .badge-turnaround {
-    bottom: -16px;
-    padding: 7px 10px;
+    display: none !important;
   }
 }
 
@@ -1705,18 +1709,46 @@ ul, ol {
   }
   .floating-actions-wrap {
     bottom: 16px;
-    right: 16px;
+    right: 12px;
     gap: 8px;
+    z-index: 998;
+  }
+  /* On mobile product detail page, hide floating actions because bottom sticky bar and inline WhatsApp already exist */
+  .product-page-active .floating-actions-wrap {
+    display: none !important;
   }
   .floating-whatsapp-btn {
-    padding: 10px;
-    width: 42px;
-    height: 42px;
+    padding: 9px;
+    width: 40px;
+    height: 40px;
     justify-content: center;
+    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35);
   }
   .back-to-top-btn {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
+  }
+  /* Bottom safe padding for catalog and products so cards are never obscured */
+  .catalog-main-content,
+  .catalog-layout-container {
+    padding-bottom: 72px !important;
+  }
+  .product-page-active #mainContent {
+    padding-bottom: 100px !important;
+  }
+}
+
+/* Prevent iOS Safari auto-zooming on input focus on mobile */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }
 
@@ -1728,7 +1760,7 @@ ul, ol {
     font-size: 1.02rem;
   }
   .navbar-actions {
-    gap: 6px;
+    gap: 5px;
   }
   .navbar-wishlist-btn,
   .navbar-cart-btn,
@@ -1740,13 +1772,26 @@ ul, ol {
     min-height: 290px;
   }
   .hero-scene-wrap {
-    height: 280px;
-    max-width: 280px;
-    transform: scale(0.72);
-    transform-origin: center center;
+    max-width: 270px;
+    padding: 10px 4px;
   }
   .layer-main-anchor {
-    width: 205px;
+    max-width: 250px !important;
+  }
+  .layer-main-anchor .main-img-box img {
+    height: 165px !important;
+  }
+  .badge-archival {
+    top: -8px !important;
+    right: -4px !important;
+    font-size: 0.68rem !important;
+    padding: 5px 8px !important;
+  }
+  .badge-turnaround {
+    bottom: -8px !important;
+    left: -4px !important;
+    font-size: 0.68rem !important;
+    padding: 5px 8px !important;
   }
   .hero-luxury-title {
     font-size: 1.4rem;

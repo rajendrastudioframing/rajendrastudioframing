@@ -132,7 +132,7 @@ function initProductSlider() {
   // Start with index 3 (Mug Printing - ₹249) in center, matching user design
   let currentIndex = 3;
   let autoSlideTimer = null;
-  const autoSlideInterval = 2000; // 2 seconds loop interval
+  const autoSlideInterval = 4500; // 4.5 seconds comfortable loop interval
   const totalSlides = slides.length;
 
   // Create pagination dots
@@ -155,7 +155,7 @@ function initProductSlider() {
 
   // Calculate 3D Coverflow transforms for all slides
   function update3DCoverflow() {
-    const isMobile = window.innerWidth <= 640;
+    const isMobile = window.innerWidth <= 680;
     const isTablet = window.innerWidth <= 992;
 
     slides.forEach((slide, i) => {
@@ -191,25 +191,40 @@ function initProductSlider() {
         opacity = 1;
         zIndex = 50;
       } else if (offset === -1) {
-        // Immediate Left (-1): Scaled down to 0.82, angled inwards
-        const xOffset = isMobile ? '-52%' : '-66%';
-        const rotY = isMobile ? '18deg' : '26deg';
-        const rotZ = isMobile ? '-2deg' : '-3.5deg';
-        transform = `translate3d(${xOffset}, 0, -40px) scale(0.82) rotateY(${rotY}) rotateZ(${rotZ})`;
-        opacity = 0.85;
-        zIndex = 20;
-      } else if (offset === 1) {
-        // Immediate Right (+1): Scaled down to 0.82, angled inwards
-        const xOffset = isMobile ? '52%' : '66%';
-        const rotY = isMobile ? '-18deg' : '-26deg';
-        const rotZ = isMobile ? '2deg' : '3.5deg';
-        transform = `translate3d(${xOffset}, 0, -40px) scale(0.82) rotateY(${rotY}) rotateZ(${rotZ})`;
-        opacity = 0.85;
-        zIndex = 20;
-      } else if (offset === -2) {
-        // Far Left (-2): Scaled down to 0.68
         if (isMobile) {
-          transform = `translate3d(-90%, 0, -80px) scale(0.6) rotateY(30deg)`;
+          // On mobile: Move cleanly to the left without overlapping the active card
+          transform = 'translate3d(-112%, 0, -30px) scale(0.86) rotateY(6deg)';
+          opacity = 0;
+          pointerEvents = 'none';
+          zIndex = 10;
+        } else {
+          // Immediate Left (-1): Scaled down to 0.82, angled inwards
+          const xOffset = '-66%';
+          const rotY = '26deg';
+          const rotZ = '-3.5deg';
+          transform = `translate3d(${xOffset}, 0, -40px) scale(0.82) rotateY(${rotY}) rotateZ(${rotZ})`;
+          opacity = 0.85;
+          zIndex = 20;
+        }
+      } else if (offset === 1) {
+        if (isMobile) {
+          // On mobile: Move cleanly to the right without overlapping the active card
+          transform = 'translate3d(112%, 0, -30px) scale(0.86) rotateY(-6deg)';
+          opacity = 0;
+          pointerEvents = 'none';
+          zIndex = 10;
+        } else {
+          // Immediate Right (+1): Scaled down to 0.82, angled inwards
+          const xOffset = '66%';
+          const rotY = '-26deg';
+          const rotZ = '3.5deg';
+          transform = `translate3d(${xOffset}, 0, -40px) scale(0.82) rotateY(${rotY}) rotateZ(${rotZ})`;
+          opacity = 0.85;
+          zIndex = 20;
+        }
+      } else if (offset === -2) {
+        if (isMobile) {
+          transform = `translate3d(-180%, 0, -80px) scale(0.6)`;
           opacity = 0;
           pointerEvents = 'none';
           zIndex = 5;
@@ -220,9 +235,8 @@ function initProductSlider() {
           zIndex = 10;
         }
       } else if (offset === 2) {
-        // Far Right (+2): Scaled down to 0.68
         if (isMobile) {
-          transform = `translate3d(90%, 0, -80px) scale(0.6) rotateY(-30deg)`;
+          transform = `translate3d(180%, 0, -80px) scale(0.6)`;
           opacity = 0;
           pointerEvents = 'none';
           zIndex = 5;
@@ -233,9 +247,8 @@ function initProductSlider() {
           zIndex = 10;
         }
       } else if (offset === -3) {
-        // Outer Left (-3): Visible at the edge
         if (isMobile) {
-          transform = `translate3d(-120%, 0, -120px) scale(0.5) rotateY(35deg)`;
+          transform = `translate3d(-240%, 0, -120px) scale(0.5)`;
           opacity = 0;
           pointerEvents = 'none';
           zIndex = 2;
@@ -246,9 +259,8 @@ function initProductSlider() {
           zIndex = 5;
         }
       } else if (offset === 3) {
-        // Outer Right (+3): Visible at the edge
         if (isMobile) {
-          transform = `translate3d(120%, 0, -120px) scale(0.5) rotateY(-35deg)`;
+          transform = `translate3d(240%, 0, -120px) scale(0.5)`;
           opacity = 0;
           pointerEvents = 'none';
           zIndex = 2;
@@ -259,9 +271,8 @@ function initProductSlider() {
           zIndex = 5;
         }
       } else {
-        // Extra hidden cards (behind)
         const sign = offset < 0 ? -1 : 1;
-        transform = `translate3d(${sign * 180}%, 0, -160px) scale(0.4)`;
+        transform = `translate3d(${sign * 260}%, 0, -160px) scale(0.4)`;
         opacity = 0;
         pointerEvents = 'none';
         zIndex = 1;
@@ -354,6 +365,7 @@ function initProductSlider() {
 
   track.addEventListener('touchstart', (e) => {
     startX = e.touches[0].clientX;
+    currentX = startX;
     isSwiping = true;
     stopAutoSlide();
   }, { passive: true });

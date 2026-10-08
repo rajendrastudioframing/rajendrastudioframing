@@ -370,7 +370,48 @@
             document.querySelectorAll('.cust-dropdown-menu').forEach(m => m.style.display = 'none');
             menu.style.display = isOpen ? 'none' : 'block';
           });
-        }
+        
+    // Also look for mobile drawer account slot
+    const drawerSlots = document.querySelectorAll('.drawer-account-slot, #drawerAccountSlot');
+    drawerSlots.forEach(slot => {
+      if (loggedIn && user) {
+        const displayName = (user.name && user.name.trim() !== 'Valued Customer') 
+          ? user.name 
+          : (user.email ? user.email.split('@')[0] : 'My Account');
+        const firstLetter = (displayName.charAt(0) || 'A').toUpperCase();
+        slot.innerHTML = `
+          <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="width: 32px; height: 32px; border-radius: 50%; background: #C99A3D; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0;">
+                ${firstLetter}
+              </span>
+              <div style="min-width: 0; flex: 1;">
+                <div style="font-weight: 700; font-size: 0.875rem; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</div>
+                <div style="font-size: 0.75rem; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email || ''}</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; border-top: 1px solid #E5E7EB; padding-top: 8px;">
+              <a href="track-order" class="btn btn-sm btn-outline" style="flex: 1; justify-content: center; font-size: 0.75rem; padding: 6px 8px; border-radius: 8px; text-decoration: none;">Track Orders</a>
+              <button type="button" onclick="logoutCustomer(true)" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 6px 10px; color: #DC2626; border-color: #FECACA; border-radius: 8px;">Sign Out</button>
+            </div>
+          </div>
+        `;
+      } else {
+        slot.innerHTML = `
+          <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(0,0,0,0.08);">
+            <button type="button" class="btn btn-outline" style="width: 100%; border-radius: 9999px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; padding: 9px 16px; font-size: 0.85rem;" onclick="openCustomerAuthModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>Sign In / My Account</span>
+            </button>
+          </div>
+        `;
+      }
+    });
+
+}
 
       } else {
         container.innerHTML = `

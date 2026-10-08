@@ -603,3 +603,37 @@ body.admin-login-body {
     font-size: 1.1rem;
   }
 }
+
+
+/* ==========================================================================
+   MOBILE RESPONSIVE ADMIN LOGIN POLISH
+   ========================================================================== */
+@media (max-width: 480px) {
+  .login-wrapper {
+    padding: 16px 12px !important;
+  }
+  .login-card {
+    padding: 30px 20px 24px !important;
+    border-radius: 20px !important;
+  }
+  .login-brand-logo-img {
+    height: 38px !important;
+  }
+  .login-brand-text-img {
+    height: 20px !important;
+  }
+  .login-title {
+    font-size: 1.45rem !important;
+  }
+  .login-subtitle {
+    font-size: 0.8rem !important;
+  }
+  .login-input {
+    font-size: 16px !important;
+    padding: 12px 14px !important;
+  }
+  .btn-login-submit {
+    padding: 13px !important;
+    font-size: 0.92rem !important;
+  }
+}

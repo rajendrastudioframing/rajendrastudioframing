@@ -181,11 +181,11 @@ function renderCatalog() {
           <span class="capsule-price">${priceFormatted}</span>
         </div>
         ${finishesHtml}
-        <div class="capsule-bottom-row" style="display: flex; gap: 8px; align-items: center; justify-content: space-between;">
-          <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="${product.id}" onclick="quickAddToCart('${product.id}', event);" title="Add to Cart" style="flex: 1; justify-content: center; padding: 6px 10px; font-size: 0.72rem;">
+        <div class="capsule-bottom-row">
+          <button type="button" class="capsule-action-btn btn-catalog-cart" data-add-to-cart data-product-id="${product.id}" onclick="quickAddToCart('${product.id}', event);" title="Add to Cart">
             <span>+ Cart</span>
           </button>
-          <button type="button" class="capsule-action-btn" onclick="event.stopPropagation(); window.quickBuyNow('${product.id}', event);" title="Buy Now" style="flex: 1; justify-content: center; padding: 6px 10px; font-size: 0.72rem; background: #111111 !important; border: 1px solid #C99A3D !important; color: #FFFFFF !important;">
+          <button type="button" class="capsule-action-btn btn-catalog-buynow" onclick="event.stopPropagation(); window.quickBuyNow('${product.id}', event);" title="Buy Now">
             <span>Buy Now</span>
           </button>
         </div>
@@ -271,3 +271,31 @@ function resetFilters() {
 }
 
 window.resetFilters = resetFilters;
+
+// Mobile View Toggle Handler
+window.setCatalogView = function(view) {
+  const grid = document.getElementById('catalogProductsGrid');
+  const btnGrid = document.getElementById('viewBtnGrid');
+  const btnSingle = document.getElementById('viewBtnSingle');
+  if (!grid) return;
+
+  if (view === 'single') {
+    grid.classList.add('single-col-view');
+    if (btnSingle) btnSingle.classList.add('active');
+    if (btnGrid) btnGrid.classList.remove('active');
+    localStorage.setItem('rf_catalog_view', 'single');
+  } else {
+    grid.classList.remove('single-col-view');
+    if (btnGrid) btnGrid.classList.add('active');
+    if (btnSingle) btnSingle.classList.remove('active');
+    localStorage.setItem('rf_catalog_view', 'grid');
+  }
+};
+
+// Restore saved view preference
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('rf_catalog_view');
+  if (saved === 'single') {
+    window.setCatalogView('single');
+  }
+});

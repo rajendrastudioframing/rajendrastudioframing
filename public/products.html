@@ -19,7 +19,7 @@
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/style.css?v=banner_bg_v1" />
-  <link rel="stylesheet" href="css/components.css?v=banner_bg_v1" />
+  <link rel="stylesheet" href="css/components.css?v=card_compact_v3" />
   <link rel="stylesheet" href="css/animations.css?v=banner_bg_v1" />
   <link rel="stylesheet" href="css/cart.css" />
   </head>
@@ -114,6 +114,8 @@
         <span>Quick Enquiry</span>
       </button>
     </div>
+      <!-- Customer Account Slot for Mobile -->
+    <div class="drawer-account-slot" id="drawerAccountSlot"></div>
   </aside>
 
   <!-- Main Content -->
@@ -236,12 +238,22 @@
           <div class="catalog-main-content">
             <!-- Filter Count Notification -->
             <div class="catalog-results-header">
-              <span id="catalogResultsCount" class="results-count-text">
-                Showing all products
-              </span>
-              <span class="custom-sizes-pill">
-                ✓ Custom Sizes &amp; Bulk Orders Welcome
-              </span>
+              <div class="results-left">
+                <span id="catalogResultsCount" class="results-count-text">
+                  Showing all products
+                </span>
+                <span class="custom-sizes-pill" style="display: block; font-size: 0.75rem; margin-top: 2px;">
+                  ✓ Custom Sizes &amp; Bulk Orders Welcome
+                </span>
+              </div>
+              <div class="catalog-view-toggle" id="catalogViewToggle" aria-label="Toggle grid layout">
+                <button type="button" class="view-btn active" id="viewBtnGrid" title="2 Columns" onclick="setCatalogView('grid')">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                </button>
+                <button type="button" class="view-btn" id="viewBtnSingle" title="Single Column" onclick="setCatalogView('single')">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="6" rx="1"></rect><rect x="3" y="14" width="18" height="6" rx="1"></rect></svg>
+                </button>
+              </div>
             </div>
 
             <!-- Dynamic Products Grid (4 cards in one row on desktop) -->
