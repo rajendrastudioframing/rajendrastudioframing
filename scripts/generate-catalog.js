@@ -1,0 +1,3262 @@
+const fs = require('fs');
+const path = require('path');
+
+// 5 Categories:
+// 1. frames: Studio and Framing (25 items)
+// 2. personalized: Personalized Printing (25 items)
+// 3. office: Office Printing (25 items)
+// 4. custom: Custom Printing (25 items)
+// 5. gifts: Photo Gifts & Keepsakes (25 items)
+
+const category1_frames = [
+  {
+    id: "glass-frame-classic",
+    name: "Glass Photo Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 655,
+    priceDisplay: "Starting from ₹655",
+    rating: 4.9,
+    reviewsCount: 128,
+    badge: "Bestseller",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Elegant glass frames designed to preserve your favorite memories with beveled edges and modern metallic standoffs.",
+    description: "Our signature Glass Photo Frame is crafted from optically refined, ultra-clear float glass with diamond-polished beveled edges. Designed to elevate portraits, wedding milestones, and fine art, it features solid brass or gold-finished standoffs that create an elegant floating presence on any desk or wall.",
+    material: "Optically Clear Float Glass (4mm / 6mm) with Diamond Beveled Edge",
+    printingType: "12-Color Archival Pigment Print (Fade-resistant 50+ yrs)",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "6\" × 8\"", price: 655 },
+      { name: "8\" × 10\"", price: 955 },
+      { name: "10\" × 12\"", price: 1355 },
+      { name: "12\" × 18\"", price: 1855 },
+      { name: "Custom Size", price: 2255 }
+    ],
+    finishes: [
+      { id: "gold-standoffs", name: "Warm Gold Standoffs", color: "#C99A3D", image: "assets/images/glass_frame.jpg", priceDelta: 0 },
+      { id: "royal-blue-glass", name: "Royal Sapphire Blue Accent", color: "#1E3A8A", image: "assets/images/glass_frame_blue.jpg", priceDelta: 30 },
+      { id: "silver-standoffs", name: "Brushed Silver Standoffs", color: "#CBD5E1", image: "assets/images/glass_frame_silver.jpg", priceDelta: 60 },
+      { id: "black-standoffs", name: "Matte Black Standoffs", color: "#111111", image: "assets/images/glass_frame_black.jpg", priceDelta: 90 }
+    ],
+    features: [
+      "Diamond-polished beveled edges for safe, lustrous finish",
+      "Scratch-resistant crystal float glass with zero optical distortion",
+      "Sturdy table-stand or heavy-duty wall mount fixtures included",
+      "UV-protective barrier prevents photo discoloration over time"
+    ]
+  },
+  {
+    id: "plastic-frame-gallery",
+    name: "Plastic Photo Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 439,
+    priceDisplay: "Starting from ₹439",
+    rating: 4.8,
+    reviewsCount: 94,
+    badge: "Popular",
+    image: "assets/images/plastic_frame_black.jpg",
+    shortDescription: "Durable, lightweight customized polymer frames with archival museum mat board in timeless matte finishes.",
+    description: "Manufactured from high-density, eco-friendly structural polymer, our Plastic Photo Frames deliver clean architectural lines without excessive weight. Paired with 1.5mm archival conservation mat board and crystal-clear glazing, these frames are ideal for expansive gallery walls, corridors, and family travel photos.",
+    material: "High-density Engineered Polymer with Conservation Mat",
+    printingType: "Ultra HD Fine Art Photographic Printing (300 DPI)",
+    status: "In Stock",
+    leadTime: "Same Day / 24 Hours",
+    sizes: [
+      { name: "8\" × 10\"", price: 439 },
+      { name: "10\" × 12\"", price: 619 },
+      { name: "12\" × 18\"", price: 909 },
+      { name: "16\" × 24\"", price: 1439 },
+      { name: "20\" × 30\"", price: 2039 },
+      { name: "Custom Size", price: 1899 }
+    ],
+    finishes: [
+      { id: "matte-black", name: "Studio Matte Black", color: "#111111", image: "assets/images/plastic_frame_black.jpg", priceDelta: 0 },
+      { id: "royal-blue", name: "Royal Sapphire Blue", color: "#1E3A8A", image: "assets/images/plastic_frame_blue.jpg", priceDelta: 13 },
+      { id: "pure-white", name: "Gallery Pure White", color: "#F8FAFC", image: "assets/images/plastic_frame_white.jpg", priceDelta: 27 },
+      { id: "warm-walnut", name: "Warm Walnut Grain", color: "#5C3A21", image: "assets/images/plastic_frame_walnut.jpg", priceDelta: 41 },
+      { id: "champagne-gold", name: "Champagne Gold", color: "#C99A3D", image: "assets/images/plastic_frame_gold.jpg", priceDelta: 55 }
+    ],
+    features: [
+      "Structural high-density polymer resistant to moisture and warping",
+      "Pre-assembled with acid-free museum conservation mat border",
+      "Versatile dual hanging points for portrait or landscape wall mounting",
+      "Shatter-resistant tempered acrylic front shield"
+    ]
+  },
+  {
+    id: "acrylic-float-frame",
+    name: "Acrylic Floating Wall Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 899,
+    priceDisplay: "Starting from ₹899",
+    rating: 4.9,
+    reviewsCount: 76,
+    badge: "Trending",
+    image: "assets/images/glass_frame_silver.jpg",
+    shortDescription: "Ultra-modern dual acrylic panel floating frame held with brushed metallic corner studs.",
+    description: "Two sheets of 4mm crystal acrylic sandwich your print with a translucent border, giving your photo an effortless floating aesthetic off the wall.",
+    material: "Dual 4mm Cast Acrylic Sheets with Brushed Stainless Standoffs",
+    printingType: "Archival HD Gloss Photographic Print",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "8\" × 12\"", price: 899 },
+      { name: "12\" × 18\"", price: 1450 },
+      { name: "16\" × 24\"", price: 2150 }
+    ],
+    finishes: [
+      { id: "silver-float", name: "Brushed Silver Studs", color: "#CBD5E1", image: "assets/images/glass_frame_silver.jpg", priceDelta: 0 },
+      { id: "gold-float", name: "Warm Gold Studs", color: "#C99A3D", image: "assets/images/glass_frame.jpg", priceDelta: 40 }
+    ]
+  },
+  {
+    id: "champagne-gold-luxury-frame",
+    name: "Champagne Gold Luxury Portrait Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 749,
+    priceDisplay: "Starting from ₹749",
+    rating: 4.9,
+    reviewsCount: 68,
+    badge: "Premium",
+    image: "assets/images/plastic_frame_gold.jpg",
+    shortDescription: "Subtle brushed champagne gold frame profile with velvet backing for weddings and family portraits.",
+    description: "Designed for elegant wedding albums and milestone portraits, with warm gold leaf brushed edge and acid-free cotton mat.",
+    material: "Extruded Aluminum & Polymer in Brushed Champagne Gold",
+    printingType: "Fine Art Metallic Pearl Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "8\" × 10\"", price: 749 },
+      { name: "12\" × 16\"", price: 1199 },
+      { name: "16\" × 20\"", price: 1699 }
+    ],
+    finishes: [
+      { id: "champagne-finish", name: "Champagne Gold", color: "#C99A3D", image: "assets/images/plastic_frame_gold.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "walnut-gallery-wood-frame",
+    name: "Warm Walnut Gallery Wood Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 589,
+    priceDisplay: "Starting from ₹589",
+    rating: 4.8,
+    reviewsCount: 82,
+    badge: "Classic",
+    image: "assets/images/plastic_frame_walnut.jpg",
+    shortDescription: "Deep organic walnut wood grain frame adding natural warmth to landscapes and portrait art.",
+    description: "Rich walnut textured moulding combined with crystal clear glass gives timeless organic elegance to any modern living room or office.",
+    material: "Dense Engineered Wood with Authentic Walnut Veneer",
+    printingType: "Archival Matte Fine Art Inkjet",
+    status: "In Stock",
+    leadTime: "Same Day / 24 Hours",
+    sizes: [
+      { name: "8\" × 10\"", price: 589 },
+      { name: "12\" × 18\"", price: 980 },
+      { name: "18\" × 24\"", price: 1590 }
+    ],
+    finishes: [
+      { id: "walnut-rich", name: "Rich Walnut", color: "#5C3A21", image: "assets/images/plastic_frame_walnut.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "minimalist-black-poster-frame",
+    name: "Minimalist Studio Black Poster Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 499,
+    priceDisplay: "Starting from ₹499",
+    rating: 4.8,
+    reviewsCount: 115,
+    badge: "Essential",
+    image: "assets/images/plastic_frame_black.jpg",
+    shortDescription: "Sleek 15mm border minimalist matte black frame perfect for photography and typography prints.",
+    description: "Ultra-slim front profile ensures maximum visual focus on your artwork. Ready to hang both horizontally and vertically.",
+    material: "Matte Black Lightweight Aluminum-Polymer",
+    printingType: "High Contrast Satin Photo Print",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "12\" × 18\"", price: 499 },
+      { name: "16\" × 24\"", price: 799 },
+      { name: "20\" × 30\"", price: 1199 }
+    ],
+    finishes: [
+      { id: "black-slim", name: "Matte Black", color: "#111111", image: "assets/images/plastic_frame_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "ornate-vintage-gold-frame",
+    name: "Royal Ornate Gold Statement Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 1150,
+    priceDisplay: "Starting from ₹1,150",
+    rating: 5.0,
+    reviewsCount: 42,
+    badge: "Luxury",
+    image: "assets/images/plastic_frame_gold.jpg",
+    shortDescription: "Intricately carved baroque style royal gold frame for regal family photos and sacred deity portraits.",
+    description: "Hand-embossed floral relief with antique gilded patina. Makes an extraordinary centerpiece in formal living rooms and halls.",
+    material: "Reinforced Composite Resin with Antique Gold Leaf",
+    printingType: "Museum Archival Giclée Print",
+    status: "In Stock",
+    leadTime: "2 - 3 Days",
+    sizes: [
+      { name: "12\" × 18\"", price: 1150 },
+      { name: "16\" × 24\"", price: 1850 },
+      { name: "24\" × 36\"", price: 2950 }
+    ],
+    finishes: [
+      { id: "antique-gold", name: "Antique Gilded Gold", color: "#C99A3D", image: "assets/images/plastic_frame_gold.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "beveled-glass-certificate-frame",
+    name: "Beveled Glass Certificate Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 620,
+    priceDisplay: "Starting from ₹620",
+    rating: 4.9,
+    reviewsCount: 54,
+    badge: "Executive",
+    image: "assets/images/glass_frame_black.jpg",
+    shortDescription: "Heavyweight beveled desktop glass frame crafted for academic degrees, citations, and awards.",
+    description: "Features precision-cut beveled border and solid silver/black metal stand, delivering an unmatched boardroom prestige.",
+    material: "5mm Polished Glass with Metal Base Stand",
+    printingType: "Ultra-HD Certificate Document Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "A4 Size (8.3\" × 11.7\")", price: 620 },
+      { name: "Legal Size (8.5\" × 14\")", price: 780 }
+    ],
+    finishes: [
+      { id: "black-stand", name: "Black Metal Accents", color: "#111111", image: "assets/images/glass_frame_black.jpg", priceDelta: 0 },
+      { id: "silver-stand", name: "Silver Metal Accents", color: "#CBD5E1", image: "assets/images/glass_frame_silver.jpg", priceDelta: 30 }
+    ]
+  },
+  {
+    id: "floating-canvas-shadowbox",
+    name: "Floating Canvas Shadowbox Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 980,
+    priceDisplay: "Starting from ₹980",
+    rating: 4.9,
+    reviewsCount: 61,
+    badge: "Artisanal",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Deep shadowbox outer frame creating a floating space around wrapped canvas artwork.",
+    description: "Provides a contemporary 5mm reveal gap between the stretched canvas and outer frame, highlighting canvas depth.",
+    material: "Kiln-Dried Solid Pine Shadowbox Profile",
+    printingType: "Archival Cotton Canvas 380 GSM",
+    status: "In Stock",
+    leadTime: "2 - 3 Days",
+    sizes: [
+      { name: "12\" × 18\"", price: 980 },
+      { name: "16\" × 24\"", price: 1580 },
+      { name: "20\" × 30\"", price: 2350 }
+    ],
+    finishes: [
+      { id: "shadow-black", name: "Ebony Black", color: "#111111", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "dual-mat-fine-art-frame",
+    name: "Dual Mat Fine Art Conservation Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 799,
+    priceDisplay: "Starting from ₹799",
+    rating: 4.8,
+    reviewsCount: 47,
+    badge: "Conservation",
+    image: "assets/images/plastic_frame_white.jpg",
+    shortDescription: "Double-layered bevel-cut mat board frame for depth and archival photo preservation.",
+    description: "Features a contrasting double mat board (pure white on deep charcoal) to add layered focal depth to fine art photography.",
+    material: "Acid-free Conservation Cotton Core Board & Hardwood Moulding",
+    printingType: "Archival Fine Art Rag Print",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "10\" × 12\" (Fits 6×8 Photo)", price: 799 },
+      { name: "14\" × 18\" (Fits 8×12 Photo)", price: 1250 }
+    ],
+    finishes: [
+      { id: "white-mat", name: "Pure White Mat Border", color: "#F8FAFC", image: "assets/images/plastic_frame_white.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "panoramic-landscape-frame",
+    name: "Panoramic Wide Landscape Gallery Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 1050,
+    priceDisplay: "Starting from ₹1,050",
+    rating: 4.9,
+    reviewsCount: 39,
+    badge: "Panoramic",
+    image: "assets/images/hero_showcase.jpg",
+    shortDescription: "Elongated aspect-ratio frame built for skyline photography, family panoramas, and scenic views.",
+    description: "Engineered specifically for wide-angle panoramic photographs with heavy duty backing and anti-glare acrylic sheet.",
+    material: "Brushed Aluminum Composite with Structural Reinforcement",
+    printingType: "Wide-Format High-Gamut Panoramic Print",
+    status: "In Stock",
+    leadTime: "2 - 3 Days",
+    sizes: [
+      { name: "10\" × 30\"", price: 1050 },
+      { name: "12\" × 36\"", price: 1650 },
+      { name: "16\" × 48\"", price: 2450 }
+    ],
+    finishes: [
+      { id: "pan-black", name: "Matte Black", color: "#111111", image: "assets/images/hero_showcase.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "polaroid-collage-multi-frame",
+    name: "Multi-Photo Polaroid Collage Grid Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 820,
+    priceDisplay: "Starting from ₹820",
+    rating: 4.8,
+    reviewsCount: 88,
+    badge: "Popular",
+    image: "assets/images/plastic_frame_blue.jpg",
+    shortDescription: "Playful grid layout frame holding 6 to 9 polaroid-style mini photos with custom captions.",
+    description: "Showcase annual vacations, baby months, or couple milestones in a clean multi-window aperture conservation mat.",
+    material: "Matte Polymer Frame with Multi-Cut Mat Board",
+    printingType: "Fuji Crystal Archive Lustre Mini Prints",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "6-Aperture (12\" × 16\")", price: 820 },
+      { name: "9-Aperture (16\" × 16\")", price: 1150 }
+    ],
+    finishes: [
+      { id: "blue-collage", name: "Sapphire Blue", color: "#1E3A8A", image: "assets/images/plastic_frame_blue.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "natural-oak-finish-frame",
+    name: "Natural Oak Minimalist Photo Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 540,
+    priceDisplay: "Starting from ₹540",
+    rating: 4.8,
+    reviewsCount: 71,
+    badge: "Natural Wood",
+    image: "assets/images/plastic_frame_walnut.jpg",
+    shortDescription: "Light Scandinavian natural oak finish frame radiating calm warmth and contemporary style.",
+    description: "Subtle oak grain brings organic harmony to botanical prints, baby photos, and architectural sketches.",
+    material: "Sustainable Engineered Wood with Light Oak Grain",
+    printingType: "Soft Matte Fine Art Photographic Print",
+    status: "In Stock",
+    leadTime: "Same Day / 24 Hours",
+    sizes: [
+      { name: "8\" × 10\"", price: 540 },
+      { name: "12\" × 16\"", price: 890 },
+      { name: "16\" × 20\"", price: 1350 }
+    ],
+    finishes: [
+      { id: "oak-finish", name: "Natural Light Oak", color: "#C2A385", image: "assets/images/plastic_frame_walnut.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "silver-brushed-metal-frame",
+    name: "Brushed Silver Modern Metal Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 675,
+    priceDisplay: "Starting from ₹675",
+    rating: 4.9,
+    reviewsCount: 52,
+    badge: "Modern",
+    image: "assets/images/glass_frame_silver.jpg",
+    shortDescription: "Industrial-chic brushed aluminum photo frame with thin profile and sleek beveled corner seams.",
+    description: "Sleek and cool-toned, this brushed silver frame pairs beautifully with black and white portraits and modern architectural prints.",
+    material: "Aircraft Grade Brushed Anodized Aluminum",
+    printingType: "True Monochrome Silver Halide Style Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "8\" × 10\"", price: 675 },
+      { name: "11\" × 14\"", price: 1050 },
+      { name: "16\" × 20\"", price: 1550 }
+    ],
+    finishes: [
+      { id: "brushed-silver", name: "Brushed Silver", color: "#CBD5E1", image: "assets/images/glass_frame_silver.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "deep-box-keepsake-frame",
+    name: "Deep Box Keepsake & Memorabilia Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 890,
+    priceDisplay: "Starting from ₹890",
+    rating: 5.0,
+    reviewsCount: 36,
+    badge: "Keepsake",
+    image: "assets/images/glass_frame_black.jpg",
+    shortDescription: "35mm deep box shadow frame with linen backing to mount baby shoes, medals, or 3D keepsakes.",
+    description: "Preserve 3-dimensional keepsakes alongside your photographs. Includes pins and mounting pads with crystal front glass.",
+    material: "Deep Box Polymer Frame with Neutral Natural Linen Backing",
+    printingType: "Archival Memory Photo Print",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "8\" × 10\" (Depth 35mm)", price: 890 },
+      { name: "12\" × 12\" (Depth 35mm)", price: 1290 }
+    ],
+    finishes: [
+      { id: "deep-black", name: "Studio Black", color: "#111111", image: "assets/images/glass_frame_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "tabletop-double-hinged-frame",
+    name: "Tabletop Double-Hinged Folding Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 580,
+    priceDisplay: "Starting from ₹580",
+    rating: 4.8,
+    reviewsCount: 63,
+    badge: "Desk Decor",
+    image: "assets/images/plastic_frame.jpg",
+    shortDescription: "Folding dual photo frame joined by brass hinges for desks, bedside tables, and mantelpieces.",
+    description: "Display two complementary memories side-by-side. Free-standing without requiring an easel kickstand.",
+    material: "Dual Joined Polymer Frames with Brass Pivot Hinges",
+    printingType: "High Definition Gloss Photo Prints (Pair)",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Dual 5\" × 7\"", price: 580 },
+      { name: "Dual 6\" × 8\"", price: 780 }
+    ],
+    finishes: [
+      { id: "hinge-gold", name: "Warm Gold Accent", color: "#C99A3D", image: "assets/images/plastic_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "diamond-edge-crystal-frame",
+    name: "Diamond Cut Crystal Edge Glass Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 720,
+    priceDisplay: "Starting from ₹720",
+    rating: 4.9,
+    reviewsCount: 57,
+    badge: "Crystal",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "6mm thick optic glass frame with multi-faceted diamond beveled border that reflects ambient light.",
+    description: "Catches and refracts room lighting into prismatic reflections, transforming ordinary portraits into radiant statements.",
+    material: "6mm Heavy Optic Glass with Multi-Faceted Diamond Edge",
+    printingType: "Ultra-Vivid Pigment Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "6\" × 8\"", price: 720 },
+      { name: "8\" × 10\"", price: 1050 }
+    ],
+    finishes: [
+      { id: "crystal-edge", name: "Prismatic Crystal", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "contemporary-white-gallery-frame",
+    name: "Contemporary Gallery Pure White Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 460,
+    priceDisplay: "Starting from ₹460",
+    rating: 4.8,
+    reviewsCount: 92,
+    badge: "Minimalist",
+    image: "assets/images/plastic_frame_white.jpg",
+    shortDescription: "Clean museum-white photo frame delivering a bright, airy gallery presentation on any wall.",
+    description: "Crisp white satin finish complements modern nursery rooms, beach photography, and minimalist interiors.",
+    material: "Eco-Polymer in Gallery Pure White Satin",
+    printingType: "Ultra HD Fine Art Photographic Print",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "8\" × 10\"", price: 460 },
+      { name: "12\" × 18\"", price: 760 },
+      { name: "16\" × 24\"", price: 1290 }
+    ],
+    finishes: [
+      { id: "pure-white-finish", name: "Gallery Pure White", color: "#F8FAFC", image: "assets/images/plastic_frame_white.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "vintage-teakwood-carved-frame",
+    name: "Heritage Carved Teakwood Photo Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 1280,
+    priceDisplay: "Starting from ₹1,280",
+    rating: 5.0,
+    reviewsCount: 31,
+    badge: "Heritage",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Hand-finished teakwood textured frame celebrating Gujarat and Indian artisanal woodworking traditions.",
+    description: "Deep hand-carved floral border sealed with natural beeswax polish. Built to last for generations as a family heirloom.",
+    material: "Hand-Crafted Solid Teakwood Texture with Protective Seal",
+    printingType: "Museum Archival Cotton Rag Giclée Print",
+    status: "In Stock",
+    leadTime: "3 - 4 Days",
+    sizes: [
+      { name: "10\" × 14\"", price: 1280 },
+      { name: "16\" × 20\"", price: 1980 }
+    ],
+    finishes: [
+      { id: "teak-natural", name: "Hand-Waxed Teak", color: "#5C3A21", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "metallic-bronze-portrait-frame",
+    name: "Metallic Antique Bronze Portrait Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 690,
+    priceDisplay: "Starting from ₹690",
+    rating: 4.8,
+    reviewsCount: 44,
+    badge: "Vintage",
+    image: "assets/images/plastic_frame_gold.jpg",
+    shortDescription: "Warm oxidized antique bronze metallic frame with dark brushed highlights.",
+    description: "Adds rich historic mood to vintage photographs, sepia portraits, and classic oil-style digital prints.",
+    material: "Textured Polymer Moulding with Bronze Patina",
+    printingType: "Warm Tone Archival Photo Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "8\" × 10\"", price: 690 },
+      { name: "12\" × 18\"", price: 1120 }
+    ],
+    finishes: [
+      { id: "bronze-patina", name: "Antique Bronze", color: "#9E7422", image: "assets/images/plastic_frame_gold.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "quad-family-collage-frame",
+    name: "Quad Aperture Family Portrait Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 850,
+    priceDisplay: "Starting from ₹850",
+    rating: 4.9,
+    reviewsCount: 78,
+    badge: "Family",
+    image: "assets/images/plastic_frame_black.jpg",
+    shortDescription: "4-window precision cut mat board frame designed to display parents, kids, and memories in balance.",
+    description: "Display four 4\" × 6\" portraits inside an elegant single 14\" × 14\" frame. Perfect housewarming and anniversary gift.",
+    material: "Sleek Matte Black Frame with Archival Beveled Multi-Cut Mat",
+    printingType: "High Definition Photographic Printing",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "4-Window (14\" × 14\")", price: 850 }
+    ],
+    finishes: [
+      { id: "quad-black", name: "Matte Black", color: "#111111", image: "assets/images/plastic_frame_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "document-degree-glass-frame",
+    name: "Degree & Citation Beveled Glass Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 640,
+    priceDisplay: "Starting from ₹640",
+    rating: 4.8,
+    reviewsCount: 63,
+    badge: "Citation",
+    image: "assets/images/glass_frame_blue.jpg",
+    shortDescription: "Wall-mount beveled glass frame tailored for university diplomas, citations, and business licenses.",
+    description: "Preserve the ink and stamp on university degrees from fading. Comes with gold or silver corner hardware.",
+    material: "Tempered Ultra-Clear Beveled Glass with Corner Mounts",
+    printingType: "High Definition Document Preservation Layer",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "A4 Degree Size", price: 640 },
+      { name: "12\" × 15\" Executive Size", price: 920 }
+    ],
+    finishes: [
+      { id: "deg-blue", name: "Royal Blue Accent", color: "#1E3A8A", image: "assets/images/glass_frame_blue.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "slim-aluminum-border-frame",
+    name: "Slim Profile Black Aluminum Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 520,
+    priceDisplay: "Starting from ₹520",
+    rating: 4.8,
+    reviewsCount: 86,
+    badge: "Slimline",
+    image: "assets/images/plastic_frame_black.jpg",
+    shortDescription: "Super-slim 8mm aluminum face designed for architectural blueprints, photography, and art prints.",
+    description: "Ultra-modern slim border puts 98% of the visual focus onto the art itself. Lightweight yet extremely rigid.",
+    material: "Anodized Aerospace Aluminum Alloy (8mm Face)",
+    printingType: "Ultra-Crisp 1200 DPI Fine Art Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "8\" × 12\"", price: 520 },
+      { name: "12\" × 18\"", price: 850 },
+      { name: "18\" × 24\"", price: 1390 }
+    ],
+    finishes: [
+      { id: "slim-black", name: "Satin Black", color: "#111111", image: "assets/images/plastic_frame_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "distressed-rustic-barn-frame",
+    name: "Distressed Rustic Wood Picture Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 610,
+    priceDisplay: "Starting from ₹610",
+    rating: 4.7,
+    reviewsCount: 38,
+    badge: "Rustic",
+    image: "assets/images/plastic_frame_walnut.jpg",
+    shortDescription: "Charming distressed wood texture with vintage weathered edges for farmhouse and cozy decor.",
+    description: "Features hand-weathered finish that adds warm vintage character to outdoor photography, pets, and travel memories.",
+    material: "Textured Engineered Wood with Weathered Matte Patina",
+    printingType: "Fine Art Matte Textured Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "8\" × 10\"", price: 610 },
+      { name: "12\" × 18\"", price: 990 }
+    ],
+    finishes: [
+      { id: "rustic-patina", name: "Weathered Walnut", color: "#5C3A21", image: "assets/images/plastic_frame_walnut.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "museum-archival-standoff-frame",
+    name: "Museum Grade Archival Standoff Frame",
+    category: "frames",
+    categoryLabel: "Studio and Framing",
+    price: 1190,
+    priceDisplay: "Starting from ₹1,190",
+    rating: 5.0,
+    reviewsCount: 29,
+    badge: "Museum Grade",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Heavy-duty 8mm float glass frame with 99% UV-blocking filter and solid gold brass wall studs.",
+    description: "The gold standard in framing. Certified UV protection prevents fading of precious heirloom photography and fine art watercolors.",
+    material: "8mm Museum UV-Blocking Float Glass with Solid Brass Mounts",
+    printingType: "12-Color Pigment Archival Print (Certified 100+ Years)",
+    status: "In Stock",
+    leadTime: "2 - 3 Days",
+    sizes: [
+      { name: "12\" × 18\"", price: 1190 },
+      { name: "16\" × 24\"", price: 1890 },
+      { name: "20\" × 30\"", price: 2790 }
+    ],
+    finishes: [
+      { id: "museum-gold", name: "Solid Brass Gold Standoffs", color: "#C99A3D", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  }
+];
+
+// Verify 25 items in Category 1
+console.log('Category 1 count:', category1_frames.length);
+
+const category2_personalized = [
+  {
+    id: "printed-water-bottle-steel",
+    name: "Bottle Printing",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 519,
+    priceDisplay: "Starting from ₹519",
+    rating: 4.9,
+    reviewsCount: 112,
+    badge: "Trending",
+    image: "assets/images/printed_bottle.jpg",
+    shortDescription: "Personalized printing on insulated stainless steel bottles for corporate branding, personal gifts, and fitness events.",
+    description: "Constructed from food-grade 304 stainless steel with double-wall vacuum insulation, our custom bottles are personalized using precision 360° rotary UV printing or fiber laser engraving. Vibrant colors and scratch-proof coatings keep drinks cold for 24 hours and hot for 12 hours.",
+    material: "Food-Grade 304 Stainless Steel (Double-Wall Vacuum)",
+    printingType: "Full 360° Rotary UV Color Print or Laser Engraving",
+    status: "In Stock",
+    leadTime: "1 - 2 Business Days",
+    sizes: [
+      { name: "500 ml Classic", price: 519 },
+      { name: "750 ml Active", price: 679 },
+      { name: "1000 ml Hydrate", price: 829 }
+    ],
+    finishes: [
+      { id: "matte-black-bottle", name: "Matte Stealth Black", color: "#111111", image: "assets/images/printed_bottle_black.jpg", priceDelta: 0 },
+      { id: "royal-blue-bottle", name: "Midnight Navy Blue", color: "#1E3A8A", image: "assets/images/printed_bottle_blue.jpg", priceDelta: 25 },
+      { id: "brushed-silver-bottle", name: "Brushed Metallic Silver", color: "#94A3B8", image: "assets/images/printed_bottle_silver.jpg", priceDelta: 50 }
+    ],
+    features: [
+      "100% BPA Free Food Grade 304 Double-Wall Vacuum Steel",
+      "Keeps liquids piping hot for 12 hours and chilled cold for 24 hours",
+      "Permanent scratch-resistant rotary UV print that won't peel",
+      "Leakproof silicone seal screw top lid included"
+    ]
+  },
+  {
+    id: "customized-coffee-mug",
+    name: "Mug Printing",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 251,
+    priceDisplay: "Starting from ₹251",
+    rating: 4.9,
+    reviewsCount: 230,
+    badge: "Bestseller",
+    image: "assets/images/custom_mug.jpg",
+    shortDescription: "Customized ceramic mugs with photos, names, logos or designs. Microwave safe with brilliant high-gloss sublimation.",
+    description: "Our custom mugs are crafted from premium grade-A ceramic with an ultra-glossy AAA coating that locks in photographic colors with brilliant saturation. Available in classic white, two-tone color handles, and temperature-sensitive magic mugs that reveal your photograph when hot coffee is poured.",
+    material: "Grade AAA Coated Ceramic (Microwave & Dishwasher Safe)",
+    printingType: "Full-Surface High-Definition Heat Sublimation Transfer",
+    status: "In Stock",
+    leadTime: "Same Day / 24 Hours",
+    sizes: [
+      { name: "Standard 325 ml (11 oz)", price: 251 },
+      { name: "Jumbo 450 ml (15 oz)", price: 351 },
+      { name: "Magic Color Changing (325 ml)", price: 421 }
+    ],
+    finishes: [
+      { id: "classic-white-mug", name: "Glossy Alpine White", color: "#FFFFFF", image: "assets/images/custom_mug.jpg", priceDelta: 0 },
+      { id: "magic-black-mug", name: "Heat-Reactive Stealth Black", color: "#111111", image: "assets/images/custom_mug_black.jpg", priceDelta: 22 },
+      { id: "navy-gold-mug", name: "Deep Navy with Gold Trim", color: "#1E3A8A", image: "assets/images/custom_mug.jpg", priceDelta: 44 }
+    ],
+    features: [
+      "Grade AAA ceramic coated with scratch-proof sublimation glaze",
+      "Microwave and dishwasher safe high-heat resilient inks",
+      "Edge-to-edge panoramic wraparound photo printing",
+      "Includes protective gift-ready cardboard presentation box"
+    ]
+  },
+  {
+    id: "magic-color-changing-mug",
+    name: "Thermal Color-Changing Magic Photo Mug",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 399,
+    priceDisplay: "Starting from ₹399",
+    rating: 4.9,
+    reviewsCount: 140,
+    badge: "Surprise Gift",
+    image: "assets/images/custom_mug_black.jpg",
+    shortDescription: "Pitch black mug when cold that magically reveals your full-color hidden photo when hot beverage is poured.",
+    description: "The ultimate birthday and anniversary surprise. Matte black thermosensitive pigment dissolves to show your photo when tea or coffee is added.",
+    material: "Heat-Sensitive Glazed Grade-A Ceramic (325 ml)",
+    printingType: "Thermodynamic High-Res Sublimation Layer",
+    status: "In Stock",
+    leadTime: "Same Day / 24 Hours",
+    sizes: [
+      { name: "Standard 325 ml (11 oz)", price: 399 }
+    ],
+    finishes: [
+      { id: "magic-stealth", name: "Stealth Black Reveal", color: "#111111", image: "assets/images/custom_mug_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "double-wall-travel-flask",
+    name: "Insulated Double-Wall Travel Coffee Flask",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 649,
+    priceDisplay: "Starting from ₹649",
+    rating: 4.8,
+    reviewsCount: 75,
+    badge: "Coffee Travel",
+    image: "assets/images/printed_bottle_black.jpg",
+    shortDescription: "Leak-proof 450ml travel coffee tumbler with flip sip lid and laser-etched custom name or corporate logo.",
+    description: "Compact cup-holder friendly design. Double-wall stainless vacuum keeps your cappuccino hot on your morning commute.",
+    material: "Food-Grade 304 Stainless Steel with Powder Coat",
+    printingType: "High Precision Fiber Laser Engraving",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "450 ml Commuter", price: 649 }
+    ],
+    finishes: [
+      { id: "flask-black", name: "Matte Black", color: "#111111", image: "assets/images/printed_bottle_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "frosted-beer-stein-mug",
+    name: "Custom Frosted Glass Beer Stein",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 420,
+    priceDisplay: "Starting from ₹420",
+    rating: 4.8,
+    reviewsCount: 58,
+    badge: "Party Favorite",
+    image: "assets/images/custom_mug.jpg",
+    shortDescription: "Heavyweight 500ml frosted glass mug with thumb rest handle and high-saturation personalized graphics.",
+    description: "Chill in the freezer before pouring cold drinks. Heavy, solid starburst bottom with frost finish.",
+    material: "Heavy Gauge Frosted Beverage Glass (500 ml)",
+    printingType: "Vivid Color Glass Sublimation",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "500 ml Giant Stein", price: 420 }
+    ],
+    finishes: [
+      { id: "frosted-glass", name: "Ice Frosted Glass", color: "#E2E8F0", image: "assets/images/custom_mug.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "sipper-sports-aluminum-bottle",
+    name: "Sports Gym Aluminum Sipper Bottle 750ml",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 480,
+    priceDisplay: "Starting from ₹480",
+    rating: 4.7,
+    reviewsCount: 93,
+    badge: "Fitness",
+    image: "assets/images/printed_bottle_blue.jpg",
+    shortDescription: "Lightweight aluminum sports bottle with carabiner clip and leak-proof pull sipper cap.",
+    description: "Clip to gym bags and backpacks with the included aluminum carabiner. Personalized with athlete name, squad number, or gym logo.",
+    material: "Seamless High-Grade Aluminum with Carabiner",
+    printingType: "Rotary Sublimation 360° Color Wrap",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "750 ml Active Sipper", price: 480 }
+    ],
+    finishes: [
+      { id: "sipper-blue", name: "Electric Blue", color: "#1E3A8A", image: "assets/images/printed_bottle_blue.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "ceramic-couple-heart-mugs",
+    name: "Couple Heart-Handle Dual Ceramic Mugs",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 549,
+    priceDisplay: "Starting from ₹549 (Set of 2)",
+    rating: 4.9,
+    reviewsCount: 165,
+    badge: "Couple Set",
+    image: "assets/images/custom_mug.jpg",
+    shortDescription: "Interlocking heart handle ceramic mug pair printed with couple names, anniversary date, and matching photos.",
+    description: "The two mugs nest together with curved heart handles that join into a heart silhouette. Wonderful wedding and Valentine gift.",
+    material: "Dual Matching AAA Ceramic Mugs (325 ml each)",
+    printingType: "Dual Wraparound Sublimation Photo Print",
+    status: "In Stock",
+    leadTime: "Same Day / 24 Hours",
+    sizes: [
+      { name: "Paired Set of 2 Mugs", price: 549 }
+    ],
+    finishes: [
+      { id: "couple-white", name: "Classic Alpine White", color: "#FFFFFF", image: "assets/images/custom_mug.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "matte-black-stainless-tumbler",
+    name: "Matte Black Vacuum Insulated Tumbler",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 599,
+    priceDisplay: "Starting from ₹599",
+    rating: 4.9,
+    reviewsCount: 84,
+    badge: "Executive",
+    image: "assets/images/printed_bottle_black.jpg",
+    shortDescription: "500ml vacuum tumbler with spill-proof lid and straw port. Keeps iced drinks cold for 18 hours.",
+    description: "Sweat-free powder coated exterior with luxury tactile texture. Customized with monogram or corporate name.",
+    material: "304 Double Wall Vacuum Insulated Steel",
+    printingType: "Precision Fiber Laser Engraving or UV Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "500 ml Tumbler", price: 599 }
+    ],
+    finishes: [
+      { id: "tumbler-black", name: "Tactile Matte Black", color: "#111111", image: "assets/images/printed_bottle_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "neon-accent-coffee-mug",
+    name: "Neon Rim & Handle Vibrant Accent Mug",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 289,
+    priceDisplay: "Starting from ₹289",
+    rating: 4.8,
+    reviewsCount: 67,
+    badge: "Vibrant",
+    image: "assets/images/custom_mug.jpg",
+    shortDescription: "Two-tone ceramic mug with bright colored handle and inner rim contrasting with white exterior photo area.",
+    description: "Brings modern pop color to your desk. Available with sunny yellow, vivid red, or ocean blue inner trim.",
+    material: "Two-Tone Glazed Ceramic (325 ml)",
+    printingType: "Ultra-Vivid Color Sublimation",
+    status: "In Stock",
+    leadTime: "Same Day / 24 Hours",
+    sizes: [
+      { name: "325 ml Two-Tone Mug", price: 289 }
+    ],
+    finishes: [
+      { id: "accent-blue", name: "Sapphire Blue Trim", color: "#1E3A8A", image: "assets/images/custom_mug.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "bamboo-top-steel-flask",
+    name: "Eco Bamboo Cap Stainless Steel Bottle",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 720,
+    priceDisplay: "Starting from ₹720",
+    rating: 4.9,
+    reviewsCount: 51,
+    badge: "Eco-Luxe",
+    image: "assets/images/printed_bottle_silver.jpg",
+    shortDescription: "Premium double-wall bottle crowned with a sustainably harvested natural bamboo lid and steel handle.",
+    description: "Eco-friendly design paired with laser engraved bamboo cap and stainless body. Elegant corporate gifting favorite.",
+    material: "304 Stainless Steel Body with Natural Bamboo Cap",
+    printingType: "Dual Laser Engraving (Cap & Body)",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "600 ml Flask", price: 720 },
+      { name: "800 ml Flask", price: 890 }
+    ],
+    finishes: [
+      { id: "bamboo-silver", name: "Brushed Steel & Bamboo", color: "#94A3B8", image: "assets/images/printed_bottle_silver.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "glitter-sparkle-photo-mug",
+    name: "Dual-Tone Gold Glitter Sublimation Mug",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 350,
+    priceDisplay: "Starting from ₹350",
+    rating: 4.8,
+    reviewsCount: 43,
+    badge: "Sparkle",
+    image: "assets/images/custom_mug.jpg",
+    shortDescription: "Shimmering glitter base ceramic mug that sparkles under daylight with your photo sublimated on top.",
+    description: "A showstopper birthday and bridal party gift. Shimmers with hundreds of fine metallic particles under the ceramic glaze.",
+    material: "Metallic Shimmer Coated Ceramic (325 ml)",
+    printingType: "Full Color High-Gloss Sublimation",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "325 ml Glitter Mug", price: 350 }
+    ],
+    finishes: [
+      { id: "glitter-gold", name: "Champagne Gold Sparkle", color: "#C99A3D", image: "assets/images/custom_mug.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "personalized-keychain-combo",
+    name: "Personalized Metal & Polymer Photo Keychain",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 180,
+    priceDisplay: "Starting from ₹180",
+    rating: 4.7,
+    reviewsCount: 110,
+    badge: "Daily Carry",
+    image: "assets/images/printed_bottle_silver.jpg",
+    shortDescription: "Double-sided photo keychain with scratch-resistant clear epoxy dome and heavy-duty steel ring.",
+    description: "Carry your favorite people wherever you drive. Double-sided photo printing sealed with high-gloss protective resin.",
+    material: "Heavy Anodized Zinc Alloy with Hard Enamel Resin",
+    printingType: "Double-Sided 1200 DPI Micro Photo Print",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Rectangle (30 × 50 mm)", price: 180 },
+      { name: "Round (40 mm Diameter)", price: 180 }
+    ],
+    finishes: [
+      { id: "keychain-silver", name: "Brushed Silver Chrome", color: "#CBD5E1", image: "assets/images/printed_bottle_silver.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "temperature-led-display-bottle",
+    name: "Smart-Temp LED Touch Bottle 500ml",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 699,
+    priceDisplay: "Starting from ₹699",
+    rating: 4.9,
+    reviewsCount: 95,
+    badge: "Smart Tech",
+    image: "assets/images/printed_bottle_black.jpg",
+    shortDescription: "Smart insulated flask featuring an LED digital temperature touch display on lid and custom name print.",
+    description: "Touch the lid to immediately view the drink temperature in Celsius. Includes removable stainless tea infuser strainer.",
+    material: "304 Stainless Vacuum Steel with Waterproof LED Touch Lid",
+    printingType: "Full 360° Rotary UV Print or Laser Etching",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "500 ml Smart Flask", price: 699 }
+    ],
+    finishes: [
+      { id: "smart-black", name: "Stealth Black LED", color: "#111111", image: "assets/images/printed_bottle_black.jpg", priceDelta: 0 },
+      { id: "smart-blue", name: "Navy Blue LED", color: "#1E3A8A", image: "assets/images/printed_bottle_blue.jpg", priceDelta: 30 }
+    ]
+  },
+  {
+    id: "vintage-enamel-camping-mug",
+    name: "Vintage Rustic Steel Enamel Camping Mug",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 340,
+    priceDisplay: "Starting from ₹340",
+    rating: 4.8,
+    reviewsCount: 52,
+    badge: "Outdoor",
+    image: "assets/images/custom_mug.jpg",
+    shortDescription: "Retro lightweight steel campfire mug with curled rim and durable enamel coating for travelers.",
+    description: "Indestructible camping classic. Drop-proof steel body coated in porcelain enamel with retro rolled lip.",
+    material: "Rolled Steel Body with Porcelain Enamel Glaze (350 ml)",
+    printingType: "Sublimation Heat Transfer",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "350 ml Enamel Camp Mug", price: 340 }
+    ],
+    finishes: [
+      { id: "enamel-white", name: "Vintage Cream & Silver Rim", color: "#FAF7F2", image: "assets/images/custom_mug.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "engraved-wooden-photo-plaque",
+    name: "Laser Engraved Wooden Desktop Plaque",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 580,
+    priceDisplay: "Starting from ₹580",
+    rating: 4.9,
+    reviewsCount: 89,
+    badge: "Handcrafted",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Solid beech wood plaque with deeply burned laser photo engraving and personalized message.",
+    description: "High-definition monochrome laser burns your photo permanently into the grain of natural beech wood. Won't ever fade.",
+    material: "18mm Kiln-Dried Solid Beech Hardwood with Table Stand",
+    printingType: "High Precision CO2 Laser Photo Burning",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "6\" × 8\" Desktop", price: 580 },
+      { name: "8\" × 10\" Display", price: 850 }
+    ],
+    finishes: [
+      { id: "wood-beech", name: "Natural Beechwood", color: "#C2A385", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-printed-mousepad",
+    name: "High-Density Speed Fabric Custom Mousepad",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 260,
+    priceDisplay: "Starting from ₹260",
+    rating: 4.8,
+    reviewsCount: 114,
+    badge: "Desk Essential",
+    image: "assets/images/printed_file.jpg",
+    shortDescription: "Silky micro-weave gaming and office mousepad with anti-slip rubber base and edge-to-edge photo printing.",
+    description: "Optimized for optical mouse tracking. Washable fabric surface retains vibrant colors through millions of mouse clicks.",
+    material: "Micro-Textured Cloth Surface with 3mm Anti-Skid Rubber Base",
+    printingType: "Ultra-Durable Thermal Dye Sublimation",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Standard (220 × 180 mm)", price: 260 },
+      { name: "Extended Desk Mat (800 × 300 mm)", price: 620 }
+    ],
+    finishes: [
+      { id: "pad-speed", name: "Smooth Speed Weave", color: "#111111", image: "assets/images/printed_file.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "crystal-glass-paperweight",
+    name: "3D Sub-Surface Laser Crystal Paperweight",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 650,
+    priceDisplay: "Starting from ₹650",
+    rating: 4.9,
+    reviewsCount: 41,
+    badge: "Keepsake",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Solid K9 optical crystal paperweight with your photo engraved inside the glass using green laser dots.",
+    description: "The photo appears suspended inside the crystal glass, viewed from any angle. Heavyweight executive desktop gift.",
+    material: "Pure K9 Optical Crystal Block (Beveled Edges)",
+    printingType: "3D Internal Sub-Surface Laser Engraving (SSLE)",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "50 × 50 × 80 mm Cube", price: 650 },
+      { name: "60 × 60 × 90 mm Grand", price: 950 }
+    ],
+    finishes: [
+      { id: "crystal-clear", name: "Pure Optical Crystal", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "personalized-passport-cover",
+    name: "Personalized Textured Leatherette Passport Cover",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 450,
+    priceDisplay: "Starting from ₹450",
+    rating: 4.8,
+    reviewsCount: 76,
+    badge: "Travel",
+    image: "assets/images/printed_folder_navy.jpg",
+    shortDescription: "Slim passport protector wallet with custom metallic gold name charm and travel icon.",
+    description: "Keeps your passport safe with dedicated internal slots for boarding pass and credit cards. Crafted from soft vegan leather.",
+    material: "Saffiano Textured Vegan Leather with Brass Name Strip",
+    printingType: "Hot Metallic Foil Stamping or Color UV Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Standard Universal Passport Size", price: 450 }
+    ],
+    finishes: [
+      { id: "pass-navy", name: "Midnight Navy Blue", color: "#1E3A8A", image: "assets/images/printed_folder_navy.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "ceramic-latte-cone-mug",
+    name: "Tall Cone Ceramic Barista Latte Mug",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 320,
+    priceDisplay: "Starting from ₹320",
+    rating: 4.7,
+    reviewsCount: 39,
+    badge: "Cafe Style",
+    image: "assets/images/custom_mug.jpg",
+    shortDescription: "Slender 420ml tapered ceramic latte mug designed for tall barista coffees and customized family photos.",
+    description: "Ergonomic tapered profile fits comfortably into hands and modern car console holders. High-gloss photographic glaze.",
+    material: "AAA Tapered Glazed Ceramic (420 ml)",
+    printingType: "Cone-Wrap Heat Sublimation",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "420 ml Tall Latte Mug", price: 320 }
+    ],
+    finishes: [
+      { id: "latte-white", name: "Glaze White", color: "#FFFFFF", image: "assets/images/custom_mug.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "personalized-phone-grip-holder",
+    name: "Sublimated Epoxy Gloss Phone Pop Grip",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 149,
+    priceDisplay: "Starting from ₹149",
+    rating: 4.8,
+    reviewsCount: 135,
+    badge: "Trending",
+    image: "assets/images/printed_bottle.jpg",
+    shortDescription: "Collapsible phone grip and stand customized with your photo under a diamond clear epoxy shield.",
+    description: "Stick to any phone or case with strong 3M adhesive. Expands to hold your phone securely or acts as a video stand.",
+    material: "Polycarbonate Socket with Crystal Clear Epoxy Top Dome",
+    printingType: "High Definition 1200 DPI Micro Photo Print",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Standard 40 mm Grip", price: 149 }
+    ],
+    finishes: [
+      { id: "grip-black", name: "Black Accordion Base", color: "#111111", image: "assets/images/printed_bottle.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-printed-fridge-magnets",
+    name: "Acrylic Photo Fridge Magnet Set (Pack of 4)",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 299,
+    priceDisplay: "Starting from ₹299 (Pack of 4)",
+    rating: 4.9,
+    reviewsCount: 88,
+    badge: "Family Pack",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Set of 4 heavy acrylic photo magnets featuring powerful neodymium backing that holds papers firmly.",
+    description: "Turn your refrigerator into a living memory wall. High-clarity 3mm acrylic with rounded corners and strong magnetic hold.",
+    material: "3mm Optic Cast Acrylic with Neodymium Magnet Disc",
+    printingType: "Reverse UV High-Definition Direct Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Set of 4 (65 × 65 mm each)", price: 299 }
+    ],
+    finishes: [
+      { id: "magnet-clear", name: "High-Gloss Clear", color: "#F8FAFC", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "monogram-leather-keyring",
+    name: "Monogram Embossed Vegan Leather Keyring",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 220,
+    priceDisplay: "Starting from ₹220",
+    rating: 4.8,
+    reviewsCount: 65,
+    badge: "Minimalist",
+    image: "assets/images/printed_folder_black.jpg",
+    shortDescription: "Sophisticated textured leather loop keychain with hot foil gold monogram stamping.",
+    description: "Sleek key accessory stamped with custom initials in metallic gold foil. Includes brushed gunmetal key split ring.",
+    material: "Dual Layer Vegan Leather with Gunmetal Rivet",
+    printingType: "Metallic Hot Gold Foil Deboss",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Loop Keychain (110 mm Length)", price: 220 }
+    ],
+    finishes: [
+      { id: "key-black", name: "Charcoal Black", color: "#111111", image: "assets/images/printed_folder_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "insulated-cola-shape-bottle",
+    name: "Cola Contour Metallic Vacuum Flask 500ml",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 560,
+    priceDisplay: "Starting from ₹560",
+    rating: 4.9,
+    reviewsCount: 78,
+    badge: "Stylist",
+    image: "assets/images/printed_bottle_silver.jpg",
+    shortDescription: "Ergonomic cola-silhouette vacuum bottle printed with personalized name, quote, or brand artwork.",
+    description: "Classic bowling pin / cola bottle contour slides smoothly into backpacks. Keeps drinks cold for 24 hours.",
+    material: "304 High-Grade Stainless Steel Vacuum Construction",
+    printingType: "Rotary High Resolution Color Printing",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "500 ml Cola Flask", price: 560 }
+    ],
+    finishes: [
+      { id: "cola-silver", name: "Metallic Chrome Silver", color: "#94A3B8", image: "assets/images/printed_bottle_silver.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "personalized-desk-calendar",
+    name: "Personalized 12-Month Hardboard Desk Calendar",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 380,
+    priceDisplay: "Starting from ₹380",
+    rating: 4.9,
+    reviewsCount: 104,
+    badge: "New Year / Gift",
+    image: "assets/images/printed_folder.jpg",
+    shortDescription: "Spiral bound desktop flip calendar featuring 12 customized monthly family photos and date highlights.",
+    description: "Mark birthdays and anniversaries right on the calendar grid with custom photos for every month of the year.",
+    material: "300 GSM Velvet Cardstock with Sturdy Triangle Base Stand",
+    printingType: "High Definition Offset Digital Press Print",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "Standard Desk Size (8\" × 6\")", price: 380 }
+    ],
+    finishes: [
+      { id: "cal-black", name: "Midnight Black Stand", color: "#111111", image: "assets/images/printed_folder.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-metal-luggage-tag",
+    name: "Anodized Metal Custom Laser Luggage Tag",
+    category: "personalized",
+    categoryLabel: "Personalized Printing",
+    price: 230,
+    priceDisplay: "Starting from ₹230",
+    rating: 4.8,
+    reviewsCount: 57,
+    badge: "Travel",
+    image: "assets/images/printed_bottle_blue.jpg",
+    shortDescription: "Heavy-duty aluminum luggage tag with stainless steel braided cable and laser etched contact details.",
+    description: "Never lose a bag at airport baggage claim. Deep fiber laser etching won't scratch or rub off during flights.",
+    material: "Anodized Aluminum Plate with Braided Steel Cable",
+    printingType: "Fiber Laser Micro-Precision Engraving",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Luggage Tag (75 × 45 mm)", price: 230 }
+    ],
+    finishes: [
+      { id: "tag-blue", name: "Anodized Royal Blue", color: "#1E3A8A", image: "assets/images/printed_bottle_blue.jpg", priceDelta: 0 }
+    ]
+  }
+];
+
+// Verify 25 items in Category 2
+console.log('Category 2 count:', category2_personalized.length);
+
+const category3_office = [
+  {
+    id: "custom-file-printing",
+    name: "File Printing",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 145,
+    priceDisplay: "Starting from ₹145",
+    rating: 4.8,
+    reviewsCount: 65,
+    badge: "Office Essential",
+    image: "assets/images/printed_file.jpg",
+    shortDescription: "Custom printed office document files, clip files, and corporate tender files with branded graphics and metal bindings.",
+    description: "Ensure your company, hospital, or institutional files project clean authority. We produce customized office files using reinforced thick board and premium lamination, tailored with custom logo printing, index clips, and multi-ring metal mechanisms.",
+    material: "350-450 GSM Heavy Board / Polypropylene with Metal Clip",
+    printingType: "High-Speed Offset & Screen Print with Matte Lamination",
+    status: "In Stock",
+    leadTime: "2 - 3 Business Days",
+    sizes: [
+      { name: "A4 Standard Document File", price: 145 },
+      { name: "Hospital Case File (Multi-Flap)", price: 185 },
+      { name: "Legal / Box File (2-Inch)", price: 235 }
+    ],
+    finishes: [
+      { id: "navy-file", name: "Corporate Navy Blue", color: "#1E3A8A", image: "assets/images/printed_file.jpg", priceDelta: 0 },
+      { id: "forest-file", name: "Forest Green", color: "#14532D", image: "assets/images/printed_file_green.jpg", priceDelta: 14 },
+      { id: "black-file", name: "Executive Charcoal Black", color: "#111111", image: "assets/images/printed_file_black.jpg", priceDelta: 28 }
+    ],
+    features: [
+      "Heavy duty 400+ GSM rigid board with spill-proof thermal matte lamination",
+      "Reinforced heavy-gauge zinc plated metal clip binding mechanism",
+      "Integrated spine pocket for easy archiving and departmental labelling",
+      "Precision die-cut corners preventing edge fraying during heavy daily use"
+    ]
+  },
+  {
+    id: "printed-office-folder-executive",
+    name: "Folder Printing",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 189,
+    priceDisplay: "Starting from ₹189",
+    rating: 4.9,
+    reviewsCount: 88,
+    badge: "Corporate Choice",
+    image: "assets/images/printed_folder_navy.jpg",
+    shortDescription: "Executive presentation folders with metallic gold foil stamping, debossed logos, and precision die-cut card pockets.",
+    description: "Make an unforgettable first impression at client presentations, proposal pitches, and conferences. Crafted from 400+ GSM art card or textured leatherette with metallic foil stamping and die-cut internal pockets for documents and business cards.",
+    material: "400 GSM Imperial Art Card / Textured Leatherette",
+    printingType: "Metallic Hot Foil Stamping, Debossing & Spot UV",
+    status: "In Stock",
+    leadTime: "2 - 4 Business Days",
+    sizes: [
+      { name: "A4 Single Pocket Presentation Folder", price: 189 },
+      { name: "A4 Dual Pocket with Card Slits", price: 279 },
+      { name: "Luxury Padded Certificate Folio", price: 469 }
+    ],
+    finishes: [
+      { id: "gold-foil-navy", name: "Navy Blue with Gold Foil", color: "#1E3A8A", image: "assets/images/printed_folder_navy.jpg", priceDelta: 0 },
+      { id: "forest-gold", name: "Forest Green with Gold Foil", color: "#14532D", image: "assets/images/printed_folder_green.jpg", priceDelta: 18 },
+      { id: "charcoal-gold", name: "Charcoal with Gold Foil", color: "#111111", image: "assets/images/printed_folder_black.jpg", priceDelta: 36 }
+    ],
+    features: [
+      "Ultra-thick 400 GSM high-density art board with soft-touch velvet finish",
+      "Metallic German gold or silver hot foil stamped company emblem",
+      "Precision engineered internal pocket with integrated business card slits",
+      "Creased expandable spine accommodating up to 40 proposal sheets"
+    ]
+  },
+  {
+    id: "gold-foil-letterhead-corporate",
+    name: "Premium Textured Executive Letterhead (Pack of 100)",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 450,
+    priceDisplay: "Starting from ₹450",
+    rating: 4.9,
+    reviewsCount: 72,
+    badge: "Executive",
+    image: "assets/images/printed_file.jpg",
+    shortDescription: "100 GSM imported textured bond paper with metallic gold foil crest and high-definition corporate identity header.",
+    description: "Command respect on every proposal and legal document. Feeds smoothly through all laser and inkjet office printers.",
+    material: "100 GSM Imported Textured Laid Bond Paper (Pack of 100)",
+    printingType: "Offset Spot Color & German Gold Foil Stamping",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "A4 Pack of 100 Sheets", price: 450 },
+      { name: "A4 Pack of 500 Sheets", price: 1650 }
+    ],
+    finishes: [
+      { id: "let-gold", name: "Warm Gold Foil Crest", color: "#C99A3D", image: "assets/images/printed_file.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "embossed-business-cards-luxury",
+    name: "450 GSM Velvet Soft-Touch Business Cards (Pack of 200)",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 550,
+    priceDisplay: "Starting from ₹550",
+    rating: 5.0,
+    reviewsCount: 142,
+    badge: "Bestseller",
+    image: "assets/images/printed_folder_black.jpg",
+    shortDescription: "Ultra-thick 450 GSM velvet laminated visiting cards with raised metallic spot UV and painted gold edges.",
+    description: "Feels substantial in hand with soft velvet touch lamination that never fingerprints. Makes an instant luxury statement.",
+    material: "450 GSM Heavy Multi-Layer Art Board with Velvet Finish",
+    printingType: "High Definition Digital Press with Raised Spot UV",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "Box of 200 Cards", price: 550 },
+      { name: "Box of 500 Cards", price: 1150 }
+    ],
+    finishes: [
+      { id: "card-black-gold", name: "Velvet Black & Gold", color: "#111111", image: "assets/images/printed_folder_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-company-envelope-set",
+    name: "Branded Self-Seal Window Envelopes (Pack of 100)",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 320,
+    priceDisplay: "Starting from ₹320",
+    rating: 4.8,
+    reviewsCount: 59,
+    badge: "Essential",
+    image: "assets/images/printed_file_green.jpg",
+    shortDescription: "Custom printed business envelopes with peel-and-seal adhesive strip and tinted interior security pattern.",
+    description: "Available in standard business #10 mailing size or full document A4 envelope sizes with company logo and address.",
+    material: "120 GSM Heavy Bond Paper with Peel & Seal Tape",
+    printingType: "High-Speed Full Color Offset Press",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "Standard 9.5\" × 4.5\" (Pack of 100)", price: 320 },
+      { name: "Document A4 Size (Pack of 100)", price: 580 }
+    ],
+    finishes: [
+      { id: "env-green", name: "Corporate Forest Green", color: "#14532D", image: "assets/images/printed_file_green.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "spiral-bound-corporate-notebook",
+    name: "Hardcover Foil-Stamped Spiral Office Notebook",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 260,
+    priceDisplay: "Starting from ₹260",
+    rating: 4.9,
+    reviewsCount: 84,
+    badge: "Meeting Essential",
+    image: "assets/images/printed_folder_navy.jpg",
+    shortDescription: "160 ruled page hardcover spiral notebook customized with company branding and calendar reference sheets.",
+    description: "Sturdy black wiro binding lays completely flat at 180° for easy note-taking during executive board meetings.",
+    material: "Hardboard Matte Cover with 80 GSM Natural Shade Interior Pages",
+    printingType: "Full Color Cover Press with Metallic Foil Logo",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "B5 Executive Size (160 Pages)", price: 260 },
+      { name: "A5 Compact Size (160 Pages)", price: 210 }
+    ],
+    finishes: [
+      { id: "note-navy", name: "Navy Blue Gold Foil", color: "#1E3A8A", image: "assets/images/printed_folder_navy.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "laminated-employee-id-cards",
+    name: "Rigid Thermal PVC Employee ID Cards with Lanyard",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 120,
+    priceDisplay: "Starting from ₹120",
+    rating: 4.8,
+    reviewsCount: 168,
+    badge: "Security",
+    image: "assets/images/printed_file.jpg",
+    shortDescription: "Credit card thickness CR80 thermal PVC badges with barcodes, employee photos, and custom printed lanyards.",
+    description: "Durable waterproof thermal dye-sublimation print that won't scratch. Includes satin lanyard with company name and safety breakaway.",
+    material: "CR80 30-Mil Solid PVC with Satin Fabric Lanyard",
+    printingType: "Dual-Sided Thermal Retransfer Photographic Print",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Single ID Card + Lanyard Set", price: 120 }
+    ],
+    finishes: [
+      { id: "id-navy", name: "Navy Blue Lanyard", color: "#1E3A8A", image: "assets/images/printed_file.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "corporate-desk-tent-calendar",
+    name: "Triangle Hardboard Executive Desk Calendar",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 220,
+    priceDisplay: "Starting from ₹220",
+    rating: 4.9,
+    reviewsCount: 65,
+    badge: "Corporate Gift",
+    image: "assets/images/printed_folder.jpg",
+    shortDescription: "Sturdy triangle stand desk calendar customized with company product showcase photos and holiday schedules.",
+    description: "A year-round branding presence on client desks. 12 monthly sheets printed on thick matte board with wiro binding.",
+    material: "Rigid Kappa Board Triangle Stand with 250 GSM Cards",
+    printingType: "12-Sheet High Gamut Color Printing",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "8.5\" × 6\" Desk Calendar", price: 220 }
+    ],
+    finishes: [
+      { id: "cal-tent", name: "Executive Charcoal Stand", color: "#111111", image: "assets/images/printed_folder.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "foil-stamped-certificate-folder",
+    name: "Gold Crest Padded Certificate Presentation Folio",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 340,
+    priceDisplay: "Starting from ₹340",
+    rating: 4.9,
+    reviewsCount: 46,
+    badge: "Award Folio",
+    image: "assets/images/printed_folder_navy.jpg",
+    shortDescription: "Padded leatherette certificate folder with satin ribbon corners to present diplomas and corporate honors.",
+    description: "Features plush sponge padding with deep gold foil debossed company emblem. Interior lined with moire silk satin ribbon corners.",
+    material: "Padded Leatherette with 4 Satin Ribbon Certificate Holders",
+    printingType: "Deep Metallic Hot Foil Debossing",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "A4 Size Presentation Folio", price: 340 }
+    ],
+    finishes: [
+      { id: "folio-navy", name: "Imperial Navy with Gold", color: "#1E3A8A", image: "assets/images/printed_folder_navy.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "carbonless-bill-invoice-book",
+    name: "Triplicate NCR Carbonless Order & Invoice Book",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 210,
+    priceDisplay: "Starting from ₹210",
+    rating: 4.8,
+    reviewsCount: 81,
+    badge: "Accounting",
+    image: "assets/images/printed_file.jpg",
+    shortDescription: "100-set carbonless triplicate invoice books with consecutive red sequential numbering and perforated sheets.",
+    description: "Writes clearly through to all 3 copies without needing messy carbon paper. Includes wraparound protective writing shield.",
+    material: "55 GSM Self-Copying NCR Paper with Cardboard Cover",
+    printingType: "Offset One-Color / Two-Color Grid Printing",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "Standard 50 Sets Triplicate (A5)", price: 210 },
+      { name: "100 Sets Triplicate (A4)", price: 390 }
+    ],
+    finishes: [
+      { id: "ncr-white", name: "Standard White/Pink/Yellow", color: "#F8FAFC", image: "assets/images/printed_file.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "metallic-embossed-visiting-cards",
+    name: "Metallic Gold Stamped Imperial Visiting Cards (Pack of 100)",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 680,
+    priceDisplay: "Starting from ₹680",
+    rating: 5.0,
+    reviewsCount: 78,
+    badge: "C-Level VIP",
+    image: "assets/images/printed_folder_black.jpg",
+    shortDescription: "Ultra-luxurious textured cotton cards with dual-sided metallic gold foil and blind letterpress debossing.",
+    description: "Crafted for CEOs, founders, and directors. Crisp raised debossed typography on 500 GSM heavyweight board.",
+    material: "500 GSM 100% Pure Cotton Imperial Cardstock",
+    printingType: "Precision Hot Foil Stamping & Blind Letterpress",
+    status: "In Stock",
+    leadTime: "3 Days",
+    sizes: [
+      { name: "Box of 100 VIP Cards", price: 680 }
+    ],
+    finishes: [
+      { id: "gold-card", name: "Deep Matte Black with Gold", color: "#111111", image: "assets/images/printed_folder_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "corporate-presentation-binder",
+    name: "2-Ring D-Mechanism Heavy Duty Document Binder",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 290,
+    priceDisplay: "Starting from ₹290",
+    rating: 4.8,
+    reviewsCount: 52,
+    badge: "Tender Binder",
+    image: "assets/images/printed_file_green.jpg",
+    shortDescription: "Custom printed hardboard ring binder with 2-inch heavy duty D-ring mechanism for technical manuals and bids.",
+    description: "Holds up to 350 sheets securely with stainless steel arch locking lever. Gloss or matte laminated full cover branding.",
+    material: "2.5mm Rigid Kappa Board with Nickel Plated D-Rings",
+    printingType: "Full Color Laminated Wraparound Print",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "2-Inch D-Ring (A4 Size)", price: 290 }
+    ],
+    finishes: [
+      { id: "binder-green", name: "Industrial Green", color: "#14532D", image: "assets/images/printed_file_green.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "branded-kraft-paper-files",
+    name: "Eco Kraft Board Minimalist Document Files",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 110,
+    priceDisplay: "Starting from ₹110",
+    rating: 4.8,
+    reviewsCount: 66,
+    badge: "Eco-Friendly",
+    image: "assets/images/printed_file.jpg",
+    shortDescription: "100% recycled 350 GSM brown kraft paper files screen printed with minimalist monochrome corporate logos.",
+    description: "Rustic eco-conscious document folders ideal for green initiatives, sustainability reports, and architecture studios.",
+    material: "350 GSM 100% Recycled Unbleached Brown Kraft Board",
+    printingType: "Eco-Friendly Soy-Based Screen Printing",
+    status: "In Stock",
+    leadTime: "Same Day / 24 Hours",
+    sizes: [
+      { name: "A4 Single Crease File", price: 110 }
+    ],
+    finishes: [
+      { id: "kraft-brown", name: "Natural Earth Kraft", color: "#9A7B56", image: "assets/images/printed_file.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "executive-leatherette-organizer",
+    name: "Executive Ring-Binder Planner with Card Slots",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 590,
+    priceDisplay: "Starting from ₹590",
+    rating: 4.9,
+    reviewsCount: 89,
+    badge: "Corporate Gift",
+    image: "assets/images/printed_folder_black.jpg",
+    shortDescription: "Luxury magnetic closure PU leather portfolio planner with pen loop, business card slots, and refillable notepad.",
+    description: "Debossed with your organization's logo on the front magnetic flap. The ultimate annual conference corporate welcome gift.",
+    material: "Textured Premium Vegan Leather with Stainless Rings",
+    printingType: "Blind Hot Stamping & Metallic Deboss",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "A5 Executive Organizer", price: 590 }
+    ],
+    finishes: [
+      { id: "org-black", name: "Midnight Charcoal", color: "#111111", image: "assets/images/printed_folder_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "gloss-laminated-annual-report",
+    name: "Saddle-Stitched Annual Report & Product Catalog",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 380,
+    priceDisplay: "Starting from ₹380",
+    rating: 4.8,
+    reviewsCount: 37,
+    badge: "Publications",
+    image: "assets/images/printed_file.jpg",
+    shortDescription: "24-page full color magazine-grade annual report with 300 GSM cover and 130 GSM silky art paper pages.",
+    description: "Produce pristine corporate financial reports and product sales catalogs with razor-sharp typography and vivid photography.",
+    material: "300 GSM Velvet Cover with 130 GSM Gloss Art Inner Pages",
+    printingType: "High-Speed Commercial Digital Offset Press",
+    status: "In Stock",
+    leadTime: "2 - 3 Days",
+    sizes: [
+      { name: "A4 24-Page Catalog", price: 380 }
+    ],
+    finishes: [
+      { id: "cat-gloss", name: "High-Gloss Finish", color: "#1E3A8A", image: "assets/images/printed_file.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-printed-desk-blotter",
+    name: "Executive Leatherette Desk Pad & Blotter",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 480,
+    priceDisplay: "Starting from ₹480",
+    rating: 4.9,
+    reviewsCount: 42,
+    badge: "Executive Desk",
+    image: "assets/images/printed_folder_black.jpg",
+    shortDescription: "Spacious 600 × 350 mm waterproof desk blotter mat embossed with company branding and smooth writing feel.",
+    description: "Protects boardroom tables from scratches while offering a cushioned, comfortable writing surface and mouse tracking.",
+    material: "Waterproof Microfiber PU Leather with Non-Slip Back",
+    printingType: "Subtle Hot Debossed Corporate Emblem",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Executive (600 × 350 mm)", price: 480 }
+    ],
+    finishes: [
+      { id: "blotter-black", name: "Executive Black", color: "#111111", image: "assets/images/printed_folder_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "tri-fold-corporate-brochure",
+    name: "300 GSM Velvet Laminated Tri-Fold Brochure (Pack of 100)",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 490,
+    priceDisplay: "Starting from ₹490 (Pack of 100)",
+    rating: 4.8,
+    reviewsCount: 97,
+    badge: "Marketing",
+    image: "assets/images/printed_file.jpg",
+    shortDescription: "Crisp 6-panel tri-fold marketing pamphlets with double creasing and velvety water-resistant lamination.",
+    description: "Explain your products and industrial services with structured clarity. Vibrant color reproduction on heavy 300 GSM card.",
+    material: "300 GSM High-Bulk Gloss Card with Thermal Velvet Coat",
+    printingType: "Double-Sided 4-Color High Precision Offset",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "A4 Open / Tri-Fold (Pack of 100)", price: 490 },
+      { name: "A4 Open / Tri-Fold (Pack of 500)", price: 1650 }
+    ],
+    finishes: [
+      { id: "brochure-matte", name: "Velvet Matte Finish", color: "#1E3A8A", image: "assets/images/printed_file.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "heavy-duty-box-file-binder",
+    name: "Commercial Heavy-Duty Lever Arch Box File",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 240,
+    priceDisplay: "Starting from ₹240",
+    rating: 4.8,
+    reviewsCount: 79,
+    badge: "Archival Box",
+    image: "assets/images/printed_file_black.jpg",
+    shortDescription: "Rigid 3-inch wide box file with nickel lever-arch mechanism, metal finger ring, and corner shoe protectors.",
+    description: "Engineered for intense daily accounting and legal document storage. Heavy steel edge shoes prevent shelving wear.",
+    material: "Reinforced 3mm Greyboard with Steel Edge Protection",
+    printingType: "Printed Laminated Cover with Custom Spine Label",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "3-Inch Spine Lever Arch (A4)", price: 240 }
+    ],
+    finishes: [
+      { id: "box-charcoal", name: "Executive Charcoal", color: "#111111", image: "assets/images/printed_file_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-sticky-note-pads",
+    name: "Custom Printed Logo Sticky Memo Notes (Set of 5)",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 195,
+    priceDisplay: "Starting from ₹195",
+    rating: 4.7,
+    reviewsCount: 88,
+    badge: "Office Daily",
+    image: "assets/images/printed_file.jpg",
+    shortDescription: "Set of 5 custom 100-sheet repositionable self-adhesive note pads watermarked with company logo.",
+    description: "Leaves no residue when peeled. Subtle watermark logo keeps your company top of mind on every memo and reminder.",
+    material: "80 GSM Ultra-Smooth Repositionable Adhesive Paper",
+    printingType: "Soft Color Watermark Offset Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "3\" × 3\" Square (Set of 5 Pads)", price: 195 }
+    ],
+    finishes: [
+      { id: "note-yellow", name: "Classic Pastel Canary Yellow", color: "#FEF08A", image: "assets/images/printed_file.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "branded-promotional-pens-pack",
+    name: "Laser-Engraved Metal Ballpoint Pens (Pack of 10)",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 420,
+    priceDisplay: "Starting from ₹420 (Pack of 10)",
+    rating: 4.9,
+    reviewsCount: 110,
+    badge: "Promo Favorite",
+    image: "assets/images/printed_bottle_silver.jpg",
+    shortDescription: "Weighted aluminum metal ballpoint pens with soft rubberized grip and crisp silver fiber laser engraving.",
+    description: "Smooth German document-safe blue ink refill. Precision laser cuts your company name with razor-sharp brilliance.",
+    material: "Solid Anodized Aluminum with Soft-Touch Grip",
+    printingType: "360° Fiber Laser Name Engraving",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Pack of 10 Engraved Pens", price: 420 },
+      { name: "Pack of 50 Engraved Pens", price: 1750 }
+    ],
+    finishes: [
+      { id: "pen-silver", name: "Matte Black with Silver Etch", color: "#111111", image: "assets/images/printed_bottle_silver.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "corporate-tender-document-folder",
+    name: "Multi-Flap Security Tender Submission Folder",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 230,
+    priceDisplay: "Starting from ₹230",
+    rating: 4.9,
+    reviewsCount: 54,
+    badge: "Tender Ready",
+    image: "assets/images/printed_folder_green.jpg",
+    shortDescription: "Heavy-duty 450 GSM multi-flap folder with tie-ribbon closure and waterproof lamination for technical tenders.",
+    description: "Designed to meet governmental and industrial tender submission protocols in Dahej GIDC and Bharuch industrial complexes.",
+    material: "450 GSM Unbendable Laminated Board with Security Flaps",
+    printingType: "High Security Foil Stamped Crest and Title Header",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Legal / Tender Multi-Flap Folder", price: 230 }
+    ],
+    finishes: [
+      { id: "ten-green", name: "Industrial Deep Green", color: "#14532D", image: "assets/images/printed_folder_green.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "event-conference-badge-pouches",
+    name: "Laminated Conference Event Passes with Ribbons",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 95,
+    priceDisplay: "Starting from ₹95",
+    rating: 4.8,
+    reviewsCount: 92,
+    badge: "Events",
+    image: "assets/images/printed_file.jpg",
+    shortDescription: "High-gloss laminated conference attendee passes with QR codes, schedules, and custom colored neck lanyards.",
+    description: "Essential for industrial seminars, corporate annual meets, and trade expos in Gujarat. Heavy duty thermal sealed edges.",
+    material: "350 GSM Art Card with 250 Micron Thermal Lamination",
+    printingType: "High Definition Double-Sided Digital Press",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Badge (100 × 140 mm) with Lanyard", price: 95 }
+    ],
+    finishes: [
+      { id: "event-blue", name: "Conference Navy", color: "#1E3A8A", image: "assets/images/printed_file.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "embossed-gift-voucher-cards",
+    name: "Premium Foil Gift Certificate Vouchers with Sleeves",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 310,
+    priceDisplay: "Starting from ₹310 (Set of 25)",
+    rating: 4.9,
+    reviewsCount: 48,
+    badge: "Retail / Spa",
+    image: "assets/images/printed_folder.jpg",
+    shortDescription: "Gold foil stamped redeemable gift vouchers with matching custom die-cut presentation envelope sleeves.",
+    description: "Delight VIP customers with tangible luxury gift vouchers featuring sequential serial numbers and verification stamps.",
+    material: "350 GSM Pearlescent Metallic Card with Matching Sleeve",
+    printingType: "Hot Gold Foil Stamping & Spot UV",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "Pack of 25 Vouchers + Sleeves", price: 310 }
+    ],
+    finishes: [
+      { id: "vouch-gold", name: "Pearlescent Gold", color: "#C99A3D", image: "assets/images/printed_folder.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "branded-office-desk-clock",
+    name: "Custom Printed Logo Acrylic Tabletop Desk Clock",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 460,
+    priceDisplay: "Starting from ₹460",
+    rating: 4.8,
+    reviewsCount: 36,
+    badge: "Executive Desk",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Silent quartz movement tabletop desk clock with clear acrylic dial printed with company logo and markers.",
+    description: "Sweep silent second hand clock (zero ticking noise) with polished optic acrylic face and brushed metallic kickstand.",
+    material: "5mm Polished Clear Acrylic with Silent Quartz Movement",
+    printingType: "Reverse HD UV Color Dial Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "150 × 150 mm Square Desk Clock", price: 460 }
+    ],
+    finishes: [
+      { id: "clock-clear", name: "Optic Crystal Clear", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "hardcover-executive-visitor-book",
+    name: "Gold-Embossed Hardcover Guest & Visitor Register",
+    category: "office",
+    categoryLabel: "Office Printing",
+    price: 520,
+    priceDisplay: "Starting from ₹520",
+    rating: 4.9,
+    reviewsCount: 41,
+    badge: "Reception",
+    image: "assets/images/printed_folder_black.jpg",
+    shortDescription: "Hardcover Smyth-sewn visitor and reception log register with golden corners and ribbon bookmark.",
+    description: "Presents authoritative prestige at your office reception counter. High opacity 100 GSM ledger paper with structured columns.",
+    material: "Heavy Hardboard Bound in Leatherette with Metal Corner Guards",
+    printingType: "Metallic Gold Foil Cover Deboss & Column Offset",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "A4 Landscape (200 Column Pages)", price: 520 }
+    ],
+    finishes: [
+      { id: "vis-black", name: "Executive Black with Gold Corners", color: "#111111", image: "assets/images/printed_folder_black.jpg", priceDelta: 0 }
+    ]
+  }
+];
+
+// Verify 25 items in Category 3
+console.log('Category 3 count:', category3_office.length);
+
+const category4_custom = [
+  {
+    id: "custom-fine-art-canvas",
+    name: "Custom Printing",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 897,
+    priceDisplay: "Starting from ₹897",
+    rating: 5.0,
+    reviewsCount: 145,
+    badge: "Artisanal",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Bespoke fine art canvas gallery wraps, floating acrylic prints, and customized personalized gifting sets.",
+    description: "Transform your favorite photography or artwork into museum-grade statement pieces. Printed on 380 GSM 100% natural textured cotton canvas using 12-color archival pigment inks and hand-stretched over kiln-dried pine wood frames, or mounted onto optic cast acrylic blocks with polished edges.",
+    material: "380 GSM Pure Cotton Canvas or 5mm Optical Cast Acrylic",
+    printingType: "12-Color Giclée Fine Art Archival Printing (1440 DPI)",
+    status: "In Stock",
+    leadTime: "2 - 3 Business Days",
+    sizes: [
+      { name: "12\" × 18\" Gallery Wrap", price: 897 },
+      { name: "16\" × 24\" Gallery Wrap", price: 1497 },
+      { name: "20\" × 30\" Statement Canvas", price: 2297 },
+      { name: "24\" × 36\" Grand Canvas", price: 3497 },
+      { name: "Custom Size", price: 2799 }
+    ],
+    finishes: [
+      { id: "gallery-wrap-1-5", name: "1.5\" Deep Gallery Wrap", color: "#78716C", image: "assets/images/custom_canvas.jpg", priceDelta: 0 },
+      { id: "floating-black", name: "Floating Black Shadowbox", color: "#111111", image: "assets/images/custom_canvas.jpg", priceDelta: 140 },
+      { id: "floating-gold", name: "Floating Warm Gold Shadowbox", color: "#C99A3D", image: "assets/images/custom_canvas.jpg", priceDelta: 260 }
+    ],
+    features: [
+      "100% pure cotton canvas sealed with UV protective archival varnish",
+      "Hand-stretched by master framers with drum-tight tension",
+      "Pre-installed heavy-duty hanging hardware included",
+      "Color accuracy certified for professional photographers and artists"
+    ]
+  },
+  {
+    id: "panoramic-cotton-canvas-wrap",
+    name: "Panoramic Grand Landscape Cotton Canvas",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 1450,
+    priceDisplay: "Starting from ₹1,450",
+    rating: 4.9,
+    reviewsCount: 68,
+    badge: "Grand Scale",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Ultra-wide panoramic cotton canvas gallery wrap ideal for wide landscapes, mountain photography, and city skylines.",
+    description: "Stretched over 1.75\" deep kiln-dried pine wood bars with mirror-wrapped edges. Creates dramatic presence above sofas.",
+    material: "380 GSM Natural Textured Pure Cotton Canvas",
+    printingType: "12-Color High-Gamut Archival Giclée",
+    status: "In Stock",
+    leadTime: "2 - 3 Days",
+    sizes: [
+      { name: "12\" × 36\" Panoramic", price: 1450 },
+      { name: "18\" × 48\" Grand Panoramic", price: 2650 }
+    ],
+    finishes: [
+      { id: "pan-wrap", name: "1.75\" Deep Gallery Wrap", color: "#78716C", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "optic-acrylic-photo-panel",
+    name: "6mm Ultra-Optic Diamond Cast Acrylic Wall Panel",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 1850,
+    priceDisplay: "Starting from ₹1,850",
+    rating: 5.0,
+    reviewsCount: 52,
+    badge: "Ultra HD",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Ultra-high definition photo print face-mounted to 6mm optical cast acrylic with diamond polished edges.",
+    description: "Delivers breathtaking depth and gloss. Light reflects internally through the crystal acrylic, producing unmatched color vibrancy.",
+    material: "6mm Pure Optical Cast Acrylic with Aluminum Floating Subframe",
+    printingType: "Direct Metallic Halide Face-Mount Print",
+    status: "In Stock",
+    leadTime: "3 - 4 Days",
+    sizes: [
+      { name: "16\" × 24\" Panel", price: 1850 },
+      { name: "20\" × 30\" Panel", price: 2850 },
+      { name: "24\" × 36\" Statement", price: 3950 }
+    ],
+    finishes: [
+      { id: "acrylic-float", name: "Hidden Floating Wall Mount", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "floating-canvas-triptych-set",
+    name: "3-Piece Split Multi-Panel Gallery Canvas Triptych",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 2690,
+    priceDisplay: "Starting from ₹2,690 (Set of 3)",
+    rating: 5.0,
+    reviewsCount: 39,
+    badge: "Triptych",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Single panoramic photo seamlessly split into 3 aligned canvas panels for contemporary gallery wall impact.",
+    description: "Transforms a single high-resolution landscape into a multi-panel gallery centerpiece. Includes alignment hanging templates.",
+    material: "3 Panels of 380 GSM Stretched Cotton Canvas",
+    printingType: "Archival 12-Color Pigment Fine Art Print",
+    status: "In Stock",
+    leadTime: "3 - 4 Days",
+    sizes: [
+      { name: "Set of 3 (Each 12\" × 24\" | Total 40\" × 24\")", price: 2690 },
+      { name: "Set of 3 (Each 16\" × 32\" | Total 52\" × 32\")", price: 3990 }
+    ],
+    finishes: [
+      { id: "trip-wrap", name: "Gallery Wrapped Edges", color: "#78716C", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "brushed-metal-aluminum-print",
+    name: "Brushed Dibond Aluminum Modern Metal Print",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 1350,
+    priceDisplay: "Starting from ₹1,350",
+    rating: 4.9,
+    reviewsCount: 44,
+    badge: "Industrial Art",
+    image: "assets/images/glass_frame_silver.jpg",
+    shortDescription: "Archival photographic print infused directly onto brushed composite aluminum for luminous metallic sheen.",
+    description: "Highlights in the photo gleam with the texture of real brushed metal. Completely weatherproof and UV-resistant.",
+    material: "3mm Brushed Aluminum Composite Panel (Dibond)",
+    printingType: "Direct UV Flatbed Metallic Infusion",
+    status: "In Stock",
+    leadTime: "2 - 3 Days",
+    sizes: [
+      { name: "12\" × 18\"", price: 1350 },
+      { name: "16\" × 24\"", price: 2150 },
+      { name: "20\" × 30\"", price: 3150 }
+    ],
+    finishes: [
+      { id: "alum-float", name: "Brushed Silver Shimmer", color: "#CBD5E1", image: "assets/images/glass_frame_silver.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "textured-watercolor-giclee",
+    name: "310 GSM Hahnemühle Cotton Rag Archival Giclée Print",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 750,
+    priceDisplay: "Starting from ₹750",
+    rating: 5.0,
+    reviewsCount: 62,
+    badge: "Museum Paper",
+    image: "assets/images/hero_showcase.jpg",
+    shortDescription: "Fine art giclée print on textured 100% cotton rag watercolor paper rated for 100+ year archival preservation.",
+    description: "The preferred choice of digital artists and traditional painters reproducing original watercolor and oil paintings.",
+    material: "310 GSM 100% Cotton Rag Acid-Free Fine Art Paper",
+    printingType: "12-Color Archival Giclée Pigment Print",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "12\" × 16\" Unframed", price: 750 },
+      { name: "16\" × 20\" Unframed", price: 1190 },
+      { name: "20\" × 30\" Unframed", price: 1850 }
+    ],
+    finishes: [
+      { id: "rag-natural", name: "Natural Warm White Textured", color: "#F5F1E8", image: "assets/images/hero_showcase.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "led-backlit-canvas-art",
+    name: "Illuminated Ambient LED Edge-Lit Canvas Wall Decor",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 2100,
+    priceDisplay: "Starting from ₹2,100",
+    rating: 4.9,
+    reviewsCount: 35,
+    badge: "Illuminated",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Museum canvas wrap embedded with internal warm LED lighting that shines gently through stars or city lights.",
+    description: "Creates enchanting ambiance in dim bedrooms and home theaters. Powered by rechargeable lithium cell or hidden adapter.",
+    material: "Translucent Woven Canvas on Internal Light Box Frame",
+    printingType: "Multi-Density Backlit UV Pigment Print",
+    status: "In Stock",
+    leadTime: "3 - 4 Days",
+    sizes: [
+      { name: "16\" × 24\" Backlit", price: 2100 },
+      { name: "24\" × 36\" Backlit", price: 3450 }
+    ],
+    finishes: [
+      { id: "led-warm", name: "Warm 3000K Ambient Glow", color: "#C99A3D", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "square-mini-canvas-cluster",
+    name: "Mini Square Gallery Canvases with Display Easels (Set of 4)",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 890,
+    priceDisplay: "Starting from ₹890 (Set of 4)",
+    rating: 4.8,
+    reviewsCount: 78,
+    badge: "Cluster Set",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Set of four 6\" × 6\" mini square canvases with wooden tabletop display easels and wall hanging strips.",
+    description: "Display your favorite Instagram squares on shelves or arrange them into a contemporary mosaic wall cluster.",
+    material: "4 Mini 6\" × 6\" Stretched Canvases with 4 Pine Wood Mini Easels",
+    printingType: "High Definition Archival Canvas Printing",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Pack of 4 (6\" × 6\" Each)", price: 890 }
+    ],
+    finishes: [
+      { id: "mini-wrap", name: "Mini 1\" Gallery Wrap", color: "#78716C", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "high-gloss-metallic-photo-print",
+    name: "Fuji Pearl Ultra-Gloss High Definition Metallic Print",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 620,
+    priceDisplay: "Starting from ₹620",
+    rating: 4.9,
+    reviewsCount: 55,
+    badge: "Pearl Metallic",
+    image: "assets/images/hero_showcase.jpg",
+    shortDescription: "Photographic print on genuine silver halide Fuji Pearl paper that shimmers with deep iridescent highlights.",
+    description: "Colors pop with astonishing three-dimensional depth. Spectacular on jewelry, night skies, water reflections, and cars.",
+    material: "260 GSM Fuji Pearl Metallic Emulsion Paper",
+    printingType: "True Optical Silver Halide Photographic Process",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "12\" × 18\"", price: 620 },
+      { name: "16\" × 24\"", price: 980 },
+      { name: "20\" × 30\"", price: 1550 }
+    ],
+    finishes: [
+      { id: "pearl-gloss", name: "Iridescent Pearl Gloss", color: "#CBD5E1", image: "assets/images/hero_showcase.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "black-floating-shadowbox-canvas",
+    name: "Museum Shadowbox Wrapped Canvas in Matte Ebony",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 1580,
+    priceDisplay: "Starting from ₹1,580",
+    rating: 5.0,
+    reviewsCount: 47,
+    badge: "Gallery Frame",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Premium stretched canvas nestled inside a floating wooden shadowbox frame with 5mm interior reveal space.",
+    description: "The gold standard of interior design. Combines the tactile texture of stretched canvas with the architectural authority of an outer frame.",
+    material: "380 GSM Cotton Canvas in 45mm Deep Ebony Wood Shadowbox",
+    printingType: "12-Color Giclée Fine Art Archival Print",
+    status: "In Stock",
+    leadTime: "3 Days",
+    sizes: [
+      { name: "16\" × 24\" Shadowbox Canvas", price: 1580 },
+      { name: "20\" × 30\" Shadowbox Canvas", price: 2380 }
+    ],
+    finishes: [
+      { id: "float-black", name: "Matte Ebony Shadowbox", color: "#111111", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-family-tree-canvas",
+    name: "Custom Illustrated Heritage Family Tree Fine Art Canvas",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 1750,
+    priceDisplay: "Starting from ₹1,750",
+    rating: 5.0,
+    reviewsCount: 28,
+    badge: "Family Heritage",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Custom illustrated multi-generation family tree artwork incorporating family names, dates, and ancestral portraits.",
+    description: "Our digital artists compose your ancestry into an exquisite heirloom artwork, stretched drum-tight on gallery canvas.",
+    material: "Heavyweight 380 GSM Cotton Canvas on Solid Pine Frame",
+    printingType: "Fade-Resistant 100-Year Pigment Giclée",
+    status: "In Stock",
+    leadTime: "3 - 5 Days",
+    sizes: [
+      { name: "18\" × 24\" Family Canvas", price: 1750 },
+      { name: "24\" × 36\" Grand Heritage", price: 2890 }
+    ],
+    finishes: [
+      { id: "tree-vintage", name: "Aged Parchment Style", color: "#C2A385", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "vintage-sepia-stretched-canvas",
+    name: "Vintage Sepia Toned Heavyweight Canvas Print",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 920,
+    priceDisplay: "Starting from ₹920",
+    rating: 4.8,
+    reviewsCount: 36,
+    badge: "Vintage Art",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Archival canvas print professionally tuned into warm sepia or black & white monochrome tones.",
+    description: "Breathes timeless historic charm into wedding photography, ancestral portraits, and heritage temple architecture.",
+    material: "100% Pure Cotton Textured Canvas (360 GSM)",
+    printingType: "High Density Monochrome Pigment Print",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "12\" × 18\"", price: 920 },
+      { name: "16\" × 24\"", price: 1480 }
+    ],
+    finishes: [
+      { id: "sepia-tone", name: "Warm Rich Sepia", color: "#5C3A21", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "oil-painting-textured-canvas",
+    name: "Digitally Painted Custom Portrait on Heavy Impasto Canvas",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 1990,
+    priceDisplay: "Starting from ₹1,990",
+    rating: 5.0,
+    reviewsCount: 64,
+    badge: "Oil Painting Style",
+    image: "assets/images/hero_showcase.jpg",
+    shortDescription: "Your favorite photo hand-retouched with digital oil brushstrokes and finished with textured clear gel varnish.",
+    description: "Our in-house digital artists paint your portrait stroke by stroke. Sealed with hand-applied textured brush strokes you can actually touch.",
+    material: "Heavy Impasto Cotton Canvas with Hand-Applied Gel Texture",
+    printingType: "Fine Art Pigment with 3D Textured Top Coat",
+    status: "In Stock",
+    leadTime: "3 - 5 Days",
+    sizes: [
+      { name: "16\" × 24\" Hand-Textured", price: 1990 },
+      { name: "20\" × 30\" Hand-Textured", price: 2990 }
+    ],
+    finishes: [
+      { id: "oil-textured", name: "Hand-Applied Impasto Varnish", color: "#C99A3D", image: "assets/images/hero_showcase.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "acrylic-block-photo-display",
+    name: "20mm Free-Standing Solid Optic Acrylic Block",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 980,
+    priceDisplay: "Starting from ₹980",
+    rating: 4.9,
+    reviewsCount: 83,
+    badge: "Free-Standing",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Ultra-thick 20mm crystal acrylic block that stands freely on any desk or mantelpiece without supports.",
+    description: "Photo is mounted to the rear of solid 20mm optic acrylic. Diamond polished bevels create radiant internal reflections.",
+    material: "20mm Solid Cast Optical Acrylic Block (Heavyweight)",
+    printingType: "Rear-Mounted Metallic Archival Film",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "6\" × 8\" Block (20mm Thick)", price: 980 },
+      { name: "8\" × 10\" Block (20mm Thick)", price: 1450 }
+    ],
+    finishes: [
+      { id: "block-crystal", name: "Diamond Beveled Optic Block", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "wedding-memory-statement-canvas",
+    name: "Signature Wedding Vow & Portrait Gallery Canvas",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 2250,
+    priceDisplay: "Starting from ₹2,250",
+    rating: 5.0,
+    reviewsCount: 71,
+    badge: "Wedding Masterpiece",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Grand format wedding portrait paired with gold-foil inscribed wedding vows and marriage dates.",
+    description: "The crown jewel of marital homes. High dynamic range photographic rendering sealed with matte archival protection.",
+    material: "380 GSM Fine Woven Canvas on 2\" Stretcher Frame",
+    printingType: "12-Color Archival Pigment with Hot Stamped Gold Names",
+    status: "In Stock",
+    leadTime: "3 - 4 Days",
+    sizes: [
+      { name: "20\" × 30\" Grand Wedding Canvas", price: 2250 },
+      { name: "24\" × 36\" Epic Statement", price: 3450 }
+    ],
+    finishes: [
+      { id: "vow-gold", name: "Gold Lettering Accent", color: "#C99A3D", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "fine-art-matte-portrait-print",
+    name: "300 GSM Archival Velvet Smooth Fine Art Portrait",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 540,
+    priceDisplay: "Starting from ₹540",
+    rating: 4.8,
+    reviewsCount: 49,
+    badge: "Velvet Smooth",
+    image: "assets/images/hero_showcase.jpg",
+    shortDescription: "Non-reflective museum velvet art paper displaying skin tones and deep shadows with zero glare.",
+    description: "Designed for gallery viewing under spotlights. Non-reflective velvet surface reveals the subtlest nuances in photography.",
+    material: "300 GSM Heavyweight Archival Cotton Rag",
+    printingType: "12-Color Pigment Giclée (No Optical Brighteners)",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "10\" × 14\" Unframed", price: 540 },
+      { name: "16\" × 24\" Unframed", price: 920 }
+    ],
+    finishes: [
+      { id: "velvet-smooth", name: "Ultra-Matte Velvet", color: "#FAF7F2", image: "assets/images/hero_showcase.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "split-quad-acrylic-wall-art",
+    name: "4-Piece Modern Square Floating Acrylic Gallery Wall",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 2850,
+    priceDisplay: "Starting from ₹2,850 (Set of 4)",
+    rating: 5.0,
+    reviewsCount: 26,
+    badge: "Gallery Grid",
+    image: "assets/images/glass_frame_silver.jpg",
+    shortDescription: "Curated 4-panel floating acrylic grid (12\" × 12\" each) mounted with architectural stainless standoffs.",
+    description: "Display four complementary photos or a continuous wide scene split across four gleaming optic acrylic tiles.",
+    material: "4 Pieces 5mm Optical Acrylic with 16 Stainless Standoffs",
+    printingType: "Direct Face-Mounted HD Photographic Print",
+    status: "In Stock",
+    leadTime: "3 - 4 Days",
+    sizes: [
+      { name: "Set of 4 (Each 12\" × 12\" | Grid 26\" × 26\")", price: 2850 }
+    ],
+    finishes: [
+      { id: "quad-acrylic-silver", name: "Brushed Standoff Mounts", color: "#CBD5E1", image: "assets/images/glass_frame_silver.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "gold-framed-luxury-canvas",
+    name: "Royal Ornate Gold Frame with Stretched Canvas Print",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 2400,
+    priceDisplay: "Starting from ₹2,400",
+    rating: 5.0,
+    reviewsCount: 38,
+    badge: "Royal Luxury",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Heavyweight cotton canvas print encased in an opulent 75mm wide carved antique gold statement frame.",
+    description: "Recreates the regal grandeur of classic European art galleries. No glass required, allowing the canvas weave to breathe.",
+    material: "380 GSM Cotton Canvas in 75mm Ornate Resin-Wood Frame",
+    printingType: "12-Color Giclée Fine Art Print",
+    status: "In Stock",
+    leadTime: "3 - 5 Days",
+    sizes: [
+      { name: "16\" × 24\" Ornate Canvas", price: 2400 },
+      { name: "24\" × 36\" Grand Ornate Canvas", price: 3850 }
+    ],
+    finishes: [
+      { id: "ornate-gold-frame", name: "Carved Royal Gold", color: "#C99A3D", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "monochrome-black-white-giclee",
+    name: "Deep Contrast Archival Monochrome Giclée Print",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 680,
+    priceDisplay: "Starting from ₹680",
+    rating: 4.9,
+    reviewsCount: 42,
+    badge: "Monochrome",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Printed with 4 dedicated monochrome carbon black inks for rich tonal gradations and pitch blacks.",
+    description: "Eliminates metamerism and color casts. Delivers rich selenium and neutral silver-toned black and white gradations.",
+    material: "285 GSM Baryta Surface Archival Photo Rag",
+    printingType: "Multi-Carbon Monochrome K3 Pigment Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "12\" × 18\" Monochrome", price: 680 },
+      { name: "16\" × 24\" Monochrome", price: 1120 }
+    ],
+    finishes: [
+      { id: "mono-neutral", name: "Neutral Silver Black", color: "#111111", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "children-milestone-growth-canvas",
+    name: "Height Milestone Growth Chart Custom Canvas",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 790,
+    priceDisplay: "Starting from ₹790",
+    rating: 4.9,
+    reviewsCount: 56,
+    badge: "Kids & Family",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Rollable hanging canvas growth chart marked from 2 to 5 feet, personalized with child's name and photos.",
+    description: "Mark your child's growth year after year with pen directly on the canvas. Includes natural wooden hanging bars and cotton cord.",
+    material: "Woven Heavy Canvas with Solid Wood Top & Bottom Hanging Dowels",
+    printingType: "Non-Toxic Water-Based Archival Latex Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "12\" × 48\" Hanging Chart", price: 790 }
+    ],
+    finishes: [
+      { id: "chart-wood", name: "Natural Pine Dowels", color: "#C2A385", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "spiritual-temple-mandir-canvas",
+    name: "Gold-Foiled Sacred Spiritual Deity Art Canvas",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 1320,
+    priceDisplay: "Starting from ₹1,320",
+    rating: 5.0,
+    reviewsCount: 92,
+    badge: "Spiritual",
+    image: "assets/images/hero_showcase.jpg",
+    shortDescription: "Sacred temple deity canvas highlighted with shimmering embossed metallic gold foil accents.",
+    description: "Infuses divine serenity into home mandirs and meditation spaces. Embellished with metallic gold halos and jewelry highlights.",
+    material: "380 GSM Cotton Canvas with Real Hot Gold Foil Embellishments",
+    printingType: "High Definition Archival Giclée with Gold Foil Accent",
+    status: "In Stock",
+    leadTime: "2 - 3 Days",
+    sizes: [
+      { name: "16\" × 24\" Mandir Canvas", price: 1320 },
+      { name: "20\" × 30\" Mandir Canvas", price: 2150 }
+    ],
+    finishes: [
+      { id: "mandir-gold", name: "Sacred Gold Foil Embellishment", color: "#C99A3D", image: "assets/images/hero_showcase.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-star-map-night-canvas",
+    name: "Custom Date & Location Night Sky Star Map Canvas",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 1150,
+    priceDisplay: "Starting from ₹1,150",
+    rating: 5.0,
+    reviewsCount: 114,
+    badge: "Anniversary Star",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Astronomically precise constellation map showing how the night sky looked at your exact date and coordinates.",
+    description: "Celebrate the night you met, proposed, or welcomed a child. Accurately plots thousands of real stars and constellations.",
+    material: "Stretched Cotton Canvas with Deep Space Midnight Matte Finish",
+    printingType: "Ultra-Fine Starfield Archival Print",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "16\" × 20\" Star Canvas", price: 1150 },
+      { name: "20\" × 30\" Star Canvas", price: 1850 }
+    ],
+    finishes: [
+      { id: "star-navy", name: "Midnight Cosmic Navy", color: "#1E3A8A", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "waterproof-outdoor-canvas-panel",
+    name: "UV-Protected Weatherproof Exterior Art Canvas",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 1650,
+    priceDisplay: "Starting from ₹1,650",
+    rating: 4.8,
+    reviewsCount: 31,
+    badge: "All-Weather",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Synthetic weatherproof canvas stretched on aluminum frames for balconies, patios, and garden gazebos.",
+    description: "Resistant to rain, humidity, and direct sunlight. Won't warp or discolor even in coastal monsoon climates.",
+    material: "Heavy-Gauge Weatherproof Poly-Canvas on Anodized Aluminum Stretcher",
+    printingType: "Industrial UV Exterior Inks (Fade-Proof 5+ Yrs Outdoors)",
+    status: "In Stock",
+    leadTime: "3 Days",
+    sizes: [
+      { name: "18\" × 24\" Outdoor Canvas", price: 1650 },
+      { name: "24\" × 36\" Outdoor Canvas", price: 2750 }
+    ],
+    finishes: [
+      { id: "out-wrap", name: "Weatherproof Sealed Wrap", color: "#78716C", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "contemporary-abstract-large-canvas",
+    name: "Oversized 36x48 Modern Abstract Fine Art Canvas",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 3890,
+    priceDisplay: "Starting from ₹3,890",
+    rating: 5.0,
+    reviewsCount: 22,
+    badge: "Oversized Statement",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "Giant 36\" × 48\" architectural statement canvas designed for double-height living rooms and corporate lobbies.",
+    description: "Delivers museum impact. Built with heavy-duty structural cross-bracing to ensure eternal drum tightness.",
+    material: "Heavyweight 400 GSM Belgian Linen Cotton Blend with Cross Bracing",
+    printingType: "Large-Format Archival Pigment Press",
+    status: "In Stock",
+    leadTime: "4 - 5 Days",
+    sizes: [
+      { name: "36\" × 48\" Grand Architectural Canvas", price: 3890 }
+    ],
+    finishes: [
+      { id: "grand-wrap", name: "2\" Deep Heavy Gallery Wrap", color: "#111111", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "soundwave-voice-art-print",
+    name: "Personalized Voice Soundwave Waveform Art Print",
+    category: "custom",
+    categoryLabel: "Custom Printing",
+    price: 820,
+    priceDisplay: "Starting from ₹820",
+    rating: 4.9,
+    reviewsCount: 77,
+    badge: "Audio Art",
+    image: "assets/images/hero_showcase.jpg",
+    shortDescription: "Your personal voice recording or wedding vows converted into visual soundwave art with scannable audio QR code.",
+    description: "Scan the printed QR code with any phone camera to instantly play the original audio recording while viewing the art.",
+    material: "Archival Textured Art Paper or Stretched Canvas",
+    printingType: "Ultra-Sharp Soundwave Vector Printing",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "12\" × 18\" Framed Audio Art", price: 820 },
+      { name: "16\" × 24\" Framed Audio Art", price: 1350 }
+    ],
+    finishes: [
+      { id: "audio-gold", name: "Gold Waveform on Black", color: "#C99A3D", image: "assets/images/hero_showcase.jpg", priceDelta: 0 }
+    ]
+  }
+];
+
+// Verify 25 items in Category 4
+console.log('Category 4 count:', category4_custom.length);
+
+const category5_gifts = [
+  {
+    id: "crystal-3d-photo-cube",
+    name: "3D Sub-Surface Laser Engraved Crystal Glass Cube",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 1150,
+    priceDisplay: "Starting from ₹1,150",
+    rating: 5.0,
+    reviewsCount: 124,
+    badge: "3D Hologram",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Convert your standard 2D photo into a true 3D volumetric hologram suspended inside pure K9 optical crystal.",
+    description: "State of the art CAD modeling transforms facial portraits into 3D depths. Micro-laser dots reflect light inside the glass.",
+    material: "Optically Flawless K9 Crystal Glass with Beveled Edges",
+    printingType: "Green Beam Sub-Surface 3D Laser Micro-Points",
+    status: "In Stock",
+    leadTime: "2 Days",
+    sizes: [
+      { name: "50 × 50 × 80 mm Cube", price: 1150 },
+      { name: "60 × 60 × 100 mm Grand Cube", price: 1750 }
+    ],
+    finishes: [
+      { id: "cube-clear", name: "Flawless K9 Crystal", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ],
+    features: [
+      "Real 3D dimensional depth generated from your regular 2D camera photo",
+      "Internal laser points never fade, scratch, or discolor over time",
+      "Packaged in satin-lined luxury blue gift presentation box",
+      "Optional lighted LED display base available"
+    ]
+  },
+  {
+    id: "wooden-photo-engraved-lamp",
+    name: "Personalized Warm LED Engraved Pine Wood Lamp",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 890,
+    priceDisplay: "Starting from ₹890",
+    rating: 4.9,
+    reviewsCount: 165,
+    badge: "Bestseller",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Natural pine wood base with laser cut acrylic photo pane that glows with warm romantic ambient LED light.",
+    description: "Plugs into any standard USB charger. Creates an enchanting warm bedside glow with your favorite couple or baby photograph.",
+    material: "Solid Pine Wood Base with 4mm Optical Cast Acrylic Sheet",
+    printingType: "Precision Laser Etched Line & Tone Engraving",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Desk Lamp (150 × 200 mm)", price: 890 }
+    ],
+    finishes: [
+      { id: "lamp-pine", name: "Natural Pine Wood Base", color: "#C2A385", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "acrylic-heart-photo-plaque",
+    name: "Free-Standing Crystal Clear Acrylic Heart Keepsake",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 620,
+    priceDisplay: "Starting from ₹620",
+    rating: 4.9,
+    reviewsCount: 118,
+    badge: "Romantic",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "15mm thick free-standing optic acrylic block cut into an elegant heart shape printed with your photo and sweet message.",
+    description: "Stands proudly on any table without stands. Diamond polished bevels glow with ambient room light.",
+    material: "15mm Free-Standing Optical Cast Acrylic Heart",
+    printingType: "High-Definition Reverse Color UV Print",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Heart Size (125 × 125 × 15 mm)", price: 620 },
+      { name: "Grand Heart (150 × 150 × 20 mm)", price: 920 }
+    ],
+    finishes: [
+      { id: "heart-clear", name: "Diamond Polished Clear", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-photo-puzzle-wooden",
+    name: "120-Piece Glossy Wooden Jigsaw Photo Keepsake Puzzle",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 450,
+    priceDisplay: "Starting from ₹450",
+    rating: 4.8,
+    reviewsCount: 82,
+    badge: "Fun & Keepsake",
+    image: "assets/images/hero_showcase.jpg",
+    shortDescription: "High-gloss wooden jigsaw puzzle printed with your photo, packaged in a custom presentation box.",
+    description: "A fun interactive gift that can be glued and framed once assembled. Sturdy 3mm wooden pieces that lock firmly.",
+    material: "3mm High-Density Laminated MDF Wood",
+    printingType: "Ultra-Gloss High Heat Sublimation",
+    status: "In Stock",
+    leadTime: "Same Day / 24 Hours",
+    sizes: [
+      { name: "120 Pieces (A4 Size: 200 × 290 mm)", price: 450 },
+      { name: "252 Pieces (A3 Size: 290 × 400 mm)", price: 750 }
+    ],
+    finishes: [
+      { id: "puz-wood", name: "High Gloss Polish", color: "#F8FAFC", image: "assets/images/hero_showcase.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "personalized-led-photo-frame",
+    name: "Ambient Warm Glow Backlit LED Photo Keepsake Box",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 780,
+    priceDisplay: "Starting from ₹780",
+    rating: 4.9,
+    reviewsCount: 97,
+    badge: "Trending",
+    image: "assets/images/glass_frame_black.jpg",
+    shortDescription: "Modern shadow box photo frame with internal warm fairy LED lights and power switch.",
+    description: "Soft warm fairy LEDs light up your photo from inside the shadowbox. The perfect centerpiece for anniversary celebrations.",
+    material: "Deep Shadowbox Frame with Micro Warm LED String Included",
+    printingType: "Translucent Archival Photo Film",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "6\" × 8\" LED Frame", price: 780 },
+      { name: "8\" × 10\" LED Frame", price: 1080 }
+    ],
+    finishes: [
+      { id: "led-black", name: "Matte Black Box", color: "#111111", image: "assets/images/glass_frame_black.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "photo-printed-wall-clock",
+    name: "12-Inch Custom Dial Wooden Wall Keepsake Clock",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 690,
+    priceDisplay: "Starting from ₹690",
+    rating: 4.8,
+    reviewsCount: 88,
+    badge: "Home Decor",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "12-inch round wall clock with your family photograph printed edge-to-edge on high gloss wood dial.",
+    description: "Features a silent quartz movement with metallic gold hour and minute hands. No distracting ticking noise.",
+    material: "6mm Heavy MDF Wood with Silent Quartz Movement",
+    printingType: "High Definition Gloss Thermal Sublimation",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "12-Inch Diameter Clock", price: 690 }
+    ],
+    finishes: [
+      { id: "clock-wood", name: "Edge-to-Edge Dial", color: "#C99A3D", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "rotating-crystal-photo-tower",
+    name: "Motorized 4-Sided Rotating Lighted Crystal Tower",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 1450,
+    priceDisplay: "Starting from ₹1,450",
+    rating: 5.0,
+    reviewsCount: 52,
+    badge: "Luxury Keepsake",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Four photos laser engraved into four facets of an optical crystal tower resting on an automatic rotating lighted base.",
+    description: "Base slowly rotates while multi-color LED lights illuminate each photo facet sequentially. Hypnotic and luxurious.",
+    material: "K9 Optical Crystal Tower with Motorized LED Base",
+    printingType: "Multi-Facet 3D Sub-Surface Laser Engraving",
+    status: "In Stock",
+    leadTime: "2 - 3 Days",
+    sizes: [
+      { name: "4-Sided Tower with Rotating Base", price: 1450 }
+    ],
+    finishes: [
+      { id: "tower-rot", name: "Rotating Crystal", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "engraved-wooden-diary-giftset",
+    name: "Laser Engraved Bamboo Notebook & Metal Pen Keepsake Set",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 620,
+    priceDisplay: "Starting from ₹620",
+    rating: 4.9,
+    reviewsCount: 74,
+    badge: "Gift Set",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Eco-luxury genuine bamboo wood cover journal paired with matching laser engraved executive pen in gift box.",
+    description: "Natural bamboo cover is laser engraved with custom portrait sketch, name, and designation. Presented in an elegant gift box.",
+    material: "Natural Bamboo Hardcover with 100 GSM Recycled Paper & Metal Pen",
+    printingType: "Deep High-Detail CO2 Laser Burning",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "A5 Bamboo Journal + Pen Set", price: 620 }
+    ],
+    finishes: [
+      { id: "bamboo-set", name: "Natural Bamboo Grain", color: "#C2A385", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-photo-snow-globe",
+    name: "Liquid Floating Heart Glitter Photo Snow Globe",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 380,
+    priceDisplay: "Starting from ₹380",
+    rating: 4.8,
+    reviewsCount: 93,
+    badge: "Heartfelt",
+    image: "assets/images/custom_mug.jpg",
+    shortDescription: "Double-sided photo globe filled with floating heart red glitter flakes that dance when shaken.",
+    description: "Shake to release a flurry of red glitter hearts swirling around your favorite couple portrait. High-clarity shatterproof dome.",
+    material: "High Impact Shatter-Resistant Optical Acrylic Dome",
+    printingType: "Waterproof Double-Sided Photo Insert",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Standard Snow Globe (90 mm Diameter)", price: 380 }
+    ],
+    finishes: [
+      { id: "globe-red", name: "Floating Red Heart Glitter", color: "#DC2626", image: "assets/images/custom_mug.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "personalized-baby-milestone-plaque",
+    name: "Baby Birth Milestone Wooden Keepsake Plaque",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 520,
+    priceDisplay: "Starting from ₹520",
+    rating: 5.0,
+    reviewsCount: 84,
+    badge: "Baby Keepsake",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Round natural birchwood plaque engraved with baby birth date, time, birth weight, and newborn photo.",
+    description: "Celebrate the arrival of a new family member. Permanent laser engraving captures every precious birth statistic.",
+    material: "10mm Natural Birch Hardwood with Display Easel Stand",
+    printingType: "Fine Wood Laser Engraving & Photo Transfer",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "8-Inch Round Birth Plaque", price: 520 }
+    ],
+    finishes: [
+      { id: "baby-birch", name: "Natural Birch", color: "#FAF7F2", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "customized-photo-cushion-pillow",
+    name: "Soft Satin Photo Cushion with Conjugated Fiber",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 460,
+    priceDisplay: "Starting from ₹460",
+    rating: 4.9,
+    reviewsCount: 172,
+    badge: "Cozy Keepsake",
+    image: "assets/images/custom_canvas.jpg",
+    shortDescription: "16\" × 16\" ultra-soft satin fabric cushion with edge-to-edge permanent photographic print and fluffy microfiber filler.",
+    description: "Machine washable satin cover that stays silky smooth. Packed with resilient microfiber filler that holds its bounce.",
+    material: "Heavy Silky Satin Fabric Cover with Microfiber Core",
+    printingType: "High Temperature Thermal Sublimation (Wash-Proof)",
+    status: "In Stock",
+    leadTime: "Same Day / 24 Hours",
+    sizes: [
+      { name: "16\" × 16\" Square Cushion + Filler", price: 460 }
+    ],
+    finishes: [
+      { id: "cushion-satin", name: "Silky Satin White", color: "#FFFFFF", image: "assets/images/custom_canvas.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "couple-anniversary-wooden-heart",
+    name: "Interlocking Dual Wooden Heart Keepsake Stand",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 680,
+    priceDisplay: "Starting from ₹680",
+    rating: 4.9,
+    reviewsCount: 65,
+    badge: "Anniversary",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Two interlocking hand-carved wooden hearts joined together with your names and photo engraved on birchwood.",
+    description: "Symbolizes two lives intertwining in love. Beautiful centerpiece for anniversary dinners and master bedroom nightstands.",
+    material: "Kiln-Dried Birch Wood with Honey Wax Sealer",
+    printingType: "Laser Pyrography Photo Burning",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Interlocking Hearts (220 × 140 mm)", price: 680 }
+    ],
+    finishes: [
+      { id: "heart-honey", name: "Warm Honey Wood", color: "#C2A385", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "mini-polaroid-photo-clips-string",
+    name: "Wooden Clothespin Fairy Lights Photo Keepsake Display",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 340,
+    priceDisplay: "Starting from ₹340 (Includes 16 Photos)",
+    rating: 4.8,
+    reviewsCount: 130,
+    badge: "Room Decor",
+    image: "assets/images/hero_showcase.jpg",
+    shortDescription: "Pack of 16 retro polaroid photo prints + 3-meter warm copper fairy lights and mini wooden clothespins.",
+    description: "Hang fairy lights across your bedroom wall and clip your 16 prints along the string. Instant dreamy room makeover.",
+    material: "16 Heavy Card Polaroid Prints + 3m Copper Wire LEDs + 16 Clips",
+    printingType: "Fuji Lustre Photographic Lab Print",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Complete Kit (16 Photos + String + Clips)", price: 340 }
+    ],
+    finishes: [
+      { id: "fairy-warm", name: "Warm White Copper Wire", color: "#C99A3D", image: "assets/images/hero_showcase.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "car-hanging-crystal-pendant",
+    name: "Double-Sided Mini Crystal Photo Car Mirror Keepsake",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 280,
+    priceDisplay: "Starting from ₹280",
+    rating: 4.8,
+    reviewsCount: 94,
+    badge: "Car Charm",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Faceted crystal glass hanging pendant featuring double-sided photo and protective deity image for car rear-view mirrors.",
+    description: "Swings gently with your car driving motion, catching rays of sunlight. Strung on durable gold beaded hanging chain.",
+    material: "Faceted Beveled Crystal Glass with Golden Hanging Chain",
+    printingType: "Ultra-Vivid Waterproof Photo Emulsion",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Pendant (45 × 45 mm Diamond)", price: 280 }
+    ],
+    finishes: [
+      { id: "car-crystal", name: "Faceted Diamond Cut", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "metal-photo-wallet-insert-card",
+    name: "Laser-Etched Ultra-Slim Anodized Aluminum Wallet Card",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 190,
+    priceDisplay: "Starting from ₹190",
+    rating: 4.9,
+    reviewsCount: 145,
+    badge: "Wallet Card",
+    image: "assets/images/printed_bottle_silver.jpg",
+    shortDescription: "Credit card sized ultra-thin metal card laser etched with your photograph and emotional love message.",
+    description: "Fits perfectly into standard wallet credit card slots. Sturdy aluminum won't bend, fade, or tear like paper photos.",
+    material: "Anodized Aerospace Aluminum (0.8mm Thickness)",
+    printingType: "High Resolution Fiber Laser Micro-Etching",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Standard Credit Card Size (85 × 54 mm)", price: 190 }
+    ],
+    finishes: [
+      { id: "wal-silver", name: "Brushed Metallic Silver", color: "#94A3B8", image: "assets/images/printed_bottle_silver.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "personalized-acrylic-keychain-set",
+    name: "Dual Matching Acrylic Couple Photo Keyrings",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 240,
+    priceDisplay: "Starting from ₹240 (Pair)",
+    rating: 4.8,
+    reviewsCount: 112,
+    badge: "Couple Keychain",
+    image: "assets/images/printed_bottle.jpg",
+    shortDescription: "Pair of two matching crystal clear acrylic keyrings that slot together like a jigsaw puzzle.",
+    description: "Keep one half on your house keys while your partner carries the other. Laser cut with smooth rounded edges.",
+    material: "4mm Cast Optic Acrylic with Heavy Steel Rings",
+    printingType: "Double Sided High Definition UV Print",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Paired Set of 2 Keyrings", price: 240 }
+    ],
+    finishes: [
+      { id: "key-couple", name: "Crystal Acrylic", color: "#F8FAFC", image: "assets/images/printed_bottle.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-printed-wooden-box",
+    name: "Keepsake Memory Storage Box with Photo Lid",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 850,
+    priceDisplay: "Starting from ₹850",
+    rating: 5.0,
+    reviewsCount: 43,
+    badge: "Keepsake Box",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Handcrafted pine wood memory box with magnetic latch and glossy ceramic photo tile set into lid.",
+    description: "Store love letters, tickets, baby hospital bracelets, and rings. Lined inside with soft burgundy velvet.",
+    material: "Solid Pine Wood with Ceramic Photo Tile Lid and Velvet Lining",
+    printingType: "Ceramic Sublimation Tile Inlay",
+    status: "In Stock",
+    leadTime: "24 - 48 Hours",
+    sizes: [
+      { name: "6\" × 8\" Box (Depth 75mm)", price: 850 }
+    ],
+    finishes: [
+      { id: "box-pine", name: "Natural Waxed Pine", color: "#C2A385", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "custom-spotify-music-acrylic-plaque",
+    name: "Custom Song Acrylic Music Plaque with Scannable Code",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 580,
+    priceDisplay: "Starting from ₹580",
+    rating: 4.9,
+    reviewsCount: 184,
+    badge: "Viral Favorite",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Clear acrylic music player plaque featuring your chosen song, couple photo, and scannable Spotify song code.",
+    description: "Scan the code with your Spotify app camera to immediately start playing your special song. Includes wooden desk stand.",
+    material: "4mm High-Definition Clear Cast Acrylic with Pine Stand",
+    printingType: "Direct Scratch-Resistant UV Color Print",
+    status: "In Stock",
+    leadTime: "Same Day / 24 Hours",
+    sizes: [
+      { name: "6\" × 8\" Plaque with Wood Stand", price: 580 },
+      { name: "8\" × 10\" Plaque with Wood Stand", price: 820 }
+    ],
+    finishes: [
+      { id: "song-clear", name: "Crystal Clear Acrylic", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "photo-engraved-crystal-keyring",
+    name: "LED Illuminated Laser Engraved Crystal Keyring",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 290,
+    priceDisplay: "Starting from ₹290",
+    rating: 4.8,
+    reviewsCount: 96,
+    badge: "LED Crystal",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Heavy faceted crystal glass keyring with laser 3D photo inside that illuminates in blue or white when twisted.",
+    description: "Twist the top cap to illuminate the internal LED bulb, highlighting the 3D laser engraved face in glowing clarity.",
+    material: "Faceted K9 Optical Crystal with LED Battery Top",
+    printingType: "Sub-Surface 3D Laser Micro Engraving",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Octagon Crystal Keyring (30 × 30 mm)", price: 290 }
+    ],
+    finishes: [
+      { id: "key-led", name: "Blue LED Glow", color: "#1E3A8A", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "brass-engraved-pocket-compass",
+    name: "Vintage Solid Brass Engraved Keepsake Compass",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 890,
+    priceDisplay: "Starting from ₹890",
+    rating: 5.0,
+    reviewsCount: 38,
+    badge: "Antique Heirloom",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Functional working solid brass nautical compass engraved with custom quote and portrait inside lid.",
+    description: "'So you always find your way back home.' A deeply sentimental gift for graduates, travelers, and husbands.",
+    material: "Heavy Solid Brass with Working Magnetic Compass Needle",
+    printingType: "Deep Fiber Laser Metal Engraving",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Pocket Compass (50 mm Diameter)", price: 890 }
+    ],
+    finishes: [
+      { id: "comp-brass", name: "Antique Gilded Brass", color: "#C99A3D", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "mothers-day-wooden-standee",
+    name: "Cutout Floral 'Best Mom' Wooden Photo Standee",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 490,
+    priceDisplay: "Starting from ₹490",
+    rating: 4.9,
+    reviewsCount: 81,
+    badge: "Mom's Gift",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Laser cutout multi-layer wooden standee displaying 'MOM' lettering with inset mother-child photos.",
+    description: "Dual-layer birch wood design with 3D relief lettering and colorful floral laser accents. Free standing desktop display.",
+    material: "Layered 6mm Engineered Birch Wood with Sturdy Base",
+    printingType: "High Definition Direct Color Wood Printing",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Table Standee (200 × 120 mm)", price: 490 }
+    ],
+    finishes: [
+      { id: "mom-wood", name: "Floral Birchwood", color: "#C2A385", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "personalized-father-desk-organizer",
+    name: "Multi-Slot Wooden Mobile & Watch Photo Docking Station",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 920,
+    priceDisplay: "Starting from ₹920",
+    rating: 4.9,
+    reviewsCount: 67,
+    badge: "Dad's Favorite",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Dual-piece interlocking wooden nightstand docking station holding phone, wristwatch, wallet, keys, and photo.",
+    description: "Keeps everyday carry essentials organized on nightstands. Slot for phone charging cable with laser engraved family photo.",
+    material: "12mm Premium Walnut Textured Wood Composite",
+    printingType: "CO2 Laser Engraved Photo & Monogram",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "Organizer (280 × 200 mm)", price: 920 }
+    ],
+    finishes: [
+      { id: "dock-walnut", name: "Warm Walnut Wood", color: "#5C3A21", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "graduation-cap-photo-tassel-charm",
+    name: "Commemorative Graduate Picture Keepsake Charm",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 220,
+    priceDisplay: "Starting from ₹220",
+    rating: 4.8,
+    reviewsCount: 46,
+    badge: "Graduation",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Mini vintage oval photo charm that clips onto graduation cap tassels in honor of loved ones.",
+    description: "Carry the memory of parents or grandparents across the graduation stage. Includes lobster claw clip and photo glass dome.",
+    material: "Antique Bronze or Silver Alloy with Glass Cabochon",
+    printingType: "Micro Photographic Print Sealed under Optical Glass",
+    status: "In Stock",
+    leadTime: "Same Day Turnaround",
+    sizes: [
+      { name: "Oval Charm (25 × 35 mm)", price: 220 }
+    ],
+    finishes: [
+      { id: "grad-silver", name: "Antique Silver", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "pet-portrait-memorial-wooden-plaque",
+    name: "Loving Pet Portrait Engraved Memorial Stone/Wood",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 650,
+    priceDisplay: "Starting from ₹650",
+    rating: 5.0,
+    reviewsCount: 59,
+    badge: "Pet Memorial",
+    image: "assets/images/workshop.jpg",
+    shortDescription: "Heartfelt memorial keepsake plaque honoring beloved dogs and cats with laser engraved portrait and paw prints.",
+    description: "'Forever in our hearts.' Natural wood or black slate plaque with deeply engraved pet name, dates, and realistic fur detail.",
+    material: "Kiln-Dried Hardwood or Natural Slate Stone with Easel",
+    printingType: "High Precision Laser Pyrography",
+    status: "In Stock",
+    leadTime: "24 Hours",
+    sizes: [
+      { name: "6\" × 8\" Memorial Plaque", price: 650 }
+    ],
+    finishes: [
+      { id: "pet-wood", name: "Natural Birch Memorial", color: "#C2A385", image: "assets/images/workshop.jpg", priceDelta: 0 }
+    ]
+  },
+  {
+    id: "resin-preserved-flower-photo-block",
+    name: "Hand-Cast Epoxy Resin Real Flower & Photo Paperweight",
+    category: "gifts",
+    categoryLabel: "Photo Gifts & Keepsakes",
+    price: 980,
+    priceDisplay: "Starting from ₹980",
+    rating: 5.0,
+    reviewsCount: 38,
+    badge: "Handmade Resin",
+    image: "assets/images/glass_frame.jpg",
+    shortDescription: "Real dried botanicals and wedding bouquet petals cast inside crystal clear epoxy resin alongside your photo.",
+    description: "Preserve wedding flowers forever. Hand-poured in multiple crystal clear resin layers for eternal botanical freshness.",
+    material: "UV-Resistant Non-Yellowing Optical Epoxy Resin with Real Dried Petals",
+    printingType: "Waterproof Micro Archival Photo Inlay",
+    status: "In Stock",
+    leadTime: "3 - 5 Days",
+    sizes: [
+      { name: "100 × 100 × 25 mm Resin Block", price: 980 }
+    ],
+    finishes: [
+      { id: "resin-botanical", name: "Floral Cast Crystal", color: "#CBD5E1", image: "assets/images/glass_frame.jpg", priceDelta: 0 }
+    ]
+  }
+];
+
+// Verify 25 items in Category 5
+console.log('Category 5 count:', category5_gifts.length);
+
+const allProducts = [
+  ...category1_frames,
+  ...category2_personalized,
+  ...category3_office,
+  ...category4_custom,
+  ...category5_gifts
+];
+
+console.log('Total Products Generated:', allProducts.length);
+
+// Business Info for client files
+const businessInfoStr = `// Business contact data
+const BUSINESS_INFO = {
+  name: "Rajendra Studio & Framing",
+  tagline: "Frames, Printing & Personalized Products",
+  phone: "+91 96015 74966",
+  phoneRaw: "+919601574966",
+  whatsapp: "+91 96015 74966",
+  whatsappNumber: "919601574966",
+  email: "rajendrastudioframing@gmail.com",
+  address: "Dahej GIDC, Bharuch, Gujarat 392130",
+  workingHours: "Mon - Sat: 9:30 AM - 8:30 PM | Sun: 10:00 AM - 2:00 PM",
+  establishedYear: 2008,
+  framesCrafted: "25,000+",
+  satisfiedClients: "18,500+",
+  ratingScore: "4.9 / 5.0"
+};
+
+// Export for module environments if needed
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { PRODUCTS_DATA, BUSINESS_INFO };
+}
+`;
+
+// 1. Write data/products.json
+const jsonPath = path.join(__dirname, '..', 'data', 'products.json');
+fs.writeFileSync(jsonPath, JSON.stringify(allProducts, null, 2), 'utf-8');
+console.log('Successfully written data/products.json with', allProducts.length, 'products');
+
+// 2. Write js/products-data.js
+const jsContent = `/**
+ * RAJENDRA STUDIO & FRAMING - MASTER PRODUCTS CATALOG DATA
+ * 5 Categories (25 products each, Total: 125 products)
+ */
+
+const PRODUCTS_DATA = ${JSON.stringify(allProducts, null, 2)};
+
+${businessInfoStr}
+`;
+
+const jsPath = path.join(__dirname, '..', 'js', 'products-data.js');
+fs.writeFileSync(jsPath, jsContent, 'utf-8');
+console.log('Successfully written js/products-data.js');
+
+// 3. Write public/js/products-data.js
+const publicJsPath = path.join(__dirname, '..', 'public', 'js', 'products-data.js');
+fs.writeFileSync(publicJsPath, jsContent, 'utf-8');
+console.log('Successfully written public/js/products-data.js');

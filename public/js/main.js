@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileDrawer();
   initBackToTop();
   highlightActiveNavLink();
+  initCategoryJumpBar();
   initProductSlider();
   initHomeContactForm();
   initScrollReveal();
@@ -516,4 +517,52 @@ window.changeCatalogCardImage = function(productId, newImgSrc, swatchEl, event, 
 
   if (swatchEl) swatchEl.classList.add('active');
 };
+
+/* --- Category Jump Bar Controller --- */
+function initCategoryJumpBar() {
+  const jumpButtons = document.querySelectorAll('.category-jump-btn');
+  if (!jumpButtons.length) return;
+
+  jumpButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const targetId = btn.getAttribute('data-cat-target');
+      if (targetId) {
+        const targetSection = document.getElementById(targetId);
+        if (targetSection) {
+          e.preventDefault();
+          targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          jumpButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          if (history.pushState) {
+            history.pushState(null, null, '#' + targetId);
+          }
+        }
+      }
+    });
+  });
+
+  // Highlight category jump button on scroll
+  const categorySections = [
+    document.getElementById('cat-frames'),
+    document.getElementById('cat-personalized'),
+    document.getElementById('cat-office'),
+    document.getElementById('cat-custom'),
+    document.getElementById('cat-gifts')
+  ].filter(Boolean);
+
+  if ('IntersectionObserver' in window && categorySections.length) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          jumpButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-cat-target') === id);
+          });
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+
+    categorySections.forEach(sec => observer.observe(sec));
+  }
+}
 
