@@ -78,7 +78,7 @@ ${items.map(renderProductCard).join('\n')}
 }
 
 const categoryNavMarkup = `
-    <!-- Category Quick-Jump Navigation Bar -->
+    <!-- 1. Category Quick-Jump Navigation Bar (Shown Immediately on Open) -->
     <section class="category-nav-section" id="categoriesSection">
       <div class="container">
         <div class="category-nav-header">
@@ -185,181 +185,89 @@ ${cat4Html}
 ${cat5Html}
 `;
 
-// Desktop Top Navigation (5 items)
-const desktopNavMenuHtml = `
-        <!-- Desktop Navigation Menu (5 Items Required) -->
-        <ul class="nav-menu">
-          <li>
-            <a href="#categoriesSection" class="nav-link active" title="Categories">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7" rx="1"></rect>
-                <rect x="14" y="3" width="7" height="7" rx="1"></rect>
-                <rect x="14" y="14" width="7" height="7" rx="1"></rect>
-                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+const whyChooseSectionHtml = `
+    <!-- Trust & Why Choose Section (Moved below products) -->
+    <section class="section section-cream" id="whyChooseSection">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow">Trust &amp; Heritage</span>
+          <h2 class="section-title">Why Choose Rajendra Studio &amp; Framing?</h2>
+          <p class="section-subtitle">
+            Every frame we build and print we produce reflects our dedication to preserving your most treasured milestones with perfection and permanence.
+          </p>
+        </div>
+
+        <div class="trust-grid">
+          <div class="trust-item reveal reveal-delay-1" style="background: #FFFFFF; padding: 28px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);">
+            <div class="trust-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
               </svg>
-              <span>Categories</span>
-            </a>
-          </li>
-          <li>
-            <a href="products" class="nav-link" title="Products">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </div>
+            <div>
+              <h3 class="trust-title">Premium Quality</h3>
+              <p class="trust-desc">High-quality materials and professional finishing.</p>
+            </div>
+          </div>
+
+          <div class="trust-item reveal reveal-delay-2" style="background: #FFFFFF; padding: 28px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);">
+            <div class="trust-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon>
+                <line x1="3" y1="22" x2="21" y2="22"></line>
               </svg>
-              <span>Products</span>
-            </a>
-          </li>
-          <li>
-            <button type="button" class="nav-link nav-item-btn" onclick="openCartDrawer()" title="Cart" aria-label="View shopping cart">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="9" cy="21" r="1"></circle>
-                <circle cx="20" cy="21" r="1"></circle>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </div>
+            <div>
+              <h3 class="trust-title">Custom Designs</h3>
+              <p class="trust-desc">Personalized designs created according to customer requirements.</p>
+            </div>
+          </div>
+
+          <div class="trust-item reveal reveal-delay-3" style="background: #FFFFFF; padding: 28px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);">
+            <div class="trust-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
               </svg>
-              <span>Cart</span>
-              <span class="cart-badge navbar-cart-badge" id="navbarCartBadge">0</span>
-            </button>
-          </li>
-          <li>
-            <button type="button" class="nav-link nav-item-btn" onclick="openWishlistDrawer()" title="Wishlist" aria-label="View wishlist">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            </div>
+            <div>
+              <h3 class="trust-title">Professional Printing</h3>
+              <p class="trust-desc">Sharp, vibrant and long-lasting printing.</p>
+            </div>
+          </div>
+
+          <div class="trust-item reveal reveal-delay-4" style="background: #FFFFFF; padding: 28px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);">
+            <div class="trust-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
               </svg>
-              <span>Wishlist</span>
-              <span class="wishlist-badge navbar-wishlist-badge" id="navbarWishlistBadge">0</span>
-            </button>
-          </li>
-          <li>
-            <div class="nav-customer-slot" id="navCustomerSlot">
-              <button type="button" class="nav-link nav-item-btn" onclick="openCustomerAuthModal()" title="Profile" aria-label="Customer Profile">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                <span>Profile</span>
-              </button>
             </div>
-          </li>
-        </ul>
+            <div>
+              <h3 class="trust-title">Customer Satisfaction</h3>
+              <p class="trust-desc">Focused on quality, service and customer satisfaction.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 `;
 
-// Mobile Fixed Bottom Navigation Bar (5 items)
-const mobileBottomNavHtml = `
-  <!-- Mobile Fixed Bottom Navigation Bar (5 Items Required) -->
-  <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile Navigation">
-    <a href="#categoriesSection" class="mobile-nav-item active" id="mobileNavCategories">
-      <div class="mobile-nav-icon-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-        </svg>
-      </div>
-      <span class="mobile-nav-label">Categories</span>
-    </a>
-
-    <a href="products" class="mobile-nav-item" id="mobileNavProducts">
-      <div class="mobile-nav-icon-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <path d="M16 10a4 4 0 0 1-8 0"></path>
-        </svg>
-      </div>
-      <span class="mobile-nav-label">Products</span>
-    </a>
-
-    <button type="button" class="mobile-nav-item" id="mobileNavCart" onclick="openCartDrawer()" aria-label="View Cart">
-      <div class="mobile-nav-icon-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="9" cy="21" r="1"></circle>
-          <circle cx="20" cy="21" r="1"></circle>
-          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-        </svg>
-        <span class="cart-badge mobile-nav-badge" id="mobileNavCartBadge">0</span>
-      </div>
-      <span class="mobile-nav-label">Cart</span>
-    </button>
-
-    <button type="button" class="mobile-nav-item" id="mobileNavWishlist" onclick="openWishlistDrawer()" aria-label="View Wishlist">
-      <div class="mobile-nav-icon-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-        </svg>
-        <span class="wishlist-badge mobile-nav-badge" id="mobileNavWishlistBadge">0</span>
-      </div>
-      <span class="mobile-nav-label">Wishlist</span>
-    </button>
-
-    <button type="button" class="mobile-nav-item" id="mobileNavProfile" onclick="openCustomerAuthModal()" aria-label="User Profile">
-      <div class="mobile-nav-icon-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        </svg>
-      </div>
-      <span class="mobile-nav-label">Profile</span>
-    </button>
-  </nav>
-`;
-
-// Update an HTML file
 function updateHomepageHtml(filePath) {
   let html = fs.readFileSync(filePath, 'utf-8');
 
-  // 1. Add link to ecom-ui.css in head if not present
-  if (!html.includes('css/ecom-ui.css')) {
-    html = html.replace('</head>', '  <link rel="stylesheet" href="css/ecom-ui.css" />\n</head>');
-  }
+  // Replace everything from `<main id="mainContent">` up to `<!-- 6. About` or `About Rajesh Framing` / `About Rajendra Studio`
+  // with `<main id="mainContent">\n` + full5CategoriesHtml + whyChooseSectionHtml
+  const mainRegex = /<main id="mainContent">[\s\S]*?(<!-- 6\.\s*About)/i;
 
-  // 2. Update brand title
-  html = html.replace(
-    /<title>.*?<\/title>/i,
-    '<title>Rajendra Studio & Framing | Custom Photo Frames, Printing & Personalized Gifts</title>'
-  );
-
-  // 3. Replace desktop nav-menu in header
-  // Find `<ul class="nav-menu">[\s\S]*?<\/ul>`
-  html = html.replace(/<ul class="nav-menu">[\s\S]*?<\/ul>/, desktopNavMenuHtml.trim());
-
-  // 4. In navbar-actions, ensure Quick Enquiry is cleanly displayed on desktop
-  // Replace the old slider & old featured products sections with our 5 categories
-  // Old sections start around `<section class="section product-slider-section">` or `<section class="section section-cream" id="whyChooseSection">`
-  // Let's place categoriesSection and the 5 categories right after the hero section (after `</section>` of `hero-wrapper-section`)!
-  
-  const heroEndMarker = '<!-- 3. Why Choose Rajesh Framing -->';
-  const heroEndAlt = '<section class="section section-cream" id="whyChooseSection">';
-
-  // Remove the old product slider section & old featured products section
-  // Old slider starts with `<!-- 4. Product Showcase Slider` and ends with `<!-- 5. Featured Products`
-  // Old featured products starts with `<!-- 5. Featured Products` and ends with `<!-- 6. About Rajesh Framing`
-  const oldSliderAndFeaturedRegex = /<!-- 4\. Product Showcase Slider[\s\S]*?<!-- 6\. About Rajesh Framing -->/;
-  
-  if (oldSliderAndFeaturedRegex.test(html)) {
+  if (mainRegex.test(html)) {
     html = html.replace(
-      oldSliderAndFeaturedRegex,
-      `${full5CategoriesHtml}\n\n    <!-- 6. About Rajesh Framing -->`
+      mainRegex,
+      `<main id="mainContent">\n${full5CategoriesHtml}\n${whyChooseSectionHtml}\n\n    $1`
     );
   } else {
-    // Alternative replacement
-    console.warn('Regex did not match oldSliderAndFeaturedRegex, falling back to after hero replacement');
-    const heroRegex = /(<\/section>[\s\r\n]*)(<!-- 3\. Why Choose)/;
-    html = html.replace(heroRegex, `$1${full5CategoriesHtml}\n\n$2`);
+    console.error('Could not find main regex match in', filePath);
   }
-
-  // 5. Add mobile bottom nav bar before closing body
-  if (!html.includes('id="mobileBottomNav"')) {
-    html = html.replace('</body>', `${mobileBottomNavHtml}\n</body>`);
-  } else {
-    html = html.replace(/<nav class="mobile-bottom-nav"[\s\S]*?<\/nav>/, mobileBottomNavHtml.trim());
-  }
-
-  // 6. Ensure Brand Name mentions in about / contact section say Rajendra Studio & Framing
-  html = html.replace(/About Rajesh Framing/g, 'About Rajendra Studio & Framing');
-  html = html.replace(/Rajesh Framing studio/g, 'Rajendra Studio & Framing');
-  html = html.replace(/Rajesh Framing provides/g, 'Rajendra Studio & Framing provides');
 
   fs.writeFileSync(filePath, html, 'utf-8');
   console.log(`Successfully updated ${filePath}`);
