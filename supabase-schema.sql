@@ -138,18 +138,18 @@ CREATE INDEX IF NOT EXISTS idx_reviews_product ON public.reviews(product_id);
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.admin_config (
   id TEXT PRIMARY KEY DEFAULT 'default',
-  admin_email TEXT DEFAULT 'rajeshframing0@gmail.com',
+  admin_email TEXT DEFAULT 'rajendrastudioframing@gmail.com',
   admin_password TEXT DEFAULT 'Admin@Rajesh2026',
-  admin_name TEXT DEFAULT 'Rajesh Kumar',
+  admin_name TEXT DEFAULT 'Rajendra Studio Admin',
   smtp JSONB DEFAULT '{
     "enabled": true,
     "service": "gmail",
     "host": "smtp.gmail.com",
     "port": 465,
     "secure": true,
-    "user": "rajeshframing0@gmail.com",
-    "pass": "uywvukwsotrtuevb",
-    "fromEmail": "Rajesh Framing <rajeshframing0@gmail.com>"
+    "user": "rajendrastudioframing@gmail.com",
+    "pass": "",
+    "fromEmail": "Rajendra Studio <rajendrastudioframing@gmail.com>"
   }'::jsonb,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -374,18 +374,18 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO public.admin_config (id, admin_email, admin_password, admin_name, smtp)
 VALUES (
   'default',
-  'rajeshframing0@gmail.com',
+  'rajendrastudioframing@gmail.com',
   'Admin@Rajesh2026',
-  'Rajesh Kumar',
+  'Rajendra Studio Admin',
   '{
     "enabled": true,
     "service": "gmail",
     "host": "smtp.gmail.com",
     "port": 465,
     "secure": true,
-    "user": "rajeshframing0@gmail.com",
-    "pass": "uywvukwsotrtuevb",
-    "fromEmail": "Rajesh Framing <rajeshframing0@gmail.com>"
+    "user": "rajendrastudioframing@gmail.com",
+    "pass": "",
+    "fromEmail": "Rajendra Studio <rajendrastudioframing@gmail.com>"
   }'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET

@@ -3479,7 +3479,7 @@ function initSettingsForms() {
       const adminEmailInput = document.getElementById('settingAdminEmail');
       const targetEmail = (userEmailInput && userEmailInput.value.trim()) || 
                           (adminEmailInput && adminEmailInput.value.trim()) || 
-                          'rajeshframing0@gmail.com';
+                          'rajendrastudioframing@gmail.com';
 
       testSmtpBtn.disabled = true;
       const originalText = testSmtpBtn.textContent;

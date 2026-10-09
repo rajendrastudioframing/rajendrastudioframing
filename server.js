@@ -279,7 +279,7 @@ function generateOtpEmailHtml(otp, recipientEmail) {
       </div>
       <div class="footer">
         Dahej Support Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
-        Direct Customer Support: +91 96015 74966 • rajeshframing0@gmail.com
+        Direct Customer Support: +91 96015 74966 • rajendrastudioframing@gmail.com
       </div>
     </div>
   </body>
@@ -332,7 +332,7 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
       </div>
       <div class="footer">
         Dahej Support Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
-        Direct Customer Support: +91 96015 74966 • rajeshframing0@gmail.com
+        Direct Customer Support: +91 96015 74966 • rajendrastudioframing@gmail.com
       </div>
     </div>
   </body>
@@ -638,7 +638,7 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
       subject = `Order #${orderId} Delivered - Thank You - Dahej Support`;
     }
 
-    const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
+    const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
 
     let introText = `Your order #${orderId} status has been updated to: ${newStatus}.`;
     if (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed') {
@@ -795,6 +795,7 @@ app.post('/api/auth/login-request', async (req, res) => {
     const config = await db.getAdminConfig();
     const cleanEmail = email.trim().toLowerCase();
     const allowedEmails = [
+      'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
       (config.adminEmail || '').toLowerCase(),
@@ -843,7 +844,7 @@ app.post('/api/auth/login-request', async (req, res) => {
 
     if (transporter) {
       try {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
         await transporter.sendMail({
           from: fromAddress,
           to: cleanEmail,
@@ -891,6 +892,7 @@ app.post('/api/auth/login', async (req, res) => {
     const config = await db.getAdminConfig();
     const cleanEmail = email.trim().toLowerCase();
     const allowedEmails = [
+      'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
       (config.adminEmail || '').toLowerCase(),
@@ -947,6 +949,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const config = await db.getAdminConfig();
     const allowedEmails = [
+      'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
       (config.adminEmail || '').toLowerCase(),
@@ -1041,6 +1044,7 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const config = await db.getAdminConfig();
     const allowedEmails = [
+      'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
       (config.adminEmail || '').toLowerCase(),
@@ -1077,7 +1081,7 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     const transporter = createTransporter(config);
     if (transporter) {
       try {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
         await transporter.sendMail({
           from: fromAddress,
           to: cleanEmail,
@@ -1226,7 +1230,7 @@ app.post('/api/customer/auth/send-otp', async (req, res) => {
 
     if (transporter) {
       try {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
         await transporter.sendMail({
           from: fromAddress,
           to: cleanEmail,
@@ -1438,7 +1442,7 @@ app.post('/api/customer/auth/resend-otp', async (req, res) => {
     const transporter = createTransporter(config);
     if (transporter) {
       try {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
         await transporter.sendMail({
           from: fromAddress,
           to: cleanEmail,
@@ -1726,8 +1730,8 @@ app.post('/api/inquiries', async (req, res) => {
       const config = await db.getAdminConfig();
       const transporter = createTransporter(config);
       if (transporter) {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
-        const adminRecipient = config.adminEmail || 'rajeshframing0@gmail.com';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
+        const adminRecipient = config.adminEmail || 'rajendrastudioframing@gmail.com';
         await transporter.sendMail({
           from: fromAddress,
           to: adminRecipient,
@@ -2755,8 +2759,8 @@ app.post('/api/contact', async (req, res) => {
       const config = await db.getAdminConfig();
       const transporter = createTransporter(config);
       if (transporter) {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
-        const adminRecipient = config.adminEmail || 'rajeshframing0@gmail.com';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
+        const adminRecipient = config.adminEmail || 'rajendrastudioframing@gmail.com';
         await transporter.sendMail({
           from: fromAddress,
           to: adminRecipient,
@@ -2867,17 +2871,17 @@ app.get('/api/admin/settings', requireAuth, async (req, res) => {
   res.json({
     success: true,
     settings: {
-      adminEmail: config.adminEmail || 'rajeshframing0@gmail.com',
-      adminName: config.adminName || 'Rajesh Kumar',
+      adminEmail: config.adminEmail || 'rajendrastudioframing@gmail.com',
+      adminName: config.adminName || 'Rajendra Studio Admin',
       smtp: {
         enabled: Boolean(config.smtp && config.smtp.enabled),
         service: (config.smtp && config.smtp.service) || 'gmail',
         host: (config.smtp && config.smtp.host) || 'smtp.gmail.com',
         port: (config.smtp && config.smtp.port) || 465,
         secure: config.smtp ? config.smtp.secure !== false : true,
-        user: (config.smtp && config.smtp.user) || 'rajeshframing0@gmail.com',
+        user: (config.smtp && config.smtp.user) || 'rajendrastudioframing@gmail.com',
         hasPassword: Boolean(config.smtp && config.smtp.pass),
-        fromEmail: (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing Studio <rajeshframing0@gmail.com>'
+        fromEmail: (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>'
       }
     }
   });
@@ -2957,7 +2961,7 @@ app.put('/api/admin/settings/smtp', requireAuth, async (req, res) => {
     if (host) config.smtp.host = host.trim();
     if (port) config.smtp.port = Number(port) || 465;
     config.smtp.secure = config.smtp.port === 465;
-    config.smtp.fromEmail = config.smtp.fromEmail || `Rajesh Framing <${config.adminEmail || 'rajeshframing0@gmail.com'}>`;
+    config.smtp.fromEmail = config.smtp.fromEmail || `Rajendra Studio <${config.adminEmail || 'rajendrastudioframing@gmail.com'}>`;
 
     await db.saveAdminConfig(config);
     console.log(`📧 [SMTP SETTINGS UPDATED] Service: ${config.smtp.service}, User: ${config.smtp.user}`);
@@ -2973,7 +2977,7 @@ app.put('/api/admin/settings/smtp', requireAuth, async (req, res) => {
  */
 const handleTestSmtp = async (req, res) => {
   try {
-    const recipient = req.body.targetEmail || req.body.testEmail || 'rajeshframing0@gmail.com';
+    const recipient = req.body.targetEmail || req.body.testEmail || 'rajendrastudioframing@gmail.com';
     const config = await db.getAdminConfig();
 
     const transporter = createTransporter(config);
@@ -2984,7 +2988,7 @@ const handleTestSmtp = async (req, res) => {
       });
     }
 
-    const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajesh Framing <rajeshframing0@gmail.com>';
+    const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
     await transporter.sendMail({
       from: fromAddress,
       to: recipient,

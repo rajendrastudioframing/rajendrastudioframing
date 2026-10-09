@@ -1,16 +1,16 @@
 {
-  "adminEmail": "help@dahejsupport.com",
-  "secondaryAdminEmail": "rajeshframing0@gmail.com",
+  "adminEmail": "rajendrastudioframing@gmail.com",
+  "secondaryAdminEmail": "rajendrastudioframing@gmail.com",
   "adminPassword": "Admin@Rajesh2026",
-  "adminName": "Rajesh Kumar",
+  "adminName": "Rajendra Studio Admin",
   "smtp": {
     "enabled": true,
     "service": "gmail",
     "host": "smtp.gmail.com",
     "port": 465,
     "secure": true,
-    "user": "rajeshframing0@gmail.com",
-    "pass": "uywvukwsotrtuevb",
-    "fromEmail": "Rajesh Framing <help@dahejsupport.com>"
+    "user": "rajendrastudioframing@gmail.com",
+    "pass": "",
+    "fromEmail": "Rajendra Studio <rajendrastudioframing@gmail.com>"
   }
 }

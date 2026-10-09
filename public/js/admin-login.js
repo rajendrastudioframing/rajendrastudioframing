@@ -180,7 +180,7 @@ function initLoginCredentialsForm() {
 
   const fillCredentials = (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (emailInput) emailInput.value = 'help@dahejsupport.com';
+    if (emailInput) emailInput.value = 'rajendrastudioframing@gmail.com';
     if (passwordInput) passwordInput.value = 'Admin@Rajesh2026';
     showAlert('info', 'Credentials filled! Click "⚡ Instant Sign In" or "📩 Sign In via Email OTP".');
     if (emailInput) emailInput.focus();
@@ -252,7 +252,7 @@ function initLoginCredentialsForm() {
   if (autoFillAndSubmitBtn) {
     autoFillAndSubmitBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      if (emailInput) emailInput.value = 'help@dahejsupport.com';
+      if (emailInput) emailInput.value = 'rajendrastudioframing@gmail.com';
       if (passwordInput) passwordInput.value = 'Admin@Rajesh2026';
       executeDirectLogin();
     });
@@ -429,7 +429,7 @@ function initOtpVerificationForm() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: currentAdminEmail || 'help@dahejsupport.com',
+            email: currentAdminEmail || 'rajendrastudioframing@gmail.com',
             otp: otp
           })
         });

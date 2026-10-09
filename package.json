@@ -1,7 +1,7 @@
 {
-  "name": "rajesh-framing",
+  "name": "rajendra-studio-and-framing",
   "version": "1.0.0",
-  "description": "Rajesh Framing - Premium Framing & Custom Printing Business Website with Admin Panel",
+  "description": "Rajendra Studio & Framing - Premium Framing & Custom Printing Business Website with Admin Panel",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
