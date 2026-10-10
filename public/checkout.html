@@ -180,6 +180,13 @@
           </h2>
 
           <!-- Customer Authentication Banner & Status -->
+          <script>
+            try {
+              if (localStorage.getItem('rf_customer_token')) {
+                document.write('<style>#checkoutAuthNotice{display:none !important;}#checkoutAuthVerified{display:flex !important;}</style>');
+              }
+            } catch(e) {}
+          </script>
           <div id="checkoutAuthNotice" class="checkout-auth-banner unauthenticated" style="margin-bottom: 20px; padding: 16px 18px; border-radius: 14px; background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 1.5px solid #FCD34D; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 12px;">
               <div style="width: 40px; height: 40px; border-radius: 10px; background: #F59E0B; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
@@ -209,7 +216,7 @@
                   Verified Customer Account
                 </div>
                 <div style="font-size: 0.8125rem; color: #047857;">
-                  Logged in as: <strong id="checkoutLoggedEmail" style="color: #064E3B;">user@example.com</strong>
+                  Logged in as: <strong id="checkoutLoggedEmail" style="color: #064E3B;">Verified Customer</strong>
                 </div>
               </div>
             </div>
