@@ -348,6 +348,82 @@
   }
 }
 
+/* Category See More / Show Less controls (5 products initial, rest in See More) */
+.product-card[data-more-item="true"] {
+  display: none !important;
+}
+
+.category-showcase-section.is-expanded .product-card[data-more-item="true"] {
+  display: flex !important;
+  animation: fadeInMoreCard 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInMoreCard {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.category-see-more-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 32px;
+  padding-top: 8px;
+}
+
+.category-see-more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 34px;
+  font-family: var(--font-heading, 'DM Sans', sans-serif);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #111111;
+  background: #FFFFFF;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.category-see-more-btn:hover {
+  background: #111111;
+  color: #FFFFFF;
+  border-color: #111111;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.category-see-more-btn .see-more-icon {
+  transition: transform 0.25s ease;
+  stroke: currentColor;
+}
+
+.category-showcase-section.is-expanded .category-see-more-btn .see-more-icon {
+  transform: rotate(180deg);
+}
+
+.category-showcase-section.is-expanded .category-see-more-btn {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+  color: #374151;
+}
+
+.category-showcase-section.is-expanded .category-see-more-btn:hover {
+  background: #111111;
+  color: #FFFFFF;
+  border-color: #111111;
+}
+
 /* --- 6. MODERN ATTRACTIVE LUXURY PRODUCT CARD STYLES --- */
 .product-card {
   display: flex !important;

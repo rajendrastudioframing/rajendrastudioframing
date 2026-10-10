@@ -17,7 +17,7 @@ console.log('Office Printing:', catOffice.length);
 console.log('Custom Printing:', catCustom.length);
 console.log('Photo Gifts & Keepsakes:', catGifts.length);
 
-function renderProductCard(p) {
+function renderProductCard(p, isExtra = false) {
   const badgeHtml = p.badge 
     ? `<span class="product-badge-pill">${p.badge}</span>` 
     : `<span></span>`;
@@ -26,10 +26,11 @@ function renderProductCard(p) {
   const ratingVal = p.rating || 4.9;
   const reviewsCount = p.reviewsCount || (40 + (p.id.length * 7) % 80);
   const categoryLabel = p.categoryLabel || 'Studio Craft';
+  const extraAttr = isExtra ? ' data-more-item="true"' : '';
 
   return `
           <!-- Product Card: ${p.id} -->
-          <article class="product-card" data-id="${p.id}" onclick="window.location.href='product-detail?id=${p.id}'">
+          <article class="product-card"${extraAttr} data-id="${p.id}" onclick="window.location.href='product-detail?id=${p.id}'">
             <div class="product-card-top">
               ${badgeHtml}
               <button type="button" class="product-wishlist-btn" data-wishlist-id="${p.id}" aria-label="Add to wishlist" onclick="event.stopPropagation(); toggleWishlist('${p.id}', event);" title="Add to Wishlist">
@@ -73,6 +74,9 @@ function renderProductCard(p) {
 }
 
 function renderCategorySection(id, eyebrow, title, desc, items, isCream = false) {
+  const initialItems = items.slice(0, 5);
+  const moreItems = items.slice(5);
+
   return `
     <!-- Category Section: ${title} -->
     <section class="section category-showcase-section ${isCream ? 'section-cream' : ''}" id="${id}">
@@ -86,7 +90,15 @@ function renderCategorySection(id, eyebrow, title, desc, items, isCream = false)
         </div>
 
         <div class="products-grid" id="grid-${id}">
-${items.map(renderProductCard).join('\n')}
+${initialItems.map(p => renderProductCard(p, false)).join('\n')}
+${moreItems.map(p => renderProductCard(p, true)).join('\n')}
+        </div>
+
+        <div class="category-see-more-wrapper">
+          <button type="button" class="category-see-more-btn" data-target="${id}" onclick="toggleCategoryMore('${id}', this)" aria-expanded="false" aria-controls="grid-${id}">
+            <span class="see-more-text">See More</span>
+            <svg class="see-more-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
         </div>
       </div>
     </section>`;
@@ -193,6 +205,25 @@ ${cat2Html}
 ${cat3Html}
 ${cat4Html}
 ${cat5Html}
+<script>
+function toggleCategoryMore(sectionId, btn) {
+  var section = document.getElementById(sectionId);
+  if (!section) return;
+  var isExpanded = section.classList.toggle('is-expanded');
+  var targetBtn = btn || section.querySelector('.category-see-more-btn');
+  var textEl = targetBtn ? targetBtn.querySelector('.see-more-text') : null;
+  if (textEl) {
+    textEl.textContent = isExpanded ? 'Show Less' : 'See More';
+  }
+  if (targetBtn) {
+    targetBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+  }
+  if (!isExpanded) {
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+window.toggleCategoryMore = toggleCategoryMore;
+</script>
 `;
 
 const whyChooseSectionHtml = `

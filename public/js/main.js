@@ -566,3 +566,29 @@ function initCategoryJumpBar() {
   }
 }
 
+// Toggle Category See More / Show Less (5 items initially, rest on See More)
+function toggleCategoryMore(sectionId, btn) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+  const isExpanded = section.classList.toggle('is-expanded');
+  const targetBtn = btn || section.querySelector('.category-see-more-btn');
+  const textEl = targetBtn ? targetBtn.querySelector('.see-more-text') : null;
+  if (textEl) {
+    textEl.textContent = isExpanded ? 'Show Less' : 'See More';
+  }
+  if (targetBtn) {
+    targetBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+  }
+  if (!isExpanded) {
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+window.toggleCategoryMore = toggleCategoryMore;
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.category-see-more-btn');
+  if (btn && btn.dataset.target && !e.defaultPrevented) {
+    toggleCategoryMore(btn.dataset.target, btn);
+  }
+});
+
