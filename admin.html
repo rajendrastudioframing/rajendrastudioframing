@@ -625,11 +625,17 @@
           <!-- ==========================================
                VIEW 4: PRODUCTS & PRICING
                ========================================== -->
+                    <!-- ==========================================
+               VIEW 4: PRODUCTS & PRICING
+               ========================================== -->
+                    <!-- ==========================================
+               VIEW 4: PRODUCTS & PRICING
+               ========================================== -->
           <section class="dashboard-view-panel" id="viewProducts">
             
             <div class="page-subheader">
               <div class="subheader-text">
-                Control live pricing, stock availability, and marketing badges across your store.
+                Control live catalog products, category filters, pricing, stock availability, and marketing badges.
               </div>
               <div class="subheader-actions">
                 <button type="button" class="btn-sub-action outline" onclick="exportProductsToCSV()" title="Export products catalog and pricing">
@@ -651,7 +657,7 @@
             </div>
 
             <!-- Products KPI Bar -->
-            <div class="metric-segment-bar">
+            <div class="metric-segment-bar five-cols">
               <div class="metric-segment">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
@@ -660,20 +666,20 @@
                   </div>
                   <span class="metric-segment-dots">•••</span>
                 </div>
-                <div class="metric-segment-val" id="kpiActiveProducts">7</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">●</span> Active items</div>
+                <div class="metric-segment-val" id="kpiActiveProducts">125</div>
+                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">●</span> 5 Categories</div>
               </div>
 
               <div class="metric-segment">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot green"></span>
-                    <span class="metric-segment-label">In Stock</span>
+                    <span class="metric-segment-label">In Stock Items</span>
                   </div>
                   <span class="metric-segment-dots">•••</span>
                 </div>
-                <div class="metric-segment-val">7</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">✓</span> 100% available</div>
+                <div class="metric-segment-val" id="kpiInStockProducts">125</div>
+                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">✓</span> Ready to ship</div>
               </div>
 
               <div class="metric-segment">
@@ -684,26 +690,122 @@
                   </div>
                   <span class="metric-segment-dots">•••</span>
                 </div>
-                <div class="metric-segment-val">6</div>
-                <div class="metric-segment-tag in-progress"><span style="font-size:0.85em;">★</span> Featured</div>
+                <div class="metric-segment-val" id="kpiBadgeProducts">48</div>
+                <div class="metric-segment-tag in-progress"><span style="font-size:0.85em;">★</span> Bestsellers &amp; Hot</div>
               </div>
 
               <div class="metric-segment">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot amber"></span>
-                    <span class="metric-segment-label">Starting Price</span>
+                    <span class="metric-segment-label">Studio Starting Price</span>
                   </div>
                   <span class="metric-segment-dots">•••</span>
                 </div>
-                <div class="metric-segment-val">₹150</div>
-                <div class="metric-segment-tag neutral">From office files</div>
+                <div class="metric-segment-val" id="kpiStartingPrice">₹120</div>
+                <div class="metric-segment-tag neutral">Pocket-friendly gifts</div>
+              </div>
+
+              <div class="metric-segment">
+                <div class="metric-segment-top">
+                  <div class="metric-label-group">
+                    <span class="metric-icon-dot blue"></span>
+                    <span class="metric-segment-label">Average Rating</span>
+                  </div>
+                  <span class="metric-segment-dots">•••</span>
+                </div>
+                <div class="metric-segment-val" id="kpiAvgRating">4.89 ★</div>
+                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">↑</span> Verified customer reviews</div>
               </div>
             </div>
 
-            <!-- Section Title -->
-            <div class="section-title-bar">
-              <h3 class="section-title-text">All Products</h3>
+            <!-- Category Selector Tabs (Interactive category option in product dashboard) -->
+            <div class="admin-category-tabs-bar" id="productCategoryTabs" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 18px 0 14px 0;">
+              <button type="button" class="admin-tab-btn active" data-category="all" onclick="selectAdminCategory('all')">
+                <span>All Products</span>
+                <span class="category-badge-count" id="countAll">125</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-category="frames" onclick="selectAdminCategory('frames')">
+                <span>🖼️ Studio &amp; Framing</span>
+                <span class="category-badge-count" id="countFrames">25</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-category="personalized" onclick="selectAdminCategory('personalized')">
+                <span>☕ Personalized Printing</span>
+                <span class="category-badge-count" id="countPersonalized">25</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-category="office" onclick="selectAdminCategory('office')">
+                <span>📁 Office Printing</span>
+                <span class="category-badge-count" id="countOffice">25</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-category="custom" onclick="selectAdminCategory('custom')">
+                <span>🎨 Custom Printing</span>
+                <span class="category-badge-count" id="countCustom">25</span>
+              </button>
+              <button type="button" class="admin-tab-btn" data-category="gifts" onclick="selectAdminCategory('gifts')">
+                <span>🎁 Photo Gifts &amp; Keepsakes</span>
+                <span class="category-badge-count" id="countGifts">25</span>
+              </button>
+            </div>
+
+            <!-- Active Category Info Banner / Card -->
+            <div class="admin-category-info-card" id="adminCategoryInfoCard">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="category-icon-box" id="categoryInfoIcon">📦</div>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);" id="categoryInfoTitle">All Products Catalog</h3>
+                    <span class="badge" id="categoryInfoCountBadge" style="background: rgba(201, 154, 61, 0.15); color: #b8860b; border: 1px solid rgba(201, 154, 61, 0.3); font-size: 0.72rem; padding: 2px 8px; border-radius: 999px;">125 Items</span>
+                  </div>
+                  <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted); max-width: 680px;" id="categoryInfoDesc">
+                    Complete studio catalog featuring handcrafted frames, corporate stationery, personalized merchandise, and photo gifts.
+                  </p>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <div style="text-align: right;">
+                  <span style="font-size: 0.72rem; color: var(--text-muted); display: block; text-transform: uppercase; font-weight: 600;">Price Range</span>
+                  <strong style="font-size: 0.95rem; color: var(--text-main);" id="categoryInfoPriceRange">₹120 – ₹2,499</strong>
+                </div>
+                <div style="height: 28px; width: 1px; background: var(--border-subtle);"></div>
+                <div style="text-align: right;">
+                  <span style="font-size: 0.72rem; color: var(--text-muted); display: block; text-transform: uppercase; font-weight: 600;">Stock Availability</span>
+                  <strong style="font-size: 0.95rem; color: #16a34a;" id="categoryInfoStockStatus">100% In Stock</strong>
+                </div>
+                <a id="categoryInfoStorefrontLink" href="products.html" target="_blank" class="btn-sub-action outline" style="padding: 6px 12px; font-size: 0.78rem;" title="View in storefront">
+                  <span>Storefront ↗</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Search, Filter & Sort Controls Row -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">
+              <div style="position: relative; flex: 1; min-width: 240px; max-width: 440px;">
+                <input type="text" id="productSearchInput" class="setting-input" placeholder="Search by product name, SKU / ID, badge, material..." style="padding-left: 36px; height: 38px; font-size: 0.84rem;" oninput="filterAdminProducts()" />
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <select id="productStockFilterSelect" class="setting-select" style="width: auto; height: 38px; font-size: 0.82rem; padding: 0 10px;" onchange="filterAdminProducts()">
+                  <option value="all">All Stock Statuses</option>
+                  <option value="in_stock">🟢 In Stock Only</option>
+                  <option value="out_of_stock">🔴 Out of Stock Only</option>
+                </select>
+
+                <select id="productSortSelect" class="setting-select" style="width: auto; height: 38px; font-size: 0.82rem; padding: 0 10px;" onchange="filterAdminProducts()">
+                  <option value="default">Default Order</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                  <option value="rating_desc">Highest Rated ★</option>
+                  <option value="name_asc">Name (A – Z)</option>
+                </select>
+
+                <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 4px;" id="productFilteredCountLabel">
+                  Showing 125 products
+                </span>
+              </div>
             </div>
 
             <!-- Products Table Card -->
@@ -711,19 +813,20 @@
               <table class="graphura-table products-table">
                 <thead>
                   <tr>
-                    <th style="width: 70px; text-align: center;">Image</th>
-                    <th style="width: 220px;">Product Name</th>
-                    <th style="width: 160px;">Category</th>
-                    <th style="width: 90px;">Price</th>
-                    <th style="width: 130px;">Badge</th>
-                    <th style="width: 110px;">Stock Status</th>
-                    <th style="width: 120px;">Lead Time</th>
+                    <th style="width: 65px; text-align: center;">Image</th>
+                    <th style="min-width: 200px;">Product Name &amp; ID</th>
+                    <th style="width: 140px;">Category</th>
+                    <th style="width: 130px;">Price &amp; MRP</th>
+                    <th style="width: 110px;">Rating</th>
+                    <th style="width: 110px;">Badge</th>
+                    <th style="width: 120px; text-align: center;">Stock Status</th>
+                    <th style="width: 100px;">Lead Time</th>
                     <th style="width: 90px; text-align: center;">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="adminProductsTableBody">
                   <tr>
-                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px;">Loading catalog products...</td>
+                    <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 32px;">Loading catalog products...</td>
                   </tr>
                 </tbody>
               </table>
@@ -1117,6 +1220,16 @@
       <form id="editProductForm">
         <div class="admin-modal-body">
           <input type="hidden" id="editProductId" />
+          <div class="setting-row">
+            <label class="setting-label">Category</label>
+            <select class="setting-select" id="editProductCategory">
+              <option value="frames">Studio &amp; Framing</option>
+              <option value="personalized">Personalized Printing</option>
+              <option value="office">Office Printing</option>
+              <option value="custom">Custom Printing</option>
+              <option value="gifts">Photo Gifts &amp; Keepsakes</option>
+            </select>
+          </div>
           
           <div class="setting-row">
             <label class="setting-label">Product Name</label>
@@ -1181,6 +1294,7 @@
                 <option value="personalized">Personalized Printing (Mug, Bottle)</option>
                 <option value="office">Office Printing (Files &amp; Folders)</option>
                 <option value="custom">Custom Printing (Canvas, Acrylic)</option>
+                <option value="gifts">Photo Gifts &amp; Keepsakes (Crystals, Plaques, Clocks)</option>
               </select>
             </div>
             <div class="setting-row" style="margin-bottom: 0;">

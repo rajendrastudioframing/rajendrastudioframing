@@ -2527,7 +2527,7 @@ async function loadProducts() {
 
     if (data && (data.success || Array.isArray(data.products))) {
       allProducts = data.products || [];
-      renderAdminProducts(allProducts);
+      updateAdminCategoryCounters(allProducts); window.filterAdminProducts();
     }
   } catch (err) {
     console.error('Failed to load products:', err);
@@ -2536,7 +2536,7 @@ async function loadProducts() {
       const data = await fallbackRes.json();
       if (data && (data.success || Array.isArray(data.products))) {
         allProducts = data.products || [];
-        renderAdminProducts(allProducts);
+        updateAdminCategoryCounters(allProducts); window.filterAdminProducts();
       }
     } catch (e2) {
       console.error('Public products fallback also failed:', e2);
@@ -2544,57 +2544,340 @@ async function loadProducts() {
   }
 }
 
+
+/* ==========================================================================
+   CATEGORY & PRODUCT DASHBOARD CONTROLLER (RICH PRODUCT INFO & FILTERS)
+   ========================================================================== */
+let adminActiveCategory = 'all';
+let adminProductSearchQuery = '';
+let adminProductStockFilter = 'all';
+let adminProductSort = 'default';
+
+const CATEGORY_META = {
+  all: {
+    name: 'All Products Catalog',
+    badge: 'All Categories',
+    icon: '📦',
+    desc: 'Complete studio catalog featuring handcrafted frames, corporate stationery, personalized merchandise, and photo gifts.',
+    anchor: 'products'
+  },
+  frames: {
+    name: 'Studio & Framing',
+    badge: 'Studio & Framing',
+    icon: '🖼️',
+    desc: 'Classic wood and acrylic glass frames, certificate frames, collage memory boxes, and gallery wall displays.',
+    anchor: 'cat-frames'
+  },
+  personalized: {
+    name: 'Personalized Printing',
+    badge: 'Personalized Printing',
+    icon: '☕',
+    desc: 'Custom printed ceramic mugs, insulated bottles, custom apparel, and personalized daily keepsakes.',
+    anchor: 'cat-personalized'
+  },
+  office: {
+    name: 'Office Printing',
+    badge: 'Office Printing',
+    icon: '📁',
+    desc: 'Corporate presentation folders, customized file binders, business cards, letterheads, and executive desk accessories.',
+    anchor: 'cat-office'
+  },
+  custom: {
+    name: 'Custom Printing',
+    badge: 'Custom Printing',
+    icon: '🎨',
+    desc: 'Museum-grade canvas gallery wraps, edge-to-edge acrylic prints, metallic prints, and bespoke art installations.',
+    anchor: 'cat-custom'
+  },
+  gifts: {
+    name: 'Photo Gifts & Keepsakes',
+    badge: 'Photo Gifts & Keepsakes',
+    icon: '🎁',
+    desc: 'Personalized 3D photo crystals, acrylic desktop plaques, customized keychains, and commemorative photo clocks.',
+    anchor: 'cat-gifts'
+  }
+};
+
+window.selectAdminCategory = function(catKey) {
+  adminActiveCategory = catKey || 'all';
+  const tabs = document.querySelectorAll('#productCategoryTabs .admin-tab-btn');
+  tabs.forEach(tab => {
+    if (tab.getAttribute('data-category') === adminActiveCategory) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+  window.filterAdminProducts();
+};
+
+window.filterAdminProducts = function() {
+  const searchInput = document.getElementById('productSearchInput');
+  const stockSelect = document.getElementById('productStockFilterSelect');
+  const sortSelect = document.getElementById('productSortSelect');
+
+  adminProductSearchQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  adminProductStockFilter = stockSelect ? stockSelect.value : 'all';
+  adminProductSort = sortSelect ? sortSelect.value : 'default';
+
+  let filtered = [...allProducts];
+
+  // 1. Filter by category
+  if (adminActiveCategory && adminActiveCategory !== 'all') {
+    filtered = filtered.filter(p => (p.category || '').toLowerCase() === adminActiveCategory.toLowerCase());
+  }
+
+  // 2. Filter by search query
+  if (adminProductSearchQuery) {
+    filtered = filtered.filter(p => {
+      const title = (p.title || p.name || '').toLowerCase();
+      const id = (p.id || '').toLowerCase();
+      const desc = (p.description || p.shortDescription || '').toLowerCase();
+      const mat = (p.primaryMaterial || p.material || '').toLowerCase();
+      const badge = (p.badge || '').toLowerCase();
+      return title.includes(adminProductSearchQuery) || 
+             id.includes(adminProductSearchQuery) || 
+             desc.includes(adminProductSearchQuery) ||
+             mat.includes(adminProductSearchQuery) ||
+             badge.includes(adminProductSearchQuery);
+    });
+  }
+
+  // 3. Filter by stock
+  if (adminProductStockFilter === 'in_stock') {
+    filtered = filtered.filter(p => p.inStock !== false && p.stockStatus !== 'Out of Stock' && p.status !== 'Out of Stock');
+  } else if (adminProductStockFilter === 'out_of_stock') {
+    filtered = filtered.filter(p => p.inStock === false || p.stockStatus === 'Out of Stock' || p.status === 'Out of Stock');
+  }
+
+  // 4. Sort
+  if (adminProductSort === 'price_asc') {
+    filtered.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+  } else if (adminProductSort === 'price_desc') {
+    filtered.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+  } else if (adminProductSort === 'rating_desc') {
+    filtered.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+  } else if (adminProductSort === 'name_asc') {
+    filtered.sort((a, b) => (a.title || a.name || '').localeCompare(b.title || b.name || ''));
+  }
+
+  // Update filtered counter label
+  const countLabel = document.getElementById('productFilteredCountLabel');
+  if (countLabel) {
+    countLabel.textContent = `Showing ${filtered.length} of ${allProducts.length} products`;
+  }
+
+  // Update Category Info Banner
+  updateAdminCategoryBanner(adminActiveCategory, filtered);
+
+  // Render Table
+  renderAdminProducts(filtered);
+};
+
+function updateAdminCategoryCounters(products) {
+  const counts = { all: products.length, frames: 0, personalized: 0, office: 0, custom: 0, gifts: 0 };
+  let inStockCount = 0;
+  let badgeCount = 0;
+  let minPrice = Infinity;
+  let totalRating = 0;
+  let ratingCount = 0;
+
+  products.forEach(p => {
+    const cat = (p.category || '').toLowerCase();
+    if (counts[cat] !== undefined) counts[cat]++;
+    const isAvail = p.inStock !== false && p.stockStatus !== 'Out of Stock' && p.status !== 'Out of Stock';
+    if (isAvail) inStockCount++;
+    if (p.badge) badgeCount++;
+    const priceNum = Number(p.price);
+    if (!isNaN(priceNum) && priceNum > 0 && priceNum < minPrice) minPrice = priceNum;
+    if (p.rating) {
+      totalRating += Number(p.rating);
+      ratingCount++;
+    }
+  });
+
+  const elAll = document.getElementById('countAll');
+  const elFrames = document.getElementById('countFrames');
+  const elPers = document.getElementById('countPersonalized');
+  const elOff = document.getElementById('countOffice');
+  const elCust = document.getElementById('countCustom');
+  const elGifts = document.getElementById('countGifts');
+
+  if (elAll) elAll.textContent = counts.all;
+  if (elFrames) elFrames.textContent = counts.frames;
+  if (elPers) elPers.textContent = counts.personalized;
+  if (elOff) elOff.textContent = counts.office;
+  if (elCust) elCust.textContent = counts.custom;
+  if (elGifts) elGifts.textContent = counts.gifts;
+
+  // KPI Bar update
+  const kpiActive = document.getElementById('kpiActiveProducts');
+  const kpiInStock = document.getElementById('kpiInStockProducts');
+  const kpiBadges = document.getElementById('kpiBadgeProducts');
+  const kpiStartPrice = document.getElementById('kpiStartingPrice');
+  const kpiAvgRating = document.getElementById('kpiAvgRating');
+
+  if (kpiActive) kpiActive.textContent = products.length;
+  if (kpiInStock) kpiInStock.textContent = inStockCount;
+  if (kpiBadges) kpiBadges.textContent = badgeCount;
+  if (kpiStartPrice && minPrice !== Infinity) kpiStartPrice.textContent = `₹${minPrice}`;
+  if (kpiAvgRating && ratingCount > 0) kpiAvgRating.textContent = `${(totalRating / ratingCount).toFixed(2)} ★`;
+}
+
+function updateAdminCategoryBanner(catKey, currentProducts) {
+  const meta = CATEGORY_META[catKey] || CATEGORY_META.all;
+  const iconEl = document.getElementById('categoryInfoIcon');
+  const titleEl = document.getElementById('categoryInfoTitle');
+  const countBadgeEl = document.getElementById('categoryInfoCountBadge');
+  const descEl = document.getElementById('categoryInfoDesc');
+  const priceRangeEl = document.getElementById('categoryInfoPriceRange');
+  const stockStatusEl = document.getElementById('categoryInfoStockStatus');
+  const storefrontLinkEl = document.getElementById('categoryInfoStorefrontLink');
+
+  if (iconEl) iconEl.textContent = meta.icon;
+  if (titleEl) titleEl.textContent = meta.name;
+  if (countBadgeEl) countBadgeEl.textContent = `${currentProducts.length} Items`;
+  if (descEl) descEl.textContent = meta.desc;
+
+  if (currentProducts.length > 0) {
+    let min = Infinity;
+    let max = -Infinity;
+    let inStock = 0;
+    currentProducts.forEach(p => {
+      const price = Number(p.price) || 0;
+      if (price < min) min = price;
+      if (price > max) max = price;
+      if (p.inStock !== false && p.stockStatus !== 'Out of Stock' && p.status !== 'Out of Stock') inStock++;
+    });
+    if (priceRangeEl) priceRangeEl.textContent = `₹${min.toLocaleString('en-IN')} – ₹${max.toLocaleString('en-IN')}`;
+    const percent = Math.round((inStock / currentProducts.length) * 100);
+    if (stockStatusEl) {
+      stockStatusEl.textContent = `${inStock}/${currentProducts.length} Available (${percent}%)`;
+      stockStatusEl.style.color = percent > 80 ? '#16a34a' : (percent > 40 ? '#d97706' : '#dc2626');
+    }
+  } else {
+    if (priceRangeEl) priceRangeEl.textContent = '—';
+    if (stockStatusEl) stockStatusEl.textContent = '0 Available';
+  }
+
+  if (storefrontLinkEl) {
+    storefrontLinkEl.href = catKey === 'all' ? 'products.html' : `index.html#${meta.anchor}`;
+  }
+}
+
 function renderAdminProducts(products) {
   const tbody = document.getElementById('adminProductsTableBody');
   if (!tbody) return;
 
-  if (products.length === 0) {
+  if (!products || products.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px;">No products in catalog.</td>
+        <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 48px 24px;">
+          <div style="font-size: 2rem; margin-bottom: 8px;">🔍</div>
+          <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main);">No matching products found</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Try selecting another category or clearing your search filters.</div>
+          <button type="button" class="btn-sub-action outline" style="margin-top: 14px;" onclick="selectAdminCategory('all'); if (document.getElementById('productSearchInput')) document.getElementById('productSearchInput').value=''; filterAdminProducts();">Reset All Filters</button>
+        </td>
       </tr>
     `;
     return;
   }
 
-  tbody.innerHTML = products.map(prod => {
+  const categoryLabels = {
+    frames: { label: 'Studio & Framing', color: '#854d0e', bg: 'rgba(234, 179, 8, 0.15)' },
+    personalized: { label: 'Personalized Printing', color: '#1e40af', bg: 'rgba(59, 130, 246, 0.15)' },
+    office: { label: 'Office Printing', color: '#166534', bg: 'rgba(34, 197, 94, 0.15)' },
+    custom: { label: 'Custom Printing', color: '#6b21a8', bg: 'rgba(168, 85, 247, 0.15)' },
+    gifts: { label: 'Photo Gifts', color: '#9d174d', bg: 'rgba(236, 72, 153, 0.15)' }
+  };
+
+  tbody.innerHTML = products.map(p => {
+    const isAvailable = p.inStock !== false && p.stockStatus !== 'Out of Stock' && p.status !== 'Out of Stock';
+    const statusBtnClass = isAvailable ? 'in-stock' : 'out-stock';
+    const statusText = isAvailable ? '🟢 In Stock' : '🔴 Out of Stock';
+    const currentPrice = Number(p.price) || 0;
+    const origPrice = p.originalPrice ? Number(p.originalPrice) : null;
+    const discountPercent = origPrice && origPrice > currentPrice ? Math.round(((origPrice - currentPrice) / origPrice) * 100) : 0;
+
+    const catKey = (p.category || 'frames').toLowerCase();
+    const catStyle = categoryLabels[catKey] || { label: p.categoryLabel || p.category || 'General', color: '#475569', bg: 'rgba(100, 116, 139, 0.15)' };
+
+    const ratingVal = p.rating ? Number(p.rating).toFixed(1) : '4.8';
+    const revCount = p.reviewsCount || p.reviews || 42;
+
+    const badgeHtml = p.badge 
+      ? `<span class="badge" style="background: rgba(201, 154, 61, 0.15); color: #b8860b; border: 1px solid rgba(201, 154, 61, 0.3); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; font-weight: 600;">${escapeHtml(p.badge)}</span>`
+      : '<span style="color: var(--text-muted); font-size: 0.75rem;">—</span>';
+
+    const pName = p.name || p.title || 'Untitled Product';
+    const pId = p.id || 'rf-prod';
+    const pImage = p.image || 'assets/images/custom_canvas.jpg';
+    const leadTime = p.leadTime || '24-48 Hours';
+
     return `
-      <tr>
-        <td style="text-align: center;">
-          <img src="${prod.image || 'assets/images/custom_canvas.jpg'}" alt="${escapeHtml(prod.name)}" style="width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-subtle);" onerror="this.src='assets/images/custom_canvas.jpg'" />
+      <tr data-product-id="${escapeHtml(pId)}" data-category="${escapeHtml(catKey)}">
+        <td style="text-align: center; vertical-align: middle;">
+          <a href="product-detail.html?id=${encodeURIComponent(pId)}" target="_blank" title="Preview on Storefront" style="display: inline-block;">
+            <img src="${escapeHtml(pImage)}" alt="${escapeHtml(pName)}" style="width: 46px; height: 46px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" onerror="this.src='assets/images/custom_canvas.jpg'" />
+          </a>
         </td>
-        <td>
-          <strong style="color: var(--text-main); display: block; font-size: 0.88rem;">${escapeHtml(prod.name)}</strong>
-          <span style="font-size: 0.73rem; color: var(--text-muted);">ID: ${prod.id}</span>
+        <td style="vertical-align: middle;">
+          <div style="font-weight: 600; color: var(--text-main); font-size: 0.88rem; line-height: 1.3;">
+            <a href="product-detail.html?id=${encodeURIComponent(pId)}" target="_blank" style="color: inherit; text-decoration: none;" title="Open Product Page">
+              ${escapeHtml(pName)}
+            </a>
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 8px;">
+            <code>${escapeHtml(pId)}</code>
+            <span>&bull;</span>
+            <span style="color: var(--text-muted);">${escapeHtml(p.primaryMaterial || p.material || 'Studio Archival')}</span>
+          </div>
         </td>
-        <td>
-          <span class="status-pill blue" style="font-weight: 600;">
-            ${escapeHtml(prod.categoryLabel || prod.category)}
+        <td style="vertical-align: middle;">
+          <span style="font-size: 0.74rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; background: ${catStyle.bg}; color: ${catStyle.color}; display: inline-block;">
+            ${escapeHtml(catStyle.label)}
           </span>
         </td>
-        <td>
-          <strong style="font-size: 0.95rem; color: var(--text-main);">₹${Number(prod.price).toLocaleString('en-IN')}</strong>
+        <td style="vertical-align: middle;">
+          <div style="font-weight: 700; color: var(--text-main); font-size: 0.92rem;">
+            ₹${currentPrice.toLocaleString('en-IN')}
+          </div>
+          ${origPrice && origPrice > currentPrice ? `
+            <div style="font-size: 0.72rem; color: var(--text-muted);">
+              <span style="text-decoration: line-through;">₹${origPrice.toLocaleString('en-IN')}</span>
+              <span style="color: #16a34a; font-weight: 600; margin-left: 4px;">${discountPercent}% OFF</span>
+            </div>
+          ` : ''}
         </td>
-        <td>
-          ${prod.badge ? `<span class="status-pill amber">${escapeHtml(prod.badge)}</span>` : '<span style="color: var(--text-subtle);">—</span>'}
+        <td style="vertical-align: middle;">
+          <div style="display: flex; align-items: center; gap: 4px; font-size: 0.82rem; font-weight: 600; color: #b45309;">
+            <span>★</span>
+            <span>${ratingVal}</span>
+          </div>
+          <div style="font-size: 0.7rem; color: var(--text-muted);">
+            (${revCount} reviews)
+          </div>
         </td>
-        <td>
-          <button type="button" class="btn-table-icon stock ${prod.status === 'In Stock' ? 'in-stock' : 'out-stock'}" onclick="toggleProductStock('${prod.id}')" title="Click to toggle: ${prod.status === 'In Stock' ? 'Mark Out of Stock' : 'Mark In Stock'}">
-            ${prod.status === 'In Stock' ? '🟢 In Stock' : '🔴 Out of Stock'}
+        <td style="vertical-align: middle;">
+          ${badgeHtml}
+        </td>
+        <td style="text-align: center; vertical-align: middle;">
+          <button type="button" class="btn-stock-toggle ${statusBtnClass}" onclick="toggleProductStock('${escapeHtml(pId)}')" title="Click to toggle availability">
+            ${statusText}
           </button>
         </td>
-        <td>
-          <span style="font-size: 0.78rem; color: var(--text-muted);">${escapeHtml(prod.leadTime || '24 - 48 Hours')}</span>
+        <td style="vertical-align: middle; font-size: 0.78rem; color: var(--text-muted);">
+          ${escapeHtml(leadTime)}
         </td>
-        <td style="text-align: center;">
-          <div class="table-action-icons">
-            <button type="button" class="btn-table-icon edit" onclick="openEditProductModal('${prod.id}')" title="Edit Pricing">
+        <td style="text-align: center; vertical-align: middle;">
+          <div class="table-action-icons" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <button type="button" class="btn-table-icon edit" onclick="openEditProductModal('${escapeHtml(pId)}')" title="Edit Product Details &amp; Pricing">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
             </button>
-            <button type="button" class="btn-table-icon delete" onclick="deleteProduct('${prod.id}')" title="Remove Product">
+            <button type="button" class="btn-table-icon delete" onclick="deleteProduct('${escapeHtml(pId)}')" title="Remove from catalog">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -2780,7 +3063,7 @@ function initProductModals() {
       const data = await res.json();
       if (data.success) {
         prod.status = nextStatus;
-        renderAdminProducts(allProducts);
+        updateAdminCategoryCounters(allProducts); window.filterAdminProducts();
         showToast('Stock Status Updated', `${prod.name} is now ${nextStatus}!`, nextStatus === 'In Stock' ? 'success' : 'warning');
       } else {
         showToast('Update Failed', data.message || 'Failed to update stock.', 'danger');
@@ -2894,6 +3177,8 @@ function initProductModals() {
     if (leadTimeEl) leadTimeEl.value = prod.leadTime || '';
     document.getElementById('editProductDesc').value = prod.shortDescription || '';
 
+        const catEl = document.getElementById('editProductCategory');
+    if (catEl) catEl.value = (prod.category || 'frames').toLowerCase();
     editModal.classList.add('open');
   };
 
@@ -2907,6 +3192,7 @@ function initProductModals() {
       const id = document.getElementById('editProductId').value;
       const prod = allProducts.find(p => p.id === id);
       const name = document.getElementById('editProductName').value.trim();
+      const editCat = document.getElementById('editProductCategory') ? document.getElementById('editProductCategory').value : (prod ? prod.category : 'frames');
       const price = document.getElementById('editProductPrice').value;
       const badgeEl = document.getElementById('editProductBadge');
       const badge = badgeEl ? badgeEl.value.trim() : (prod && prod.badge ? prod.badge : '');
@@ -2959,7 +3245,7 @@ window.deleteProduct = async (id) => {
     const data = await res.json();
     if (data.success) {
       allProducts = allProducts.filter(p => p.id !== id);
-      renderAdminProducts(allProducts);
+      updateAdminCategoryCounters(allProducts); window.filterAdminProducts();
       showToast('Product Removed', 'Product was removed from the catalog.', 'info');
     } else {
       showToast('Delete Failed', data.message || 'Could not delete product.', 'danger');

@@ -2556,12 +2556,34 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
 
   // Update fields
   if (updates.name) target.name = updates.name.trim();
-  if (updates.price) {
+  if (updates.category) {
+    target.category = updates.category.trim();
+    const catLabels = {
+      frames: 'Studio & Framing',
+      personalized: 'Personalized Printing',
+      office: 'Office Printing',
+      custom: 'Custom Printing',
+      gifts: 'Photo Gifts & Keepsakes'
+    };
+    target.categoryLabel = updates.categoryLabel || catLabels[target.category] || target.category;
+  }
+  if (updates.categoryLabel && !updates.category) target.categoryLabel = updates.categoryLabel.trim();
+  if (updates.price !== undefined) {
     target.price = Number(updates.price);
     target.priceDisplay = `Starting from ₹${Number(updates.price)}`;
   }
+  if (updates.originalPrice !== undefined) {
+    target.originalPrice = updates.originalPrice ? Number(updates.originalPrice) : null;
+  }
+  if (updates.inStock !== undefined) {
+    target.inStock = Boolean(updates.inStock);
+    target.status = target.inStock ? 'In Stock' : 'Out of Stock';
+  }
   if (updates.badge !== undefined) target.badge = updates.badge;
-  if (updates.status) target.status = updates.status;
+  if (updates.status) {
+    target.status = updates.status;
+    if (updates.inStock === undefined) target.inStock = updates.status === 'In Stock';
+  }
   if (updates.shortDescription) target.shortDescription = updates.shortDescription;
   if (updates.description) target.description = updates.description;
   if (updates.leadTime) target.leadTime = updates.leadTime;
