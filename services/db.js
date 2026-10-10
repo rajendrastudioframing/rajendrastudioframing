@@ -303,6 +303,25 @@ module.exports = {
     return order;
   },
 
+  async deleteOrder(orderId) {
+    const cleanId = (orderId || '').trim().replace(/^#/, '');
+    if (supabase) {
+      await supabase.from('orders').delete().ilike('order_id', cleanId);
+    }
+    let orders = readJson(ORDERS_FILE, []);
+    orders = orders.filter(o => o.orderId && o.orderId.toLowerCase() !== cleanId.toLowerCase());
+    writeJson(ORDERS_FILE, orders);
+    return true;
+  },
+
+  async clearAllOrders() {
+    if (supabase) {
+      await supabase.from('orders').delete().neq('order_id', '');
+    }
+    writeJson(ORDERS_FILE, []);
+    return true;
+  },
+
   // --- INQUIRIES ---
   async getInquiries() {
     if (supabase) {

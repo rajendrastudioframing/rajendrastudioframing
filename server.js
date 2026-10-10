@@ -2379,6 +2379,30 @@ app.delete('/api/admin/inquiries/:id', requireAuth, async (req, res) => {
 });
 
 /**
+ * Delete Order (DELETE)
+ */
+app.delete('/api/admin/orders/:id', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  await db.deleteOrder(id);
+  await db.deleteInquiry(id);
+  res.json({ success: true, message: `Order #${id} deleted successfully.` });
+});
+
+/**
+ * Clear All Orders (DELETE)
+ */
+app.delete('/api/admin/orders', requireAuth, async (req, res) => {
+  await db.clearAllOrders();
+  const inquiries = await db.getInquiries();
+  const nonOrderInquiries = inquiries.filter(i => !i.id || (!i.id.startsWith('RF-ORD') && (!i.product || !i.product.includes('[ONLINE ORDER]'))));
+  const INQUIRIES_FILE = path.join(__dirname, 'data', 'inquiries.json');
+  try {
+    fs.writeFileSync(INQUIRIES_FILE, JSON.stringify(nonOrderInquiries, null, 2));
+  } catch (_) {}
+  res.json({ success: true, message: 'All orders removed successfully.' });
+});
+
+/**
  * Products List (GET)
  */
 app.get('/api/admin/products', requireAuth, async (req, res) => {
