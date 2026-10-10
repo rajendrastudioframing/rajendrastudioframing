@@ -1,219 +1,8 @@
 /**
- * RAJESH FRAMING - CHECKOUT CONTROLLER
- * Validates customer details, calculates totals, and submits order to backend API
- */
-
-document.addEventListener('DOMContentLoaded', () => {
-  initCheckoutPage();
-});
-
-function initCheckoutPage() {
-  // Ensure success modal is strictly hidden on initial page load
-  const successModal = document.getElementById('orderSuccessModal');
-  if (successModal) {
-    successModal.style.setProperty('display', 'none', 'important');
-    successModal.classList.remove('open');
-  }
-
-  handleBuyNowQueryParam();
-  renderCheckoutSummary();
-  bindCheckoutForm();
-  updateCheckoutAuthUI();
-
-  // Listen to cart updates in case drawer changes items
-  window.addEventListener('cartUpdated', () => {
-    renderCheckoutSummary();
-  });
-
-  // Listen to customer auth changes (login/logout)
-  window.addEventListener('customerAuthStateChanged', () => {
-    updateCheckoutAuthUI();
-  });
-}
-
-function updateCheckoutAuthUI() {
-  const noticeBanner = document.getElementById('checkoutAuthNotice');
-  const verifiedBanner = document.getElementById('checkoutAuthVerified');
-  const loggedEmailEl = document.getElementById('checkoutLoggedEmail');
-  const emailInput = document.getElementById('custEmail');
-  const nameInput = document.getElementById('custName');
-  const phoneInput = document.getElementById('custPhone');
-
-  const isLoggedIn = typeof isCustomerLoggedIn === 'function' && isCustomerLoggedIn();
-  const user = typeof getCustomerUser === 'function' ? getCustomerUser() : null;
-
-  if (isLoggedIn && user) {
-    if (noticeBanner) noticeBanner.style.display = 'none';
-    if (verifiedBanner) verifiedBanner.style.display = 'flex';
-    if (loggedEmailEl) loggedEmailEl.textContent = user.email || 'customer@example.com';
-
-    // Auto-fill customer details if fields are empty
-    if (emailInput && (!emailInput.value || emailInput.value !== user.email)) {
-      emailInput.value = user.email;
-    }
-    if (nameInput && !nameInput.value && user.name && user.name !== 'Valued Customer') {
-      nameInput.value = user.name;
-    }
-    if (phoneInput && !phoneInput.value && user.phone) {
-      phoneInput.value = user.phone;
-    }
-  } else {
-    if (noticeBanner) noticeBanner.style.display = 'flex';
-    if (verifiedBanner) verifiedBanner.style.display = 'none';
-  }
-}
-
-/**
- * If user clicked "Buy Now" on a product, check URL parameter
- */
-function handleBuyNowQueryParam() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const buyNowId = urlParams.get('buyNow');
-  const qtyParam = parseInt(urlParams.get('qty'), 10) || 1;
-  const sizeParam = urlParams.get('size') || 'Standard';
-  const finishParam = urlParams.get('finish') || 'Standard';
-
-  if (buyNowId && typeof PRODUCTS_DATA !== 'undefined') {
-    const prod = PRODUCTS_DATA.find(p => p.id === buyNowId);
-    if (prod) {
-      // Add this product to cart if not present
-      const currentCart = getCart();
-      const existing = currentCart.find(i => i.id === prod.id && i.size === sizeParam && i.finish === finishParam);
-      if (!existing) {
-        addToCart({
-          id: prod.id,
-          name: prod.name,
-          price: prod.price || 650,
-          image: prod.image,
-          category: prod.category,
-          size: sizeParam,
-          finish: finishParam,
-          leadTime: prod.leadTime || '24 - 48 Hours'
-        }, qtyParam, false);
-      }
-    }
-  }
-}
-
-/**
- * Render order items preview and totals on checkout page
- */
-function renderCheckoutSummary() {
-  const activeContainer = document.getElementById('checkoutActiveContainer');
-  const emptyContainer = document.getElementById('checkoutEmptyState');
-  const itemsContainer = document.getElementById('checkoutItemsList');
-  const subtotalEl = document.getElementById('summarySubtotal');
-  const totalEl = document.getElementById('summaryGrandTotal');
-
-  if (!itemsContainer) return;
-
-  const cart = getCart();
-
-  if (!cart || cart.length === 0) {
-    if (activeContainer) activeContainer.style.display = 'none';
-    if (emptyContainer) emptyContainer.style.display = 'block';
-    return;
-  }
-
-  if (activeContainer) activeContainer.style.display = 'grid';
-  if (emptyContainer) emptyContainer.style.display = 'none';
-
-  const subtotal = getCartSubtotal();
-
-  if (subtotalEl) subtotalEl.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
-  if (totalEl) totalEl.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
-
-  // Initialize and update Dynamic UPI QR Code
-  setupUpiPayment(subtotal);
-
-  itemsContainer.innerHTML = cart.map(item => {
-    const lineTotal = (Number(item.price) || 0) * (Number(item.quantity) || 1);
-    const displayThumb = (item.uploadedPhoto && item.uploadedPhoto.fileUrl) ? item.uploadedPhoto.fileUrl : (item.image || 'assets/images/custom_canvas.jpg');
-    return `
-      <div class="order-item-row">
-        <img src="${displayThumb}" alt="${escapeHtml(item.name)}" class="order-item-img" onerror="this.src='assets/images/custom_canvas.jpg'" />
-        
-        <div class="order-item-details">
-          <div class="order-item-name">${escapeHtml(item.name)}</div>
-          <div class="order-item-qty">
-            Qty: <strong>${item.quantity}</strong>
-            ${item.size && item.size !== 'Standard' ? ` • ${escapeHtml(item.size)}` : ''}
-            ${item.finish && item.finish !== 'Standard' ? ` • ${escapeHtml(item.finish)}` : ''}
-          </div>
-          ${item.uploadedPhoto ? `
-            <div style="font-size: 0.72rem; color: #059669; font-weight: 600; margin-top: 2px; display: flex; align-items: center; gap: 4px;">
-              <span>📸 Custom Photo Attached</span>
-            </div>
-          ` : ''}
-        </div>
-
-        <div class="order-item-price">₹${lineTotal.toLocaleString('en-IN')}</div>
-      </div>
-    `;
-  }).join('');
-}
-
-let selectedPaymentMethod = 'upi';
-const UPI_ID = 'rajeshframing0@okaxis';
-const UPI_PAYEE = 'Rajesh Framing';
-
-/**
- * Configure and render dynamic UPI QR code and payment handlers
+ * Configure payment handlers (Single Option: Pick up from shop)
  */
 function setupUpiPayment(amount) {
-  const upiCard = document.getElementById('payOptionUpi');
-  const codCard = document.getElementById('payOptionCod');
-  const qrDrawer = document.getElementById('upiQrDrawer');
-  const qrImg = document.getElementById('dynamicUpiQrImg');
-  const amountPill = document.getElementById('upiQrAmountPill');
-  const deepLinkBtn = document.getElementById('btnUpiDeepLink');
-  const copyBtn = document.getElementById('btnCopyUpiId');
-  const copyText = document.getElementById('copyUpiText');
-  const upiDisplay = document.getElementById('upiIdDisplay');
-
-  if (upiDisplay) upiDisplay.textContent = UPI_ID;
-
-  // Build standard NPCI UPI URI
-  const upiUri = `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(UPI_PAYEE)}&am=${amount}&cu=INR&tn=${encodeURIComponent('Rajesh Framing Custom Order')}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(upiUri)}`;
-
-  if (qrImg) qrImg.src = qrUrl;
-  if (amountPill) amountPill.textContent = `Pay ₹${amount.toLocaleString('en-IN')}`;
-  if (deepLinkBtn) deepLinkBtn.href = upiUri;
-
-  if (copyBtn && !copyBtn.dataset.bound) {
-    copyBtn.dataset.bound = 'true';
-    copyBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      navigator.clipboard.writeText(UPI_ID).then(() => {
-        if (copyText) copyText.textContent = 'Copied!';
-        setTimeout(() => { if (copyText) copyText.textContent = 'Copy'; }, 2000);
-      }).catch(() => {
-        alert(`UPI ID: ${UPI_ID}`);
-      });
-    });
-  }
-
-  // Toggle Payment Option Cards
-  if (upiCard && !upiCard.dataset.bound) {
-    upiCard.dataset.bound = 'true';
-    upiCard.addEventListener('click', () => {
-      selectedPaymentMethod = 'upi';
-      upiCard.classList.add('active');
-      if (codCard) codCard.classList.remove('active');
-      if (qrDrawer) qrDrawer.style.display = 'grid';
-    });
-  }
-
-  if (codCard && !codCard.dataset.bound) {
-    codCard.dataset.bound = 'true';
-    codCard.addEventListener('click', () => {
-      selectedPaymentMethod = 'cod';
-      codCard.classList.add('active');
-      if (upiCard) upiCard.classList.remove('active');
-      if (qrDrawer) qrDrawer.style.display = 'none';
-    });
-  }
+  selectedPaymentMethod = 'pickup';
 }
 
 /**
@@ -294,7 +83,7 @@ function bindCheckoutForm() {
     if (desktopBtn) desktopBtn.disabled = true;
     if (btnText) btnText.textContent = 'Processing Order...';
 
-    const paymentLabel = selectedPaymentMethod === 'upi' ? 'Instant UPI Payment (QR Code)' : 'Pay on Delivery / Studio Pickup';
+    const paymentLabel = 'Pick up from shop';
 
     const orderPayload = {
       customerName: name,
@@ -351,7 +140,7 @@ function bindCheckoutForm() {
         
         const successPayEl = document.getElementById('successPaymentMethod');
         if (successPayEl) {
-          successPayEl.textContent = paymentLabel;
+          successPayEl.textContent = 'Pick up from shop';
         }
 
         // Configure WhatsApp Follow-up button
@@ -364,8 +153,7 @@ function bindCheckoutForm() {
           `• Phone: ${phone}\n` +
           `• Items: ${itemNames}\n` +
           `• Total Amount: ₹${total.toLocaleString('en-IN')}\n` +
-          `• Payment Method: ${paymentLabel}\n` +
-          (utr ? `• UPI Ref / UTR: ${utr}\n` : '') +
+          `• Payment Method: Pick up from shop (Pay on Collection)\n` +
           `• Delivery Address: ${address}, ${city} (${pincode})\n\n` +
           `Please confirm my order and share the digital preview proof!`
         );

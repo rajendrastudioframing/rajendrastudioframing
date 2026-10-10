@@ -621,7 +621,7 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
     }
 
     const total = orderOrInquiry.total || orderOrInquiry.estimatedValue || 0;
-    const paymentMethod = orderOrInquiry.paymentMethod || 'Pay on Delivery / Studio Pickup';
+    const paymentMethod = orderOrInquiry.paymentMethod || 'Pick up from shop';
     const address = (orderOrInquiry.customer && orderOrInquiry.customer.address) || orderOrInquiry.specs || '';
 
     // Spam-safe subject lines (avoiding exclamation marks or emojis that spam filters flag)
@@ -1903,7 +1903,7 @@ app.post('/api/orders', async (req, res) => {
       total: Number(total) || 0,
       notes: notes || '',
       orderPhoto: orderPhoto || null,
-      paymentMethod: req.body.paymentMethod || 'Instant UPI Payment (QR Code)',
+      paymentMethod: req.body.paymentMethod || 'Pick up from shop',
       upiUtr: req.body.upiUtr || null,
       status: 'New',
       createdAt: new Date().toISOString()
@@ -2040,7 +2040,7 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
     }
 
     const total = (foundOrder && foundOrder.total) || foundInq.estimatedValue || 0;
-    const paymentMethod = (foundOrder && foundOrder.paymentMethod) || 'Pay on Delivery / Studio Pickup';
+    const paymentMethod = (foundOrder && foundOrder.paymentMethod) || 'Pick up from shop';
     const isPaid = paymentMethod.toLowerCase().includes('upi') || status === 'Completed';
     const paymentStatus = isPaid ? 'Paid' : 'Pending';
 

@@ -311,94 +311,42 @@
 
             </div>
 
-            <!-- Payment Method & Dynamic UPI QR Section -->
-            <div style="margin-top: 20px;">
-              <h3 class="payment-section-title">
+                        <!-- Payment Method: Pick up from shop -->
+            <div style="margin-top: 24px;">
+              <h3 class="payment-section-title" style="display: flex; align-items: center; gap: 8px; font-size: 1.125rem; font-weight: 700; color: #111111; margin-bottom: 12px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-gold);">
-                  <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                  <line x1="2" y1="10" x2="22" y2="10"></line>
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
                 </svg>
-                Select Payment Method
+                Payment Method
               </h3>
 
               <div class="payment-methods-grid">
-                <!-- Option 1: Dynamic UPI QR Code (Recommended) -->
-                <div class="payment-option-card active" id="payOptionUpi" data-method="upi">
-                  <div class="payment-option-header">
-                    <div class="payment-option-left">
-                      <div class="payment-radio-circle">
-                        <div class="payment-radio-dot"></div>
-                      </div>
-                      <div>
-                        <div class="payment-option-name">Instant UPI Payment (QR Code &amp; Apps)</div>
-                        <div style="font-size: 0.76rem; color: #059669; font-weight: 600; margin-top: 2px;">⚡ Zero convenience fee • Instant order confirmation</div>
-                      </div>
-                    </div>
-                    <div class="payment-brand-badges">
-                      <span class="upi-app-badge gpay">GPay</span>
-                      <span class="upi-app-badge phonepe">PhonePe</span>
-                      <span class="upi-app-badge paytm">Paytm</span>
-                      <span class="upi-app-badge bhim">BHIM</span>
-                    </div>
-                  </div>
-
-                  <!-- Dynamic QR Display Drawer -->
-                  <div class="upi-qr-content-box" id="upiQrDrawer">
-                    <div class="upi-qr-card">
-                      <img src="" id="dynamicUpiQrImg" alt="Rajesh Framing UPI QR Code" />
-                      <div class="upi-qr-amount-pill" id="upiQrAmountPill">Pay ₹0</div>
-                    </div>
-
-                    <div class="upi-info-col">
-                      <div class="upi-scan-steps">
-                        <strong>Scan to pay with any UPI app:</strong>
-                        <ol>
-                          <li>Open Google Pay, PhonePe, Paytm, or BHIM.</li>
-                          <li>Scan the live QR code with your phone or UPI app.</li>
-                          <li>Verify Payee name: <strong>Rajesh Framing</strong>.</li>
-                        </ol>
-                      </div>
-
-                      <div class="upi-copy-row">
-                        <span style="font-size: 0.74rem; color: #6B7280;">UPI ID:</span>
-                        <span class="upi-id-text" id="upiIdDisplay">rajeshframing0@okaxis</span>
-                        <button type="button" class="btn-copy-upi" id="btnCopyUpiId">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                          </svg>
-                          <span id="copyUpiText">Copy</span>
-                        </button>
-                      </div>
-
-                      <!-- Mobile Deep Link Button -->
-                      <a href="#" id="btnUpiDeepLink" class="btn-upi-intent">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                          <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                <!-- Single Option: Pick up from shop -->
+                <div class="payment-option-card active" id="payOptionPickup" data-method="pickup" style="border: 2px solid var(--accent-gold); background: #FCFAF6; padding: 20px; border-radius: 14px; box-shadow: 0 2px 8px rgba(201, 154, 61, 0.08);">
+                  <div class="payment-option-header" style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+                    <div class="payment-option-left" style="display: flex; align-items: flex-start; gap: 14px;">
+                      <div class="payment-radio-circle" style="border-color: var(--accent-gold); background: var(--accent-gold); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 2px; flex-shrink: 0;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
-                        <span>Open &amp; Pay via UPI App</span>
-                      </a>
-
-                      <!-- Optional UTR / Reference -->
-                      <div class="upi-utr-row">
-                        <input type="text" id="upiUtrNumber" class="upi-utr-input" placeholder="UPI Ref / UTR No. (Optional if already paid)" maxlength="20" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Option 2: Pay on Delivery / Studio Pickup -->
-                <div class="payment-option-card" id="payOptionCod" data-method="cod">
-                  <div class="payment-option-header">
-                    <div class="payment-option-left">
-                      <div class="payment-radio-circle">
-                        <div class="payment-radio-dot"></div>
                       </div>
                       <div>
-                        <div class="payment-option-name">Pay on Delivery / Studio Pickup</div>
-                        <div style="font-size: 0.76rem; color: #6B7280; margin-top: 2px;">Inspect your frames first • Pay via Cash, Card, or UPI upon delivery</div>
+                        <div class="payment-option-name" style="font-size: 1.0625rem; font-weight: 800; color: #111111; letter-spacing: -0.2px;">
+                          Pick up from shop
+                        </div>
+                        <p style="font-size: 0.875rem; color: #4B5563; margin: 6px 0 0; line-height: 1.5; max-width: 500px;">
+                          Pay directly at our shop / studio when you pick up your order. Inspect your custom frames and prints in person before making payment.
+                        </p>
+                        <div style="margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.8125rem; color: #926A18; font-weight: 600; background: rgba(201, 154, 61, 0.1); padding: 5px 12px; border-radius: 6px;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                          <span>Studio Address: Dahej GIDC, Bharuch, Gujarat</span>
+                        </div>
                       </div>
+                    </div>
+                    <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(201, 154, 61, 0.14); color: #926A18; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <span>Pay on Collection</span>
                     </div>
                   </div>
                 </div>
@@ -526,7 +474,7 @@
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
           <span style="color: #6B7280;">Payment Method:</span>
-          <span id="successPaymentMethod" style="font-weight: 600; color: #111111;">Instant UPI Payment</span>
+          <span id="successPaymentMethod" style="font-weight: 600; color: #111111;">Pick up from shop</span>
         </div>
         <div style="display: flex; justify-content: space-between;">
           <span style="color: #6B7280;">Turnaround:</span>
