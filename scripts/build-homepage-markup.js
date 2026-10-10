@@ -22,13 +22,18 @@ function renderProductCard(p) {
     ? `<span class="product-badge-pill">${p.badge}</span>` 
     : `<span></span>`;
 
+  const originalPrice = Math.round(p.price * 1.25);
+  const ratingVal = p.rating || 4.9;
+  const reviewsCount = p.reviewsCount || (40 + (p.id.length * 7) % 80);
+  const categoryLabel = p.categoryLabel || 'Studio Craft';
+
   return `
           <!-- Product Card: ${p.id} -->
           <article class="product-card" data-id="${p.id}" onclick="window.location.href='product-detail?id=${p.id}'">
             <div class="product-card-top">
               ${badgeHtml}
               <button type="button" class="product-wishlist-btn" data-wishlist-id="${p.id}" aria-label="Add to wishlist" onclick="event.stopPropagation(); toggleWishlist('${p.id}', event);" title="Add to Wishlist">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                 </svg>
               </button>
@@ -36,16 +41,30 @@ function renderProductCard(p) {
             <div class="product-image-box">
               <img src="${p.image}" alt="${p.name}" class="product-image" loading="lazy" />
             </div>
-            <div class="product-capsule">
-              <div class="capsule-top-row">
-                <h3 class="capsule-title">
-                  <a href="product-detail?id=${p.id}">${p.name}</a>
-                </h3>
-                <span class="capsule-price">₹${p.price}</span>
+            <div class="product-capsule product-card-body">
+              <div class="product-card-meta">
+                <span class="product-card-category">${categoryLabel}</span>
+                <div class="product-card-rating">
+                  <span class="rating-star">★</span>
+                  <span class="rating-val">${ratingVal}</span>
+                  <span class="rating-count">(${reviewsCount})</span>
+                </div>
               </div>
-              <div class="capsule-bottom-row">
-                <button type="button" class="capsule-action-btn" data-add-to-cart data-product-id="${p.id}" onclick="event.stopPropagation(); quickAddToCart('${p.id}', event);" title="Add to Cart">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <h3 class="capsule-title product-card-title">
+                <a href="product-detail?id=${p.id}">${p.name}</a>
+              </h3>
+              <div class="product-card-price-row capsule-price-row">
+                <span class="capsule-price product-card-price">₹${p.price}</span>
+                <span class="product-card-mrp">₹${originalPrice}</span>
+                <span class="product-card-discount">20% OFF</span>
+              </div>
+              <div class="capsule-bottom-row product-card-actions">
+                <button type="button" class="capsule-action-btn product-add-cart-btn" data-add-to-cart data-product-id="${p.id}" onclick="event.stopPropagation(); quickAddToCart('${p.id}', event);" title="Add to Cart">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                  </svg>
                   <span>Add to Cart</span>
                 </button>
               </div>

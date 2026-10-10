@@ -162,7 +162,7 @@ function renderCatalog() {
       <div class="product-card-top">
         ${product.badge ? `<span class="product-badge-pill">${product.badge}</span>` : '<span></span>'}
         <button type="button" class="product-wishlist-btn ${wishActive ? 'active' : ''}" data-wishlist-id="${product.id}" aria-label="Add to wishlist" onclick="toggleWishlist('${product.id}', event);" title="Add to Wishlist">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
         </button>
@@ -170,19 +170,29 @@ function renderCatalog() {
 
       <div class="product-image-box">
         <img src="${initialCardImg}" alt="${product.name}" class="product-image" loading="lazy" />
-        <div class="product-image-overlay"></div>
       </div>
 
-      <div class="product-capsule">
-        <div class="capsule-top-row">
-          <h3 class="capsule-title">
-            <a href="product-detail?id=${product.id}${defaultFinish ? `&finish=${defaultFinish.id}` : ''}">${product.name}</a>
-          </h3>
-          <span class="capsule-price">${priceFormatted}</span>
+      <div class="product-capsule product-card-body">
+        <div class="product-card-meta">
+          <span class="product-card-category">${product.categoryLabel || 'Studio Craft'}</span>
+          <div class="product-card-rating">
+            <span class="rating-star">★</span>
+            <span class="rating-val">${product.rating || 4.9}</span>
+            <span class="rating-count">(${product.reviewsCount || 85})</span>
+          </div>
         </div>
+        <h3 class="capsule-title product-card-title">
+          <a href="product-detail?id=${product.id}${defaultFinish ? `&finish=${defaultFinish.id}` : ''}">${product.name}</a>
+        </h3>
         ${finishesHtml}
-        <div class="capsule-bottom-row">
+        <div class="product-card-price-row capsule-price-row">
+          <span class="capsule-price product-card-price">${priceFormatted}</span>
+          <span class="product-card-mrp">₹${Math.round((product.price || 500) * 1.25)}</span>
+          <span class="product-card-discount">20% OFF</span>
+        </div>
+        <div class="capsule-bottom-row product-card-actions">
           <button type="button" class="capsule-action-btn btn-catalog-cart" data-add-to-cart data-product-id="${product.id}" onclick="quickAddToCart('${product.id}', event);" title="Add to Cart">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             <span>+ Cart</span>
           </button>
           <button type="button" class="capsule-action-btn btn-catalog-buynow" onclick="event.stopPropagation(); window.quickBuyNow('${product.id}', event);" title="Buy Now">

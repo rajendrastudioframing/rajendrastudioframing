@@ -1100,7 +1100,7 @@ function renderRelatedProducts() {
       <div class="product-card-top">
         ${p.badge ? `<span class="product-badge-pill">${p.badge}</span>` : '<span></span>'}
         <button type="button" class="product-wishlist-btn ${isWishlisted ? 'active' : ''}" aria-label="Add to wishlist" onclick="event.stopPropagation(); if (typeof toggleWishlist === 'function') { toggleWishlist('${p.id}', event); } else { this.classList.toggle('active'); }">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
         </button>
@@ -1108,20 +1108,26 @@ function renderRelatedProducts() {
 
       <div class="product-image-box">
         <img src="${p.image}" alt="${p.name}" class="product-image" loading="lazy" />
-        <div class="product-image-overlay"></div>
       </div>
 
-      <div class="product-capsule">
-        <div class="capsule-top-row">
-          <h4 class="capsule-title">
-            <a href="product-detail?id=${p.id}">${p.name}</a>
-          </h4>
-          <span class="capsule-price">${priceFormatted}</span>
+      <div class="product-capsule product-card-body">
+        <div class="product-card-meta">
+          <span class="product-card-category">${p.categoryLabel || 'Studio Craft'}</span>
+          <div class="product-card-rating">
+            <span class="rating-star">★</span>
+            <span class="rating-val">${p.rating || 4.9}</span>
+          </div>
         </div>
-        <div class="capsule-bottom-row" style="display: flex; gap: 8px;">
-          <button type="button" class="capsule-action-btn" onclick="event.stopPropagation(); window.location.href='product-detail?id=${p.id}'" style="width: 100%; justify-content: center; padding: 6px 12px; font-size: 0.72rem;">
+        <h4 class="capsule-title product-card-title">
+          <a href="product-detail?id=${p.id}">${p.name}</a>
+        </h4>
+        <div class="product-card-price-row capsule-price-row">
+          <span class="capsule-price product-card-price">${priceFormatted}</span>
+        </div>
+        <div class="capsule-bottom-row product-card-actions">
+          <button type="button" class="capsule-action-btn product-add-cart-btn" onclick="event.stopPropagation(); window.location.href='product-detail?id=${p.id}'" style="width: 100%; justify-content: center;">
             <span>View Details</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>
             </svg>
