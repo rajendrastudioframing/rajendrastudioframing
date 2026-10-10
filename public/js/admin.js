@@ -845,6 +845,18 @@ function createOrderCardRowHTML(order) {
   const paymentClass = paymentStatus.toLowerCase();
   const paymentMethod = isOnlinePayment ? 'Online UPI' : 'Pay on Delivery';
 
+  const isAccepted = order.status === 'Confirmed' || order.status === 'Accepted' || order.status === 'In Progress';
+  const isPickupReady = order.status === 'Shipped' || order.status === 'Dispatched' || order.status === 'Completed' || order.status === 'Pickup Ready';
+
+  let displayStatus = order.status || 'New';
+  if (isAccepted) {
+    displayStatus = 'Accepted';
+  } else if (isPickupReady) {
+    displayStatus = 'Pick Up Ready';
+  } else if (order.status === 'New' || order.status === 'Pending') {
+    displayStatus = 'New Order';
+  }
+
   const deliveryClass = order.status.toLowerCase().replace(/\s+/g, '-');
   const trackingText = order.specs && order.specs.includes('Deliver to:') 
     ? 'Doorstep Delivery' 
@@ -961,7 +973,7 @@ function createOrderCardRowHTML(order) {
           <span class="col-field-label">Delivery Status</span>
           <span class="status-pill ${deliveryClass}">
             <span class="status-dot"></span>
-            ${order.status}
+            ${displayStatus}
           </span>
           <span class="sub-meta-text">${trackingText}</span>
         </div>
@@ -981,72 +993,19 @@ function createOrderCardRowHTML(order) {
           <span class="order-note-content">${escapeHtml(noteText)}</span>
         </div>
         <div class="order-action-buttons">
-          <!-- Direct Status Switcher -->
-          <div class="order-quick-status-wrap" title="Quick change fulfillment status">
-            <select class="order-quick-status-select" onchange="changeOrderStatusDirectly('${order.id}', this.value)">
-              <option value="New" ${order.status === 'New' || order.status === 'Pending' ? 'selected' : ''}>🔵 New Order (Pending)</option>
-              <option value="Confirmed" ${order.status === 'Confirmed' ? 'selected' : ''}>✓ Confirmed (In Production)</option>
-              <option value="In Progress" ${order.status === 'In Progress' ? 'selected' : ''}>🟡 In Production</option>
-              <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>🟣 Dispatched / Ready</option>
-              <option value="Completed" ${order.status === 'Completed' ? 'selected' : ''}>🟢 Delivered</option>
-              <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>🔴 Cancelled</option>
-            </select>
-          </div>
-
-          <!-- View Details Action Button -->
-          <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${order.id}')" title="View complete order specifications & customer choices">
-            👁️ View Details
+          <button type="button" 
+                  class="btn-card-action accept ${isAccepted ? 'active-state' : ''}" 
+                  onclick="acceptOrderQuick('${order.id}')" 
+                  title="Accept order and move to production">
+            ${isAccepted ? '✓ Order Accepted' : '✓ Accept Order'}
           </button>
-
-          <!-- Contextual Primary Workflow Actions -->
-          ${order.status === 'New' || order.status === 'Pending' ? `
-            <button type="button" class="btn-card-action accept" onclick="acceptOrderQuick('${order.id}')" title="Confirm order & move to production">
-              ✓ Confirm Order
-            </button>
-            <button type="button" class="btn-card-action cancel" onclick="openCancelOrderModal('${order.id}')" title="Cancel order and notify customer">
-              ✕ Cancel Order
-            </button>
-          ` : (order.status === 'In Progress' || order.status === 'Confirmed' ? `
-            <button type="button" class="btn-card-action dispatch" onclick="updateInquiryStatus('${order.id}', 'Shipped')" title="Mark as Dispatched / Ready for Pickup">
-              🚚 Mark Dispatched
-            </button>
-            <button type="button" class="btn-card-action accept" onclick="updateInquiryStatus('${order.id}', 'Completed')" title="Mark order as completed/delivered">
-              ✓ Mark Delivered
-            </button>
-            <button type="button" class="btn-card-action revert" onclick="updateInquiryStatus('${order.id}', 'New')" title="Revert order back to New status">
-              ↩ Move to New
-            </button>
-            <button type="button" class="btn-card-action cancel" onclick="openCancelOrderModal('${order.id}')" title="Cancel order and notify customer">
-              ✕ Cancel Order
-            </button>
-          ` : (order.status === 'Shipped' ? `
-            <button type="button" class="btn-card-action accept" onclick="updateInquiryStatus('${order.id}', 'Completed')" title="Mark order as completed/delivered">
-              ✓ Mark Delivered
-            </button>
-            <button type="button" class="btn-card-action revert" onclick="updateInquiryStatus('${order.id}', 'In Progress')" title="Move back to In Production">
-              ↩ In Production
-            </button>
-            <button type="button" class="btn-card-action cancel" onclick="openCancelOrderModal('${order.id}')" title="Cancel order">
-              ✕ Cancel Order
-            </button>
-          ` : (order.status === 'Completed' ? `
-            <span class="status-pill completed" style="font-size: 0.72rem; padding: 4px 8px;">✓ Delivered</span>
-            <button type="button" class="btn-card-action reopen" onclick="updateInquiryStatus('${order.id}', 'In Progress')" title="Reopen order into Production">
-              🔄 Reopen Order
-            </button>
-          ` : (order.status === 'Cancelled' ? `
-            <span class="status-pill cancelled" style="font-size: 0.72rem; padding: 4px 8px;">✕ Cancelled</span>
-            <button type="button" class="btn-card-action reopen" onclick="restoreCancelledOrder('${order.id}', 'In Progress')" title="Restore and put order back into Production">
-              🔄 Reopen &amp; Confirm
-            </button>
-            <button type="button" class="btn-card-action revert" onclick="restoreCancelledOrder('${order.id}', 'New')" title="Restore and move back to New Orders">
-              ↩ Restore to New
-            </button>
-          ` : ''))))}
           
-          <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" class="btn-card-action invoice" title="Chat on WhatsApp">
-            💬 WhatsApp / Invoice
-          </a>
+          <button type="button" 
+                  class="btn-card-action pickup-ready ${isPickupReady ? 'active-state' : ''}" 
+                  onclick="markPickupReadyQuick('${order.id}')" 
+                  title="Mark order ready for collection and notify customer">
+            ${isPickupReady ? '🛍️ Pick Up Ready ✓' : '🛍️ Pick Up Ready'}
+          </button>
         </div>
       </div>
     </div>
@@ -2215,6 +2174,46 @@ window.acceptOrderQuick = async (id) => {
     showToast('Network Error', 'Failed to connect to server.', 'danger');
   }
 };
+
+/* ==========================================================================
+   MARK PICK UP READY (QUICK ACTION WITH EMAIL NOTIFICATION)
+   ========================================================================== */
+window.markPickupReadyQuick = async (id) => {
+  const cleanId = (id || '').replace(/^#/, '');
+  const item = allInquiries.find(i => i.id === cleanId || i.id === id);
+  if (!item) return;
+
+  try {
+    showToast('Updating Order', `Marking Order #${cleanId} as Ready for Pick Up...`, 'info');
+    const res = await fetch(`${API_BASE}/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        status: 'Shipped',
+        notes: 'Your order is ready! Please pick up your custom frame from Rajesh Framing Studio, Dahej.',
+        notifyCustomer: true
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      if (item) item.status = 'Shipped';
+      await loadInquiries();
+      await loadDashboardStats();
+      const emailNotice = data.emailResult && data.emailResult.sent ? ` Notification sent to ${data.emailResult.recipient}!` : '';
+      showToast('Pick Up Ready! 🛍️', `Order #${cleanId} is now Ready for Pick Up.${emailNotice}`, 'success');
+    } else {
+      showToast('Action Failed', data.message || 'Could not update order status.', 'danger');
+    }
+  } catch (err) {
+    console.error('Error marking order as ready for pickup:', err);
+    showToast('Network Error', 'Failed to connect to server.', 'danger');
+  }
+};
+
 
 /* ==========================================================================
    MODAL: EDIT ORDER DETAILS & STATUS

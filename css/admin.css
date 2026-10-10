@@ -1808,6 +1808,56 @@ body.admin-dashboard-body[data-theme="dark"] {
   transform: translateY(-1px);
 }
 
+/* Pick Up Ready / Pick Up Your Order Button Styles */
+[data-theme="light"] .btn-card-action.pickup-ready {
+  background: #F4EBFF;
+  color: #6941C6;
+  border: 1px solid #D6BBFB;
+  font-weight: 700;
+}
+[data-theme="light"] .btn-card-action.pickup-ready:hover {
+  background: #E9D7FE;
+  border-color: #B692F6;
+  transform: translateY(-1px);
+}
+[data-theme="light"] .btn-card-action.pickup-ready.active-state {
+  background: #7C3AED;
+  color: #FFFFFF;
+  border-color: #6D28D9;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.28);
+}
+[data-theme="dark"] .btn-card-action.pickup-ready {
+  background: rgba(147, 51, 234, 0.16);
+  color: #C084FC;
+  border: 1px solid rgba(147, 51, 234, 0.35);
+  font-weight: 700;
+}
+[data-theme="dark"] .btn-card-action.pickup-ready:hover {
+  background: rgba(147, 51, 234, 0.26);
+  box-shadow: 0 0 12px rgba(147, 51, 234, 0.35);
+  transform: translateY(-1px);
+}
+[data-theme="dark"] .btn-card-action.pickup-ready.active-state {
+  background: #8B5CF6;
+  color: #FFFFFF;
+  border-color: #A78BFA;
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.45);
+}
+
+/* Active State for Accept Order */
+[data-theme="light"] .btn-card-action.accept.active-state {
+  background: #10B981;
+  color: #FFFFFF;
+  border-color: #059669;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.28);
+}
+[data-theme="dark"] .btn-card-action.accept.active-state {
+  background: #10B981;
+  color: #FFFFFF;
+  border-color: #34D399;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);
+}
+
 [data-theme="light"] .btn-card-action.reopen {
   background: #EFF8FF;
   color: #175CD3;
