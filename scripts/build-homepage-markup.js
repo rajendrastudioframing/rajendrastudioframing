@@ -74,7 +74,7 @@ function renderProductCard(p) {
 
 function renderCategorySection(id, eyebrow, title, desc, items, isCream = false) {
   return `
-    <!-- Category Section: ${title} (${items.length} Products) -->
+    <!-- Category Section: ${title} -->
     <section class="section category-showcase-section ${isCream ? 'section-cream' : ''}" id="${id}">
       <div class="container">
         <div class="category-showcase-header">
@@ -82,10 +82,6 @@ function renderCategorySection(id, eyebrow, title, desc, items, isCream = false)
             <span class="eyebrow">${eyebrow}</span>
             <h2>${title}</h2>
             <p>${desc}</p>
-          </div>
-          <div class="category-count-tag">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>${items.length} Products Available</span>
           </div>
         </div>
 
@@ -103,7 +99,7 @@ const categoryNavMarkup = `
         <div class="category-nav-header">
           <span class="eyebrow">Explore Our Collections</span>
           <h2 class="category-nav-title">Shop by Category</h2>
-          <p class="category-nav-subtitle">Browse through 125 handcrafted framing options, personalized drinkware, executive stationery, fine art canvas, and keepsake gifts.</p>
+          <p class="category-nav-subtitle">Browse through our handcrafted framing options, personalized drinkware, executive stationery, fine art canvas, and keepsake gifts.</p>
         </div>
 
         <div class="category-jump-bar" role="navigation" aria-label="Category Navigation">
@@ -112,7 +108,6 @@ const categoryNavMarkup = `
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10"/></svg>
             </span>
             <span class="cat-jump-name">Studio &amp; Framing</span>
-            <span class="cat-jump-count">25 Items</span>
           </a>
 
           <a href="#cat-personalized" class="category-jump-btn" data-cat-target="cat-personalized">
@@ -120,7 +115,6 @@ const categoryNavMarkup = `
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="6" x2="6" y2="4"/><line x1="10" y1="6" x2="10" y2="4"/><line x1="14" y1="6" x2="14" y2="4"/></svg>
             </span>
             <span class="cat-jump-name">Personalized Printing</span>
-            <span class="cat-jump-count">25 Items</span>
           </a>
 
           <a href="#cat-office" class="category-jump-btn" data-cat-target="cat-office">
@@ -128,7 +122,6 @@ const categoryNavMarkup = `
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             </span>
             <span class="cat-jump-name">Office Printing</span>
-            <span class="cat-jump-count">25 Items</span>
           </a>
 
           <a href="#cat-custom" class="category-jump-btn" data-cat-target="cat-custom">
@@ -136,7 +129,6 @@ const categoryNavMarkup = `
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
             </span>
             <span class="cat-jump-name">Custom Printing</span>
-            <span class="cat-jump-count">25 Items</span>
           </a>
 
           <a href="#cat-gifts" class="category-jump-btn" data-cat-target="cat-gifts">
@@ -144,7 +136,6 @@ const categoryNavMarkup = `
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
             </span>
             <span class="cat-jump-name">Photo Gifts &amp; Keepsakes</span>
-            <span class="cat-jump-count">25 Items</span>
           </a>
         </div>
       </div>

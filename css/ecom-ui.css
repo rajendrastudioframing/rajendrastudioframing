@@ -267,17 +267,7 @@
 }
 
 .cat-jump-count {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 9999px;
-  background: rgba(201, 154, 61, 0.15);
-  color: #C99A3D;
-}
-
-.category-jump-btn.active .cat-jump-count {
-  background: rgba(255, 255, 255, 0.2);
-  color: #FFFFFF;
+  display: none !important;
 }
 
 /* --- 4. 5 CATEGORY SHOWCASE SECTIONS --- */
@@ -318,15 +308,7 @@
 }
 
 .category-count-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: rgba(201, 154, 61, 0.1);
-  color: #C99A3D;
-  border-radius: 9999px;
-  font-size: 0.8125rem;
-  font-weight: 700;
+  display: none !important;
 }
 
 /* --- 5. RESPONSIVE PRODUCT LAYOUT (4-5 / 2-3 / 2) --- */
