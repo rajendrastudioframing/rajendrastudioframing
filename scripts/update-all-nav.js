@@ -9,7 +9,7 @@ function getDesktopNav(activeItem) {
         <!-- Desktop Navigation Menu (5 Items Required) -->
         <ul class="nav-menu">
           <li>
-            <a href="/#categoriesSection" class="nav-link ${activeItem === 'categories' ? 'active' : ''}" title="Categories">
+            <a href="categories" class="nav-link ${activeItem === 'categories' ? 'active' : ''}" title="Categories">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="7" height="7" rx="1"></rect>
                 <rect x="14" y="3" width="7" height="7" rx="1"></rect>
@@ -69,7 +69,7 @@ function getMobileBottomNav(activeItem) {
   return `
   <!-- Mobile Fixed Bottom Navigation Bar (5 Items Required) -->
   <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile Navigation">
-    <a href="/#categoriesSection" class="mobile-nav-item ${activeItem === 'categories' ? 'active' : ''}" id="mobileNavCategories">
+    <a href="categories" class="mobile-nav-item ${activeItem === 'categories' ? 'active' : ''}" id="mobileNavCategories">
       <div class="mobile-nav-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
@@ -127,12 +127,27 @@ function getMobileBottomNav(activeItem) {
   `.trim();
 }
 
+function getDrawerNav(activeItem) {
+  return `
+    <ul class="drawer-nav">
+      <li><a href="/" class="nav-link ${activeItem === 'home' ? 'active' : ''}">Home</a></li>
+      <li><a href="categories" class="nav-link ${activeItem === 'categories' ? 'active' : ''}">Categories</a></li>
+      <li><a href="products" class="nav-link ${activeItem === 'products' ? 'active' : ''}">Products</a></li>
+      <li><a href="about" class="nav-link ${activeItem === 'about' ? 'active' : ''}">About Us</a></li>
+      <li><a href="contact" class="nav-link ${activeItem === 'contact' ? 'active' : ''}">Contact Us</a></li>
+      <li><a href="track-order" class="nav-link ${activeItem === 'track-order' ? 'active' : ''}">Track Order</a></li>
+    </ul>
+  `.trim();
+}
+
 const pages = [
+  { file: 'index.html', active: 'home' },
+  { file: 'categories.html', active: 'categories' },
   { file: 'products.html', active: 'products' },
   { file: 'product-detail.html', active: 'products' },
   { file: 'checkout.html', active: 'cart' },
-  { file: 'about.html', active: '' },
-  { file: 'contact.html', active: '' },
+  { file: 'about.html', active: 'about' },
+  { file: 'contact.html', active: 'contact' },
   { file: 'track-order.html', active: 'profile' }
 ];
 
@@ -148,6 +163,9 @@ pages.forEach(({ file, active }) => {
 
     // Replace top nav
     html = html.replace(/<ul class="nav-menu">[\s\S]*?<\/ul>/, getDesktopNav(active));
+
+    // Replace mobile drawer nav
+    html = html.replace(/<ul class="drawer-nav">[\s\S]*?<\/ul>/, getDrawerNav(active));
 
     // Replace or add mobile bottom nav
     if (html.includes('id="mobileBottomNav"')) {

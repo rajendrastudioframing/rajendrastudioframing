@@ -51,6 +51,15 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Categories Route handler
+app.get('/categories', (req, res) => {
+  const publicCategories = path.join(__dirname, 'public', 'categories.html');
+  if (fs.existsSync(publicCategories)) {
+    return res.sendFile(publicCategories);
+  }
+  res.sendFile(path.join(__dirname, 'categories.html'));
+});
+
 // File Paths
 const DATA_DIR = path.join(__dirname, 'data');
 const CONFIG_FILE = path.join(DATA_DIR, 'admin-config.json');
