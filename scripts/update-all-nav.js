@@ -30,7 +30,7 @@ function getDesktopNav(activeItem) {
             </a>
           </li>
           <li>
-            <button type="button" class="nav-link nav-item-btn" onclick="openCartDrawer()" title="Cart" aria-label="View shopping cart">
+            <button type="button" class="nav-link nav-item-btn ${activeItem === 'cart' ? 'active' : ''}" id="navbarCartBtn" onclick="openCartDrawer()" title="Cart" aria-label="View shopping cart">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="9" cy="21" r="1"></circle>
                 <circle cx="20" cy="21" r="1"></circle>
@@ -41,7 +41,7 @@ function getDesktopNav(activeItem) {
             </button>
           </li>
           <li>
-            <button type="button" class="nav-link nav-item-btn" onclick="openWishlistDrawer()" title="Wishlist" aria-label="View wishlist">
+            <button type="button" class="nav-link nav-item-btn ${activeItem === 'wishlist' ? 'active' : ''}" id="navbarWishlistBtn" onclick="openWishlistDrawer()" title="Wishlist" aria-label="View wishlist">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
               </svg>
@@ -51,7 +51,7 @@ function getDesktopNav(activeItem) {
           </li>
           <li>
             <div class="nav-customer-slot" id="navCustomerSlot">
-              <button type="button" class="nav-link nav-item-btn" onclick="openCustomerAuthModal()" title="Profile" aria-label="Customer Profile">
+              <button type="button" class="nav-link nav-item-btn ${activeItem === 'profile' ? 'active' : ''}" id="navbarProfileBtn" onclick="openCustomerAuthModal()" title="Profile" aria-label="Customer Profile">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                   <circle cx="12" cy="7" r="4"></circle>
@@ -92,7 +92,7 @@ function getMobileBottomNav(activeItem) {
       <span class="mobile-nav-label">Products</span>
     </a>
 
-    <button type="button" class="mobile-nav-item" id="mobileNavCart" onclick="openCartDrawer()" aria-label="View Cart">
+    <button type="button" class="mobile-nav-item ${activeItem === 'cart' ? 'active' : ''}" id="mobileNavCart" onclick="openCartDrawer()" aria-label="View Cart">
       <div class="mobile-nav-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="9" cy="21" r="1"></circle>
@@ -104,7 +104,7 @@ function getMobileBottomNav(activeItem) {
       <span class="mobile-nav-label">Cart</span>
     </button>
 
-    <button type="button" class="mobile-nav-item" id="mobileNavWishlist" onclick="openWishlistDrawer()" aria-label="View Wishlist">
+    <button type="button" class="mobile-nav-item ${activeItem === 'wishlist' ? 'active' : ''}" id="mobileNavWishlist" onclick="openWishlistDrawer()" aria-label="View Wishlist">
       <div class="mobile-nav-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -114,7 +114,7 @@ function getMobileBottomNav(activeItem) {
       <span class="mobile-nav-label">Wishlist</span>
     </button>
 
-    <button type="button" class="mobile-nav-item" id="mobileNavProfile" onclick="openCustomerAuthModal()" aria-label="User Profile">
+    <button type="button" class="mobile-nav-item ${activeItem === 'profile' ? 'active' : ''}" id="mobileNavProfile" onclick="openCustomerAuthModal()" aria-label="User Profile">
       <div class="mobile-nav-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>

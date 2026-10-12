@@ -358,7 +358,60 @@ function renderWishlistDrawer() {
   `).join('');
 }
 
+// Variables to keep track of previously active navigation items
+let previousActiveWishlistNavElement = null;
+let previousActiveWishlistMobileElement = null;
+
+function highlightWishlistNav() {
+  // Desktop Nav Highlight
+  const activeDesktopNav = document.querySelector('.nav-menu .nav-link.active, .nav-menu .nav-item-btn.active');
+  const wishlistDesktopBtn = document.getElementById('navbarWishlistBtn') || 
+                             document.querySelector('.nav-menu button[onclick*="openWishlistDrawer"]');
+  
+  if (wishlistDesktopBtn && !wishlistDesktopBtn.classList.contains('active')) {
+    if (activeDesktopNav && activeDesktopNav !== wishlistDesktopBtn) {
+      previousActiveWishlistNavElement = activeDesktopNav;
+      activeDesktopNav.classList.remove('active');
+    }
+    wishlistDesktopBtn.classList.add('active');
+  }
+
+  // Mobile Bottom Nav Highlight
+  const activeMobileNav = document.querySelector('.mobile-bottom-nav .mobile-nav-item.active');
+  const wishlistMobileBtn = document.getElementById('mobileNavWishlist');
+  
+  if (wishlistMobileBtn && !wishlistMobileBtn.classList.contains('active')) {
+    if (activeMobileNav && activeMobileNav !== wishlistMobileBtn) {
+      previousActiveWishlistMobileElement = activeMobileNav;
+      activeMobileNav.classList.remove('active');
+    }
+    wishlistMobileBtn.classList.add('active');
+  }
+}
+
+function unhighlightWishlistNav() {
+  const wishlistDesktopBtn = document.getElementById('navbarWishlistBtn') || 
+                             document.querySelector('.nav-menu button[onclick*="openWishlistDrawer"]');
+  if (wishlistDesktopBtn) {
+    wishlistDesktopBtn.classList.remove('active');
+  }
+  if (previousActiveWishlistNavElement) {
+    previousActiveWishlistNavElement.classList.add('active');
+    previousActiveWishlistNavElement = null;
+  }
+
+  const wishlistMobileBtn = document.getElementById('mobileNavWishlist');
+  if (wishlistMobileBtn) {
+    wishlistMobileBtn.classList.remove('active');
+  }
+  if (previousActiveWishlistMobileElement) {
+    previousActiveWishlistMobileElement.classList.add('active');
+    previousActiveWishlistMobileElement = null;
+  }
+}
+
 function openWishlistDrawer() {
+  highlightWishlistNav();
   let overlay = document.getElementById('wishlistDrawerOverlay');
   if (!overlay) {
     injectWishlistDrawerMarkup();
@@ -376,6 +429,7 @@ function closeWishlistDrawer() {
   if (!overlay) return;
   overlay.classList.remove('open');
   document.body.style.overflow = '';
+  unhighlightWishlistNav();
 }
 
 function bindWishlistDrawerEvents() {
