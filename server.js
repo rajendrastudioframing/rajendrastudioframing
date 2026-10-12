@@ -349,6 +349,211 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
   `;
 }
 
+// Customer Login Notification Email Generator
+function generateCustomerLoginEmailHtml({ customerName, customerEmail, loginTime, ipAddress, userAgent, catalogUrl }) {
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Alert - Dahej Support</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #F8F6F0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111111; -webkit-font-smoothing: antialiased;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8F6F0; padding: 30px 15px;">
+      <tr>
+        <td align="center">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; border: 1px solid #E8E3DA; box-shadow: 0 10px 25px rgba(0,0,0,0.06);">
+            <!-- Header Brand Matching Website Theme -->
+            <tr>
+              <td style="background-color: #111111; padding: 28px 32px; text-align: center; border-bottom: 3px solid #C99A3D;">
+                <div style="font-size: 22px; font-weight: 800; letter-spacing: 2px; color: #FFFFFF; text-transform: uppercase;">
+                  RAJESH <span style="color: #C99A3D;">FRAMING</span>
+                </div>
+                <div style="font-size: 11px; letter-spacing: 1.5px; color: #C5A880; text-transform: uppercase; margin-top: 5px;">
+                  Custom Framing Studio &bull; Dahej &amp; Bharuch
+                </div>
+              </td>
+            </tr>
+
+            <!-- Status Banner -->
+            <tr>
+              <td style="padding: 32px 32px 16px; text-align: center;">
+                <div style="display: inline-block; background-color: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; border-radius: 9999px; padding: 6px 16px; font-size: 12px; font-weight: 800; letter-spacing: 0.5px;">
+                  🔐 SECURITY ALERT &bull; SUCCESSFUL LOGIN
+                </div>
+                <h2 style="font-size: 22px; font-weight: 800; color: #111111; margin: 18px 0 8px; line-height: 1.3;">
+                  Welcome Back! You Are Now Logged In
+                </h2>
+                <div style="font-size: 14px; color: #78716C;">
+                  Account: <strong style="color: #111111;">${customerEmail}</strong>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Message Body -->
+            <tr>
+              <td style="padding: 0 32px 24px;">
+                <p style="font-size: 15px; line-height: 1.6; color: #333333; margin: 0 0 16px;">
+                  Hello <strong>${customerName || 'Valued Customer'}</strong>,
+                </p>
+                <p style="font-size: 15px; line-height: 1.6; color: #333333; margin: 0 0 20px;">
+                  This email confirms that you successfully signed in to your Dahej Support account. Your saved cart items, wishlist, and past orders are now synced and accessible.
+                </p>
+
+                <!-- Activity Details Box -->
+                <div style="background-color: #FAF7F2; border: 1px solid #EAE5DB; border-radius: 12px; padding: 18px 20px; margin-bottom: 24px;">
+                  <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #8B7355; margin-bottom: 12px; border-bottom: 1px solid #EAE5DB; padding-bottom: 6px;">
+                    Login Activity Details
+                  </div>
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 13px; line-height: 1.6;">
+                    <tr>
+                      <td style="color: #78716C; padding: 4px 0; width: 120px;">Time (IST):</td>
+                      <td style="color: #111111; font-weight: 600; padding: 4px 0;">${loginTime}</td>
+                    </tr>
+                    <tr>
+                      <td style="color: #78716C; padding: 4px 0;">Device / Client:</td>
+                      <td style="color: #111111; font-weight: 600; padding: 4px 0;">${userAgent}</td>
+                    </tr>
+                    ${ipAddress ? `
+                    <tr>
+                      <td style="color: #78716C; padding: 4px 0;">IP Address:</td>
+                      <td style="color: #111111; font-weight: 600; padding: 4px 0;">${ipAddress}</td>
+                    </tr>
+                    ` : ''}
+                  </table>
+                </div>
+
+                <!-- Security Note -->
+                <div style="background-color: #FFFDF7; border-left: 4px solid #C99A3D; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #555555; line-height: 1.5; border: 1px solid #F5E8D0; border-left-width: 4px;">
+                  <strong>Didn't log in?</strong> If you did not perform this login, someone else may be accessing your account. Please notify our studio immediately on WhatsApp at <strong style="color: #111111;">+91 96015 74966</strong>.
+                </div>
+              </td>
+            </tr>
+
+            <!-- CTA Button -->
+            <tr>
+              <td align="center" style="padding: 0 32px 30px;">
+                <table border="0" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td align="center" style="border-radius: 8px; background: linear-gradient(135deg, #C99A3D 0%, #A67C2E 100%); box-shadow: 0 4px 14px rgba(201, 154, 61, 0.35);">
+                      <a href="${catalogUrl}" target="_blank" style="font-size: 15px; font-weight: 700; color: #FFFFFF; text-decoration: none; padding: 14px 28px; display: inline-block; border-radius: 8px; letter-spacing: 0.3px;">
+                        Explore Products &amp; Categories &rarr;
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Support & Footer -->
+            <tr>
+              <td style="background-color: #FAF8F5; padding: 24px 32px; text-align: center; border-top: 1px solid #EAE5DB;">
+                <div style="font-size: 13px; font-weight: 700; color: #111111; margin-bottom: 6px;">
+                  Rajesh Framing Studio &bull; Dahej Support
+                </div>
+                <div style="font-size: 12px; color: #78716C; margin-bottom: 12px;">
+                  Dahej GIDC, Bharuch, Gujarat 392130 &bull; Phone: +91 96015 74966
+                </div>
+                <div>
+                  <a href="https://wa.me/919601574966" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 8px 18px; border-radius: 9999px; margin: 0 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);">
+                    💬 Studio WhatsApp
+                  </a>
+                </div>
+                <div style="margin-top: 16px; font-size: 11px; color: #A8A29E; line-height: 1.5;">
+                  This is an automated security alert notification sent to ${customerEmail}.
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>
+  `;
+}
+
+// Send Customer Login Notification Email Helper
+async function sendCustomerLoginNotification(customerEmail, customerName, req) {
+  if (!customerEmail || !customerEmail.includes('@')) return { sent: false, reason: 'Invalid email' };
+  try {
+    const config = await db.getAdminConfig();
+    const transporter = createTransporter(config);
+    if (!transporter) {
+      console.log(`ℹ️ [Customer Login Email] SMTP not configured. Login email to ${customerEmail} skipped.`);
+      return { sent: false, reason: 'SMTP not configured' };
+    }
+
+    const cleanEmail = customerEmail.trim().toLowerCase();
+    const cleanName = (customerName && customerName.trim()) || cleanEmail.split('@')[0];
+    const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
+
+    const protocol = (req && (req.headers['x-forwarded-proto'] || req.protocol)) || 'https';
+    const host = (req && req.get('host')) || `localhost:${PORT}`;
+    const catalogUrl = `${protocol}://${host}/products`;
+
+    const ipAddress = (req && (req.headers['x-forwarded-for'] || req.socket.remoteAddress)) || 'Local Network';
+    let userAgent = (req && req.headers['user-agent']) || 'Web Browser';
+    if (userAgent.length > 80) {
+      if (userAgent.includes('Mobile') || userAgent.includes('Android') || userAgent.includes('iPhone')) {
+        userAgent = 'Mobile Browser';
+      } else if (userAgent.includes('Windows')) {
+        userAgent = 'Windows Desktop Browser';
+      } else if (userAgent.includes('Macintosh')) {
+        userAgent = 'Mac Desktop Browser';
+      } else {
+        userAgent = userAgent.substring(0, 60) + '...';
+      }
+    }
+
+    const loginTime = new Date().toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }) + ' IST';
+
+    const plainText = `Hello ${cleanName},
+
+You have successfully logged in to your Dahej Support account (${cleanEmail}) at ${loginTime}.
+
+Device: ${userAgent}
+IP Address: ${ipAddress}
+
+If you did not perform this login, please contact our studio immediately:
+WhatsApp: https://wa.me/919601574966
+Phone: +91 96015 74966
+
+Browse our handcrafted collections:
+${catalogUrl}
+
+Rajesh Framing Studio
+Dahej GIDC, Bharuch, Gujarat 392130
+`;
+
+    await transporter.sendMail({
+      from: fromAddress,
+      to: cleanEmail,
+      subject: `🔐 Successful Login to Your Dahej Support Account`,
+      text: plainText,
+      html: generateCustomerLoginEmailHtml({
+        customerName: cleanName,
+        customerEmail: cleanEmail,
+        loginTime,
+        ipAddress,
+        userAgent,
+        catalogUrl
+      })
+    });
+
+    console.log(`📧 [CUSTOMER LOGIN EMAIL SENT] Successful login notification delivered to ${cleanEmail}`);
+    return { sent: true, recipient: cleanEmail };
+  } catch (err) {
+    console.warn(`⚠️ [Customer Login Email Error] Could not send login email to ${customerEmail}:`, err.message);
+    return { sent: false, error: err.message };
+  }
+}
+
 // Customer Order Status Notification Email Generator
 function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, notes, items, total, paymentMethod, trackingUrl, editOrderUrl, address }) {
   const isPlaced = newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed';
@@ -365,12 +570,12 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
   let primaryMessage = `Your order status has been updated to <strong>${newStatus}</strong>.`;
 
   if (isPlaced) {
-    badgeText = '📦 ORDER PLACED • UNDER STUDIO REVIEW';
-    badgeBg = '#FFFBEB';
-    badgeColor = '#B45309';
-    badgeBorder = '#FDE68A';
+    badgeText = '🎉 ORDER PLACED SUCCESSFULLY';
+    badgeBg = '#ECFDF5';
+    badgeColor = '#047857';
+    badgeBorder = '#A7F3D0';
     headline = 'Your Order Has Been Placed Successfully!';
-    primaryMessage = 'Thank you for placing your order with Dahej Support! We have received your order details and payment information. Our studio team is currently reviewing your order specifications and will officially confirm your order shortly before framing production begins.';
+    primaryMessage = 'Thank you for placing your order with Dahej Support! We have received your order details and items. Our master craftsmen are reviewing your specifications and preparing your custom frames &amp; prints.';
   } else if (isAccepted) {
     badgeText = '✓ ORDER CONFIRMED & IN PRODUCTION';
     badgeBg = '#FEF9EE';
@@ -633,10 +838,10 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
     const paymentMethod = orderOrInquiry.paymentMethod || 'Pick up from shop';
     const address = (orderOrInquiry.customer && orderOrInquiry.customer.address) || orderOrInquiry.specs || '';
 
-    // Spam-safe subject lines (avoiding exclamation marks or emojis that spam filters flag)
+    // Clean subject lines
     let subject = `Order #${orderId} Status Update: ${newStatus} - Dahej Support`;
     if (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed') {
-      subject = `Order #${orderId} Placed: Received & Pending Studio Review - Dahej Support`;
+      subject = `🎉 Order Placed Successfully! #${orderId} - Dahej Support Studio`;
     } else if (newStatus === 'In Progress' || newStatus === 'Confirmed' || newStatus === 'Accepted') {
       subject = `Order #${orderId} Confirmed - Dahej Support Studio`;
     } else if (newStatus === 'Cancelled') {
@@ -651,7 +856,7 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
 
     let introText = `Your order #${orderId} status has been updated to: ${newStatus}.`;
     if (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed') {
-      introText = `Your order #${orderId} has been placed successfully and received by Rajesh Framing Studio. Our team is currently reviewing your order specifications and will confirm it shortly.`;
+      introText = `Your order #${orderId} has been placed successfully and received by Rajesh Framing Studio! We have recorded your items and delivery details.`;
     } else if (newStatus === 'Confirmed' || newStatus === 'In Progress' || newStatus === 'Accepted') {
       introText = `Great news! Your order #${orderId} has been officially confirmed by Rajesh Framing Studio and is now in production.`;
     } else if (newStatus === 'Cancelled') {
@@ -1304,6 +1509,10 @@ app.post('/api/customer/auth/direct-login', async (req, res) => {
 
     console.log(`🎉 [CUSTOMER DIRECT LOGIN] Customer ${cleanEmail} logged in directly!`);
 
+    // Dispatch Login Confirmation Email to Customer
+    sendCustomerLoginNotification(cleanEmail, customerName, req)
+      .catch(loginMailErr => console.warn('Customer direct-login email warning:', loginMailErr.message));
+
     return res.json({
       success: true,
       message: 'Successfully logged in!',
@@ -1393,6 +1602,10 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
     const customerProfile = await db.recordCustomerLogin(cleanEmail, customerName, customerPhone, true);
 
     console.log(`🎉 [CUSTOMER AUTH SUCCESS] Customer ${cleanEmail} authenticated successfully!`);
+
+    // Dispatch Login Confirmation Email to Customer
+    sendCustomerLoginNotification(cleanEmail, customerName, req)
+      .catch(loginMailErr => console.warn('Customer login email warning:', loginMailErr.message));
 
     return res.json({
       success: true,
@@ -1966,10 +2179,63 @@ app.post('/api/orders', async (req, res) => {
     console.log(`📍 Address: ${newOrder.customer.address}, ${newOrder.customer.city}`);
     console.log(`======================================================\n`);
 
-    // Dispatch Order Placed confirmation email to customer (pending studio confirmation)
+    // Dispatch Order Placed confirmation email to customer
     if (newOrder.customer && newOrder.customer.email && newOrder.customer.email.includes('@')) {
-      await sendCustomerOrderNotification(newOrder, 'Placed', 'Thank you! Your order has been placed successfully online. Our studio will review and confirm it shortly before production.', req)
-        .catch(err => console.warn('Order placed email error:', err.message));
+      try {
+        const emailResult = await sendCustomerOrderNotification(
+          newOrder,
+          'Placed',
+          'Thank you! Your order has been placed successfully online. Our studio will review and prepare it with precision.',
+          req
+        );
+        if (emailResult && emailResult.sent) {
+          console.log(`✅ [ORDER CONFIRMATION EMAIL DELIVERED] Successfully sent order receipt to customer: ${newOrder.customer.email}`);
+        }
+      } catch (custMailErr) {
+        console.warn('⚠️ [Customer Order Email Warning]:', custMailErr.message);
+      }
+    }
+
+    // Send instant Order Alert email to Studio Admin
+    try {
+      const config = await db.getAdminConfig();
+      const transporter = createTransporter(config);
+      if (transporter) {
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
+        const adminRecipient = config.adminEmail || 'rajendrastudioframing@gmail.com';
+        const itemSummary = newOrder.items.map(i => `${i.name} (x${i.quantity})`).join(', ');
+        const protocol = (req && (req.headers['x-forwarded-proto'] || req.protocol)) || 'https';
+        const host = (req && req.get('host')) || `localhost:${PORT}`;
+
+        await transporter.sendMail({
+          from: fromAddress,
+          to: adminRecipient,
+          subject: `🛒 [New Online Order] #${orderId} from ${newOrder.customer.name} (₹${newOrder.total})`,
+          text: `New Customer Order Placed Online!\n\nOrder ID: #${orderId}\nCustomer: ${newOrder.customer.name}\nPhone: ${newOrder.customer.phone}\nEmail: ${newOrder.customer.email}\nItems: ${itemSummary}\nTotal: ₹${newOrder.total}\nPayment Method: ${newOrder.paymentMethod}\nDelivery Address: ${newOrder.customer.address}, ${newOrder.customer.city} (${newOrder.customer.pincode})\n\nManage in Admin Panel: ${protocol}://${host}/admin.html#orders`,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 24px; background: #FAF8F5; border-radius: 12px; border: 1px solid #E5E0D5;">
+              <h2 style="color: #111111; margin-top: 0;">🛒 New Customer Order #${orderId}</h2>
+              <p style="color: #555555; font-size: 15px;">A new order was just placed on the website:</p>
+              <table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;">
+                <tr><td style="padding: 8px 0; color: #888888; width: 140px;">Order ID:</td><td style="font-weight: 700; color: #8C6A1E;">#${orderId}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Customer:</td><td style="font-weight: 700; color: #111111;">${newOrder.customer.name}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Phone:</td><td style="font-weight: 700; color: #111111;">${newOrder.customer.phone}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Email:</td><td>${newOrder.customer.email}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Items:</td><td style="font-weight: 700; color: #111111;">${itemSummary}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Total Amount:</td><td style="font-weight: 700; color: #047857; font-size: 16px;">₹${Number(newOrder.total).toLocaleString('en-IN')}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Payment Method:</td><td>${newOrder.paymentMethod}</td></tr>
+                <tr><td style="padding: 8px 0; color: #888888;">Delivery Address:</td><td>${newOrder.customer.address}, ${newOrder.customer.city} (${newOrder.customer.pincode})</td></tr>
+              </table>
+              <div style="margin-top: 20px;">
+                <a href="${protocol}://${host}/admin.html#orders" style="background: #111111; color: #FFFFFF; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">Open in Admin Panel &rarr;</a>
+              </div>
+            </div>
+          `
+        }).then(() => console.log(`📧 [ADMIN ORDER ALERT DELIVERED] New order notification sent to ${adminRecipient}`))
+          .catch(adminMailErr => console.warn('Could not send admin order notification:', adminMailErr.message));
+      }
+    } catch (adminErr) {
+      console.warn('Admin order alert warning:', adminErr.message);
     }
 
     res.json({
