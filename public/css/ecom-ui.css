@@ -200,6 +200,10 @@
   /* Safe Area & Content Clearance so navigation never obscures products */
   body,
   main {
+    padding-bottom: 0 !important;
+  }
+
+  .site-footer {
     padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
   }
 

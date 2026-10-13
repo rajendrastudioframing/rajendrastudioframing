@@ -4720,9 +4720,8 @@ body:has(.modal-overlay.open) {
 @media (max-width: 768px) {
   .catalog-main-content,
   .catalog-layout-container,
-  #catalogProductsGrid,
-  .section-cream {
-    padding-bottom: 110px !important;
+  #catalogProductsGrid {
+    padding-bottom: 32px !important;
   }
 
   .floating-actions-wrap {
