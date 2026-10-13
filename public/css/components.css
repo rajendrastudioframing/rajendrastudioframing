@@ -734,8 +734,17 @@
     box-sizing: border-box !important;
   }
 
-  .detail-actions-card {
+  .transit-guarantee-pill {
     order: 6;
+    margin-top: 4px;
+    margin-bottom: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .detail-actions-card {
+    order: 7;
     margin-bottom: 0;
     width: 100% !important;
     max-width: 100% !important;
@@ -743,7 +752,7 @@
   }
 
   .detail-overview-card {
-    order: 7;
+    order: 8;
     margin-bottom: 0;
     width: 100% !important;
     max-width: 100% !important;
@@ -752,15 +761,8 @@
 
   .guarantee-list,
   .detail-gallery .guarantee-list {
-    order: 8;
-    margin-top: 4px;
-    margin-bottom: 0;
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
-
-  .transit-guarantee-pill {
     order: 9;
+    margin-top: 4px;
     margin-bottom: 0;
     width: 100% !important;
     box-sizing: border-box !important;
