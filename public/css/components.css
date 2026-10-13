@@ -649,11 +649,45 @@
   }
 }
 
-@media (max-width: 992px) {
+/* Responsive Tablet Grid (769px - 992px): Maintain balanced 2-column layout to eliminate empty blank space */
+@media (min-width: 769px) and (max-width: 992px) {
+  .product-detail-layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 24px;
+    align-items: start;
+    width: 100%;
+  }
+
+  .detail-gallery {
+    width: 100%;
+  }
+
+  .detail-info {
+    width: 100%;
+  }
+
+  .detail-card,
+  .photo-upload-container,
+  .detail-actions-card,
+  .detail-customization-card,
+  .detail-overview-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* Responsive Mobile Phone Flow (<= 768px):
+   Natural Mobile Hierarchy: Image -> Product Name & Price -> Size & Options -> Upload Photo -> Action Buttons -> Overview -> Badges
+   Everything stretches to 100% full width to completely eliminate empty blank space */
+@media (max-width: 768px) {
   .product-detail-layout {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    align-items: stretch !important;
+    width: 100% !important;
   }
 
   .detail-gallery,
@@ -661,41 +695,59 @@
     display: contents;
   }
 
-  /* Natural Mobile Ecommerce Hierarchy: Image -> Product Name & Price -> Size & Options -> Upload Photo -> Action Buttons -> Overview -> Badges */
   .detail-main-img-box {
     order: 1;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .detail-thumbs-strip {
     order: 2;
     margin-bottom: 6px;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .detail-header-compact {
     order: 3;
     margin-top: 4px;
     margin-bottom: 4px;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .detail-customization-card {
     order: 4;
     margin-bottom: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .photo-upload-container {
     order: 5;
     margin-top: 0;
     margin-bottom: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .detail-actions-card {
     order: 6;
     margin-bottom: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .detail-overview-card {
     order: 7;
     margin-bottom: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .guarantee-list,
@@ -703,11 +755,15 @@
     order: 8;
     margin-top: 4px;
     margin-bottom: 0;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .transit-guarantee-pill {
     order: 9;
     margin-bottom: 0;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 }
 
@@ -3506,7 +3562,10 @@ body:has(.modal-overlay.open) {
    PHOTO UPLOAD COMPONENT FOR CUSTOM FRAMING & PERSONALIZED PRINTING
    ========================================================================== */
 .photo-upload-container {
-  margin-top: 18px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 14px;
 }
 
 .detail-gallery .photo-upload-container {
@@ -3614,6 +3673,9 @@ body:has(.modal-overlay.open) {
 }
 
 .photo-upload-dropzone {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   position: relative;
   background: #FAF8F5;
   border: 2px dashed rgba(201, 154, 61, 0.4);
@@ -4711,6 +4773,9 @@ body:has(.modal-overlay.open) {
    PRODUCT DETAIL DISTINCT SECTION CARDS (Size/Finish, Actions, Overview)
    ========================================================================== */
 .detail-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   border-radius: 14px;
   padding: 16px 18px;
   margin-bottom: 14px;
