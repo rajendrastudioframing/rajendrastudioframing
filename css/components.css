@@ -4460,3 +4460,27 @@ body:has(.modal-overlay.open) {
     max-height: 190px !important;
   }
 }
+
+
+/* Related Products Grid (Fixed 4 Columns on Desktop to eliminate empty 5th column space) */
+#relatedProductsGrid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  width: 100% !important;
+}
+
+@media (max-width: 1200px) {
+  #relatedProductsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  #relatedProductsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
+
