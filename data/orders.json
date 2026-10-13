@@ -1,1 +1,48 @@
-[]
+[
+  {
+    "orderId": "RF-ORD-2026-001",
+    "customer": {
+      "name": "Kavya",
+      "phone": "9876543210",
+      "email": "kavya@example.com",
+      "address": "Plot 42, GIDC Residential Colony, Near Reliance Greens",
+      "city": "Dahej, Bharuch",
+      "state": "Gujarat",
+      "pincode": "392130"
+    },
+    "items": [
+      {
+        "id": "glass-frame-classic",
+        "name": "Glass Photo Frame",
+        "price": 655,
+        "quantity": 1,
+        "size": "12\" × 18\"",
+        "finish": "Warm Gold Standoffs",
+        "image": "assets/images/glass_frame.jpg",
+        "category": "Studio & Framing",
+        "lineTotal": 655
+      },
+      {
+        "id": "acrylic-float-wall",
+        "name": "Acrylic Floating Wall Frame",
+        "price": 899,
+        "quantity": 1,
+        "size": "16\" × 24\"",
+        "finish": "Crystal Clear Float",
+        "image": "assets/images/acrylic_frame.jpg",
+        "category": "Studio & Framing",
+        "lineTotal": 899
+      }
+    ],
+    "subtotal": 1554,
+    "shipping": 0,
+    "total": 1554,
+    "notes": "Please handle glass with care. Need archival wall mounting brackets.",
+    "paymentMethod": "UPI (GPay / PhonePe)",
+    "paymentStatus": "Paid",
+    "upiUtr": "UPI/261013/98765432",
+    "status": "In Production",
+    "createdAt": "2026-10-12T14:30:00.000Z",
+    "updatedAt": "2026-10-13T09:15:00.000Z"
+  }
+]

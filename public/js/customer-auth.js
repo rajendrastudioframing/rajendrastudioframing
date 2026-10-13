@@ -348,9 +348,13 @@
                 <div style="font-size: 0.75rem; color: #6B7280;">Signed in as</div>
                 <div style="font-size: 0.8125rem; font-weight: 700; color: #111827; word-break: break-all;">${user.email || ''}</div>
               </div>
-              <a href="track-order" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 0.8125rem; color: #374151; text-decoration: none; border-radius: 8px;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span>Track My Orders</span>
+              <a href="orders" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 0.8125rem; font-weight: 600; color: #111827; text-decoration: none; border-radius: 8px;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span>My Orders</span>
+              </a>
+              <a href="track-order" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 0.8125rem; color: #4B5563; text-decoration: none; border-radius: 8px;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span>Track Order</span>
               </a>
               <button type="button" onclick="logoutCustomer(true)" style="width: 100%; text-align: left; display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 0.8125rem; color: #DC2626; background: none; border: none; cursor: pointer; border-radius: 8px;" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='transparent'">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -391,7 +395,8 @@
               </div>
             </div>
             <div style="display: flex; gap: 8px; border-top: 1px solid #E5E7EB; padding-top: 8px;">
-              <a href="track-order" class="btn btn-sm btn-outline" style="flex: 1; justify-content: center; font-size: 0.75rem; padding: 6px 8px; border-radius: 8px; text-decoration: none;">Track Orders</a>
+              <a href="orders" class="btn btn-sm btn-gold" style="flex: 1; justify-content: center; font-size: 0.75rem; padding: 6px 8px; border-radius: 8px; text-decoration: none;">My Orders</a>
+              <a href="track-order" class="btn btn-sm btn-outline" style="flex: 1; justify-content: center; font-size: 0.75rem; padding: 6px 8px; border-radius: 8px; text-decoration: none;">Track Order</a>
               <button type="button" onclick="logoutCustomer(true)" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 6px 10px; color: #DC2626; border-color: #FECACA; border-radius: 8px;">Sign Out</button>
             </div>
           </div>

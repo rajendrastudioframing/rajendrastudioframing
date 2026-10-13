@@ -60,6 +60,19 @@ app.get('/categories', (req, res) => {
   res.sendFile(path.join(__dirname, 'categories.html'));
 });
 
+// Orders Route handler
+app.get('/orders', (req, res) => {
+  const publicOrders = path.join(__dirname, 'public', 'orders.html');
+  if (fs.existsSync(publicOrders)) {
+    return res.sendFile(publicOrders);
+  }
+  res.sendFile(path.join(__dirname, 'orders.html'));
+});
+
+app.get('/my-orders', (req, res) => {
+  res.redirect('/orders');
+});
+
 // File Paths
 const DATA_DIR = path.join(__dirname, 'data');
 const CONFIG_FILE = path.join(DATA_DIR, 'admin-config.json');
