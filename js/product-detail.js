@@ -1197,6 +1197,18 @@ const SEED_PRODUCT_REVIEWS = {
       comment: 'The finish is super premium and looks much more expensive than the price paid. Sturdy hardware and easy to hang with provided wall anchors. Will definitely order again for my living room gallery.',
       verified: true,
       helpful: 7
+    },
+    {
+      id: 'rev-gfc-4',
+      productId: 'glass-frame-classic',
+      author: 'Rajesh Patel',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-10',
+      headline: 'Flawless framing precision and ultra-secure packaging',
+      comment: 'Ordered two 12×16 frames with certificate mats. The beveled float glass has crystal-clear transparency with zero distortion. Delivered safely cushioned in heavy corner shields and bubble wrap.',
+      verified: true,
+      helpful: 15
     }
   ],
   'plastic-frame-gallery': [
@@ -1235,6 +1247,18 @@ const SEED_PRODUCT_REVIEWS = {
       comment: 'Ordered 15 frames for our regional branch office. All arrived in spotless condition with reinforced corner guards. Excellent quality polymer.',
       verified: true,
       helpful: 6
+    },
+    {
+      id: 'rev-pfg-4',
+      productId: 'plastic-frame-gallery',
+      author: 'Alkesh Joshi',
+      city: 'Dahej GIDC',
+      rating: 5,
+      date: '2026-09-06',
+      headline: 'Perfect alignment and robust polymer wall brackets',
+      comment: 'Installed 6 gallery frames in our executive boardroom. The clean black border looks dignified and the matte finish resists fingerprints completely.',
+      verified: true,
+      helpful: 11
     }
   ],
   'printed-water-bottle-steel': [
@@ -1261,6 +1285,30 @@ const SEED_PRODUCT_REVIEWS = {
       comment: 'The wrap-around color printing is vivid and sharp. No peeling or discoloration after multiple dishwasher runs. Great personalized gift!',
       verified: true,
       helpful: 11
+    },
+    {
+      id: 'rev-pwb-3',
+      productId: 'printed-water-bottle-steel',
+      author: 'Manish Doshi',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-12',
+      headline: 'Laser etching is sharp and temperature retention is solid',
+      comment: 'Keeps cold drinks chilled all day during our plant inspections. The metallic silver finish and custom logo engraving are top notch.',
+      verified: true,
+      helpful: 14
+    },
+    {
+      id: 'rev-pwb-4',
+      productId: 'printed-water-bottle-steel',
+      author: 'Bhavin Vyas',
+      city: 'Dahej',
+      rating: 4,
+      date: '2026-09-08',
+      headline: 'Great corporate welcome kit merchandise',
+      comment: 'Ordered 30 customized units for new plant joiners. High grade stainless steel, leak-proof cap, and arrived ahead of schedule.',
+      verified: true,
+      helpful: 8
     }
   ],
   'customized-coffee-mug': [
@@ -1287,6 +1335,30 @@ const SEED_PRODUCT_REVIEWS = {
       comment: '50 custom branded mugs ordered for our Dahej logistics facility. Every single logo print is centered and color-accurate to our brand hex codes. Thank you Dahej Support!',
       verified: true,
       helpful: 14
+    },
+    {
+      id: 'rev-cmc-3',
+      productId: 'customized-coffee-mug',
+      author: 'Neha Trivedi',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-14',
+      headline: 'Vibrant glossy ceramic with ergonomic handle',
+      comment: 'Printed our family reunion picture on 8 mugs. Colors are deep, edges are sharp, and microwave safe without fading.',
+      verified: true,
+      helpful: 10
+    },
+    {
+      id: 'rev-cmc-4',
+      productId: 'customized-coffee-mug',
+      author: 'Krunal Shah',
+      city: 'Ankleshwar',
+      rating: 4,
+      date: '2026-09-07',
+      headline: 'Fast delivery and very secure gift packaging',
+      comment: 'Each mug came safely boxed in individual bubble casing. The print finish is completely smooth with no blemishes.',
+      verified: true,
+      helpful: 7
     }
   ],
   'custom-file-printing': [
@@ -1301,6 +1373,42 @@ const SEED_PRODUCT_REVIEWS = {
       comment: 'We order all our legal files and audit binders from Dahej Support. Heavy duty clips don\'t bend and the matte lamination prevents edge tearing.',
       verified: true,
       helpful: 13
+    },
+    {
+      id: 'rev-cfp-2',
+      productId: 'custom-file-printing',
+      author: 'Rakesh Shah',
+      city: 'Dahej GIDC',
+      rating: 5,
+      date: '2026-09-15',
+      headline: 'Durable binding and crystal clear corporate logo printing',
+      comment: 'We use these custom printed ring files for all our ISO audit documentation. The laminated board withstands frequent office handling.',
+      verified: true,
+      helpful: 9
+    },
+    {
+      id: 'rev-cfp-3',
+      productId: 'custom-file-printing',
+      author: 'Divya Parmar',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-11',
+      headline: 'High precision indexing and vibrant spine printing',
+      comment: 'Organized our annual project proposals in these branded executive binders. Excellent paper stock and rigid build.',
+      verified: true,
+      helpful: 8
+    },
+    {
+      id: 'rev-cfp-4',
+      productId: 'custom-file-printing',
+      author: 'Amit Chauhan',
+      city: 'Surat',
+      rating: 4,
+      date: '2026-09-06',
+      headline: 'Heavy duty clips that never slip or tear pages',
+      comment: 'Reliable supplier for office printing supplies. The matte lamination gives a very professional presentation touch.',
+      verified: true,
+      helpful: 6
     }
   ],
   'printed-office-folder-executive': [
@@ -1315,6 +1423,42 @@ const SEED_PRODUCT_REVIEWS = {
       comment: 'Our presentation folders with metallic gold foil stamping turned out fantastic. Clients at our Dahej industrial expo specifically remarked on how luxurious our folders felt.',
       verified: true,
       helpful: 16
+    },
+    {
+      id: 'rev-pof-2',
+      productId: 'printed-office-folder-executive',
+      author: 'Jignesh Patel',
+      city: 'Dahej GIDC',
+      rating: 5,
+      date: '2026-09-18',
+      headline: 'Stunning metallic gold foil stamping on heavy stock',
+      comment: 'Our client proposal folders made an outstanding first impression during our supplier negotiations. Luxury texture.',
+      verified: true,
+      helpful: 12
+    },
+    {
+      id: 'rev-pof-3',
+      productId: 'printed-office-folder-executive',
+      author: 'Pradeep Nair',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-13',
+      headline: 'Crisp inside pockets with business card slits',
+      comment: 'Everything fits neatly without tearing. Premium 400 GSM cardstock with clean die-cutting and rich matte coating.',
+      verified: true,
+      helpful: 8
+    },
+    {
+      id: 'rev-pof-4',
+      productId: 'printed-office-folder-executive',
+      author: 'Shailesh Dave',
+      city: 'Ankleshwar',
+      rating: 4,
+      date: '2026-09-07',
+      headline: 'Prompt delivery and immaculate batch printing quality',
+      comment: 'Ordered 200 folders for our corporate conference. Colors matched our branding guidelines down to the exact Pantone shade.',
+      verified: true,
+      helpful: 6
     }
   ],
   'custom-fine-art-canvas': [
@@ -1329,6 +1473,42 @@ const SEED_PRODUCT_REVIEWS = {
       comment: 'Printed a 30x40 landscape photography canvas. The texture of the 380 GSM natural cotton and depth of black tones are extraordinary. Gallery wrapping around the pine frame is taut and flawless.',
       verified: true,
       helpful: 28
+    },
+    {
+      id: 'rev-fac-2',
+      productId: 'custom-fine-art-canvas',
+      author: 'Smita Kothari',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-20',
+      headline: 'Gallery grade texture with vibrant pigment saturation',
+      comment: 'Transformed our wedding portrait into an art gallery canvas. The natural cotton grain and wood stretching are museum class.',
+      verified: true,
+      helpful: 14
+    },
+    {
+      id: 'rev-fac-3',
+      productId: 'custom-fine-art-canvas',
+      author: 'Vijay Makwana',
+      city: 'Dahej',
+      rating: 5,
+      date: '2026-09-15',
+      headline: 'Zero sag pine frame and UV protective lacquer coating',
+      comment: 'Hung in our lobby reception under direct spot lighting. Zero glare, high contrast blacks, and rich vibrant hues.',
+      verified: true,
+      helpful: 11
+    },
+    {
+      id: 'rev-fac-4',
+      productId: 'custom-fine-art-canvas',
+      author: 'Aarti Panchal',
+      city: 'Surat',
+      rating: 4,
+      date: '2026-09-09',
+      headline: 'Exceeded expectations in turnaround and color accuracy',
+      comment: 'Dahej Support shared a WhatsApp color proof before final print. The canvas arrived flawless and ready to hang.',
+      verified: true,
+      helpful: 7
     }
   ]
 };
@@ -1364,28 +1544,75 @@ async function initProductReviews() {
   }
 
   // 2. Fallback to localStorage or seed
+  const seedList = SEED_PRODUCT_REVIEWS[pId] || [
+    {
+      id: `rev-${pId}-1`,
+      productId: pId,
+      author: 'Verified Studio Patron',
+      city: 'Bharuch',
+      rating: 5,
+      date: '2026-09-20',
+      headline: 'Exceptional craftsmanship and swift turnaround',
+      comment: 'The materials, print fidelity, and bespoke finishing from Dahej Support were top notch. Seamless process from ordering to doorstep delivery.',
+      verified: true,
+      helpful: 14
+    },
+    {
+      id: `rev-${pId}-2`,
+      productId: pId,
+      author: 'Rajesh P.',
+      city: 'Dahej GIDC',
+      rating: 5,
+      date: '2026-09-16',
+      headline: 'Superb quality and rapid turnaround',
+      comment: 'Very professional team in Bharuch. The prints arrived safely packed and flawless in every corner.',
+      verified: true,
+      helpful: 10
+    },
+    {
+      id: `rev-${pId}-3`,
+      productId: pId,
+      author: 'Deepak Shah',
+      city: 'Ankleshwar',
+      rating: 5,
+      date: '2026-09-12',
+      headline: 'Highly recommend for custom bespoke work',
+      comment: 'Ordered for our office presentation. The material feel and finish exceeded all expectations.',
+      verified: true,
+      helpful: 8
+    },
+    {
+      id: `rev-${pId}-4`,
+      productId: pId,
+      author: 'Sneha Patel',
+      city: 'Bharuch',
+      rating: 4,
+      date: '2026-09-05',
+      headline: 'Stunning archival finish and sturdy craftsmanship',
+      comment: 'Will definitely order again for future framing needs. Top tier studio in the region!',
+      verified: true,
+      helpful: 6
+    }
+  ];
+
   if (!productReviews || productReviews.length === 0) {
     const local = localStorage.getItem(storageKey);
     if (local) {
       try {
-        productReviews = JSON.parse(local);
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) {
+          // If cached local reviews have fewer items than seed, sync with seed so all 4 columns are filled
+          if (parsed.length < seedList.length) {
+            productReviews = seedList;
+            localStorage.setItem(storageKey, JSON.stringify(seedList));
+          } else {
+            productReviews = parsed;
+          }
+        }
       } catch (_) {}
     }
     if (!productReviews || productReviews.length === 0) {
-      productReviews = SEED_PRODUCT_REVIEWS[pId] || [
-        {
-          id: `rev-default-1`,
-          productId: pId,
-          author: 'Verified Studio Patron',
-          city: 'Bharuch',
-          rating: 5,
-          date: '2026-09-20',
-          headline: 'Exceptional craftsmanship and swift turnaround',
-          comment: 'The materials, print fidelity, and bespoke finishing from Dahej Support were top notch. Seamless process from ordering to doorstep delivery.',
-          verified: true,
-          helpful: 10
-        }
-      ];
+      productReviews = seedList;
       try {
         localStorage.setItem(storageKey, JSON.stringify(productReviews));
       } catch (_) {}
@@ -1656,6 +1883,7 @@ function renderReviewsListOnly() {
 
   const votedReviews = JSON.parse(localStorage.getItem('rf_voted_reviews') || '[]');
 
+  listContainer.setAttribute('data-count', Math.min(filtered.length, 4));
   listContainer.innerHTML = filtered.map(rev => {
     const ratingStars = '★'.repeat(Math.min(5, Math.max(1, Math.round(Number(rev.rating) || 5))));
     const dateFormatted = formatReviewDate(rev.date);

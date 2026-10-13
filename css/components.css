@@ -3060,12 +3060,29 @@ body:has(.modal-overlay.open) {
   cursor: pointer;
 }
 
-/* Reviews List & Cards (4 Cards Per Row Grid) */
+/* Reviews List & Cards (4 Cards Per Row Grid with Adaptive Balance) */
 .reviews-list {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   align-items: stretch;
+}
+
+.reviews-list[data-count="4"],
+.reviews-list:not([data-count]) {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.reviews-list[data-count="3"] {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.reviews-list[data-count="2"] {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.reviews-list[data-count="1"] {
+  grid-template-columns: 1fr;
 }
 
 .review-card {
@@ -3221,14 +3238,20 @@ body:has(.modal-overlay.open) {
 }
 
 @media (max-width: 1200px) {
-  .reviews-list {
+  .reviews-list,
+  .reviews-list[data-count="4"],
+  .reviews-list[data-count="3"] {
     grid-template-columns: repeat(2, 1fr);
     gap: 18px;
   }
 }
 
 @media (max-width: 640px) {
-  .reviews-list {
+  .reviews-list,
+  .reviews-list[data-count="4"],
+  .reviews-list[data-count="3"],
+  .reviews-list[data-count="2"],
+  .reviews-list[data-count="1"] {
     grid-template-columns: 1fr;
     gap: 16px;
   }
