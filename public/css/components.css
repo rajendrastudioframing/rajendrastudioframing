@@ -1620,7 +1620,23 @@
 }
 
 body.product-page-active {
-  padding-bottom: 84px;
+  padding-bottom: 0 !important;
+}
+
+.product-page-active .site-footer {
+  padding-bottom: 96px;
+}
+
+.detail-related-section {
+  margin-top: 56px;
+  padding-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .detail-related-section {
+    margin-top: 36px;
+    padding-bottom: 16px;
+  }
 }
 
 @media (max-width: 768px) {
