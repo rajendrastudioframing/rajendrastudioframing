@@ -10,7 +10,7 @@ try {
 
   console.log('--- GIT COMMIT ---');
   try {
-    execSync('git commit -m "feat(admin): make sidebar permanently fixed so it does not scroll when page scrolls"', { stdio: 'inherit' });
+    execSync('git commit -m "feat(admin): make metric cards compact, modern, and attractive 2-column grid for mobile screens"', { stdio: 'inherit' });
   } catch (err) {
     console.log('Nothing to commit or commit failed:', err.message);
   }
