@@ -1,6 +1,6 @@
 /**
  * RAJESH FRAMING - PRODUCTS CATALOG CONTROLLER
- * Category Filtering, Real-time Search, Sorting & Redesigned Luxury Product Cards
+ * Category Filtering, Real-time Search, Sorting & Unified Toolbar / Filter Drawer
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -10,6 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
 let currentCategory = 'all';
 let searchQuery = '';
 let currentSort = 'featured';
+
+const CATEGORY_MAP = {
+  'all': 'All Products',
+  'frames': 'Studio & Framing',
+  'personalized': 'Personalized Printing',
+  'office': 'Office Printing',
+  'custom': 'Custom Printing',
+  'gifts': 'Photo Gifts & Keepsakes'
+};
 
 async function initCatalog() {
   const gridContainer = document.getElementById('catalogProductsGrid');
@@ -36,29 +45,118 @@ async function initCatalog() {
   // Check URL query params for initial category filter
   const urlParams = new URLSearchParams(window.location.search);
   const paramCategory = urlParams.get('category');
-  if (paramCategory) {
+  if (paramCategory && CATEGORY_MAP[paramCategory]) {
     currentCategory = paramCategory;
   }
 
   setupFilterButtons();
   setupSearchInput();
   setupSortSelect();
+  initUnifiedBar();
+  updateCategoryUI();
   renderCatalog();
+}
+
+function updateCategoryUI() {
+  const label = CATEGORY_MAP[currentCategory] || 'All Products';
+  const labelEl = document.getElementById('currentCategoryText');
+  if (labelEl) labelEl.textContent = label;
+
+  // Sync all category buttons and dropdown items
+  document.querySelectorAll('[data-filter]').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-filter') === currentCategory);
+  });
+}
+
+function selectCatalogCategory(catKey, catLabel) {
+  currentCategory = catKey;
+  updateCategoryUI();
+
+  // Close dropdown if open
+  const menu = document.getElementById('categoryDropdownMenu');
+  const trigger = document.getElementById('categoryDropdownTrigger');
+  if (menu) menu.classList.remove('show');
+  if (trigger) trigger.classList.remove('open');
+
+  renderCatalog();
+}
+window.selectCatalogCategory = selectCatalogCategory;
+
+function toggleFilterDrawer(open) {
+  const drawer = document.getElementById('catalogFilterDrawer');
+  const backdrop = document.getElementById('filterDrawerBackdrop');
+  if (!drawer || !backdrop) return;
+
+  if (open) {
+    drawer.classList.add('active');
+    backdrop.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  } else {
+    drawer.classList.remove('active');
+    backdrop.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+}
+window.toggleFilterDrawer = toggleFilterDrawer;
+
+function initUnifiedBar() {
+  const trigger = document.getElementById('categoryDropdownTrigger');
+  const menu = document.getElementById('categoryDropdownMenu');
+
+  if (trigger && menu) {
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = menu.classList.contains('show');
+      menu.classList.toggle('show', !isOpen);
+      trigger.classList.toggle('open', !isOpen);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!menu.contains(e.target) && !trigger.contains(e.target)) {
+        menu.classList.remove('show');
+        trigger.classList.remove('open');
+      }
+    });
+  }
+
+  // Bind drawer search
+  const drawerSearch = document.getElementById('drawerSearchInput');
+  if (drawerSearch) {
+    drawerSearch.addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim().toLowerCase();
+      const mainSearch = document.getElementById('catalogSearchInput');
+      if (mainSearch) mainSearch.value = e.target.value;
+      renderCatalog();
+    });
+  }
+
+  // Bind drawer sort buttons
+  const drawerSortBtns = document.querySelectorAll('.drawer-sort-btn');
+  drawerSortBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      drawerSortBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentSort = btn.getAttribute('data-sort');
+      const sortSelect = document.getElementById('catalogSortSelect');
+      if (sortSelect) sortSelect.value = currentSort;
+      renderCatalog();
+    });
+  });
 }
 
 function setupFilterButtons() {
   const filterButtons = document.querySelectorAll('[data-filter]');
   filterButtons.forEach(btn => {
-    const filterVal = btn.getAttribute('data-filter');
-    if (filterVal === currentCategory) {
-      filterButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-
     btn.addEventListener('click', () => {
-      filterButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      const filterVal = btn.getAttribute('data-filter');
       currentCategory = filterVal;
+      updateCategoryUI();
+
+      const menu = document.getElementById('categoryDropdownMenu');
+      const trigger = document.getElementById('categoryDropdownTrigger');
+      if (menu) menu.classList.remove('show');
+      if (trigger) trigger.classList.remove('open');
+
       renderCatalog();
     });
   });
@@ -70,6 +168,8 @@ function setupSearchInput() {
 
   searchInput.addEventListener('input', (e) => {
     searchQuery = e.target.value.trim().toLowerCase();
+    const drawerSearch = document.getElementById('drawerSearchInput');
+    if (drawerSearch) drawerSearch.value = e.target.value;
     renderCatalog();
   });
 }
@@ -80,6 +180,9 @@ function setupSortSelect() {
 
   sortSelect.addEventListener('change', (e) => {
     currentSort = e.target.value;
+    document.querySelectorAll('.drawer-sort-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-sort') === currentSort);
+    });
     renderCatalog();
   });
 }
@@ -88,6 +191,8 @@ function renderCatalog() {
   const gridContainer = document.getElementById('catalogProductsGrid');
   const countBadge = document.getElementById('catalogResultsCount');
   if (!gridContainer) return;
+
+  updateCategoryUI();
 
   // Filter products
   let filtered = PRODUCTS_DATA.filter(item => {
@@ -115,6 +220,35 @@ function renderCatalog() {
   if (countBadge) {
     countBadge.textContent = `Showing ${filtered.length} Product${filtered.length === 1 ? '' : 's'}`;
   }
+
+  // Update drawer apply button text
+  const drawerApplyText = document.getElementById('drawerApplyText');
+  if (drawerApplyText) {
+    drawerApplyText.textContent = `Show ${filtered.length} Product${filtered.length === 1 ? '' : 's'}`;
+  }
+
+  // Active filter badge
+  let activeCount = 0;
+  if (currentCategory !== 'all') activeCount++;
+  if (searchQuery) activeCount++;
+  if (currentSort !== 'featured') activeCount++;
+
+  const badge = document.getElementById('activeFilterBadge');
+  if (badge) {
+    if (activeCount > 0) {
+      badge.textContent = activeCount;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // Reset button visibility
+  const resetBtns = document.querySelectorAll('#catalogBarResetBtn, .sidebar-reset-btn');
+  resetBtns.forEach(btn => {
+    btn.style.opacity = activeCount > 0 ? '1' : '0.4';
+    btn.style.pointerEvents = activeCount > 0 ? 'auto' : 'none';
+  });
 
   // Empty state
   if (filtered.length === 0) {
@@ -264,18 +398,23 @@ function resetFilters() {
 
   const searchInput = document.getElementById('catalogSearchInput');
   if (searchInput) searchInput.value = '';
+  const drawerSearch = document.getElementById('drawerSearchInput');
+  if (drawerSearch) drawerSearch.value = '';
 
   const sortSelect = document.getElementById('catalogSortSelect');
   if (sortSelect) sortSelect.value = 'featured';
 
+  document.querySelectorAll('.drawer-sort-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-sort') === 'featured');
+  });
+
   const filterButtons = document.querySelectorAll('[data-filter]');
   filterButtons.forEach(btn => {
-    if (btn.getAttribute('data-filter') === 'all') {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
+    btn.classList.toggle('active', btn.getAttribute('data-filter') === 'all');
   });
+
+  const catText = document.getElementById('currentCategoryText');
+  if (catText) catText.textContent = 'All Products';
 
   renderCatalog();
 }
