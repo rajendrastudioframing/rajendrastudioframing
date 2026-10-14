@@ -10,7 +10,7 @@ try {
 
   console.log('--- GIT COMMIT ---');
   try {
-    execSync('git commit -m "feat(admin): make metric cards compact, modern, and attractive 2-column grid for mobile screens"', { stdio: 'inherit' });
+    execSync('git commit -m "feat(email): integrate Brevo transactional emails for customer login, admin login, and order pickup ready notifications to shop@rajendrastudioandgifts.in"', { stdio: 'inherit' });
   } catch (err) {
     console.log('Nothing to commit or commit failed:', err.message);
   }

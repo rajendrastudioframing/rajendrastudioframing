@@ -1,16 +1,16 @@
 {
-  "adminEmail": "rajendrastudioframing@gmail.com",
+  "adminEmail": "shop@rajendrastudioandgifts.in",
   "secondaryAdminEmail": "rajendrastudioframing@gmail.com",
   "adminPassword": "Admin@Rajesh2026",
   "adminName": "Rajendra Studio Admin",
   "smtp": {
     "enabled": true,
-    "service": "gmail",
-    "host": "smtp.gmail.com",
-    "port": 465,
-    "secure": true,
-    "user": "rajendrastudioframing@gmail.com",
+    "service": "brevo",
+    "host": "smtp-relay.brevo.com",
+    "port": 587,
+    "secure": false,
+    "user": "shop@rajendrastudioandgifts.in",
     "pass": "",
-    "fromEmail": "Rajendra Studio <rajendrastudioframing@gmail.com>"
+    "fromEmail": "Rajendra Studio & Gifts <shop@rajendrastudioandgifts.in>"
   }
 }

@@ -29,16 +29,16 @@
     "subtotal": 450,
     "shipping": 0,
     "total": 450,
-    "notes": "Order cancelled by studio. Reason: Material / Frame stock unavailable.",
+    "notes": "Your order is ready! Please pick up your custom frame from Rajesh Framing Studio, Dahej.",
     "orderPhoto": {
       "fileUrl": "assets/images/custom_canvas.jpg",
       "fileName": "kavya_family_portrait.jpg"
     },
     "paymentMethod": "Instant UPI Payment (QR Code)",
     "upiUtr": "0",
-    "status": "Cancelled",
+    "status": "Shipped",
     "createdAt": "2026-09-26T11:45:20.094Z",
-    "updatedAt": "2026-09-26T11:46:53.925Z"
+    "updatedAt": "2026-10-14T16:05:17.187Z"
   },
   {
     "orderId": "RF-ORD-2026-004",

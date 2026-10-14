@@ -8,14 +8,14 @@
     "specs": "Deliver to: g.h.patel college of engineering, anand (388120) • Instant UPI Payment (QR Code) [UTR: 0]",
     "quantity": 1,
     "estimatedValue": 450,
-    "notes": "Order cancelled by studio. Reason: Material / Frame stock unavailable.",
-    "status": "Cancelled",
+    "notes": "Your order is ready! Please pick up your custom frame from Rajesh Framing Studio, Dahej.",
+    "status": "Shipped",
     "hasUpload": true,
     "uploadedFileUrl": "assets/images/custom_canvas.jpg",
     "uploadedFileName": "kavya_family_portrait.jpg",
     "deliveryAddress": "g.h.patel college of engineering, anand (388120)",
     "createdAt": "2026-09-26T11:45:20.094Z",
-    "updatedAt": "2026-09-26T11:46:53.925Z"
+    "updatedAt": "2026-10-14T16:05:17.185Z"
   },
   {
     "id": "RF-ORD-2026-004",

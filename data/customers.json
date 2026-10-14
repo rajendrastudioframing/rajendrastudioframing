@@ -1,5 +1,17 @@
 [
   {
+    "id": "CUST-0014",
+    "name": "Rajendra Studio Customer",
+    "email": "shop@rajendrastudioandgifts.in",
+    "phone": "9601574966",
+    "registeredAt": "2026-10-14T16:04:12.892Z",
+    "lastLoginAt": "2026-10-14T16:04:12.892Z",
+    "loginCount": 1,
+    "totalOrders": 0,
+    "totalSpent": 0,
+    "status": "Active"
+  },
+  {
     "id": "CUST-0013",
     "name": "Kavya Live Test",
     "email": "tandelkavya.live@gmail.com",

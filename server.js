@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const db = require('./services/db');
+const emailService = require('./services/email');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -797,6 +798,19 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
 
 // Send Customer Order Notification Helper
 async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, req) {
+  // If order is Ready for Pick Up / Shipped to shop counter, use specialized Brevo pick up notification
+  const isPickupReadyStatus = (newStatus === 'Shipped' || newStatus === 'Pickup Ready' || newStatus === 'Ready for Pickup' || (notes && notes.toLowerCase().includes('pick up')));
+  if (isPickupReadyStatus) {
+    try {
+      const pickupResult = await emailService.notifyOrderPickupReady({ order: orderOrInquiry, notes, req });
+      if (pickupResult && pickupResult.sent) {
+        return pickupResult;
+      }
+    } catch (e) {
+      console.warn('⚠️ [Brevo Pickup Email Warning in sendCustomerOrderNotification]:', e.message);
+    }
+  }
+
   try {
     const config = await db.getAdminConfig();
     const transporter = createTransporter(config);
@@ -1022,6 +1036,7 @@ app.post('/api/auth/login-request', async (req, res) => {
     const config = await db.getAdminConfig();
     const cleanEmail = email.trim().toLowerCase();
     const allowedEmails = [
+      'shop@rajendrastudioandgifts.in',
       'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
@@ -1067,7 +1082,18 @@ app.post('/api/auth/login-request', async (req, res) => {
 
     let emailSent = false;
     let emailError = null;
-    const transporter = createTransporter(config);
+
+    try {
+      const brevoAdminResult = await emailService.sendAdminOtpEmail({ email: cleanEmail, otp });
+      if (brevoAdminResult && brevoAdminResult.success) {
+        emailSent = true;
+        console.log(`✅ [Brevo API] Admin OTP email delivered to ${cleanEmail}`);
+      }
+    } catch (brevoErr) {
+      console.warn('⚠️ [Brevo Admin OTP Warning]:', brevoErr.message);
+    }
+
+    const transporter = !emailSent ? createTransporter(config) : null;
 
     if (transporter) {
       try {
@@ -1119,6 +1145,7 @@ app.post('/api/auth/login', async (req, res) => {
     const config = await db.getAdminConfig();
     const cleanEmail = email.trim().toLowerCase();
     const allowedEmails = [
+      'shop@rajendrastudioandgifts.in',
       'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
@@ -1144,6 +1171,13 @@ app.post('/api/auth/login', async (req, res) => {
     saveSessions();
 
     console.log(`🎉 [ADMIN DIRECT LOGIN] Admin ${cleanEmail} authenticated directly!`);
+
+    // Alert shop@rajendrastudioandgifts.in of Admin Login
+    emailService.notifyAdminLogin({
+      adminEmail: cleanEmail,
+      loginType: 'Direct Password Authentication',
+      req
+    }).catch(err => console.warn('Admin direct login email alert warning:', err.message));
 
     return res.json({
       success: true,
@@ -1176,6 +1210,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const config = await db.getAdminConfig();
     const allowedEmails = [
+      'shop@rajendrastudioandgifts.in',
       'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
@@ -1242,6 +1277,13 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 
     console.log(`🎉 [ADMIN LOGIN SUCCESSFUL] Admin ${cleanEmail} authenticated successfully!`);
 
+    // Alert shop@rajendrastudioandgifts.in of Admin Login
+    emailService.notifyAdminLogin({
+      adminEmail: cleanEmail,
+      loginType: isMasterPin ? 'Master PIN Verification' : 'OTP Verification',
+      req
+    }).catch(err => console.warn('Admin OTP login email alert warning:', err.message));
+
     return res.json({
       success: true,
       message: 'Authentication successful! Welcome to Rajesh Framing Admin Panel.',
@@ -1271,6 +1313,7 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const config = await db.getAdminConfig();
     const allowedEmails = [
+      'shop@rajendrastudioandgifts.in',
       'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
@@ -1305,7 +1348,18 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     console.log(`🔄 [OTP RESENT] Email: ${cleanEmail} | New OTP: >>> ${otp} <<<`);
 
     let emailSent = false;
-    const transporter = createTransporter(config);
+
+    try {
+      const brevoAdminResendResult = await emailService.sendAdminOtpEmail({ email: cleanEmail, otp });
+      if (brevoAdminResendResult && brevoAdminResendResult.success) {
+        emailSent = true;
+        console.log(`✅ [Brevo API] Admin Resend OTP email delivered to ${cleanEmail}`);
+      }
+    } catch (brevoErr) {
+      console.warn('⚠️ [Brevo Admin Resend OTP Warning]:', brevoErr.message);
+    }
+
+    const transporter = !emailSent ? createTransporter(config) : null;
     if (transporter) {
       try {
         const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
@@ -1452,9 +1506,25 @@ app.post('/api/customer/auth/send-otp', async (req, res) => {
 
     console.log(`🔐 [CUSTOMER OTP GENERATED] Recipient: ${cleanEmail} | Passcode: ${otp} (Valid for 5 mins)`);
 
-    const config = await db.getAdminConfig();
-    const transporter = createTransporter(config);
     let emailDelivered = false;
+
+    // Send Customer OTP via Brevo API
+    try {
+      const brevoCustResult = await emailService.sendCustomerOtpEmail({
+        email: cleanEmail,
+        otp,
+        name: cleanName
+      });
+      if (brevoCustResult && brevoCustResult.success) {
+        emailDelivered = true;
+        console.log(`✅ [Brevo API] Customer OTP email delivered to ${cleanEmail}`);
+      }
+    } catch (brevoErr) {
+      console.warn('⚠️ [Brevo Customer OTP Warning]:', brevoErr.message);
+    }
+
+    const config = await db.getAdminConfig();
+    const transporter = !emailDelivered ? createTransporter(config) : null;
 
     if (transporter) {
       try {
@@ -1519,9 +1589,13 @@ app.post('/api/customer/auth/direct-login', async (req, res) => {
 
     console.log(`🎉 [CUSTOMER DIRECT LOGIN] Customer ${cleanEmail} logged in directly!`);
 
-    // Dispatch Login Confirmation Email to Customer
-    sendCustomerLoginNotification(cleanEmail, customerName, req)
-      .catch(loginMailErr => console.warn('Customer direct-login email warning:', loginMailErr.message));
+    // Dispatch Login Notifications (to shop@rajendrastudioandgifts.in AND customer)
+    emailService.notifyCustomerLogin({
+      customerEmail: cleanEmail,
+      customerName,
+      customerPhone,
+      req
+    }).catch(loginMailErr => console.warn('Customer direct-login email warning:', loginMailErr.message));
 
     return res.json({
       success: true,
@@ -1613,9 +1687,13 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
 
     console.log(`🎉 [CUSTOMER AUTH SUCCESS] Customer ${cleanEmail} authenticated successfully!`);
 
-    // Dispatch Login Confirmation Email to Customer
-    sendCustomerLoginNotification(cleanEmail, customerName, req)
-      .catch(loginMailErr => console.warn('Customer login email warning:', loginMailErr.message));
+    // Dispatch Login Notifications (to shop@rajendrastudioandgifts.in AND customer)
+    emailService.notifyCustomerLogin({
+      customerEmail: cleanEmail,
+      customerName,
+      customerPhone,
+      req
+    }).catch(loginMailErr => console.warn('Customer OTP verify login email warning:', loginMailErr.message));
 
     return res.json({
       success: true,
@@ -2206,6 +2284,10 @@ app.post('/api/orders', async (req, res) => {
       }
     }
 
+    // Send instant Order Alert email to Studio Admin (shop@rajendrastudioandgifts.in) via Brevo
+    emailService.notifyNewOrderPlaced({ order: newOrder, req })
+      .catch(err => console.warn('Brevo new order alert warning:', err.message));
+
     // Send instant Order Alert email to Studio Admin
     try {
       const config = await db.getAdminConfig();
@@ -2550,9 +2632,14 @@ async function handleUpdateOrderStatus(req, res) {
     // Determine target object for email notification (prefer orders for rich data)
     const targetObj = updatedOrder || updatedInquiry;
 
-    // Trigger customer notification email
+    // Trigger customer & shop notification email
     let emailResult = { sent: false };
-    if (notifyCustomer !== false) {
+    const isPickupReady = (status === 'Shipped' || status === 'Pickup Ready' || status === 'Ready for Pickup' || (notes && notes.toLowerCase().includes('pick up')));
+
+    if (isPickupReady) {
+      console.log(`🛍️ [PICKUP READY TRIGGERED] Sending pick up email for order #${cleanId} via Brevo...`);
+      emailResult = await emailService.notifyOrderPickupReady({ order: targetObj, notes, req });
+    } else if (notifyCustomer !== false) {
       emailResult = await sendCustomerOrderNotification(targetObj, status, notes, req);
     }
 
