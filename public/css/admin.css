@@ -142,7 +142,7 @@ body.admin-dashboard-body {
   background-attachment: fixed;
   font-family: var(--font-body);
   color: var(--text-main);
-  overflow-x: hidden;
+  overflow-x: clip;
   transition: background-color 0.25s ease, color 0.25s ease;
   -webkit-font-smoothing: antialiased;
 }
@@ -188,10 +188,13 @@ body.admin-dashboard-body[data-theme="dark"] {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  bottom: 0;
   height: 100vh;
   z-index: 100;
+  overflow-y: auto;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease;
 }
 
@@ -470,6 +473,8 @@ body.admin-dashboard-body[data-theme="dark"] {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  margin-left: 250px;
+  width: calc(100% - 250px);
   background: transparent;
 }
 
@@ -2516,6 +2521,10 @@ body.modal-open {
 }
 
 @media (max-width: 768px) {
+  .admin-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
   .admin-sidebar {
     position: fixed;
     left: -250px;
@@ -3632,6 +3641,10 @@ body.admin-login-body {
 @media (max-width: 768px) {
   .admin-layout {
     overflow-x: hidden;
+  }
+  .admin-main {
+    margin-left: 0 !important;
+    width: 100% !important;
   }
   .admin-sidebar {
     position: fixed !important;

@@ -8,7 +8,26 @@
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="apple-touch-icon" href="assets/images/favicon.png" />
   <!-- Security Shield & Immediate Auth Guard: Completely shields DOM until active admin session is verified -->
-  <style id="rf-auth-shield">html { display: none !important; }</style>
+  <style id="rf-auth-shield">html { display: none !important; }
+    /* Permanent Fixed Sidebar: Never scroll when page scrolls */
+    @media (min-width: 769px) {
+      .admin-sidebar,
+      #adminSidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        width: 250px !important;
+        z-index: 100 !important;
+        overflow-y: auto !important;
+      }
+      .admin-main {
+        margin-left: 250px !important;
+        width: calc(100% - 250px) !important;
+      }
+    }
+  </style>
   <script>
     (function () {
       // 1. Immediately hide document to prevent any unauthenticated UI flash
@@ -30,7 +49,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/admin.css?v=v13_remove_turnaround" />
+  <link rel="stylesheet" href="css/admin.css?v=sidebar_fixed_v3" />
   <style id="rf-active-badge-guard">
     /* Instant guard: Never show notification badge on active / open sidebar section */
     .sidebar-link.active .sidebar-badge {
