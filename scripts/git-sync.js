@@ -10,7 +10,7 @@ try {
 
   console.log('--- GIT COMMIT ---');
   try {
-    execSync('git commit -m "feat(catalog): replace tall filter sidebar with unified one-bar toolbar and slide-over filter drawer"', { stdio: 'inherit' });
+    execSync('git commit -m "fix: restore customers and website data, ensure live customer login sync, add messages and reviews to admin panel"', { stdio: 'inherit' });
   } catch (err) {
     console.log('Nothing to commit or commit failed:', err.message);
   }

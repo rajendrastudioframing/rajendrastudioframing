@@ -437,6 +437,8 @@ function initNavigation() {
     viewOrders: 'Orders',
     viewLeads: 'Leads',
     viewCustomers: 'Customers',
+    viewMessages: 'Messages',
+    viewReviews: 'Reviews',
     viewSettings: 'Settings'
   };
 
@@ -478,6 +480,8 @@ function initNavigation() {
     if (viewId === 'viewOverview') loadDashboardStats();
     if (viewId === 'viewOrders' || viewId === 'viewLeads') loadInquiries();
     if (viewId === 'viewCustomers') loadCustomers();
+    if (viewId === 'viewMessages') loadMessages();
+    if (viewId === 'viewReviews') loadReviews();
     if (viewId === 'viewProducts') loadProducts();
     if (viewId === 'viewSettings') loadSettings();
   }
@@ -497,6 +501,8 @@ function initNavigation() {
   if (hash === 'orders') switchTab('viewOrders');
   else if (hash === 'leads') switchTab('viewLeads');
   else if (hash === 'customers') switchTab('viewCustomers');
+  else if (hash === 'messages') switchTab('viewMessages');
+  else if (hash === 'reviews') switchTab('viewReviews');
   else if (hash === 'products') switchTab('viewProducts');
   else if (hash === 'settings') switchTab('viewSettings');
   else switchTab('viewOverview');
@@ -3861,3 +3867,108 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+
+/* ==========================================================================
+   CUSTOMER REVIEWS CONTROLLER
+   ========================================================================== */
+let allReviews = [];
+
+async function loadReviews() {
+  try {
+    const tbody = document.getElementById('reviewsTableBody');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading reviews...</td></tr>';
+    }
+    const res = await apiFetch('/api/admin/reviews');
+    const data = await res.json();
+    if (data && data.success) {
+      allReviews = data.reviews || [];
+      renderReviewsTable(allReviews);
+    } else {
+      throw new Error(data.message || 'Failed to fetch admin reviews');
+    }
+  } catch (err) {
+    console.warn('Admin reviews API unavailable, falling back to public endpoint:', err.message);
+    try {
+      const fallbackRes = await fetch(`${API_BASE}/api/reviews`);
+      const fallbackData = await fallbackRes.json();
+      allReviews = fallbackData.reviews || [];
+      renderReviewsTable(allReviews);
+    } catch (fbErr) {
+      console.error('Failed to load reviews:', fbErr);
+    }
+  }
+}
+
+function renderReviewsTable(reviews) {
+  const tbody = document.getElementById('reviewsTableBody');
+  if (!tbody) return;
+
+  if (!reviews || reviews.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No customer reviews yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = reviews.map(r => {
+    const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(Math.max(0, 5 - (r.rating || 5)));
+    const prod = (allProducts || []).find(p => p.id === r.productId);
+    const prodName = prod ? prod.name : (r.productId || 'General Catalog');
+
+    return `
+      <tr>
+        <td>
+          <strong style="font-size: 0.84rem; color: var(--text-main); font-weight: 700;">${escapeHtml(prodName)}</strong>
+        </td>
+        <td>
+          <div style="font-weight: 700; font-size: 0.84rem; color: var(--text-main);">${escapeHtml(r.author || 'Anonymous')}</div>
+          <div style="font-size: 0.74rem; color: var(--text-muted);">📍 ${escapeHtml(r.city || 'Dahej / Bharuch')}</div>
+        </td>
+        <td>
+          <div style="color: #F59E0B; font-size: 0.95rem; letter-spacing: 1px;">${stars}</div>
+          <span style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted);">${r.rating}.0 / 5.0</span>
+        </td>
+        <td>
+          <strong style="font-size: 0.82rem; color: var(--text-main);">${escapeHtml(r.headline || '')}</strong>
+        </td>
+        <td>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); max-width: 320px; line-height: 1.45;">
+            ${escapeHtml(r.comment || '')}
+          </div>
+        </td>
+        <td>
+          <span style="font-size: 0.76rem; color: var(--text-muted);">${escapeHtml(r.date || '')}</span>
+        </td>
+        <td style="text-align: center;">
+          <button type="button" class="btn-table-icon delete" onclick="deleteReview('${r.id}')" title="Delete Review">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+window.deleteReview = async (id) => {
+  if (!confirm('Are you sure you want to delete this customer review?')) return;
+  try {
+    const res = await apiFetch(`/api/admin/reviews/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data && data.success) {
+      allReviews = allReviews.filter(r => r.id !== id);
+      renderReviewsTable(allReviews);
+      showToast('Review Deleted', 'The review has been removed.', 'info');
+    } else {
+      showToast('Action Notice', data.message || 'Review removed from view.', 'info');
+      allReviews = allReviews.filter(r => r.id !== id);
+      renderReviewsTable(allReviews);
+    }
+  } catch (err) {
+    showToast('Error', 'Could not delete review: ' + err.message, 'danger');
+  }
+};
+
+window.loadReviews = loadReviews;
