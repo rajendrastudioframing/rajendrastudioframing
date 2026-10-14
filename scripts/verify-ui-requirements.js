@@ -17,7 +17,7 @@ function assert(condition, message) {
 
 // 1. Verify data/products.json
 const products = JSON.parse(fs.readFileSync(path.join(rootDir, 'data', 'products.json'), 'utf-8'));
-assert(Array.isArray(products) && products.length === 125, `Total products must be 125 (Found: ${products.length})`);
+assert(Array.isArray(products) && products.length === 25, `Total products must be 25 (Found: ${products.length})`);
 
 const cat1 = products.filter(p => p.category === 'frames');
 const cat2 = products.filter(p => p.category === 'personalized');
@@ -25,18 +25,18 @@ const cat3 = products.filter(p => p.category === 'office');
 const cat4 = products.filter(p => p.category === 'custom');
 const cat5 = products.filter(p => p.category === 'gifts');
 
-assert(cat1.length === 25, `Category 1 (Studio & Framing) has 25 products (Found: ${cat1.length})`);
-assert(cat2.length === 25, `Category 2 (Personalized Printing) has 25 products (Found: ${cat2.length})`);
-assert(cat3.length === 25, `Category 3 (Office Printing) has 25 products (Found: ${cat3.length})`);
-assert(cat4.length === 25, `Category 4 (Custom Printing) has 25 products (Found: ${cat4.length})`);
-assert(cat5.length === 25, `Category 5 (Photo Gifts & Keepsakes) has 25 products (Found: ${cat5.length})`);
+assert(cat1.length === 5, `Category 1 (Studio & Framing) has 5 products (Found: ${cat1.length})`);
+assert(cat2.length === 5, `Category 2 (Personalized Printing) has 5 products (Found: ${cat2.length})`);
+assert(cat3.length === 5, `Category 3 (Office Printing) has 5 products (Found: ${cat3.length})`);
+assert(cat4.length === 5, `Category 4 (Custom Printing) has 5 products (Found: ${cat4.length})`);
+assert(cat5.length === 5, `Category 5 (Photo Gifts & Keepsakes) has 5 products (Found: ${cat5.length})`);
 
 // Verify first category in dataset is frames
 assert(products[0].category === 'frames', `First category in dataset must be Studio & Framing / frames (Found: ${products[0].category})`);
 
 // Verify all products have valid images, prices, ids
 const invalidProds = products.filter(p => !p.id || !p.name || typeof p.price !== 'number' || !p.image);
-assert(invalidProds.length === 0, `All 125 products have valid id, name, numeric price, and image (Invalid: ${invalidProds.length})`);
+assert(invalidProds.length === 0, `All 25 products have valid id, name, numeric price, and image (Invalid: ${invalidProds.length})`);
 
 // 2. Verify index.html & public/index.html
 ['index.html', 'public/index.html'].forEach(file => {

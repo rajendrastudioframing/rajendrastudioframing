@@ -3203,11 +3203,11 @@ const category5_gifts = [
 console.log('Category 5 count:', category5_gifts.length);
 
 const allProducts = [
-  ...category1_frames,
-  ...category2_personalized,
-  ...category3_office,
-  ...category4_custom,
-  ...category5_gifts
+  ...category1_frames.slice(0, 5),
+  ...category2_personalized.slice(0, 5),
+  ...category3_office.slice(0, 5),
+  ...category4_custom.slice(0, 5),
+  ...category5_gifts.slice(0, 5)
 ];
 
 console.log('Total Products Generated:', allProducts.length);
@@ -3244,7 +3244,7 @@ console.log('Successfully written data/products.json with', allProducts.length, 
 // 2. Write js/products-data.js
 const jsContent = `/**
  * RAJENDRA STUDIO & FRAMING - MASTER PRODUCTS CATALOG DATA
- * 5 Categories (25 products each, Total: 125 products)
+ * 5 Categories (5 products each, Total: 25 products)
  */
 
 const PRODUCTS_DATA = ${JSON.stringify(allProducts, null, 2)};
