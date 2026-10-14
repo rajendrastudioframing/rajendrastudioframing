@@ -543,22 +543,22 @@
 /* 4 Columns in Main Content on Desktop */
 .catalog-main-content .products-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr) !important;
-  gap: 16px !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 12px !important;
   width: 100%;
 }
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 991px) and (min-width: 768px) {
   .catalog-main-content .products-grid,
   .products-grid {
     grid-template-columns: repeat(3, 1fr) !important;
-    gap: 16px !important;
+    gap: 12px !important;
   }
 }
 
