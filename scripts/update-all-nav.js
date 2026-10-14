@@ -3,10 +3,10 @@ const path = require('path');
 
 const rootDir = path.join(__dirname, '..');
 
-// Desktop Navigation Menu (5 items)
+// Desktop Navigation Menu
 function getDesktopNav(activeItem) {
   return `
-        <!-- Desktop Navigation Menu (5 Items Required) -->
+        <!-- Desktop Navigation Menu -->
         <ul class="nav-menu">
           <li>
             <a href="categories" class="nav-link ${activeItem === 'categories' ? 'active' : ''}" title="Categories">
@@ -27,6 +27,17 @@ function getDesktopNav(activeItem) {
                 <path d="M16 10a4 4 0 0 1-8 0"></path>
               </svg>
               <span>Products</span>
+            </a>
+          </li>
+          <li>
+            <a href="orders" class="nav-link ${activeItem === 'orders' ? 'active' : ''}" title="Orders">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+              <span>Orders</span>
             </a>
           </li>
           <li>
@@ -133,9 +144,10 @@ function getDrawerNav(activeItem) {
       <li><a href="/" class="nav-link ${activeItem === 'home' ? 'active' : ''}">Home</a></li>
       <li><a href="categories" class="nav-link ${activeItem === 'categories' ? 'active' : ''}">Categories</a></li>
       <li><a href="products" class="nav-link ${activeItem === 'products' ? 'active' : ''}">Products</a></li>
+      <li><a href="orders" class="nav-link ${activeItem === 'orders' ? 'active' : ''}">My Orders</a></li>
+      <li><a href="track-order" class="nav-link ${activeItem === 'track-order' ? 'active' : ''}">Track Order</a></li>
       <li><a href="about" class="nav-link ${activeItem === 'about' ? 'active' : ''}">About Us</a></li>
       <li><a href="contact" class="nav-link ${activeItem === 'contact' ? 'active' : ''}">Contact Us</a></li>
-      <li><a href="track-order" class="nav-link ${activeItem === 'track-order' ? 'active' : ''}">Track Order</a></li>
     </ul>
   `.trim();
 }
@@ -145,10 +157,11 @@ const pages = [
   { file: 'categories.html', active: 'categories' },
   { file: 'products.html', active: 'products' },
   { file: 'product-detail.html', active: 'products' },
+  { file: 'orders.html', active: 'orders' },
   { file: 'checkout.html', active: 'cart' },
   { file: 'about.html', active: 'about' },
   { file: 'contact.html', active: 'contact' },
-  { file: 'track-order.html', active: 'profile' }
+  { file: 'track-order.html', active: 'track-order' }
 ];
 
 pages.forEach(({ file, active }) => {
@@ -174,36 +187,8 @@ pages.forEach(({ file, active }) => {
       html = html.replace('</body>', `${getMobileBottomNav(active)}\n</body>`);
     }
 
-    // Special for products.html: update sidebar category filters to all 5 categories
-    if (file === 'products.html') {
-      const filtersRegex = /<div class="catalog-filters sidebar-filters">[\s\S]*?<\/div>/;
-      const updatedFilters = `
-                <div class="catalog-filters sidebar-filters">
-                  <button type="button" class="filter-btn sidebar-filter-btn active" data-filter="all">
-                    <span>All Products</span>
-                  </button>
-                  <button type="button" class="filter-btn sidebar-filter-btn" data-filter="frames">
-                    <span>Studio &amp; Framing</span>
-                  </button>
-                  <button type="button" class="filter-btn sidebar-filter-btn" data-filter="personalized">
-                    <span>Personalized Printing</span>
-                  </button>
-                  <button type="button" class="filter-btn sidebar-filter-btn" data-filter="office">
-                    <span>Office Printing</span>
-                  </button>
-                  <button type="button" class="filter-btn sidebar-filter-btn" data-filter="custom">
-                    <span>Custom Printing</span>
-                  </button>
-                  <button type="button" class="filter-btn sidebar-filter-btn" data-filter="gifts">
-                    <span>Photo Gifts &amp; Keepsakes</span>
-                  </button>
-                </div>
-      `.trim();
-      html = html.replace(filtersRegex, updatedFilters);
-    }
-
+    console.log(`Updating navigation for: ${path.basename(targetPath)}`);
     fs.writeFileSync(targetPath, html, 'utf-8');
-    console.log(`Updated navigation for: ${targetPath}`);
   });
 });
 

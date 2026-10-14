@@ -6,11 +6,11 @@
    - Mobile Fixed Bottom Navigation Bar (5 Items)
    ========================================================================== */
 
-/* --- 1. DESKTOP 5-ITEM TOP NAVIGATION MENU --- */
+/* --- 1. DESKTOP TOP NAVIGATION MENU --- */
 .nav-menu {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -26,13 +26,14 @@
   font-weight: 600;
   color: #1F2937;
   text-decoration: none;
-  padding: 8px 12px;
+  padding: 8px 11px;
   border-radius: 8px;
   background: none;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  white-space: nowrap;
 }
 
 .nav-menu .nav-link svg,
@@ -87,6 +88,23 @@
 /* --- 2. MOBILE FIXED BOTTOM NAVIGATION BAR (5 ITEMS) --- */
 .mobile-bottom-nav {
   display: none; /* Hidden on laptop/desktop */
+}
+
+/* Intermediate desktop breakpoint to ensure 6 nav items never wrap or crowd header */
+@media (max-width: 1240px) and (min-width: 992px) {
+  .nav-menu {
+    gap: 10px;
+  }
+  .nav-menu .nav-link,
+  .nav-menu .nav-item-btn {
+    padding: 6px 9px;
+    font-size: 0.875rem;
+    gap: 5px;
+  }
+  .navbar-actions .navbar-quote-btn {
+    padding: 7px 12px;
+    font-size: 0.8125rem;
+  }
 }
 
 @media (max-width: 991px) {
