@@ -811,6 +811,19 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
     }
   }
 
+  // If order is Confirmed / Accepted by Admin, dispatch via order@rajendrastudioandgifts.in
+  const isAcceptedStatusInNotice = (newStatus === 'Confirmed' || newStatus === 'Accepted' || newStatus === 'In Progress');
+  if (isAcceptedStatusInNotice) {
+    try {
+      const acceptedResult = await emailService.notifyOrderAcceptedByAdmin({ order: orderOrInquiry, notes, req });
+      if (acceptedResult && acceptedResult.sent) {
+        return acceptedResult;
+      }
+    } catch (e) {
+      console.warn('⚠️ [Brevo Order Accepted Warning in sendCustomerOrderNotification]:', e.message);
+    }
+  }
+
   try {
     const config = await db.getAdminConfig();
     const transporter = createTransporter(config);
@@ -2284,9 +2297,9 @@ app.post('/api/orders', async (req, res) => {
       }
     }
 
-    // Send instant Order Alert email to Studio Admin (shop@rajendrastudioandgifts.in) via Brevo
-    emailService.notifyNewOrderPlaced({ order: newOrder, req })
-      .catch(err => console.warn('Brevo new order alert warning:', err.message));
+    // Send Order Confirmation & Alerts via order@rajendrastudioandgifts.in Brevo Channel
+    emailService.notifyOrderConfirmation({ order: newOrder, req })
+      .catch(err => console.warn('Brevo order confirmation warning:', err.message));
 
     // Send instant Order Alert email to Studio Admin
     try {
@@ -2635,10 +2648,14 @@ async function handleUpdateOrderStatus(req, res) {
     // Trigger customer & shop notification email
     let emailResult = { sent: false };
     const isPickupReady = (status === 'Shipped' || status === 'Pickup Ready' || status === 'Ready for Pickup' || (notes && notes.toLowerCase().includes('pick up')));
+    const isAcceptedStatus = (status === 'Confirmed' || status === 'Accepted' || status === 'In Progress');
 
     if (isPickupReady) {
       console.log(`🛍️ [PICKUP READY TRIGGERED] Sending pick up email for order #${cleanId} via Brevo...`);
       emailResult = await emailService.notifyOrderPickupReady({ order: targetObj, notes, req });
+    } else if (isAcceptedStatus) {
+      console.log(`🎨 [ORDER ACCEPTED TRIGGERED] Sending order accepted email for order #${cleanId} via order@rajendrastudioandgifts.in...`);
+      emailResult = await emailService.notifyOrderAcceptedByAdmin({ order: targetObj, notes, req });
     } else if (notifyCustomer !== false) {
       emailResult = await sendCustomerOrderNotification(targetObj, status, notes, req);
     }

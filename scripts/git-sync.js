@@ -10,7 +10,7 @@ try {
 
   console.log('--- GIT COMMIT ---');
   try {
-    execSync('git commit -m "feat(email): integrate Brevo transactional emails for customer login, admin login, and order pickup ready notifications to shop@rajendrastudioandgifts.in"', { stdio: 'inherit' });
+    execSync('git commit -m "feat(email): add dedicated Brevo channel for order confirmations and admin order acceptance via order@rajendrastudioandgifts.in"', { stdio: 'inherit' });
   } catch (err) {
     console.log('Nothing to commit or commit failed:', err.message);
   }

@@ -17,6 +17,12 @@ const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || 'shop@rajendrastudioandgi
 const SENDER_NAME = process.env.BREVO_SENDER_NAME || 'Rajendra Studio & Gifts';
 const SHOP_ALERT_EMAIL = process.env.SHOP_NOTIFICATION_EMAIL || 'shop@rajendrastudioandgifts.in';
 
+// Brevo Channel 2: Order Confirmations & Admin Order Acceptance
+const BREVO_ORDER_API_KEY = process.env.BREVO_ORDER_API_KEY || '';
+const ORDER_SENDER_EMAIL = process.env.BREVO_ORDER_EMAIL || 'order@rajendrastudioandgifts.in';
+const ORDER_SENDER_NAME = process.env.BREVO_ORDER_NAME || 'Rajendra Studio Orders';
+const ORDER_ALERT_EMAIL = process.env.ORDER_NOTIFICATION_EMAIL || 'order@rajendrastudioandgifts.in';
+
 const STUDIO_INFO = {
   name: 'Rajendra Studio & Framing',
   tagline: 'Custom Framing & Gifts Studio • Dahej Support',
@@ -30,7 +36,7 @@ const STUDIO_INFO = {
 /**
  * Core Brevo API Dispatcher
  */
-function sendBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, replyTo = null, sender = null }) {
+function sendBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, replyTo = null, sender = null, apiKey = null }) {
   return new Promise((resolve, reject) => {
     try {
       const recipients = Array.isArray(to) ? to : [{ email: to }];
@@ -72,7 +78,7 @@ function sendBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, rep
         method: 'POST',
         headers: {
           'accept': 'application/json',
-          'api-key': BREVO_API_KEY,
+          'api-key': apiKey || BREVO_API_KEY,
           'content-type': 'application/json',
           'content-length': Buffer.byteLength(postData)
         },
@@ -715,8 +721,403 @@ async function notifyNewOrderPlaced({ order, req = null }) {
   });
 }
 
+
+/**
+ * Dedicated Brevo Order Channel Dispatcher
+ * Dispatches strictly from order@rajendrastudioandgifts.in using Order API Key
+ */
+function sendOrderBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, replyTo = null, sender = null }) {
+  const orderKey = BREVO_ORDER_API_KEY || BREVO_API_KEY;
+  const orderSender = sender || { name: ORDER_SENDER_NAME, email: ORDER_SENDER_EMAIL };
+  return sendBrevoEmail({
+    to,
+    subject,
+    htmlContent,
+    textContent,
+    bcc,
+    replyTo: replyTo || ORDER_SENDER_EMAIL,
+    sender: orderSender,
+    apiKey: orderKey
+  });
+}
+
+
+/**
+ * 7. ORDER CONFIRMATION NOTIFICATION (via order@rajendrastudioandgifts.in)
+ * Dispatched when a customer places an order or an order is confirmed
+ */
+async function notifyOrderConfirmation({ order, req = null }) {
+  if (!order) return { success: false, reason: 'No order provided' };
+
+  const orderId = order.orderId || order.id || 'N/A';
+  const cleanId = orderId.toString().replace(/^#/, '');
+  const customerName = (order.customer && order.customer.name) || order.name || 'Valued Customer';
+  const customerEmail = (order.customer && order.customer.email) || order.email || '';
+  const customerPhone = (order.customer && order.customer.phone) || order.phone || '';
+  const total = order.total || order.estimatedValue || 0;
+  const paymentMethod = order.paymentMethod || 'Pick up from shop';
+
+  const protocol = (req && (req.headers['x-forwarded-proto'] || req.protocol)) || 'https';
+  const host = (req && req.get('host')) || 'rajendrastudioandgifts.in';
+  const trackingUrl = `${protocol}://${host}/track-order.html?id=${encodeURIComponent(cleanId)}`;
+
+  const timeIST = new Date().toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    dateStyle: 'full',
+    timeStyle: 'short'
+  }) + ' IST';
+
+  let items = [];
+  if (order.items && Array.isArray(order.items)) {
+    items = order.items;
+  } else if (order.product) {
+    items = [{
+      name: order.product.replace('[ONLINE ORDER]', '').trim(),
+      quantity: order.quantity || 1,
+      price: order.estimatedValue || total
+    }];
+  }
+
+  const itemsHtml = items.map(item => `
+    <tr>
+      <td style="padding: 10px 14px; border-bottom: 1px solid #EFEAE0; font-size: 14px; color: #111;">
+        <strong>${item.name || 'Custom Photo Frame'}</strong>
+        ${item.size ? `<br><span style="font-size: 12px; color: #777;">Size: ${item.size}</span>` : ''}
+        ${item.finish ? `<br><span style="font-size: 12px; color: #777;">Finish: ${item.finish}</span>` : ''}
+      </td>
+      <td style="padding: 10px 14px; border-bottom: 1px solid #EFEAE0; font-size: 14px; text-align: center; color: #444;">x${item.quantity || 1}</td>
+      <td style="padding: 10px 14px; border-bottom: 1px solid #EFEAE0; font-size: 14px; text-align: right; font-weight: 700; color: #111;">₹${item.price || (total / (item.quantity || 1))}</td>
+    </tr>
+  `).join('');
+
+  // A) Customer Confirmation Email
+  const customerSubject = `🎉 Order #${cleanId} Confirmed - Rajendra Studio & Framing`;
+  const customerHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F6F0; margin:0; padding:24px; color:#111;">
+      <div style="max-width: 600px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid #E5E0D5; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+        <div style="background: #111; padding: 26px 28px; text-align: center; border-bottom: 3px solid #C99A3D;">
+          <h2 style="color: #fff; margin:0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">
+            RAJENDRA <span style="color: #C99A3D;">STUDIO &amp; FRAMING</span>
+          </h2>
+          <div style="color: #C5A880; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 5px;">
+            Order Confirmation Desk • Dahej Support
+          </div>
+        </div>
+        <div style="background: #ECFDF5; padding: 22px 24px; text-align: center; border-bottom: 1px solid #A7F3D0;">
+          <div style="display: inline-block; background: #059669; color: #fff; font-weight: 800; font-size: 12px; letter-spacing: 1px; padding: 5px 14px; border-radius: 999px; text-transform: uppercase; margin-bottom: 8px;">
+            ✓ ORDER CONFIRMED
+          </div>
+          <h1 style="margin: 0 0 6px; font-size: 22px; font-weight: 800; color: #065F46;">
+            Thank You for Your Order!
+          </h1>
+          <p style="margin: 0; font-size: 14px; color: #047857;">
+            Order ID: <strong>#${cleanId}</strong> • Placed on ${timeIST}
+          </p>
+        </div>
+        <div style="padding: 28px;">
+          <p style="font-size: 15px; color: #333; margin-top: 0;">
+            Dear <strong>${customerName}</strong>,
+          </p>
+          <p style="font-size: 14px; color: #555; line-height: 1.6;">
+            Your order <strong>#${cleanId}</strong> has been successfully confirmed at Rajendra Studio &amp; Framing. Our team will handcraft and prepare your custom frames with utmost care and precision.
+          </p>
+          <h4 style="margin: 20px 0 10px; font-size: 14px; color: #111; text-transform: uppercase;">Order Items</h4>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px; background: #FAF9F6; border-radius: 8px; border: 1px solid #EFEAE0;">
+            <thead>
+              <tr style="background: #F1ECE1;">
+                <th style="padding: 10px 14px; text-align: left; font-size: 12px; color: #666; text-transform: uppercase;">Item</th>
+                <th style="padding: 10px 14px; text-align: center; font-size: 12px; color: #666; text-transform: uppercase;">Qty</th>
+                <th style="padding: 10px 14px; text-align: right; font-size: 12px; color: #666; text-transform: uppercase;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              <tr>
+                <td colspan="2" style="padding: 12px 14px; font-weight: 800; font-size: 15px; text-align: right; color: #111;">Total Amount:</td>
+                <td style="padding: 12px 14px; font-weight: 800; font-size: 17px; text-align: right; color: #8C6A1E;">₹${total}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding: 8px 14px; font-size: 13px; color: #666; text-align: right;">Payment Method:</td>
+                <td style="padding: 8px 14px; font-size: 13px; font-weight: 600; text-align: right; color: #111;">${paymentMethod}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="text-align: center; margin: 24px 0 10px;">
+            <a href="${trackingUrl}" style="display: inline-block; background: #111; color: #C99A3D; font-weight: 800; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 14px; border: 1px solid #C99A3D;">
+              Track Order Live &rarr;
+            </a>
+          </div>
+        </div>
+        <div style="background: #FAF8F5; padding: 16px 24px; text-align: center; font-size: 11px; color: #888; border-top: 1px solid #E5E0D5;">
+          ${STUDIO_INFO.name} • ${STUDIO_INFO.address}<br>
+          Direct Order Desk: ${ORDER_SENDER_EMAIL} • Helpline: ${STUDIO_INFO.phone}
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // B) Order Admin Alert Email (sent to order@rajendrastudioandgifts.in)
+  const orderAlertSubject = `🛒 [Order Confirmed] #${cleanId} from ${customerName} (₹${total})`;
+  const orderAlertHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F6F0; margin:0; padding:24px; color:#111;">
+      <div style="max-width: 580px; margin: 0 auto; background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid #E5E0D5;">
+        <div style="background: #111; padding: 20px 24px; border-bottom: 3px solid #C99A3D; text-align: center;">
+          <h2 style="color: #fff; margin:0; font-size: 18px; text-transform: uppercase;">
+            RAJENDRA <span style="color: #C99A3D;">STUDIO ORDERS</span>
+          </h2>
+          <div style="color: #A0A5B1; font-size: 11px;">New Confirmed Order Alert</div>
+        </div>
+        <div style="padding: 24px;">
+          <div style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; margin-bottom: 14px;">
+            🛒 NEW ORDER CONFIRMED
+          </div>
+          <h3 style="margin: 0 0 10px;">Order #${cleanId} Confirmed</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; background: #FAF9F6; border: 1px solid #EFEAE0; margin: 14px 0;">
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; width: 130px; border-bottom: 1px solid #EFEAE0;">Order ID:</td><td style="padding: 10px 14px; font-weight: 700; color: #8C6A1E; border-bottom: 1px solid #EFEAE0;">#${cleanId}</td></tr>
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Customer:</td><td style="padding: 10px 14px; font-weight: 700; color: #111; border-bottom: 1px solid #EFEAE0;">${customerName}</td></tr>
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Email:</td><td style="padding: 10px 14px; color: #111; border-bottom: 1px solid #EFEAE0;">${customerEmail || 'N/A'}</td></tr>
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Phone:</td><td style="padding: 10px 14px; color: #111; border-bottom: 1px solid #EFEAE0;">${customerPhone || 'N/A'}</td></tr>
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Total Amount:</td><td style="padding: 10px 14px; font-weight: 700; color: #111; border-bottom: 1px solid #EFEAE0;">₹${total}</td></tr>
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666;">Payment:</td><td style="padding: 10px 14px; color: #111;">${paymentMethod}</td></tr>
+          </table>
+          <div style="text-align: center; margin-top: 18px;">
+            <a href="https://rajendrastudioandgifts.in/admin#orders" style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 11px 22px; border-radius: 8px; font-size: 13px; font-weight: 700;">Open in Admin Panel &rarr;</a>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const promises = [
+    sendOrderBrevoEmail({
+      to: ORDER_ALERT_EMAIL,
+      subject: orderAlertSubject,
+      htmlContent: orderAlertHtml,
+      textContent: `Order #${cleanId} Confirmed from ${customerName} (${customerPhone}). Total: ₹${total}`
+    })
+  ];
+
+  if (customerEmail && customerEmail.includes('@')) {
+    promises.push(
+      sendOrderBrevoEmail({
+        to: customerEmail,
+        subject: customerSubject,
+        htmlContent: customerHtml,
+        textContent: `Hello ${customerName}, your order #${cleanId} has been confirmed at Rajendra Studio & Framing. Total: ₹${total}. Track online: ${trackingUrl}`
+      })
+    );
+  }
+
+  await Promise.allSettled(promises);
+  return { success: true, sent: true, recipient: customerEmail, orderNotified: true };
+}
+
+/**
+ * 8. ORDER ACCEPTED BY ADMIN (via order@rajendrastudioandgifts.in)
+ * Dispatched when Admin clicks "Accept Order" or status is updated to Confirmed / Accepted / In Progress
+ */
+async function notifyOrderAcceptedByAdmin({ order, notes = '', req = null }) {
+  if (!order) return { success: false, reason: 'No order provided' };
+
+  const orderId = order.orderId || order.id || 'N/A';
+  const cleanId = orderId.toString().replace(/^#/, '');
+  const customerName = (order.customer && order.customer.name) || order.name || 'Valued Customer';
+  const customerEmail = (order.customer && order.customer.email) || order.email || '';
+  const customerPhone = (order.customer && order.customer.phone) || order.phone || '';
+  const total = order.total || order.estimatedValue || 0;
+  const paymentMethod = order.paymentMethod || 'Pick up from shop';
+
+  const protocol = (req && (req.headers['x-forwarded-proto'] || req.protocol)) || 'https';
+  const host = (req && req.get('host')) || 'rajendrastudioandgifts.in';
+  const trackingUrl = `${protocol}://${host}/track-order.html?id=${encodeURIComponent(cleanId)}`;
+
+  const timeIST = new Date().toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    dateStyle: 'full',
+    timeStyle: 'short'
+  }) + ' IST';
+
+  let items = [];
+  if (order.items && Array.isArray(order.items)) {
+    items = order.items;
+  } else if (order.product) {
+    items = [{
+      name: order.product.replace('[ONLINE ORDER]', '').trim(),
+      quantity: order.quantity || 1,
+      price: order.estimatedValue || total
+    }];
+  }
+
+  const itemsHtml = items.map(item => `
+    <tr>
+      <td style="padding: 10px 14px; border-bottom: 1px solid #EFEAE0; font-size: 14px; color: #111;">
+        <strong>${item.name || 'Custom Photo Frame'}</strong>
+        ${item.size ? `<br><span style="font-size: 12px; color: #777;">Size: ${item.size}</span>` : ''}
+        ${item.finish ? `<br><span style="font-size: 12px; color: #777;">Finish: ${item.finish}</span>` : ''}
+      </td>
+      <td style="padding: 10px 14px; border-bottom: 1px solid #EFEAE0; font-size: 14px; text-align: center; color: #444;">x${item.quantity || 1}</td>
+      <td style="padding: 10px 14px; border-bottom: 1px solid #EFEAE0; font-size: 14px; text-align: right; font-weight: 700; color: #111;">₹${item.price || (total / (item.quantity || 1))}</td>
+    </tr>
+  `).join('');
+
+  // A) Customer Accepted & Production Started Email
+  const customerSubject = `🎨 Order #${cleanId} Accepted & In Production! - Rajendra Studio`;
+  const customerHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F6F0; margin:0; padding:24px; color:#111;">
+      <div style="max-width: 600px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid #E5E0D5; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+        <div style="background: #111; padding: 26px 28px; text-align: center; border-bottom: 3px solid #C99A3D;">
+          <h2 style="color: #fff; margin:0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">
+            RAJENDRA <span style="color: #C99A3D;">STUDIO &amp; FRAMING</span>
+          </h2>
+          <div style="color: #C5A880; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 5px;">
+            Master Framing &bull; Production Update
+          </div>
+        </div>
+        <div style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); padding: 24px; text-align: center; border-bottom: 1px solid #A7F3D0;">
+          <div style="display: inline-block; background: #059669; color: #fff; font-weight: 800; font-size: 12px; letter-spacing: 1px; padding: 5px 14px; border-radius: 999px; text-transform: uppercase; margin-bottom: 8px;">
+            🎨 ORDER ACCEPTED &bull; IN PRODUCTION
+          </div>
+          <h1 style="margin: 0 0 6px; font-size: 22px; font-weight: 800; color: #065F46;">
+            Your Order Has Been Accepted!
+          </h1>
+          <p style="margin: 0; font-size: 14px; color: #047857;">
+            Order ID: <strong>#${cleanId}</strong> &bull; Production Started at ${timeIST}
+          </p>
+        </div>
+        <div style="padding: 28px;">
+          <p style="font-size: 15px; color: #333; margin-top: 0;">
+            Dear <strong>${customerName}</strong>,
+          </p>
+          <p style="font-size: 14px; color: #555; line-height: 1.6;">
+            Great news! Your custom framed artwork for order <strong>#${cleanId}</strong> has been officially reviewed and <strong>accepted by our master framing team</strong>. It is now in active framing, mounting, and quality production.
+          </p>
+          ${notes ? `
+          <div style="background: #F0FDF4; border-left: 4px solid #16A34A; padding: 12px 16px; margin: 18px 0; border-radius: 4px; font-size: 13px; color: #166534;">
+            <strong>Studio Note:</strong> ${notes}
+          </div>
+          ` : ''}
+          <div style="background: #FAF8F5; border: 1px solid #EAE5DB; border-radius: 10px; padding: 18px; margin: 20px 0;">
+            <div style="font-size: 13px; font-weight: 700; color: #111; margin-bottom: 6px;">Next Step: Workshop Crafting &amp; Quality Inspection</div>
+            <div style="font-size: 13px; color: #666; line-height: 1.5;">
+              Our artisans are precision-cutting, joining, and sealing your frame. Once inspection is complete, you will receive an instant notification that your order is ready for collection at our studio shop.
+            </div>
+          </div>
+          <h4 style="margin: 20px 0 10px; font-size: 14px; color: #111; text-transform: uppercase;">Order Summary</h4>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px; background: #FAF9F6; border-radius: 8px; border: 1px solid #EFEAE0;">
+            <thead>
+              <tr style="background: #F1ECE1;">
+                <th style="padding: 10px 14px; text-align: left; font-size: 12px; color: #666; text-transform: uppercase;">Item</th>
+                <th style="padding: 10px 14px; text-align: center; font-size: 12px; color: #666; text-transform: uppercase;">Qty</th>
+                <th style="padding: 10px 14px; text-align: right; font-size: 12px; color: #666; text-transform: uppercase;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              <tr>
+                <td colspan="2" style="padding: 12px 14px; font-weight: 800; font-size: 15px; text-align: right; color: #111;">Total Amount:</td>
+                <td style="padding: 12px 14px; font-weight: 800; font-size: 17px; text-align: right; color: #8C6A1E;">₹${total}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding: 8px 14px; font-size: 13px; color: #666; text-align: right;">Payment Mode:</td>
+                <td style="padding: 8px 14px; font-size: 13px; font-weight: 600; text-align: right; color: #111;">${paymentMethod}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="text-align: center; margin: 24px 0 10px;">
+            <a href="${trackingUrl}" style="display: inline-block; background: #111; color: #C99A3D; font-weight: 800; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 14px; border: 1px solid #C99A3D;">
+              Track Order Status Online &rarr;
+            </a>
+          </div>
+        </div>
+        <div style="background: #FAF8F5; padding: 16px 24px; text-align: center; font-size: 11px; color: #888; border-top: 1px solid #E5E0D5;">
+          ${STUDIO_INFO.name} • ${STUDIO_INFO.address}<br>
+          Order Support: ${ORDER_SENDER_EMAIL} • Phone: ${STUDIO_INFO.phone}
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // B) Order Admin Alert (sent to order@rajendrastudioandgifts.in)
+  const adminSubject = `🎨 [Order Accepted] #${cleanId} Moved to Production - ${customerName}`;
+  const adminHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F6F0; margin:0; padding:24px; color:#111;">
+      <div style="max-width: 580px; margin: 0 auto; background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid #E5E0D5;">
+        <div style="background: #111; padding: 20px 24px; border-bottom: 3px solid #C99A3D; text-align: center;">
+          <h2 style="color: #fff; margin:0; font-size: 18px; text-transform: uppercase;">
+            RAJENDRA <span style="color: #C99A3D;">STUDIO ORDERS</span>
+          </h2>
+          <div style="color: #A0A5B1; font-size: 11px;">Admin Order Acceptance Log</div>
+        </div>
+        <div style="padding: 24px;">
+          <div style="background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; margin-bottom: 14px;">
+            🎨 ORDER ACCEPTED &bull; MOVED TO PRODUCTION
+          </div>
+          <h3 style="margin: 0 0 10px;">Order #${cleanId} Accepted by Admin</h3>
+          <p style="font-size: 14px; color: #555; line-height: 1.5;">
+            An order was accepted and marked In Production. Notification sent to customer from <strong>${ORDER_SENDER_EMAIL}</strong>:
+          </p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; background: #FAF9F6; border: 1px solid #EFEAE0; margin: 14px 0;">
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; width: 130px; border-bottom: 1px solid #EFEAE0;">Order ID:</td><td style="padding: 10px 14px; font-weight: 700; color: #8C6A1E; border-bottom: 1px solid #EFEAE0;">#${cleanId}</td></tr>
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Customer:</td><td style="padding: 10px 14px; font-weight: 700; color: #111; border-bottom: 1px solid #EFEAE0;">${customerName}</td></tr>
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Email:</td><td style="padding: 10px 14px; color: #111; border-bottom: 1px solid #EFEAE0;">${customerEmail || 'N/A'}</td></tr>
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Phone:</td><td style="padding: 10px 14px; color: #111; border-bottom: 1px solid #EFEAE0;">${customerPhone || 'N/A'}</td></tr>
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Total:</td><td style="padding: 10px 14px; font-weight: 700; color: #111; border-bottom: 1px solid #EFEAE0;">₹${total}</td></tr>
+            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666;">Status Update:</td><td style="padding: 10px 14px; color: #111;">Accepted / In Production (${timeIST})</td></tr>
+          </table>
+          ${notes ? `<div style="font-size: 13px; color: #555; background: #FFFBEB; padding: 10px 14px; border-radius: 6px; border: 1px solid #FDE68A; margin-bottom: 18px;"><strong>Note:</strong> ${notes}</div>` : ''}
+          <div style="text-align: center; margin-top: 18px;">
+            <a href="https://rajendrastudioandgifts.in/admin#orders" style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 11px 22px; border-radius: 8px; font-size: 13px; font-weight: 700;">View in Admin Panel &rarr;</a>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const promises = [
+    sendOrderBrevoEmail({
+      to: ORDER_ALERT_EMAIL,
+      subject: adminSubject,
+      htmlContent: adminHtml,
+      textContent: `Order #${cleanId} accepted by admin and moved to production. Customer: ${customerName} (${customerPhone}). Total: ₹${total}`
+    })
+  ];
+
+  if (customerEmail && customerEmail.includes('@')) {
+    promises.push(
+      sendOrderBrevoEmail({
+        to: customerEmail,
+        subject: customerSubject,
+        htmlContent: customerHtml,
+        textContent: `Hello ${customerName}, your order #${cleanId} has been accepted and moved to framing production at Rajendra Studio. Track online: ${trackingUrl}`
+      })
+    );
+  }
+
+  await Promise.allSettled(promises);
+  return { success: true, sent: true, recipient: customerEmail, orderNotified: true };
+}
+
 module.exports = {
   sendBrevoEmail,
+  sendOrderBrevoEmail,
+  notifyOrderConfirmation,
+  notifyOrderAcceptedByAdmin,
   notifyCustomerLogin,
   notifyAdminLogin,
   notifyOrderPickupReady,
