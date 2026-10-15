@@ -103,6 +103,59 @@ function writeJson(filePath, data) {
   }
 }
 
+/**
+ * Automatically sync static JS catalog files whenever products are created, modified, or deleted
+ */
+function syncProductsDataFiles(products) {
+  try {
+    const businessInfo = {
+      name: "Rajendra Studio & Framing",
+      tagline: "Frames, Printing & Personalized Products",
+      phone: "+91 96015 74966",
+      phoneRaw: "+919601574966",
+      whatsapp: "+91 96015 74966",
+      whatsappNumber: "919601574966",
+      email: "rajendrastudioframing@gmail.com",
+      address: "Dahej GIDC, Bharuch, Gujarat 392130",
+      workingHours: "Mon - Sat: 9:30 AM - 8:30 PM | Sun: 10:00 AM - 2:00 PM",
+      establishedYear: 2008,
+      framesCrafted: "25,000+",
+      satisfiedClients: "18,500+",
+      ratingScore: "4.9 / 5.0"
+    };
+
+    const fileContent = `/**
+ * RAJENDRA STUDIO & FRAMING - MASTER PRODUCTS CATALOG DATA
+ * Total: ${products.length} products - Auto-synced from Admin Panel
+ */
+
+const PRODUCTS_DATA = ${JSON.stringify(products, null, 2)};
+
+// Business contact data
+const BUSINESS_INFO = ${JSON.stringify(businessInfo, null, 2)};
+
+// Export for module environments if needed
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { PRODUCTS_DATA, BUSINESS_INFO };
+}
+`;
+
+    const publicPath = path.join(__dirname, '..', 'public', 'js', 'products-data.js');
+    const rootPath = path.join(__dirname, '..', 'js', 'products-data.js');
+
+    if (!process.env.VERCEL) {
+      if (fs.existsSync(path.dirname(publicPath))) {
+        fs.writeFileSync(publicPath, fileContent, 'utf8');
+      }
+      if (fs.existsSync(path.dirname(rootPath))) {
+        fs.writeFileSync(rootPath, fileContent, 'utf8');
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ [DATABASE] Failed to sync products-data.js:', err.message);
+  }
+}
+
 // Initialize Supabase Client if env variables are present
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
@@ -188,30 +241,65 @@ module.exports = {
 
   async saveProduct(product) {
     if (supabase) {
-      const { data, error } = await supabase.from('products').upsert(product).select().single();
-      if (!error) return data;
-      console.warn('Supabase saveProduct error, writing local:', error?.message);
+      try {
+        const supabaseRow = {
+          id: product.id,
+          name: product.name,
+          category: product.category,
+          category_label: product.categoryLabel || product.category_label || product.category,
+          price: product.price,
+          price_display: product.priceDisplay || product.price_display || `Starting from ₹${product.price}`,
+          rating: product.rating !== undefined ? product.rating : 5.0,
+          reviews_count: product.reviewsCount || product.reviews_count || 1,
+          badge: product.badge || '',
+          image: product.image,
+          short_description: product.shortDescription || product.short_description || '',
+          description: product.description || product.shortDescription || '',
+          material: product.material || '',
+          printing_type: product.printingType || product.printing_type || '',
+          status: product.status || 'In Stock',
+          lead_time: product.leadTime || product.lead_time || '24 - 48 Hours',
+          sizes: product.sizes || [],
+          finishes: product.finishes || []
+        };
+        const { error } = await supabase.from('products').upsert(supabaseRow, { onConflict: 'id' });
+        if (error) {
+          console.warn('⚠️ [DATABASE] Supabase saveProduct warning:', error.message);
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase saveProduct exception:', err.message);
+      }
     }
+
     const products = readJson(PRODUCTS_FILE, []);
     const idx = products.findIndex(p => p.id === product.id);
+    let updated;
     if (idx !== -1) {
-      products[idx] = { ...products[idx], ...product };
+      updated = { ...products[idx], ...product };
+      products[idx] = updated;
     } else {
-      products.push(product);
+      updated = { ...product };
+      products.push(updated);
     }
     writeJson(PRODUCTS_FILE, products);
-    return product;
+    syncProductsDataFiles(products);
+    return updated;
   },
 
   async deleteProduct(id) {
     if (supabase) {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (!error) return true;
-      console.warn('Supabase deleteProduct error:', error?.message);
+      try {
+        const { error } = await supabase.from('products').delete().eq('id', id);
+        if (error) console.warn('⚠️ [DATABASE] Supabase deleteProduct warning:', error.message);
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase deleteProduct exception:', err.message);
+      }
     }
     let products = readJson(PRODUCTS_FILE, []);
     products = products.filter(p => p.id !== id);
-    return writeJson(PRODUCTS_FILE, products);
+    writeJson(PRODUCTS_FILE, products);
+    syncProductsDataFiles(products);
+    return true;
   },
 
   // --- ORDERS ---

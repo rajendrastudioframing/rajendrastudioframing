@@ -1,6 +1,6 @@
 /**
  * RAJENDRA STUDIO & FRAMING - MASTER PRODUCTS CATALOG DATA
- * 5 Categories (5 products each, Total: 25 products)
+ * Total: 25 products - Auto-synced from Admin Panel
  */
 
 const PRODUCTS_DATA = [
@@ -78,7 +78,11 @@ const PRODUCTS_DATA = [
       "Scratch-resistant crystal float glass with zero optical distortion",
       "Sturdy table-stand or heavy-duty wall mount fixtures included",
       "UV-protective barrier prevents photo discoloration over time"
-    ]
+    ],
+    "originalPrice": null,
+    "inStock": true,
+    "stockQty": 100,
+    "updatedAt": "2026-10-15T09:31:10.573Z"
   },
   {
     "id": "plastic-frame-gallery",
@@ -1167,24 +1171,22 @@ const PRODUCTS_DATA = [
 
 // Business contact data
 const BUSINESS_INFO = {
-  name: "Rajendra Studio & Framing",
-  tagline: "Frames, Printing & Personalized Products",
-  phone: "+91 96015 74966",
-  phoneRaw: "+919601574966",
-  whatsapp: "+91 96015 74966",
-  whatsappNumber: "919601574966",
-  email: "rajendrastudioframing@gmail.com",
-  address: "Dahej GIDC, Bharuch, Gujarat 392130",
-  workingHours: "Mon - Sat: 9:30 AM - 8:30 PM | Sun: 10:00 AM - 2:00 PM",
-  establishedYear: 2008,
-  framesCrafted: "25,000+",
-  satisfiedClients: "18,500+",
-  ratingScore: "4.9 / 5.0"
+  "name": "Rajendra Studio & Framing",
+  "tagline": "Frames, Printing & Personalized Products",
+  "phone": "+91 96015 74966",
+  "phoneRaw": "+919601574966",
+  "whatsapp": "+91 96015 74966",
+  "whatsappNumber": "919601574966",
+  "email": "rajendrastudioframing@gmail.com",
+  "address": "Dahej GIDC, Bharuch, Gujarat 392130",
+  "workingHours": "Mon - Sat: 9:30 AM - 8:30 PM | Sun: 10:00 AM - 2:00 PM",
+  "establishedYear": 2008,
+  "framesCrafted": "25,000+",
+  "satisfiedClients": "18,500+",
+  "ratingScore": "4.9 / 5.0"
 };
 
 // Export for module environments if needed
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { PRODUCTS_DATA, BUSINESS_INFO };
 }
-
-

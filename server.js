@@ -2096,6 +2096,9 @@ app.post('/api/inquiries', async (req, res) => {
  * Public Customer Endpoint: Get Catalog Products (GET)
  */
 app.get('/api/products', async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   const products = await db.getProducts();
   res.json({ success: true, products });
 });
@@ -2803,7 +2806,7 @@ app.get('/api/admin/products', requireAuth, async (req, res) => {
  * Add New Product (POST)
  */
 app.post('/api/admin/products', requireAuth, async (req, res) => {
-  const { name, category, categoryLabel, price, badge, shortDescription, description, material, printingType, leadTime, image, status, stockQty, sizes, finishes, colors, variants } = req.body;
+  const { name, category, categoryLabel, price, originalPrice, badge, shortDescription, description, material, printingType, leadTime, image, status, stockQty, sizes, finishes, colors, variants } = req.body;
 
   if (!name || !price) {
     return res.status(400).json({ success: false, message: 'Product name and price are required.' });
@@ -2906,6 +2909,7 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     category: category || 'custom',
     categoryLabel: categoryLabel || 'Custom Printing',
     price: Number(price),
+    originalPrice: originalPrice ? Number(originalPrice) : null,
     priceDisplay: `Starting from ₹${Number(price)}`,
     rating: 5.0,
     reviewsCount: 1,
@@ -2916,6 +2920,7 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     material: material || 'Premium Archival Grade',
     printingType: printingType || 'High-Resolution Archival Print',
     status: status || 'In Stock',
+    inStock: (status || 'In Stock') === 'In Stock',
     stockQty: Number(stockQty || 100),
     leadTime: leadTime || '24 - 48 Hours',
     sizes: resolvedSizes,
@@ -2941,12 +2946,35 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
     return res.status(404).json({ success: false, message: 'Product not found.' });
   }
 
-  const target = products[index];
+  const target = { ...products[index] };
 
-  // Update fields
-  if (updates.name) target.name = updates.name.trim();
-  if (updates.category) {
-    target.category = updates.category.trim();
+  // Handle uploaded base64 image if updated
+  if (updates.image && typeof updates.image === 'string' && updates.image.startsWith('data:image/')) {
+    try {
+      const matches = updates.image.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+      if (matches) {
+        const ext = matches[1] === 'png' ? '.png' : (matches[1] === 'webp' ? '.webp' : '.jpg');
+        const buffer = Buffer.from(matches[2], 'base64');
+        const uploadDir = path.join(__dirname, 'assets', 'images', 'uploads');
+        const pubUploadDir = path.join(__dirname, 'public', 'assets', 'images', 'uploads');
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+        if (!fs.existsSync(pubUploadDir)) fs.mkdirSync(pubUploadDir, { recursive: true });
+        const cleanName = `prod_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${ext}`;
+        fs.writeFileSync(path.join(uploadDir, cleanName), buffer);
+        fs.writeFileSync(path.join(pubUploadDir, cleanName), buffer);
+        target.image = `assets/images/uploads/${cleanName}`;
+      }
+    } catch (e) {
+      console.warn('Error saving updated product image to disk:', e.message);
+    }
+  } else if (updates.image && typeof updates.image === 'string' && updates.image.trim()) {
+    target.image = updates.image.trim();
+  }
+
+  // Update text & numerical fields
+  if (updates.name !== undefined) target.name = String(updates.name).trim();
+  if (updates.category !== undefined) {
+    target.category = String(updates.category).trim();
     const catLabels = {
       frames: 'Studio & Framing',
       personalized: 'Personalized Printing',
@@ -2956,7 +2984,9 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
     };
     target.categoryLabel = updates.categoryLabel || catLabels[target.category] || target.category;
   }
-  if (updates.categoryLabel && !updates.category) target.categoryLabel = updates.categoryLabel.trim();
+  if (updates.categoryLabel !== undefined && updates.category === undefined) {
+    target.categoryLabel = String(updates.categoryLabel).trim();
+  }
   if (updates.price !== undefined) {
     target.price = Number(updates.price);
     target.priceDisplay = `Starting from ₹${Number(updates.price)}`;
@@ -2964,21 +2994,67 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
   if (updates.originalPrice !== undefined) {
     target.originalPrice = updates.originalPrice ? Number(updates.originalPrice) : null;
   }
-  if (updates.inStock !== undefined) {
+  if (updates.status !== undefined) {
+    target.status = updates.status;
+    target.inStock = updates.status === 'In Stock';
+  } else if (updates.inStock !== undefined) {
     target.inStock = Boolean(updates.inStock);
     target.status = target.inStock ? 'In Stock' : 'Out of Stock';
   }
-  if (updates.badge !== undefined) target.badge = updates.badge;
-  if (updates.status) {
-    target.status = updates.status;
-    if (updates.inStock === undefined) target.inStock = updates.status === 'In Stock';
+  if (updates.stockQty !== undefined) {
+    target.stockQty = Number(updates.stockQty);
   }
-  if (updates.shortDescription) target.shortDescription = updates.shortDescription;
-  if (updates.description) target.description = updates.description;
-  if (updates.leadTime) target.leadTime = updates.leadTime;
-  if (updates.image) target.image = updates.image;
-  if (updates.sizes) target.sizes = updates.sizes;
-  if (updates.finishes) target.finishes = updates.finishes;
+  if (updates.badge !== undefined) {
+    target.badge = String(updates.badge).trim();
+  }
+  if (updates.shortDescription !== undefined) {
+    target.shortDescription = String(updates.shortDescription).trim();
+  }
+  if (updates.description !== undefined) {
+    target.description = String(updates.description).trim();
+  }
+  if (updates.material !== undefined) {
+    target.material = String(updates.material).trim();
+  }
+  if (updates.printingType !== undefined) {
+    target.printingType = String(updates.printingType).trim();
+  }
+  if (updates.leadTime !== undefined) {
+    target.leadTime = String(updates.leadTime).trim();
+  }
+  if (updates.sizes !== undefined) {
+    if (Array.isArray(updates.sizes)) {
+      target.sizes = updates.sizes;
+    } else if (typeof updates.sizes === 'string') {
+      try {
+        target.sizes = JSON.parse(updates.sizes);
+      } catch (_) {
+        target.sizes = updates.sizes.split(',').map(s => s.trim()).filter(Boolean).map((s, idx) => ({
+          name: s,
+          price: Math.round(target.price * (1 + (idx * 0.25)))
+        }));
+      }
+    }
+  }
+  if (updates.finishes !== undefined) {
+    if (Array.isArray(updates.finishes)) {
+      target.finishes = updates.finishes;
+    } else if (typeof updates.finishes === 'string') {
+      try {
+        target.finishes = JSON.parse(updates.finishes);
+      } catch (_) {
+        target.finishes = updates.finishes.split(',').map(v => v.trim()).filter(Boolean).map((v, idx) => ({
+          id: `finish-${idx + 1}`,
+          name: v,
+          color: '#C99A3D',
+          image: target.image,
+          priceDelta: 0
+        }));
+      }
+    }
+  }
+
+  target.updatedAt = new Date().toISOString();
 
   await db.saveProduct(target);
   res.json({ success: true, message: 'Product updated successfully.', product: target });

@@ -20,14 +20,11 @@ let selectedFinish = null;
 async function initProductDetailPage() {
   // Sync fresh products from server if available
   try {
-    const res = await fetch('/api/products');
+    const res = await fetch('/api/products?t=' + Date.now());
     if (res.ok) {
       const data = await res.json();
       if (data && data.success && Array.isArray(data.products) && data.products.length > 0) {
-        window.PRODUCTS_DATA = data.products.map(p => {
-          const existing = (typeof PRODUCTS_DATA !== 'undefined' ? PRODUCTS_DATA : []).find(e => e.id === p.id);
-          return { ...existing, ...p };
-        });
+        window.PRODUCTS_DATA = data.products;
       }
     }
   } catch (e) {

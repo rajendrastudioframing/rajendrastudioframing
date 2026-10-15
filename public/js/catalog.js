@@ -26,14 +26,11 @@ async function initCatalog() {
 
   // Sync fresh products from server if available
   try {
-    const res = await fetch('/api/products');
+    const res = await fetch('/api/products?t=' + Date.now());
     if (res.ok) {
       const data = await res.json();
       if (data && data.success && Array.isArray(data.products) && data.products.length > 0) {
-        window.PRODUCTS_DATA = data.products.map(p => {
-          const existing = (typeof PRODUCTS_DATA !== 'undefined' ? PRODUCTS_DATA : []).find(e => e.id === p.id);
-          return { ...existing, ...p };
-        });
+        window.PRODUCTS_DATA = data.products;
       }
     }
   } catch (e) {
@@ -198,11 +195,18 @@ function renderCatalog() {
   let filtered = PRODUCTS_DATA.filter(item => {
     const matchesCategory = (currentCategory === 'all') || (item.category === currentCategory);
 
+    const nameText = (item.name || '').toLowerCase();
+    const descText = (item.shortDescription || item.description || '').toLowerCase();
+    const catText = (item.categoryLabel || item.category || '').toLowerCase();
+    const matText = (item.material || '').toLowerCase();
+    const badgeText = (item.badge || '').toLowerCase();
+
     const matchesSearch = !searchQuery ||
-      item.name.toLowerCase().includes(searchQuery) ||
-      item.shortDescription.toLowerCase().includes(searchQuery) ||
-      item.categoryLabel.toLowerCase().includes(searchQuery) ||
-      item.material.toLowerCase().includes(searchQuery);
+      nameText.includes(searchQuery) ||
+      descText.includes(searchQuery) ||
+      catText.includes(searchQuery) ||
+      matText.includes(searchQuery) ||
+      badgeText.includes(searchQuery);
 
     return matchesCategory && matchesSearch;
   });

@@ -73,7 +73,11 @@
       "Scratch-resistant crystal float glass with zero optical distortion",
       "Sturdy table-stand or heavy-duty wall mount fixtures included",
       "UV-protective barrier prevents photo discoloration over time"
-    ]
+    ],
+    "originalPrice": null,
+    "inStock": true,
+    "stockQty": 100,
+    "updatedAt": "2026-10-15T09:31:10.573Z"
   },
   {
     "id": "plastic-frame-gallery",
