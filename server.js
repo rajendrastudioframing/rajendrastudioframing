@@ -302,7 +302,7 @@ function generateOtpEmailHtml(otp, recipientEmail) {
       </div>
       <div class="footer">
         Dahej Support Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
-        Direct Customer Support: +91 96015 74966 • rajendrastudioframing@gmail.com
+        Direct Customer Support: +91 96015 74966 • shop@rajendrastudioandgifts.in
       </div>
     </div>
   </body>
@@ -355,7 +355,7 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
       </div>
       <div class="footer">
         Dahej Support Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
-        Direct Customer Support: +91 96015 74966 • rajendrastudioframing@gmail.com
+        Direct Customer Support: +91 96015 74966 • shop@rajendrastudioandgifts.in
       </div>
     </div>
   </body>
@@ -501,7 +501,7 @@ async function sendCustomerLoginNotification(customerEmail, customerName, req) {
 
     const cleanEmail = customerEmail.trim().toLowerCase();
     const cleanName = (customerName && customerName.trim()) || cleanEmail.split('@')[0];
-    const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
+    const fromAddress = (config.smtp && config.smtp.fromEmail) || (process.env.BREVO_SENDER_EMAIL ? `${process.env.BREVO_SENDER_NAME || 'Rajendra Studio & Gifts'} <${process.env.BREVO_SENDER_EMAIL}>` : 'Rajendra Studio & Gifts <shop@rajendrastudioandgifts.in>');
 
     const protocol = (req && (req.headers['x-forwarded-proto'] || req.protocol)) || 'https';
     const host = (req && req.get('host')) || `localhost:${PORT}`;
@@ -892,7 +892,7 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
       subject = `Order #${orderId} Delivered - Thank You - Dahej Support`;
     }
 
-    const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
+    const fromAddress = (config.smtp && config.smtp.fromEmail) || (process.env.BREVO_ORDER_EMAIL ? `${process.env.BREVO_ORDER_NAME || 'Rajendra Studio Orders'} <${process.env.BREVO_ORDER_EMAIL}>` : 'Rajendra Studio Orders <order@rajendrastudioandgifts.in>');
 
     let introText = `Your order #${orderId} status has been updated to: ${newStatus}.`;
     if (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed') {
@@ -1110,7 +1110,7 @@ app.post('/api/auth/login-request', async (req, res) => {
 
     if (transporter) {
       try {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || (process.env.BREVO_SENDER_EMAIL ? `${process.env.BREVO_SENDER_NAME || 'Rajendra Studio & Gifts'} <${process.env.BREVO_SENDER_EMAIL}>` : 'Rajendra Studio & Gifts <shop@rajendrastudioandgifts.in>');
         await transporter.sendMail({
           from: fromAddress,
           to: cleanEmail,
@@ -1375,7 +1375,7 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     const transporter = !emailSent ? createTransporter(config) : null;
     if (transporter) {
       try {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || (process.env.BREVO_SENDER_EMAIL ? `${process.env.BREVO_SENDER_NAME || 'Rajendra Studio & Gifts'} <${process.env.BREVO_SENDER_EMAIL}>` : 'Rajendra Studio & Gifts <shop@rajendrastudioandgifts.in>');
         await transporter.sendMail({
           from: fromAddress,
           to: cleanEmail,
@@ -1541,7 +1541,7 @@ app.post('/api/customer/auth/send-otp', async (req, res) => {
 
     if (transporter) {
       try {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || (process.env.BREVO_SENDER_EMAIL ? `${process.env.BREVO_SENDER_NAME || 'Rajendra Studio & Gifts'} <${process.env.BREVO_SENDER_EMAIL}>` : 'Rajendra Studio & Gifts <shop@rajendrastudioandgifts.in>');
         await transporter.sendMail({
           from: fromAddress,
           to: cleanEmail,
@@ -1761,11 +1761,25 @@ app.post('/api/customer/auth/resend-otp', async (req, res) => {
       createdAt: Date.now()
     });
 
+    let emailDelivered = false;
+    try {
+      const brevoCustResult = await emailService.sendCustomerOtpEmail({
+        email: cleanEmail,
+        otp
+      });
+      if (brevoCustResult && brevoCustResult.success) {
+        emailDelivered = true;
+        console.log(`✅ [Brevo API] Resend Customer OTP email delivered to ${cleanEmail}`);
+      }
+    } catch (brevoErr) {
+      console.warn('⚠️ [Brevo Customer Resend OTP Warning]:', brevoErr.message);
+    }
+
     const config = await db.getAdminConfig();
-    const transporter = createTransporter(config);
+    const transporter = !emailDelivered ? createTransporter(config) : null;
     if (transporter) {
       try {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || (process.env.BREVO_SENDER_EMAIL ? `${process.env.BREVO_SENDER_NAME || 'Rajendra Studio & Gifts'} <${process.env.BREVO_SENDER_EMAIL}>` : 'Rajendra Studio & Gifts <shop@rajendrastudioandgifts.in>');
         await transporter.sendMail({
           from: fromAddress,
           to: cleanEmail,
@@ -1773,12 +1787,10 @@ app.post('/api/customer/auth/resend-otp', async (req, res) => {
           text: `Hello,\n\nYour new One-Time Passcode (OTP) is: ${otp}\n\nValid for 5 minutes. Do not share with anyone.\n\nRajesh Framing Studio`,
           html: generateCustomerOtpEmailHtml(otp, cleanEmail)
         });
+        emailDelivered = true;
       } catch (mailErr) {
         console.error('Error sending resend OTP email:', mailErr.message);
-        return res.status(500).json({ success: false, message: 'Failed to deliver OTP email.' });
       }
-    } else {
-      return res.status(503).json({ success: false, message: 'Email service unavailable.' });
     }
 
     return res.json({
@@ -2053,8 +2065,8 @@ app.post('/api/inquiries', async (req, res) => {
       const config = await db.getAdminConfig();
       const transporter = createTransporter(config);
       if (transporter) {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
-        const adminRecipient = config.adminEmail || 'rajendrastudioframing@gmail.com';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || (process.env.BREVO_SENDER_EMAIL ? `${process.env.BREVO_SENDER_NAME || 'Rajendra Studio & Gifts'} <${process.env.BREVO_SENDER_EMAIL}>` : 'Rajendra Studio & Gifts <shop@rajendrastudioandgifts.in>');
+        const adminRecipient = config.adminEmail || process.env.ADMIN_EMAIL || 'shop@rajendrastudioandgifts.in';
         await transporter.sendMail({
           from: fromAddress,
           to: adminRecipient,
@@ -2309,8 +2321,8 @@ app.post('/api/orders', async (req, res) => {
       const config = await db.getAdminConfig();
       const transporter = createTransporter(config);
       if (transporter) {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
-        const adminRecipient = config.adminEmail || 'rajendrastudioframing@gmail.com';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || (process.env.BREVO_ORDER_EMAIL ? `${process.env.BREVO_ORDER_NAME || 'Rajendra Studio Orders'} <${process.env.BREVO_ORDER_EMAIL}>` : 'Rajendra Studio Orders <order@rajendrastudioandgifts.in>');
+        const adminRecipient = config.adminEmail || process.env.ADMIN_EMAIL || 'shop@rajendrastudioandgifts.in';
         const itemSummary = newOrder.items.map(i => `${i.name} (x${i.quantity})`).join(', ');
         const protocol = (req && (req.headers['x-forwarded-proto'] || req.protocol)) || 'https';
         const host = (req && req.get('host')) || `localhost:${PORT}`;
@@ -3270,8 +3282,8 @@ app.post('/api/contact', async (req, res) => {
       const config = await db.getAdminConfig();
       const transporter = createTransporter(config);
       if (transporter) {
-        const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
-        const adminRecipient = config.adminEmail || 'rajendrastudioframing@gmail.com';
+        const fromAddress = (config.smtp && config.smtp.fromEmail) || (process.env.BREVO_SENDER_EMAIL ? `${process.env.BREVO_SENDER_NAME || 'Rajendra Studio & Gifts'} <${process.env.BREVO_SENDER_EMAIL}>` : 'Rajendra Studio & Gifts <shop@rajendrastudioandgifts.in>');
+        const adminRecipient = config.adminEmail || process.env.ADMIN_EMAIL || 'shop@rajendrastudioandgifts.in';
         await transporter.sendMail({
           from: fromAddress,
           to: adminRecipient,
@@ -3412,7 +3424,7 @@ app.get('/api/admin/settings', requireAuth, async (req, res) => {
   res.json({
     success: true,
     settings: {
-      adminEmail: config.adminEmail || 'rajendrastudioframing@gmail.com',
+      adminEmail: config.adminEmail || process.env.ADMIN_EMAIL || 'shop@rajendrastudioandgifts.in',
       adminName: config.adminName || 'Rajendra Studio Admin',
       smtp: {
         enabled: Boolean(config.smtp && config.smtp.enabled),
@@ -3420,9 +3432,9 @@ app.get('/api/admin/settings', requireAuth, async (req, res) => {
         host: (config.smtp && config.smtp.host) || 'smtp.gmail.com',
         port: (config.smtp && config.smtp.port) || 465,
         secure: config.smtp ? config.smtp.secure !== false : true,
-        user: (config.smtp && config.smtp.user) || 'rajendrastudioframing@gmail.com',
+        user: (config.smtp && config.smtp.user) || process.env.BREVO_SENDER_EMAIL || 'shop@rajendrastudioandgifts.in',
         hasPassword: Boolean(config.smtp && config.smtp.pass),
-        fromEmail: (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>'
+        fromEmail: (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio & Gifts <shop@rajendrastudioandgifts.in>'
       }
     }
   });
@@ -3502,7 +3514,7 @@ app.put('/api/admin/settings/smtp', requireAuth, async (req, res) => {
     if (host) config.smtp.host = host.trim();
     if (port) config.smtp.port = Number(port) || 465;
     config.smtp.secure = config.smtp.port === 465;
-    config.smtp.fromEmail = config.smtp.fromEmail || `Rajendra Studio <${config.adminEmail || 'rajendrastudioframing@gmail.com'}>`;
+    config.smtp.fromEmail = config.smtp.fromEmail || `Rajendra Studio & Gifts <${config.adminEmail || 'shop@rajendrastudioandgifts.in'}>`;
 
     await db.saveAdminConfig(config);
     console.log(`📧 [SMTP SETTINGS UPDATED] Service: ${config.smtp.service}, User: ${config.smtp.user}`);
@@ -3518,7 +3530,7 @@ app.put('/api/admin/settings/smtp', requireAuth, async (req, res) => {
  */
 const handleTestSmtp = async (req, res) => {
   try {
-    const recipient = req.body.targetEmail || req.body.testEmail || 'rajendrastudioframing@gmail.com';
+    const recipient = req.body.targetEmail || req.body.testEmail || 'shop@rajendrastudioandgifts.in';
     const config = await db.getAdminConfig();
 
     const transporter = createTransporter(config);
@@ -3529,7 +3541,7 @@ const handleTestSmtp = async (req, res) => {
       });
     }
 
-    const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio <rajendrastudioframing@gmail.com>';
+    const fromAddress = (config.smtp && config.smtp.fromEmail) || 'Rajendra Studio & Gifts <shop@rajendrastudioandgifts.in>';
     await transporter.sendMail({
       from: fromAddress,
       to: recipient,
