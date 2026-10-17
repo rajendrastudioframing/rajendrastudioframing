@@ -981,24 +981,11 @@
   border-color: #000000 !important;
 }
 
-/* Swatches styling */
-.card-color-swatches {
-  display: flex !important;
-  align-items: center !important;
-  gap: 5px !important;
-  margin: 2px 0 !important;
-}
-.card-swatch-dot {
-  width: 14px !important;
-  height: 14px !important;
-  border-radius: 50% !important;
-  border: 1.5px solid #E5E7EB !important;
-  cursor: pointer !important;
-  transition: transform 0.15s ease !important;
-}
-.card-swatch-dot:hover, .card-swatch-dot.active {
-  transform: scale(1.2) !important;
-  border-color: #C99A3D !important;
+/* Color swatches removed per user request */
+.card-color-swatches,
+.color-swatch-item,
+#finishOptionGroup {
+  display: none !important;
 }
 
 /* Mobile Screens (<= 767px) */

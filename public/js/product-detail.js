@@ -477,64 +477,12 @@ function renderSizeOptions() {
 }
 
 function renderFinishOptions() {
+  selectedFinish = null;
   const container = document.getElementById('detailFinishesContainer');
-  if (!container || !currentProduct.finishes) return;
-
-  // Dynamic finish option title based on product type
-  const finishOptionTitle = document.getElementById('finishOptionTitle') || 
-    (container.parentElement ? container.parentElement.querySelector('.option-name') : null);
-  if (finishOptionTitle) {
-    const p = currentProduct;
-    if (p.category === 'frames' || p.name.toLowerCase().includes('frame')) {
-      finishOptionTitle.textContent = 'Frame Color / Finish Option:';
-    } else if (p.category === 'office' || p.id.includes('file') || p.id.includes('folder')) {
-      finishOptionTitle.textContent = 'Executive Color / Finish:';
-    } else if (p.category === 'drinkware' || p.id.includes('bottle') || p.id.includes('mug')) {
-      finishOptionTitle.textContent = 'Color & Tone Option:';
-    } else {
-      finishOptionTitle.textContent = 'Color / Finish Style:';
-    }
+  if (container) {
+    const parentGroup = container.closest('.option-group') || document.getElementById('finishOptionGroup');
+    if (parentGroup) parentGroup.style.display = 'none';
   }
-
-  container.innerHTML = currentProduct.finishes.map((f, idx) => {
-    const isActive = (selectedFinish && selectedFinish.id === f.id) || (!selectedFinish && idx === 0);
-    return `
-      <button type="button" class="color-swatch-item ${isActive ? 'active' : ''}" 
-        style="background-color: ${f.color};" 
-        data-finish-id="${f.id}" 
-        data-finish-name="${f.name}" 
-        data-finish-img="${f.image || currentProduct.image}"
-        data-finish-color="${f.color}"
-        title="${f.name}"
-        aria-label="Select ${f.name} color option">
-      </button>
-    `;
-  }).join('');
-
-  container.querySelectorAll('.color-swatch-item').forEach(swatch => {
-    swatch.addEventListener('click', () => {
-      container.querySelectorAll('.color-swatch-item').forEach(s => s.classList.remove('active'));
-      swatch.classList.add('active');
-
-      const finishId = swatch.getAttribute('data-finish-id');
-      const finishName = swatch.getAttribute('data-finish-name');
-      const finishImg = swatch.getAttribute('data-finish-img');
-      const finishColor = swatch.getAttribute('data-finish-color');
-
-      const foundFinish = currentProduct.finishes.find(item => item.id === finishId);
-      selectedFinish = foundFinish || { id: finishId, name: finishName, image: finishImg, color: finishColor };
-
-      const selectedDisplay = document.getElementById('selectedFinishLabel');
-      if (selectedDisplay) selectedDisplay.textContent = finishName;
-
-      // Dynamically update product preview image & gallery thumbnail
-      updateDetailImageForFinish(selectedFinish);
-      updatePriceDisplay();
-    });
-  });
-
-  const selectedDisplay = document.getElementById('selectedFinishLabel');
-  if (selectedDisplay && selectedFinish) selectedDisplay.textContent = selectedFinish.name;
 }
 
 /**
@@ -746,10 +694,9 @@ function setupOptionInteractions() {
 
 
       const sizeStr = selectedSize ? selectedSize.name : 'Standard';
-      const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
-      const finishDelta = (selectedFinish && typeof selectedFinish.priceDelta === 'number') ? selectedFinish.priceDelta : 0;
-      const activePrice = (selectedSize ? selectedSize.price : currentProduct.price) + finishDelta;
-      const activeImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : currentProduct.image;
+      const finishStr = 'Standard';
+      const activePrice = selectedSize ? selectedSize.price : currentProduct.price;
+      const activeImg = currentProduct.image;
 
       if (window.addToCart) {
         window.addToCart({
@@ -792,10 +739,9 @@ function setupOptionInteractions() {
       }
 
       const sizeStr = selectedSize ? selectedSize.name : 'Standard';
-      const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
-      const finishDelta = (selectedFinish && typeof selectedFinish.priceDelta === 'number') ? selectedFinish.priceDelta : 0;
-      const activePrice = (selectedSize ? selectedSize.price : currentProduct.price) + finishDelta;
-      const activeImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : currentProduct.image;
+      const finishStr = 'Standard';
+      const activePrice = selectedSize ? selectedSize.price : currentProduct.price;
+      const activeImg = currentProduct.image;
 
       if (window.buyNow) {
         window.buyNow({

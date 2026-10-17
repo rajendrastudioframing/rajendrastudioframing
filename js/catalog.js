@@ -274,29 +274,10 @@ function renderCatalog() {
   gridContainer.innerHTML = filtered.map(product => {
     const priceFormatted = product.price ? `₹${product.price}` : product.priceDisplay;
     const wishActive = typeof isInWishlist === 'function' && isInWishlist(product.id);
-    const initialCardImg = (product.finishes && product.finishes.length > 0 && product.finishes[0].image) ? product.finishes[0].image : product.image;
-
-    const defaultFinish = (product.finishes && product.finishes.length > 0) ? product.finishes[0] : null;
-    const finishesHtml = (product.finishes && product.finishes.length > 0) ? `
-      <div class="card-color-swatches" onclick="event.stopPropagation();" aria-label="Available Colors">
-        ${product.finishes.map((f, i) => `
-          <button type="button" 
-            class="card-swatch-dot ${i === 0 ? 'active' : ''}" 
-            style="background-color: ${f.color};" 
-            title="${f.name}"
-            aria-label="${f.name}"
-            data-product-id="${product.id}"
-            data-finish-id="${f.id}"
-            data-finish-name="${f.name}"
-            data-finish-img="${f.image || product.image}"
-            onclick="changeCatalogCardImage('${product.id}', '${f.image || product.image}', this, event, '${f.id}', '${f.name}');">
-          </button>
-        `).join('')}
-      </div>
-    ` : '';
+    const initialCardImg = product.image;
 
     return `
-    <article class="product-card" data-id="${product.id}" data-selected-finish-id="${defaultFinish ? defaultFinish.id : ''}" data-selected-finish-name="${defaultFinish ? defaultFinish.name : ''}" data-selected-finish-img="${initialCardImg}" onclick="window.location.href='product-detail?id=${product.id}${defaultFinish ? `&finish=${defaultFinish.id}` : ''}'">
+    <article class="product-card" data-id="${product.id}" onclick="window.location.href='product-detail?id=${product.id}'">
       <div class="product-card-top">
         ${product.badge ? `<span class="product-badge-pill">${product.badge}</span>` : '<span></span>'}
         <button type="button" class="product-wishlist-btn ${wishActive ? 'active' : ''}" data-wishlist-id="${product.id}" aria-label="Add to wishlist" onclick="toggleWishlist('${product.id}', event);" title="Add to Wishlist">
@@ -320,9 +301,8 @@ function renderCatalog() {
           </div>
         </div>
         <h3 class="capsule-title product-card-title">
-          <a href="product-detail?id=${product.id}${defaultFinish ? `&finish=${defaultFinish.id}` : ''}">${product.name}</a>
+          <a href="product-detail?id=${product.id}">${product.name}</a>
         </h3>
-        ${finishesHtml}
         <div class="product-card-price-row capsule-price-row">
           <span class="capsule-price product-card-price">${priceFormatted}</span>
           <span class="product-card-mrp">₹${Math.round((product.price || 500) * 1.25)}</span>
