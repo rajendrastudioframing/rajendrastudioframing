@@ -53,20 +53,7 @@ function getCartSubtotal() {
 function addToCart(product, quantity = 1, openDrawer = true) {
   if (!product || !product.id) return;
 
-  // Customer Login Requirement: Must be logged in before adding to cart
-  if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
-    if (typeof openCustomerAuthModal === 'function') {
-      openCustomerAuthModal(() => {
-        addToCart(product, quantity, openDrawer);
-      }, {
-        title: 'Sign In to Add to Cart',
-        subtitle: 'Please sign in or create an account to add items to your cart.'
-      });
-    } else {
-      alert('Please log in to your account first.');
-    }
-    return;
-  }
+  // Guest cart support: allows adding to cart without mandatory login first (login is handled at checkout)
 
   const cart = getCart();
   const qtyToAdd = Math.max(1, parseInt(quantity, 10) || 1);
@@ -533,16 +520,13 @@ function quickAddToCart(productId, event) {
     if (typeof event.stopPropagation === 'function') event.stopPropagation();
   }
 
-  if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
-    handleProductCardAddToCart(productId, false, event);
-    return;
-  }
-
-  handleProductCardAddToCart(productId, false, event);
+  // Add to cart and open drawer for instant visual confirmation
+  handleProductCardAddToCart(productId, true, event);
 
   // Visual button feedback
-  if (event && event.currentTarget) {
-    const btn = event.currentTarget;
+  const btn = (event && (event.currentTarget || (event.target && event.target.closest('button')))) || 
+              document.querySelector(`button[data-product-id="${productId}"][data-add-to-cart]`);
+  if (btn) {
     const origHtml = btn.innerHTML;
     btn.innerHTML = '<span>Added ✓</span>';
     btn.style.background = '#2E7D32';

@@ -22,7 +22,7 @@ const categoriesSectionHtml = `
               <img src="assets/images/glass_frame.jpg" alt="Studio &amp; Framing" loading="lazy" />
               <div class="category-card-overlay"></div>
               <span class="category-card-badge">Collection 01</span>
-              <span class="category-card-count">25 Items</span>
+              <span class="category-card-count">5 Items</span>
             </div>
             <div class="category-card-content">
               <span class="category-card-eyebrow">Studio &amp; Framing</span>
@@ -43,7 +43,7 @@ const categoriesSectionHtml = `
               <img src="assets/images/custom_mug.jpg" alt="Personalized Printing" loading="lazy" />
               <div class="category-card-overlay"></div>
               <span class="category-card-badge">Collection 02</span>
-              <span class="category-card-count">25 Items</span>
+              <span class="category-card-count">5 Items</span>
             </div>
             <div class="category-card-content">
               <span class="category-card-eyebrow">Drinkware &amp; Lifestyle</span>
@@ -64,7 +64,7 @@ const categoriesSectionHtml = `
               <img src="assets/images/printed_file.jpg" alt="Office Printing" loading="lazy" />
               <div class="category-card-overlay"></div>
               <span class="category-card-badge">Collection 03</span>
-              <span class="category-card-count">25 Items</span>
+              <span class="category-card-count">5 Items</span>
             </div>
             <div class="category-card-content">
               <span class="category-card-eyebrow">Corporate &amp; Executive</span>
@@ -85,7 +85,7 @@ const categoriesSectionHtml = `
               <img src="assets/images/custom_canvas.jpg" alt="Custom Printing" loading="lazy" />
               <div class="category-card-overlay"></div>
               <span class="category-card-badge">Collection 04</span>
-              <span class="category-card-count">25 Items</span>
+              <span class="category-card-count">5 Items</span>
             </div>
             <div class="category-card-content">
               <span class="category-card-eyebrow">Canvas &amp; Large Format</span>
@@ -106,7 +106,7 @@ const categoriesSectionHtml = `
               <img src="assets/images/photo_gifts_showcase.jpg" alt="Photo Gifts &amp; Keepsakes" loading="lazy" />
               <div class="category-card-overlay"></div>
               <span class="category-card-badge">Collection 05</span>
-              <span class="category-card-count">25 Items</span>
+              <span class="category-card-count">5 Items</span>
             </div>
             <div class="category-card-content">
               <span class="category-card-eyebrow">Milestones &amp; Gifts</span>

@@ -1861,7 +1861,9 @@
     padding: 7px 10px;
   }
   .bar-search-box,
-  .bar-sort-box {
+  .bar-sort-box,
+  #catalogBarResetBtn,
+  .catalog-unified-bar .bar-reset-btn {
     display: none !important;
   }
   .bar-category-picker,

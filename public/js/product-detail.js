@@ -743,17 +743,7 @@ function setupOptionInteractions() {
   const addToCartBtn = document.getElementById('detailAddToCartBtn');
   if (addToCartBtn) {
     addToCartBtn.addEventListener('click', () => {
-      if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
-        if (typeof openCustomerAuthModal === 'function') {
-          openCustomerAuthModal(() => {
-            if (addToCartBtn) addToCartBtn.click();
-          }, {
-            title: 'Sign In to Add to Cart',
-            subtitle: 'Please sign in or create an account to add items to your cart.'
-          });
-          return;
-        }
-      }
+
 
       const sizeStr = selectedSize ? selectedSize.name : 'Standard';
       const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
