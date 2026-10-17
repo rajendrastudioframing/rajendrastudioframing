@@ -42,14 +42,21 @@ function sendBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, rep
       const recipients = Array.isArray(to) ? to : [{ email: to }];
       const validRecipients = recipients
         .map(r => (typeof r === 'string' ? { email: r } : r))
+        .map(r => (r && r.email ? { ...r, email: r.email.trim().toLowerCase() } : null))
         .filter(r => r && r.email && r.email.includes('@'));
 
       if (validRecipients.length === 0) {
         return resolve({ success: false, reason: 'No valid recipient email address' });
       }
 
+      const activeSender = sender || { name: SENDER_NAME, email: SENDER_EMAIL };
+      const cleanSender = {
+        name: (activeSender.name || SENDER_NAME).trim(),
+        email: (activeSender.email || SENDER_EMAIL).trim().toLowerCase()
+      };
+
       const payload = {
-        sender: sender || { name: SENDER_NAME, email: SENDER_EMAIL },
+        sender: cleanSender,
         to: validRecipients,
         subject: subject,
         htmlContent: htmlContent || `<p>${textContent || ''}</p>`,
@@ -59,6 +66,7 @@ function sendBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, rep
       if (bcc) {
         const bccList = (Array.isArray(bcc) ? bcc : [{ email: bcc }])
           .map(b => (typeof b === 'string' ? { email: b } : b))
+          .map(b => (b && b.email ? { ...b, email: b.email.trim().toLowerCase() } : null))
           .filter(b => b && b.email && b.email.includes('@'));
         if (bccList.length > 0) {
           payload.bcc = bccList;
@@ -66,7 +74,10 @@ function sendBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, rep
       }
 
       if (replyTo) {
-        payload.replyTo = typeof replyTo === 'string' ? { email: replyTo } : replyTo;
+        const cleanReply = typeof replyTo === 'string' ? replyTo.trim().toLowerCase() : (replyTo.email || '').trim().toLowerCase();
+        if (cleanReply && cleanReply.includes('@')) {
+          payload.replyTo = { email: cleanReply };
+        }
       }
 
       const postData = JSON.stringify(payload);
@@ -658,67 +669,7 @@ async function sendAdminOtpEmail({ email, otp }) {
  * 6. NEW ORDER PLACED NOTIFICATION
  */
 async function notifyNewOrderPlaced({ order, req = null }) {
-  if (!order) return;
-
-  const orderId = order.orderId || order.id;
-  const cleanId = orderId.toString().replace(/^#/, '');
-  const customerName = (order.customer && order.customer.name) || order.name || 'Customer';
-  const customerEmail = (order.customer && order.customer.email) || order.email || '';
-  const customerPhone = (order.customer && order.customer.phone) || order.phone || '';
-  const total = order.total || order.estimatedValue || 0;
-  const paymentMethod = order.paymentMethod || 'Pick up from shop';
-
-  const timeIST = new Date().toLocaleString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    dateStyle: 'full',
-    timeStyle: 'short'
-  }) + ' IST';
-
-  const itemSummary = (order.items && Array.isArray(order.items))
-    ? order.items.map(i => `${i.name} (x${i.quantity})`).join(', ')
-    : (order.product || 'Custom Frame');
-
-  // Shop Notification
-  const shopSubject = `🛒 [New Order Placed] #${cleanId} from ${customerName} (₹${total})`;
-  const shopHtml = `
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"></head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F6F0; margin:0; padding:24px; color:#111;">
-      <div style="max-width: 580px; margin: 0 auto; background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid #E5E0D5;">
-        <div style="background: #111; padding: 20px 24px; border-bottom: 3px solid #C99A3D; text-align: center;">
-          <h2 style="color: #fff; margin:0; font-size: 19px;">RAJENDRA <span style="color: #C99A3D;">STUDIO &amp; FRAMING</span></h2>
-          <div style="color: #A0A5B1; font-size: 11px;">New Online Customer Order</div>
-        </div>
-        <div style="padding: 24px;">
-          <div style="background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-block; margin-bottom: 14px;">
-            🛒 NEW ORDER RECEIVED
-          </div>
-          <h3 style="margin: 0 0 10px;">Order #${cleanId} Received</h3>
-          <table style="width: 100%; border-collapse: collapse; font-size: 14px; background: #FAF9F6; border: 1px solid #EFEAE0; margin: 14px 0;">
-            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; width: 130px; border-bottom: 1px solid #EFEAE0;">Order ID:</td><td style="padding: 10px 14px; font-weight: 700; color: #8C6A1E; border-bottom: 1px solid #EFEAE0;">#${cleanId}</td></tr>
-            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Customer:</td><td style="padding: 10px 14px; font-weight: 700; color: #111; border-bottom: 1px solid #EFEAE0;">${customerName}</td></tr>
-            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Phone:</td><td style="padding: 10px 14px; color: #111; border-bottom: 1px solid #EFEAE0;"><a href="tel:${customerPhone}">${customerPhone}</a></td></tr>
-            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Email:</td><td style="padding: 10px 14px; color: #111; border-bottom: 1px solid #EFEAE0;">${customerEmail || 'N/A'}</td></tr>
-            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Items:</td><td style="padding: 10px 14px; color: #111; border-bottom: 1px solid #EFEAE0;">${itemSummary}</td></tr>
-            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666; border-bottom: 1px solid #EFEAE0;">Total:</td><td style="padding: 10px 14px; font-weight: 700; color: #111; border-bottom: 1px solid #EFEAE0;">₹${total}</td></tr>
-            <tr><td style="padding: 10px 14px; font-weight: 600; color: #666;">Payment:</td><td style="padding: 10px 14px; color: #111;">${paymentMethod}</td></tr>
-          </table>
-          <div style="text-align: center; margin-top: 18px;">
-            <a href="https://rajendrastudioandgifts.in/admin#orders" style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 11px 22px; border-radius: 8px; font-size: 13px; font-weight: 700;">View &amp; Accept Order &rarr;</a>
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-
-  await sendBrevoEmail({
-    to: SHOP_ALERT_EMAIL,
-    subject: shopSubject,
-    htmlContent: shopHtml,
-    textContent: `New Order #${cleanId} from ${customerName}. Items: ${itemSummary}. Total: ₹${total}. Phone: ${customerPhone}`
-  });
+  return await notifyOrderConfirmation({ order, req });
 }
 
 
@@ -726,10 +677,12 @@ async function notifyNewOrderPlaced({ order, req = null }) {
  * Dedicated Brevo Order Channel Dispatcher
  * Dispatches strictly from order@rajendrastudioandgifts.in using Order API Key
  */
-function sendOrderBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, replyTo = null, sender = null }) {
+async function sendOrderBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, replyTo = null, sender = null }) {
   const orderKey = BREVO_ORDER_API_KEY || BREVO_API_KEY;
   const orderSender = sender || { name: ORDER_SENDER_NAME, email: ORDER_SENDER_EMAIL };
-  return sendBrevoEmail({
+
+  // Attempt Channel 2 (Dedicated Order Channel)
+  const result = await sendBrevoEmail({
     to,
     subject,
     htmlContent,
@@ -739,6 +692,27 @@ function sendOrderBrevoEmail({ to, subject, htmlContent, textContent, bcc = null
     sender: orderSender,
     apiKey: orderKey
   });
+
+  if (result && result.success) {
+    return result;
+  }
+
+  // Automatic Fallback to Channel 1 (Shop Channel) if Channel 2 fails
+  if (BREVO_API_KEY && (orderKey !== BREVO_API_KEY || (orderSender && orderSender.email !== SENDER_EMAIL))) {
+    console.warn(`⚠️ [sendOrderBrevoEmail Fallback] Channel 2 failed (${result.error || result.statusCode || 'unknown'}). Retrying via Channel 1 (${SENDER_EMAIL})...`);
+    return await sendBrevoEmail({
+      to,
+      subject,
+      htmlContent,
+      textContent,
+      bcc,
+      replyTo: SENDER_EMAIL,
+      sender: { name: SENDER_NAME, email: SENDER_EMAIL },
+      apiKey: BREVO_API_KEY
+    });
+  }
+
+  return result;
 }
 
 
@@ -752,7 +726,8 @@ async function notifyOrderConfirmation({ order, req = null }) {
   const orderId = order.orderId || order.id || 'N/A';
   const cleanId = orderId.toString().replace(/^#/, '');
   const customerName = (order.customer && order.customer.name) || order.name || 'Valued Customer';
-  const customerEmail = (order.customer && order.customer.email) || order.email || '';
+  const rawEmail = (order.customer && order.customer.email) || order.email || order.customerEmail || '';
+  const customerEmail = (typeof rawEmail === 'string' ? rawEmail : '').trim().toLowerCase();
   const customerPhone = (order.customer && order.customer.phone) || order.phone || '';
   const total = order.total || order.estimatedValue || 0;
   const paymentMethod = order.paymentMethod || 'Pick up from shop';
@@ -896,28 +871,57 @@ async function notifyOrderConfirmation({ order, req = null }) {
     </html>
   `;
 
-  const promises = [
-    sendOrderBrevoEmail({
-      to: ORDER_ALERT_EMAIL,
-      subject: orderAlertSubject,
-      htmlContent: orderAlertHtml,
-      textContent: `Order #${cleanId} Confirmed from ${customerName} (${customerPhone}). Total: ₹${total}`
-    })
-  ];
+  let customerEmailResult = { success: false, reason: 'No customer email provided' };
+  let adminEmailResult = { success: false };
 
+  const adminPromise = sendOrderBrevoEmail({
+    to: ORDER_ALERT_EMAIL,
+    subject: orderAlertSubject,
+    htmlContent: orderAlertHtml,
+    textContent: `Order #${cleanId} Confirmed from ${customerName} (${customerPhone}). Total: ₹${total}`
+  }).then(res => {
+    adminEmailResult = res;
+    return res;
+  }).catch(err => {
+    adminEmailResult = { success: false, error: err.message };
+    return adminEmailResult;
+  });
+
+  let customerPromise = Promise.resolve(customerEmailResult);
   if (customerEmail && customerEmail.includes('@')) {
-    promises.push(
-      sendOrderBrevoEmail({
-        to: customerEmail,
-        subject: customerSubject,
-        htmlContent: customerHtml,
-        textContent: `Hello ${customerName}, your order #${cleanId} has been confirmed at Rajendra Studio & Framing. Total: ₹${total}. Track online: ${trackingUrl}`
-      })
-    );
+    customerPromise = sendOrderBrevoEmail({
+      to: customerEmail,
+      subject: customerSubject,
+      htmlContent: customerHtml,
+      textContent: `Hello ${customerName}, your order #${cleanId} has been confirmed at Rajendra Studio & Framing. Total: ₹${total}. Track online: ${trackingUrl}`
+    }).then(res => {
+      customerEmailResult = res;
+      if (res && res.success) {
+        console.log(`✅ [ORDER RECEIPT DELIVERED TO CUSTOMER] #${cleanId} -> ${customerEmail}`);
+      } else {
+        console.warn(`⚠️ [ORDER RECEIPT DELIVERY FAILED] #${cleanId} -> ${customerEmail}:`, res ? (res.error || res.statusCode) : 'Unknown');
+      }
+      return res;
+    }).catch(err => {
+      customerEmailResult = { success: false, error: err.message };
+      console.error(`❌ [ORDER RECEIPT ERROR] #${cleanId} -> ${customerEmail}:`, err.message);
+      return customerEmailResult;
+    });
+  } else {
+    console.warn(`⚠️ [notifyOrderConfirmation] Order #${cleanId} does not have a valid customer email on file (Found: "${customerEmail}")`);
   }
 
-  await Promise.allSettled(promises);
-  return { success: true, sent: true, recipient: customerEmail, orderNotified: true };
+  await Promise.allSettled([adminPromise, customerPromise]);
+  const customerSent = Boolean(customerEmailResult && customerEmailResult.success);
+
+  return {
+    success: customerSent,
+    sent: customerSent,
+    recipient: customerEmail,
+    customerResult: customerEmailResult,
+    adminResult: adminEmailResult,
+    orderNotified: true
+  };
 }
 
 /**

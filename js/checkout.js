@@ -164,7 +164,7 @@ function bindCheckoutForm() {
 
     const name = document.getElementById('custName').value.trim();
     const phone = document.getElementById('custPhone').value.trim();
-    const email = document.getElementById('custEmail').value.trim();
+    let email = document.getElementById('custEmail').value.trim();
     const address = document.getElementById('custAddress').value.trim();
     const city = document.getElementById('custCity').value.trim();
     const state = document.getElementById('custState').value.trim();
@@ -184,6 +184,24 @@ function bindCheckoutForm() {
     if (!phone || phone.replace(/\D/g, '').length < 10) {
       alert('Please provide a valid 10-digit mobile number.');
       document.getElementById('custPhone').focus();
+      return;
+    }
+
+    // Auto-fill from active customer session if empty
+    if (!email) {
+      const activeUser = typeof getCustomerUser === 'function'
+        ? getCustomerUser()
+        : (window.CustomerAuth ? window.CustomerAuth.getCustomerUser() : null);
+      if (activeUser && activeUser.email) {
+        email = activeUser.email.trim();
+        const emailEl = document.getElementById('custEmail');
+        if (emailEl) emailEl.value = email;
+      }
+    }
+
+    if (!email || !email.includes('@')) {
+      alert('Please provide a valid email address so we can email your order receipt.');
+      document.getElementById('custEmail').focus();
       return;
     }
 
@@ -239,7 +257,7 @@ function bindCheckoutForm() {
     const orderPayload = {
       customerName: name,
       customerPhone: phone,
-      customerEmail: email,
+      customerEmail: email.toLowerCase(),
       address: address,
       city: city,
       state: state,

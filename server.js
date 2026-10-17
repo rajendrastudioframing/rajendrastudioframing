@@ -798,12 +798,25 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
 
 // Send Customer Order Notification Helper
 async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, req) {
-  // If order is Ready for Pick Up / Shipped to shop counter, use specialized Brevo pick up notification
+  // 1. If order is Placed / New / Order Placed, dispatch via Brevo notifyOrderConfirmation
+  const isPlacedStatus = (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed');
+  if (isPlacedStatus) {
+    try {
+      const orderConfResult = await emailService.notifyOrderConfirmation({ order: orderOrInquiry, req });
+      if (orderConfResult && (orderConfResult.sent || orderConfResult.success)) {
+        return orderConfResult;
+      }
+    } catch (e) {
+      console.warn('⚠️ [Brevo Order Confirmation Warning in sendCustomerOrderNotification]:', e.message);
+    }
+  }
+
+  // 2. If order is Ready for Pick Up / Shipped to shop counter, use specialized Brevo pick up notification
   const isPickupReadyStatus = (newStatus === 'Shipped' || newStatus === 'Pickup Ready' || newStatus === 'Ready for Pickup' || (notes && notes.toLowerCase().includes('pick up')));
   if (isPickupReadyStatus) {
     try {
       const pickupResult = await emailService.notifyOrderPickupReady({ order: orderOrInquiry, notes, req });
-      if (pickupResult && pickupResult.sent) {
+      if (pickupResult && (pickupResult.sent || pickupResult.success)) {
         return pickupResult;
       }
     } catch (e) {
@@ -811,12 +824,12 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
     }
   }
 
-  // If order is Confirmed / Accepted by Admin, dispatch via order@rajendrastudioandgifts.in
+  // 3. If order is Confirmed / Accepted by Admin, dispatch via order@rajendrastudioandgifts.in
   const isAcceptedStatusInNotice = (newStatus === 'Confirmed' || newStatus === 'Accepted' || newStatus === 'In Progress');
   if (isAcceptedStatusInNotice) {
     try {
       const acceptedResult = await emailService.notifyOrderAcceptedByAdmin({ order: orderOrInquiry, notes, req });
-      if (acceptedResult && acceptedResult.sent) {
+      if (acceptedResult && (acceptedResult.sent || acceptedResult.success)) {
         return acceptedResult;
       }
     } catch (e) {
@@ -825,12 +838,6 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
   }
 
   try {
-    const config = await db.getAdminConfig();
-    const transporter = createTransporter(config);
-    if (!transporter) {
-      console.log(`ℹ️ [SMTP Info] SMTP not configured. Notification email skipped.`);
-      return { sent: false, reason: 'SMTP not configured' };
-    }
 
     const orderId = orderOrInquiry.orderId || orderOrInquiry.id;
     let customerEmail = (orderOrInquiry.customer && orderOrInquiry.customer.email) || orderOrInquiry.email;
@@ -929,27 +936,62 @@ Rajesh Framing Studio
 Dahej GIDC, Bharuch, Gujarat 392130
 `;
 
-    await transporter.sendMail({
-      from: fromAddress,
-      to: customerEmail.trim(),
-      subject: subject,
-      text: plainTextBody,
-      html: generateCustomerOrderEmailHtml({
-        orderId,
-        customerName,
-        newStatus,
-        notes,
-        items,
-        total,
-        paymentMethod,
-        trackingUrl,
-        editOrderUrl,
-        address
-      })
+    try {
+      const config = await db.getAdminConfig();
+      const transporter = createTransporter(config);
+      if (transporter) {
+        await transporter.sendMail({
+          from: fromAddress,
+          to: customerEmail.trim(),
+          subject: subject,
+          text: plainTextBody,
+          html: generateCustomerOrderEmailHtml({
+            orderId,
+            customerName,
+            newStatus,
+            notes,
+            items,
+            total,
+            paymentMethod,
+            trackingUrl,
+            editOrderUrl,
+            address
+          })
+        });
+        console.log(`📧 [CUSTOMER NOTIFICATION SENT VIA SMTP] Order #${orderId} (${newStatus}) -> ${customerEmail}`);
+        return { sent: true, recipient: customerEmail };
+      }
+    } catch (smtpErr) {
+      console.warn(`⚠️ [SMTP Order Notification Warning]:`, smtpErr.message);
+    }
+
+    // Direct Brevo delivery (primary transactional email engine)
+    const brevoHtml = generateCustomerOrderEmailHtml({
+      orderId,
+      customerName,
+      newStatus,
+      notes,
+      items,
+      total,
+      paymentMethod,
+      trackingUrl,
+      editOrderUrl,
+      address
     });
 
-    console.log(`📧 [CUSTOMER NOTIFICATION SENT] Order #${orderId} (${newStatus}) -> ${customerEmail}`);
-    return { sent: true, recipient: customerEmail };
+    const brevoRes = await emailService.sendOrderBrevoEmail({
+      to: customerEmail.trim(),
+      subject: subject,
+      textContent: plainTextBody,
+      htmlContent: brevoHtml
+    });
+
+    if (brevoRes && (brevoRes.sent || brevoRes.success)) {
+      console.log(`📧 [CUSTOMER NOTIFICATION SENT VIA BREVO] Order #${orderId} (${newStatus}) -> ${customerEmail}`);
+      return { sent: true, recipient: customerEmail, messageId: brevoRes.messageId };
+    }
+
+    return { sent: false, recipient: customerEmail, error: brevoRes ? brevoRes.error : 'Failed to send' };
 
   } catch (err) {
     console.error(`⚠️ [Customer Notification Error] Order ${orderOrInquiry.orderId || orderOrInquiry.id}:`, err.message);
@@ -2208,7 +2250,7 @@ app.post('/api/orders', async (req, res) => {
       });
     }
 
-    const orderEmail = (customerEmail && customerEmail.trim()) || authenticatedEmail;
+    const orderEmail = (customerEmail && customerEmail.trim().toLowerCase()) || (authenticatedEmail && authenticatedEmail.trim().toLowerCase());
 
     const orders = await db.getOrders();
     const orderNumber = String(orders.length + 1).padStart(3, '0');
@@ -2295,26 +2337,18 @@ app.post('/api/orders', async (req, res) => {
     console.log(`📍 Address: ${newOrder.customer.address}, ${newOrder.customer.city}`);
     console.log(`======================================================\n`);
 
-    // Dispatch Order Placed confirmation email to customer
-    if (newOrder.customer && newOrder.customer.email && newOrder.customer.email.includes('@')) {
-      try {
-        const emailResult = await sendCustomerOrderNotification(
-          newOrder,
-          'Placed',
-          'Thank you! Your order has been placed successfully online. Our studio will review and prepare it with precision.',
-          req
-        );
-        if (emailResult && emailResult.sent) {
-          console.log(`✅ [ORDER CONFIRMATION EMAIL DELIVERED] Successfully sent order receipt to customer: ${newOrder.customer.email}`);
-        }
-      } catch (custMailErr) {
-        console.warn('⚠️ [Customer Order Email Warning]:', custMailErr.message);
+    // Dispatch Order Placed confirmation email to customer & studio alert via Brevo
+    let emailResult = { sent: false };
+    try {
+      emailResult = await emailService.notifyOrderConfirmation({ order: newOrder, req });
+      if (emailResult && (emailResult.sent || emailResult.success)) {
+        console.log(`✅ [ORDER CONFIRMATION EMAIL DELIVERED] Successfully sent order receipt to customer: ${newOrder.customer.email}`);
+      } else {
+        console.warn(`⚠️ [Order Confirmation Notice] Delivery to customer ${newOrder.customer.email}:`, emailResult ? (emailResult.error || emailResult.reason) : 'No result');
       }
+    } catch (mailErr) {
+      console.error(`❌ [Order Email Exception]:`, mailErr.message);
     }
-
-    // Send Order Confirmation & Alerts via order@rajendrastudioandgifts.in Brevo Channel
-    emailService.notifyOrderConfirmation({ order: newOrder, req })
-      .catch(err => console.warn('Brevo order confirmation warning:', err.message));
 
     // Send instant Order Alert email to Studio Admin
     try {
