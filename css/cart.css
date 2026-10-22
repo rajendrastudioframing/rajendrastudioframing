@@ -856,25 +856,15 @@
   border-radius: 16px;
   padding: 20px 22px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-  position: -webkit-sticky !important;
-  position: sticky !important;
-  top: 86px !important;
-  max-height: calc(100vh - 100px) !important;
-  overflow-y: auto !important;
-  overscroll-behavior: contain !important;
-  scrollbar-width: thin;
-  z-index: 30 !important;
-  align-self: start !important;
+  box-sizing: border-box;
 }
 
 .order-items-preview {
-  max-height: 180px;
-  overflow-y: auto;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   padding-right: 4px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .order-item-row {
@@ -1364,79 +1354,16 @@
 }
 
 
-@media (max-height: 700px) {
-  .order-summary-card {
-    top: 76px !important;
-    padding: 14px 16px !important;
-    max-height: calc(100vh - 86px) !important;
-  }
-  .order-items-preview {
-    max-height: 110px !important;
-    margin-bottom: 8px !important;
-    gap: 8px !important;
-  }
-  .checkout-title {
-    font-size: 1.15rem !important;
-    margin-bottom: 10px !important;
-    padding-bottom: 8px !important;
-  }
-  .order-breakdown-row {
-    font-size: 0.8125rem !important;
-    margin-bottom: 4px !important;
-  }
-  .order-breakdown-row.grand-total {
-    margin-top: 6px !important;
-    margin-bottom: 10px !important;
-    padding-top: 6px !important;
-    font-size: 1.1rem !important;
-  }
-  .btn-place-order {
-    padding: 10px 14px !important;
-    font-size: 0.9375rem !important;
-  }
-  .order-guarantee-badges {
-    margin-top: 8px !important;
-    padding-top: 8px !important;
-  }
-  .order-badge-row {
-    font-size: 0.7rem !important;
-    gap: 6px !important;
-  }
-}
-
-
 /* ==========================================================================
-   STICKY ORDER SUMMARY CARD (STAYS PINNED AND STATIONARY WHEN SCROLLING)
+   ORDER SUMMARY CARD - RESPONSIVE & MOBILE-FRIENDLY SCROLLING
    ========================================================================== */
-.checkout-grid {
-  display: grid !important;
-  grid-template-columns: 1fr 400px !important;
-  gap: 28px !important;
-  align-items: start !important;
-}
-
-@media (max-width: 992px) {
-  .checkout-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
-
 .order-summary-card {
   background: #FFFFFF !important;
   border: 1px solid var(--border-light, #E5E0D5) !important;
   border-radius: 16px !important;
-  padding: 18px 20px !important;
+  padding: 20px !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
-  position: -webkit-sticky !important;
-  position: sticky !important;
-  top: 84px !important;
-  z-index: 30 !important;
-  align-self: start !important;
   box-sizing: border-box !important;
-  max-height: calc(100vh - 96px) !important;
-  overflow-y: auto !important;
-  overscroll-behavior: contain !important;
-  scrollbar-width: thin !important;
 }
 
 .order-summary-card .checkout-title {
@@ -1452,30 +1379,19 @@
   gap: 8px !important;
 }
 
-.order-items-preview {
-  max-height: 140px !important;
-  overflow-y: auto !important;
-  margin-bottom: 12px !important;
-  padding-right: 4px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 8px !important;
-  scrollbar-width: thin !important;
-}
-
 .order-item-row {
   display: flex !important;
   align-items: center !important;
-  gap: 10px !important;
-  padding-bottom: 8px !important;
+  gap: 12px !important;
+  padding-bottom: 10px !important;
   border-bottom: 1px solid #F0ECE4 !important;
 }
 
 .order-item-img {
-  width: 42px !important;
-  height: 42px !important;
+  width: 48px !important;
+  height: 48px !important;
   object-fit: cover !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   background: #FAF7F2 !important;
   flex-shrink: 0 !important;
 }
@@ -1486,44 +1402,42 @@
 }
 
 .order-item-name {
-  font-size: 0.8125rem !important;
+  font-size: 0.875rem !important;
   font-weight: 700 !important;
   color: #111111 !important;
-  margin-bottom: 1px !important;
-  line-height: 1.25 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  margin-bottom: 3px !important;
+  line-height: 1.3 !important;
 }
 
 .order-item-qty {
-  font-size: 0.7rem !important;
+  font-size: 0.75rem !important;
   color: #6B7280 !important;
+  line-height: 1.4 !important;
 }
 
 .order-item-price {
   font-weight: 700 !important;
   color: var(--accent-gold, #C99A3D) !important;
-  font-size: 0.85rem !important;
+  font-size: 0.9rem !important;
   white-space: nowrap !important;
 }
 
 .order-breakdown-row {
   display: flex !important;
   justify-content: space-between !important;
-  font-size: 0.8125rem !important;
+  font-size: 0.85rem !important;
   color: #4B5563 !important;
-  margin-bottom: 5px !important;
+  margin-bottom: 6px !important;
 }
 
 .order-breakdown-row.grand-total {
   font-size: 1.15rem !important;
   font-weight: 800 !important;
   color: #111111 !important;
-  padding-top: 8px !important;
+  padding-top: 10px !important;
   border-top: 2px solid #F0ECE4 !important;
-  margin-top: 8px !important;
-  margin-bottom: 12px !important;
+  margin-top: 10px !important;
+  margin-bottom: 14px !important;
 }
 
 .order-breakdown-row.grand-total span:last-child {
@@ -1532,7 +1446,7 @@
 
 .btn-place-order {
   width: 100% !important;
-  padding: 12px 18px !important;
+  padding: 13px 18px !important;
   font-size: 0.95rem !important;
   font-weight: 800 !important;
   border-radius: 10px !important;
@@ -1543,29 +1457,105 @@
   background: linear-gradient(135deg, #C99A3D 0%, #A87A24 100%) !important;
   color: #FFFFFF !important;
   box-shadow: 0 4px 16px rgba(201, 154, 61, 0.3) !important;
+  cursor: pointer !important;
+  border: none !important;
 }
 
 .order-guarantee-badges {
-  margin-top: 10px !important;
-  padding-top: 10px !important;
+  margin-top: 12px !important;
+  padding-top: 12px !important;
   border-top: 1px dashed #E5E0D5 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 5px !important;
+  gap: 6px !important;
 }
 
 .order-badge-row {
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  font-size: 0.72rem !important;
+  gap: 8px !important;
+  font-size: 0.75rem !important;
   color: #4B5563 !important;
 }
 
 .order-badge-row svg {
-  width: 14px !important;
-  height: 14px !important;
+  width: 15px !important;
+  height: 15px !important;
   color: var(--accent-gold, #C99A3D) !important;
   flex-shrink: 0 !important;
 }
+
+/* --- DESKTOP VIEW (STICKY SIDEBAR WITH NATURAL SCROLLING) --- */
+@media (min-width: 993px) {
+  .checkout-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 400px !important;
+    gap: 28px !important;
+    align-items: start !important;
+  }
+
+  .order-summary-card {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 90px !important;
+    max-height: calc(100vh - 110px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    z-index: 20 !important;
+  }
+
+  .order-items-preview {
+    max-height: 260px !important;
+    overflow-y: auto !important;
+    overscroll-behavior: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    scrollbar-width: thin !important;
+    margin-bottom: 12px !important;
+    padding-right: 4px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+}
+
+/* --- MOBILE & TABLET VIEW (NATURAL FLOW, NO TRAPPED SCROLLING) --- */
+@media (max-width: 992px) {
+  .checkout-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    width: 100% !important;
+  }
+
+  .order-summary-card {
+    position: static !important;
+    top: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overscroll-behavior: auto !important;
+    z-index: 1 !important;
+    margin-top: 8px !important;
+    margin-bottom: 30px !important;
+  }
+
+  .order-items-preview {
+    max-height: none !important;
+    overflow: visible !important;
+    overscroll-behavior: auto !important;
+    touch-action: pan-y !important;
+    margin-bottom: 14px !important;
+    padding-right: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .checkout-wrapper {
+    padding-bottom: 100px !important;
+  }
+}
+
 

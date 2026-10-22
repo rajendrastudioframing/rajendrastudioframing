@@ -377,7 +377,7 @@ function createOrderCardHtml(order) {
           <span>Order Again</span>
         </button>
 
-        <a href="https://wa.me/919601574966?text=${waMsg}" target="_blank" class="order-btn order-btn-whatsapp" title="WhatsApp Studio Support">
+        <a href="https://wa.me/919510757513?text=${waMsg}" target="_blank" class="order-btn order-btn-whatsapp" title="WhatsApp Studio Support">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.974.57 1.879.88 2.791.88 3.181 0 5.767-2.586 5.768-5.766 0-3.18-2.587-5.766-5.768-5.766zm0 10.375c-.864 0-1.71-.24-2.449-.694l-.175-.108-1.579.414.421-1.54-.114-.182c-.482-.767-.736-1.564-.736-2.5 0-2.518 2.049-4.567 4.568-4.567 2.519 0 4.568 2.049 4.568 4.567 0 2.518-2.049 4.567-4.568 4.567z"/></svg>
           <span>Support</span>
         </a>
@@ -570,7 +570,7 @@ function openInvoiceModal(orderId) {
         </div>
         <p style="font-size: 0.8rem; color: #6B7280; margin: 0; line-height: 1.4;">
           Rajendra Studio &amp; Framing • Dahej GIDC, Bharuch, Gujarat 392130<br>
-          Direct Hotline: +91 96015 74966 • Support: rajendrastudioframing@gmail.com
+          Direct Hotline: +91 95107 57513 • Support: info@rajendrastudioandgifts.in
         </p>
       </div>
       <div style="text-align: right;">

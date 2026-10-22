@@ -302,7 +302,7 @@ function generateOtpEmailHtml(otp, recipientEmail) {
       </div>
       <div class="footer">
         Dahej Support Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
-        Direct Customer Support: +91 96015 74966 • shop@rajendrastudioandgifts.in
+        Direct Customer Support: +91 95107 57513 • shop@rajendrastudioandgifts.in
       </div>
     </div>
   </body>
@@ -355,7 +355,7 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
       </div>
       <div class="footer">
         Dahej Support Studio • Dahej GIDC, Bharuch, Gujarat 392130<br>
-        Direct Customer Support: +91 96015 74966 • shop@rajendrastudioandgifts.in
+        Direct Customer Support: +91 95107 57513 • shop@rajendrastudioandgifts.in
       </div>
     </div>
   </body>
@@ -440,7 +440,7 @@ function generateCustomerLoginEmailHtml({ customerName, customerEmail, loginTime
 
                 <!-- Security Note -->
                 <div style="background-color: #FFFDF7; border-left: 4px solid #C99A3D; padding: 12px 16px; border-radius: 6px; font-size: 13px; color: #555555; line-height: 1.5; border: 1px solid #F5E8D0; border-left-width: 4px;">
-                  <strong>Didn't log in?</strong> If you did not perform this login, someone else may be accessing your account. Please notify our studio immediately on WhatsApp at <strong style="color: #111111;">+91 96015 74966</strong>.
+                  <strong>Didn't log in?</strong> If you did not perform this login, someone else may be accessing your account. Please notify our studio immediately on WhatsApp at <strong style="color: #111111;">+91 95107 57513</strong>.
                 </div>
               </td>
             </tr>
@@ -467,10 +467,10 @@ function generateCustomerLoginEmailHtml({ customerName, customerEmail, loginTime
                   Rajesh Framing Studio &bull; Dahej Support
                 </div>
                 <div style="font-size: 12px; color: #78716C; margin-bottom: 12px;">
-                  Dahej GIDC, Bharuch, Gujarat 392130 &bull; Phone: +91 96015 74966
+                  Dahej GIDC, Bharuch, Gujarat 392130 &bull; Phone: +91 95107 57513
                 </div>
                 <div>
-                  <a href="https://wa.me/919601574966" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 8px 18px; border-radius: 9999px; margin: 0 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);">
+                  <a href="https://wa.me/919510757513" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 8px 18px; border-radius: 9999px; margin: 0 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);">
                     💬 Studio WhatsApp
                   </a>
                 </div>
@@ -535,8 +535,8 @@ Device: ${userAgent}
 IP Address: ${ipAddress}
 
 If you did not perform this login, please contact our studio immediately:
-WhatsApp: https://wa.me/919601574966
-Phone: +91 96015 74966
+WhatsApp: https://wa.me/919510757513
+Phone: +91 95107 57513
 
 Browse our handcrafted collections:
 ${catalogUrl}
@@ -774,11 +774,11 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
                   Our studio team is available Mon–Sat (9:00 AM – 9:00 PM).
                 </div>
                 <div>
-                  <a href="https://wa.me/919601574966?text=${encodeURIComponent('Hello Rajesh Framing, I am inquiring about my Order #' + orderId)}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);">
+                  <a href="https://wa.me/919510757513?text=${encodeURIComponent('Hello Rajesh Framing, I am inquiring about my Order #' + orderId)}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);">
                     💬 Chat on WhatsApp
                   </a>
-                  <a href="tel:+919601574966" style="display: inline-block; background-color: #111111; color: #FFFFFF; border: 1px solid #C99A3D; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px;">
-                    📞 +91 96015 74966
+                  <a href="tel:+919510757513" style="display: inline-block; background-color: #111111; color: #FFFFFF; border: 1px solid #C99A3D; font-size: 12px; font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 9999px; margin: 0 4px;">
+                    📞 +91 95107 57513
                   </a>
                 </div>
                 <div style="margin-top: 20px; font-size: 11px; color: #A8A29E; line-height: 1.6;">
@@ -929,8 +929,8 @@ Total Amount: ₹${Number(total || 0).toLocaleString('en-IN')}
 Delivery To: ${address || 'Studio Pickup / Dahej & Bharuch'}
 
 If you have any questions, reach our studio:
-Phone: +91 96015 74966
-WhatsApp: https://wa.me/919601574966
+Phone: +91 95107 57513
+WhatsApp: https://wa.me/919510757513
 
 Rajesh Framing Studio
 Dahej GIDC, Bharuch, Gujarat 392130
@@ -1092,6 +1092,7 @@ app.post('/api/auth/login-request', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const allowedEmails = [
       'shop@rajendrastudioandgifts.in',
+      'info@rajendrastudioandgifts.in',
       'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
@@ -1201,6 +1202,7 @@ app.post('/api/auth/login', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const allowedEmails = [
       'shop@rajendrastudioandgifts.in',
+      'info@rajendrastudioandgifts.in',
       'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
@@ -1266,6 +1268,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     const config = await db.getAdminConfig();
     const allowedEmails = [
       'shop@rajendrastudioandgifts.in',
+      'info@rajendrastudioandgifts.in',
       'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
@@ -1299,8 +1302,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
       }
 
       // Check max attempts
-      stored.attempts = (stored.attempts || 0) + 1;
-      if (stored.attempts > 8 && !isMasterPin) {
+      if ((stored.attempts || 0) >= 3 && !isMasterPin) {
         activeOtps.delete(cleanEmail);
         return res.status(429).json({
           success: false,
@@ -1310,9 +1312,21 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 
       // Verify OTP code
       if (stored.otp !== submittedOtp && !isMasterPin) {
+        stored.attempts = (stored.attempts || 0) + 1;
+        const maxAttempts = 3;
+        const remainingAttempts = maxAttempts - stored.attempts;
+
+        if (stored.attempts >= maxAttempts) {
+          activeOtps.delete(cleanEmail);
+          return res.status(429).json({
+            success: false,
+            message: 'Too many incorrect attempts (3 of 3 used). Please request a new OTP.'
+          });
+        }
+
         return res.status(400).json({
           success: false,
-          message: `Incorrect OTP. Please enter the valid 6-digit code (${8 - stored.attempts} attempts remaining).`
+          message: `Incorrect OTP. Please enter the valid 6-digit code (${remainingAttempts} ${remainingAttempts === 1 ? 'attempt' : 'attempts'} remaining).`
         });
       }
 
@@ -1369,6 +1383,7 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     const config = await db.getAdminConfig();
     const allowedEmails = [
       'shop@rajendrastudioandgifts.in',
+      'info@rajendrastudioandgifts.in',
       'rajendrastudioframing@gmail.com',
       'help@dahejsupport.com',
       'rajeshframing0@gmail.com',
@@ -1602,10 +1617,7 @@ app.post('/api/customer/auth/send-otp', async (req, res) => {
 
     return res.json({
       success: true,
-      message: emailDelivered 
-        ? 'Passcode sent to your email address! Please check your inbox.'
-        : `Passcode generated! (Use Master Passcode 999999 or passcode: ${otp} to sign in)`,
-      offlinePasscode: !emailDelivered ? otp : undefined
+      message: 'Passcode sent to your email address! Please check your inbox.'
     });
 
   } catch (err) {
@@ -1670,7 +1682,7 @@ app.post('/api/customer/auth/direct-login', async (req, res) => {
 
 /**
  * Customer Step 2: Verify OTP -> Issue Customer Session Token
- * Supports Master Emergency PIN 999999 across serverless instances
+ * Verifies 6-digit OTP code sent to customer email
  */
 app.post('/api/customer/auth/verify-otp', async (req, res) => {
   try {
@@ -1682,7 +1694,7 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanOtp = otp.toString().trim();
     const stored = customerOtps.get(cleanEmail);
-    const isMasterPin = (cleanOtp === '999999');
+    const isMasterPin = false;
 
     if (!stored && !isMasterPin) {
       return res.status(400).json({
@@ -1702,8 +1714,7 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
       }
 
       // Check max attempts
-      stored.attempts = (stored.attempts || 0) + 1;
-      if (stored.attempts > 8 && !isMasterPin) {
+      if ((stored.attempts || 0) >= 3 && !isMasterPin) {
         customerOtps.delete(cleanEmail);
         return res.status(429).json({
           success: false,
@@ -1713,9 +1724,21 @@ app.post('/api/customer/auth/verify-otp', async (req, res) => {
 
       // Verify OTP exact match
       if (stored.otp !== cleanOtp && !isMasterPin) {
+        stored.attempts = (stored.attempts || 0) + 1;
+        const maxAttempts = 3;
+        const remainingAttempts = maxAttempts - stored.attempts;
+
+        if (stored.attempts >= maxAttempts) {
+          customerOtps.delete(cleanEmail);
+          return res.status(429).json({
+            success: false,
+            message: 'Too many incorrect attempts (3 of 3 used). Please request a new OTP.'
+          });
+        }
+
         return res.status(400).json({
           success: false,
-          message: `Incorrect OTP. Please enter the valid 6-digit code (${8 - stored.attempts} attempts remaining).`
+          message: `Incorrect OTP. Please enter the valid 6-digit code (${remainingAttempts} ${remainingAttempts === 1 ? 'attempt' : 'attempts'} remaining).`
         });
       }
 
@@ -2224,10 +2247,15 @@ app.post('/api/orders', async (req, res) => {
       orderPhoto
     } = req.body;
 
-    if (!customerName || !customerPhone || !address || !items || !items.length) {
+    const orderAddress = (address && address.trim()) || 'Studio Pickup - Dahej Shop';
+    const orderCity = (city && city.trim()) || 'Dahej / Bharuch';
+    const orderState = (state && state.trim()) || 'Gujarat';
+    const orderPincode = (pincode && pincode.trim()) || '392130';
+
+    if (!customerName || !customerPhone || !items || !items.length) {
       return res.status(400).json({
         success: false,
-        message: 'Name, phone number, address, and at least one item are required to place an order.'
+        message: 'Name, phone number, and at least one item are required to place an order.'
       });
     }
 
@@ -2262,10 +2290,10 @@ app.post('/api/orders', async (req, res) => {
         name: customerName.trim(),
         phone: customerPhone.trim(),
         email: orderEmail,
-        address: address.trim(),
-        city: (city || 'Dahej / Bharuch').trim(),
-        state: (state || 'Gujarat').trim(),
-        pincode: (pincode || '').trim()
+        address: orderAddress,
+        city: orderCity,
+        state: orderState,
+        pincode: orderPincode
       },
       items: items.map(item => ({
         id: item.id,
@@ -3458,7 +3486,7 @@ app.get('/api/admin/settings', requireAuth, async (req, res) => {
   res.json({
     success: true,
     settings: {
-      adminEmail: config.adminEmail || process.env.ADMIN_EMAIL || 'shop@rajendrastudioandgifts.in',
+      adminEmail: config.adminEmail || process.env.ADMIN_EMAIL || 'info@rajendrastudioandgifts.in',
       adminName: config.adminName || 'Rajendra Studio Admin',
       smtp: {
         enabled: Boolean(config.smtp && config.smtp.enabled),

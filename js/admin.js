@@ -1319,7 +1319,7 @@ window.printCurrentOrderReceipt = () => {
         <div>
           <div class="brand">RAJESH <span>FRAMING</span></div>
           <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Custom Framing &amp; Archival Printing Studio</div>
-          <div style="font-size: 11px; color: #94a3b8;">Near Railway Station, Dahej / Bharuch, Gujarat • Tel: +91 96015 74966</div>
+          <div style="font-size: 11px; color: #94a3b8;">Near Railway Station, Dahej / Bharuch, Gujarat • Tel: +91 95107 57513</div>
         </div>
         <div class="order-meta">
           <div style="font-size: 18px; font-weight: 800; color: #0f172a;">#${escapeHtml(order.id)}</div>
@@ -1379,7 +1379,7 @@ window.printCurrentOrderReceipt = () => {
       ` : ''}
 
       <div class="footer">
-        Thank you for choosing Dahej Support Studio! For inquiries or re-prints, WhatsApp us at +91 96015 74966.
+        Thank you for choosing Dahej Support Studio! For inquiries or re-prints, WhatsApp us at +91 95107 57513.
       </div>
       <script>
         window.onload = function() { window.print(); };
@@ -4038,7 +4038,7 @@ function initSettingsForms() {
       const adminEmailInput = document.getElementById('settingAdminEmail');
       const targetEmail = (userEmailInput && userEmailInput.value.trim()) || 
                           (adminEmailInput && adminEmailInput.value.trim()) || 
-                          'rajendrastudioframing@gmail.com';
+                          'info@rajendrastudioandgifts.in';
 
       testSmtpBtn.disabled = true;
       const originalText = testSmtpBtn.textContent;

@@ -164,12 +164,16 @@ function bindCheckoutForm() {
 
     const name = document.getElementById('custName').value.trim();
     const phone = document.getElementById('custPhone').value.trim();
-    let email = document.getElementById('custEmail').value.trim();
-    const address = document.getElementById('custAddress').value.trim();
-    const city = document.getElementById('custCity').value.trim();
-    const state = document.getElementById('custState').value.trim();
-    const pincode = document.getElementById('custPincode').value.trim();
-    const fulfillment = document.getElementById('fulfillmentMethod').value;
+    const addressEl = document.getElementById('custAddress');
+    const cityEl = document.getElementById('custCity');
+    const stateEl = document.getElementById('custState');
+    const pincodeEl = document.getElementById('custPincode');
+    const fulfillmentEl = document.getElementById('fulfillmentMethod');
+    const address = addressEl ? addressEl.value.trim() : 'Studio Pickup - Dahej Shop';
+    const city = cityEl ? cityEl.value.trim() : 'Dahej / Bharuch';
+    const state = stateEl ? stateEl.value.trim() : 'Gujarat';
+    const pincode = pincodeEl ? pincodeEl.value.trim() : '392130';
+    const fulfillment = fulfillmentEl ? fulfillmentEl.value : 'pickup';
     const notes = document.getElementById('orderNotes').value.trim();
     const utrInput = document.getElementById('upiUtrNumber');
     const utr = utrInput ? utrInput.value.trim() : '';
@@ -202,18 +206,6 @@ function bindCheckoutForm() {
     if (!email || !email.includes('@')) {
       alert('Please provide a valid email address so we can email your order receipt.');
       document.getElementById('custEmail').focus();
-      return;
-    }
-
-    if (!address) {
-      alert('Please provide your complete delivery or pickup address.');
-      document.getElementById('custAddress').focus();
-      return;
-    }
-
-    if (!pincode || pincode.length < 6) {
-      alert('Please enter a valid 6-digit postal pincode.');
-      document.getElementById('custPincode').focus();
       return;
     }
 
@@ -339,7 +331,7 @@ function bindCheckoutForm() {
 
         const waBtn = document.getElementById('successWhatsAppBtn');
         if (waBtn) {
-          waBtn.href = `https://wa.me/919601574966?text=${waMsg}`;
+          waBtn.href = `https://wa.me/919510757513?text=${waMsg}`;
         }
 
         const trackBtn = document.getElementById('successTrackBtn');

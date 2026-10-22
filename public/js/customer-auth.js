@@ -512,10 +512,6 @@
               <input type="text" maxlength="1" class="cust-otp-box" id="cust-otp-6" inputmode="numeric" />
             </div>
 
-            <div style="font-size: 0.75rem; color: #6B7280; text-align: center; margin-top: 4px;">
-              <span>💡 Master Passcode for instant login: <strong>999999</strong></span>
-            </div>
-
             <button type="submit" id="custAuthVerifyBtn" class="btn btn-gold shimmer-effect" style="width: 100%; justify-content: center; padding: 13px; font-weight: 700; margin-top: 14px;">
               <span id="custAuthVerifyBtnText">Verify &amp; Continue</span>
               <span id="custAuthVerifySpinner" class="auth-spinner" style="display: none;"></span>

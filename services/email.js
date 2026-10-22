@@ -27,8 +27,8 @@ const STUDIO_INFO = {
   name: 'Rajendra Studio & Framing',
   tagline: 'Custom Framing & Gifts Studio • Dahej Support',
   address: 'Rajesh Framing Studio, Dahej GIDC, Near Main Road, Bharuch, Gujarat 392130',
-  phone: '+91 96015 74966',
-  whatsapp: 'https://wa.me/919601574966',
+  phone: process.env.STUDIO_PHONE || '+91 95107 57513',
+  whatsapp: process.env.STUDIO_WHATSAPP ? `https://wa.me/${process.env.STUDIO_WHATSAPP}` : 'https://wa.me/919510757513',
   email: 'shop@rajendrastudioandgifts.in',
   hours: '9:30 AM – 9:00 PM (Monday to Sunday)'
 };
@@ -223,7 +223,7 @@ async function notifyCustomerLogin({ customerEmail, customerName = '', customerP
           </p>
           <div style="background: #FAF9F6; border: 1px solid #EAE5DB; border-radius: 10px; padding: 16px; margin-bottom: 22px;">
             <div style="font-size: 13px; color: #666; margin-bottom: 6px;"><strong>Device:</strong> ${userAgent}</div>
-            <div style="font-size: 13px; color: #666;"><strong>Security Notice:</strong> If you did not perform this login, please contact us immediately on WhatsApp or Phone: <a href="tel:+919601574966" style="color: #8C6A1E; font-weight: 700;">+91 96015 74966</a>.</div>
+            <div style="font-size: 13px; color: #666;"><strong>Security Notice:</strong> If you did not perform this login, please contact us immediately on WhatsApp or Phone: <a href="tel:+919510757513" style="color: #8C6A1E; font-weight: 700;">+91 95107 57513</a>.</div>
           </div>
           <div style="text-align: center; margin: 24px 0 10px;">
             <a href="https://rajendrastudioandgifts.in/products" style="display: inline-block; background: #C99A3D; color: #111; font-weight: 800; text-decoration: none; padding: 12px 26px; border-radius: 8px; font-size: 14px;">Browse Premium Framing Collection &rarr;</a>
@@ -431,8 +431,8 @@ async function notifyOrderPickupReady({ order, notes = '', req = null }) {
             </div>
             <div style="font-size: 13px; color: #666; margin-top: 10px; line-height: 1.6;">
               <strong>🕒 Shop Timings:</strong> ${STUDIO_INFO.hours}<br>
-              <strong>📞 Direct Helpline:</strong> <a href="tel:+919601574966" style="color: #8C6A1E; font-weight: 700; text-decoration: none;">+91 96015 74966</a><br>
-              <strong>💬 WhatsApp:</strong> <a href="${STUDIO_INFO.whatsapp}" style="color: #16A34A; font-weight: 700; text-decoration: none;">Chat on WhatsApp (+91 96015 74966)</a>
+              <strong>📞 Direct Helpline:</strong> <a href="tel:+919510757513" style="color: #8C6A1E; font-weight: 700; text-decoration: none;">+91 95107 57513</a><br>
+              <strong>💬 WhatsApp:</strong> <a href="${STUDIO_INFO.whatsapp}" style="color: #16A34A; font-weight: 700; text-decoration: none;">Chat on WhatsApp (+91 95107 57513)</a>
             </div>
             <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #EBE6DC; font-size: 12px; color: #777;">
               💡 <em>Please show this email or share your Order ID (<strong>#${cleanId}</strong>) at our shop counter during collection.</em>

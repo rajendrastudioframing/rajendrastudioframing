@@ -1275,9 +1275,9 @@ ul, ol {
   margin-bottom: 24px;
 }
 
-.footer-socials {
-  display: flex;
-  gap: 10px;
+.footer-socials,
+.footer-social-wrap {
+  display: none !important;
 }
 
 .social-link {
