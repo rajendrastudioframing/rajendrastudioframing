@@ -186,7 +186,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/admin.css?v=opt_dd_v5" />
+  <link rel="stylesheet" href="css/admin.css?v=no_calc_v6" />
   <style id="rf-active-badge-guard">
     /* Remove sidebar notification number badges completely */
     .sidebar-badge {
@@ -1922,7 +1922,7 @@
                 <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Price &amp; Variant Pricing:</span>
                 <span style="font-size: 0.7rem; color: var(--text-muted);">Configure variant rates</span>
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
                 <div>
                   <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">Selling Price (₹)</span>
                   <input type="number" class="setting-input" id="editProductBasePriceMirror" placeholder="e.g. 599" min="0" oninput="syncAdminPrice('edit', this.value)" />
@@ -1931,9 +1931,6 @@
                   <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">MRP / Original Price (₹)</span>
                   <input type="number" class="setting-input" id="editProductOriginalPriceMirror" placeholder="e.g. 899 (Optional)" min="0" oninput="syncAdminOrigPrice('edit', this.value)" />
                 </div>
-              </div>
-              <div style="padding: 10px 12px; border-radius: 8px; background: rgba(201, 154, 61, 0.08); border: 1px dashed rgba(201, 154, 61, 0.3); font-size: 0.73rem; color: var(--text-secondary); line-height: 1.4;">
-                💡 <strong>Auto Pricing Calculation:</strong> Smaller sizes use base selling price. Larger custom sizes scale automatically on the live catalog product page.
               </div>
             </div>
           </div>
@@ -2162,7 +2159,7 @@
                 <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Price &amp; Variant Pricing:</span>
                 <span style="font-size: 0.7rem; color: var(--text-muted);">Configure variant rates</span>
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
                 <div>
                   <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">Base Selling Price (₹)</span>
                   <input type="number" class="setting-input" id="newProductBasePriceMirror" placeholder="e.g. 599" min="1" oninput="syncAdminPrice('new', this.value)" />
@@ -2171,9 +2168,6 @@
                   <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">MRP / Original Price (₹)</span>
                   <input type="number" class="setting-input" id="newProductOriginalPrice" placeholder="e.g. 899 (Optional)" min="1" />
                 </div>
-              </div>
-              <div style="padding: 10px 12px; border-radius: 8px; background: rgba(201, 154, 61, 0.08); border: 1px dashed rgba(201, 154, 61, 0.3); font-size: 0.73rem; color: var(--text-secondary); line-height: 1.4;">
-                💡 <strong>Auto Pricing Calculation:</strong> Smaller sizes use base selling price. Larger custom sizes scale automatically on the live catalog product page.
               </div>
             </div>
           </div>
@@ -2372,7 +2366,7 @@
   <!-- Modern Floating Toast Container -->
   <div class="admin-toast-container" id="adminToastContainer"></div>
 
-  <script src="js/admin.js?v=opt_dd_v5"></script>
+  <script src="js/admin.js?v=no_calc_v6"></script>
   <script>
     // Direct click safeguard: Instantly hide badge when clicking any sidebar link
     document.addEventListener('DOMContentLoaded', function () {
