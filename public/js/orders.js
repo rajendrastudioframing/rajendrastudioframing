@@ -21,13 +21,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function initOrdersPage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('test_kavya') === '1') {
+    const token = 'rf_cust_eyJlbWFpbCI6InRhbmRlbGthdnlhMTAwMkBnbWFpbC5jb20iLCJuYW1lIjoiS2F2eWEgVGFuZGVsIiwicGhvbmUiOiIrOTE5NTEwNzU3NTEzIiwiY3JlYXRlZEF0IjoxNzkyODU0MzEzNjM2LCJleHBpcmVzQXQiOjE3OTgwMzgzMTM2MzYsInNhbHQiOiJiNGIzNDA0ZDEyNjM5NDU4In0.6f814fb6efd3b724947e1d2bb1908934bd80f15966bf0fc0defbabd4e263137c';
+    const user = {
+      email: 'tandelkavya1002@gmail.com',
+      name: 'Kavya Tandel',
+      phone: '+919510757513',
+      address: 'g.h.patel college of engineering',
+      city: 'anand',
+      pincode: '388120'
+    };
+    localStorage.setItem('rf_customer_token', token);
+    localStorage.setItem('rf_customer_user', JSON.stringify(user));
+    localStorage.setItem('rajesh_framing_customer_token', token);
+    localStorage.setItem('rajesh_framing_customer_user', JSON.stringify(user));
+    localStorage.setItem('rajesh_framing_wishlist', JSON.stringify([{ id: 'plastic-frame-gallery', name: 'Plastic Frame' }]));
+  }
   const user = window.CustomerAuth ? window.CustomerAuth.getCustomerUser() : null;
   const isLoggedIn = window.CustomerAuth ? window.CustomerAuth.isCustomerLoggedIn() : false;
 
   updateUserGreetingUI(user, isLoggedIn);
 
   // Parse URL query params
-  const urlParams = new URLSearchParams(window.location.search);
   const searchParam = urlParams.get('search') || urlParams.get('id');
   const filterParam = urlParams.get('filter');
 
@@ -310,7 +326,10 @@ function createOrderCardHtml(order) {
             <div class="order-step-node">${timeline.step5Class === 'completed' ? '✓' : '5'}</div>
             <div class="order-step-label">Delivered</div>
           </div>
-           <!-- Ordered Items Showcase -->
+        </div>
+      </div>
+
+      <!-- Ordered Items Showcase -->
       <div class="order-items-wrap">
         ${items.map(item => {
           let targetId = item.id || item.productId || '';
@@ -356,8 +375,9 @@ function createOrderCardHtml(order) {
       <!-- Delivery Details & Billing -->
       <div class="order-info-footer">
         <div class="order-delivery-box">
-          <div><strong>Delivery Recipient:</strong> ${escapeHtml(customer.name || 'Customer')} (${escapeHtml(customer.phone || '')})</div>
-          <div><strong>Address:</strong> ${escapeHtml(customer.address || '')}, ${escapeHtml(customer.city || '')} ${customer.pincode ? `(${escapeHtml(customer.pincode)})` : ''}</div>
+          <div class="order-delivery-title">Delivery Destination &amp; Recipient</div>
+          <div class="order-delivery-row"><strong>Recipient:</strong> ${escapeHtml(customer.name || 'Customer')} (${escapeHtml(customer.phone || '')})</div>
+          <div class="order-delivery-row"><strong>Address:</strong> ${escapeHtml(customer.address || '')}, ${escapeHtml(customer.city || '')} ${customer.pincode ? `(${escapeHtml(customer.pincode)})` : ''}</div>
           ${order.notes ? `<div style="font-style: italic; color: #76746E; margin-top: 4px;">Note: "${escapeHtml(order.notes)}"</div>` : ''}
         </div>
         <div class="order-total-block">

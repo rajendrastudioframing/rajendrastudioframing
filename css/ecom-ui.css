@@ -66,23 +66,29 @@
   display: none !important; /* Replaced with clean pill hover */
 }
 
-/* Nav Badge */
+/* Nav Badge: Clean inline pill alignment, reset absolute/shadows */
 .nav-badge-pill,
 .navbar-cart-badge,
 .navbar-wishlist-badge {
-  display: inline-flex;
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  font-size: 0.6875rem;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 6px;
+  font-size: 0.72rem;
   font-weight: 700;
   border-radius: 9999px;
-  background: #C99A3D;
-  color: #FFFFFF;
+  background: #C99A3D !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  box-shadow: none !important;
   line-height: 1;
-  margin-left: 3px;
+  margin-left: 5px;
+  vertical-align: middle;
 }
 
 /* --- 2. MOBILE FIXED BOTTOM NAVIGATION BAR (5 ITEMS) --- */

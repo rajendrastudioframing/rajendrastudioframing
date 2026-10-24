@@ -312,7 +312,7 @@
 
 /* Craftsmanship Timeline Tracker */
 .order-timeline-wrap {
-  padding: 24px;
+  padding: 22px 28px 20px;
   background: #FFFFFF;
   border-bottom: 1px solid var(--orders-border);
 }
@@ -332,16 +332,18 @@
 .order-timeline-steps {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   position: relative;
-  margin: 0 10px;
+  margin: 0;
+  width: 100%;
 }
 
 .order-timeline-steps::before {
   content: '';
   position: absolute;
-  top: 15px;
-  left: 20px;
-  right: 20px;
+  top: 16px;
+  left: 36px;
+  right: 36px;
   height: 3px;
   background: #E5E7EB;
   z-index: 1;
@@ -349,8 +351,8 @@
 
 .order-timeline-progress {
   position: absolute;
-  top: 15px;
-  left: 20px;
+  top: 16px;
+  left: 36px;
   height: 3px;
   background: var(--orders-gold);
   z-index: 2;
@@ -364,7 +366,8 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  width: 100px;
+  flex: 1;
+  max-width: 130px;
 }
 
 .order-step-node {
@@ -377,10 +380,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   margin-bottom: 8px;
   transition: all 0.25s ease;
+  box-shadow: 0 0 0 4px #FFFFFF;
 }
 
 .order-timeline-step.completed .order-step-node {
@@ -393,14 +397,16 @@
   background: #FFFFFF;
   border-color: var(--orders-gold);
   color: var(--orders-gold);
-  box-shadow: 0 0 0 4px rgba(201, 154, 61, 0.2);
+  box-shadow: 0 0 0 4px rgba(201, 154, 61, 0.22), 0 0 0 2px #FFFFFF;
 }
 
 .order-step-label {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #4B5563;
-  line-height: 1.3;
+  line-height: 1.35;
+  white-space: normal;
+  word-break: normal;
 }
 
 .order-timeline-step.active .order-step-label {
@@ -414,7 +420,7 @@
 
 /* Ordered Items Section */
 .order-items-wrap {
-  padding: 24px;
+  padding: 22px 28px;
 }
 
 .order-item-row {
@@ -488,31 +494,57 @@
 
 /* Order Summary & Customer Info Grid */
 .order-info-footer {
-  padding: 20px 24px;
+  padding: 20px 28px;
   background: #FDFCFB;
   border-top: 1px solid var(--orders-border);
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
   align-items: center;
 }
 
 .order-delivery-box {
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   color: #4B5563;
-  line-height: 1.5;
+  line-height: 1.55;
+}
+
+.order-delivery-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #8C6A1E;
+  margin-bottom: 6px;
+}
+
+.order-delivery-row {
+  margin-bottom: 3px;
 }
 
 .order-delivery-box strong {
   color: #111827;
 }
 
+.order-delivery-notes {
+  font-style: italic;
+  color: #76746E;
+  margin-top: 6px;
+  padding: 6px 12px;
+  background: #F5F1EA;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
 .order-total-block {
   text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .order-total-label {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--orders-muted);
   text-transform: uppercase;
   font-weight: 700;
@@ -521,58 +553,65 @@
 
 .order-total-amount {
   font-family: var(--font-heading, 'Playfair Display', serif);
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   font-weight: 800;
   color: #8C6A1E;
+  margin: 2px 0;
+  line-height: 1.2;
 }
 
 .order-payment-method {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: #6B7280;
-  margin-top: 2px;
 }
 
 /* Card Action Bar */
 .order-actions-bar {
-  padding: 16px 24px;
+  padding: 14px 28px;
   background: #FFFFFF;
   border-top: 1px solid var(--orders-border);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .order-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 18px;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 16px;
   border-radius: 8px;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
   border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1;
+  height: 38px;
 }
 
 .order-btn-primary {
   background: linear-gradient(135deg, #C99A3D 0%, #A67C2E 100%);
   color: #FFFFFF;
   border: none;
-  box-shadow: 0 4px 12px rgba(201, 154, 61, 0.25);
+  box-shadow: 0 2px 8px rgba(201, 154, 61, 0.25);
 }
 
 .order-btn-primary:hover {
   filter: brightness(1.06);
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(201, 154, 61, 0.35);
+  color: #FFFFFF;
 }
 
 .order-btn-outline {
   background: #FFFFFF;
-  border-color: #D1D5DB;
+  border: 1.5px solid #D1D5DB;
   color: #374151;
 }
 
@@ -580,17 +619,64 @@
   background: #F9FAFB;
   border-color: #9CA3AF;
   color: #111827;
+  transform: translateY(-1px);
 }
 
 .order-btn-whatsapp {
   background: #25D366;
   color: #FFFFFF;
   border: none;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
 }
 
 .order-btn-whatsapp:hover {
   background: #1EBE5D;
   color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+}
+
+/* Header Badges Fix: Inline Pill Alignment without floating shadow */
+.nav-menu .navbar-cart-badge,
+.nav-menu .navbar-wishlist-badge {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  background: #C99A3D !important;
+  color: #FFFFFF !important;
+  line-height: 1;
+  margin-left: 5px;
+  border: none !important;
+  box-shadow: none !important;
+  vertical-align: middle;
+}
+
+/* Edit Address Modal Form Enhancements */
+#editOrderForm input,
+#editOrderForm textarea {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+#editOrderForm input:focus,
+#editOrderForm textarea:focus {
+  border-color: #C99A3D !important;
+  box-shadow: 0 0 0 3px rgba(201, 154, 61, 0.18) !important;
+}
+
+#editAddressInput {
+  resize: vertical;
+  min-height: 70px;
 }
 
 /* Empty State Card */
@@ -794,8 +880,10 @@
   .order-timeline-step {
     flex-direction: row;
     width: 100%;
+    max-width: none;
     text-align: left;
     gap: 14px;
+    align-items: center;
   }
 
   .order-step-node {
