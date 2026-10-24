@@ -100,6 +100,10 @@ function initBackToTop() {
   if (!backToTopBtn) return;
 
   window.addEventListener('scroll', () => {
+    if (window.innerWidth <= 768) {
+      backToTopBtn.classList.remove('visible');
+      return;
+    }
     if (window.scrollY > 400) {
       backToTopBtn.classList.add('visible');
     } else {
@@ -113,6 +117,7 @@ function initBackToTop() {
       behavior: 'smooth'
     });
   });
+});
 }
 
 /* ==========================================================================

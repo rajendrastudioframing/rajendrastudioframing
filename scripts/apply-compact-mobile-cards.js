@@ -386,7 +386,7 @@ const NEW_MOBILE_CSS = `
   }
 
   .floating-actions-wrap {
-    bottom: 14px !important;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
     right: 12px !important;
   }
 }

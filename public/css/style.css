@@ -1707,26 +1707,36 @@ ul, ol {
   .menu-toggle {
     padding: 6px;
   }
+  .back-to-top-btn {
+    display: none !important;
+  }
   .floating-actions-wrap {
-    bottom: 16px;
-    right: 12px;
-    gap: 8px;
-    z-index: 99999 !important;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    right: 16px !important;
+    gap: 0 !important;
+    z-index: 99995 !important;
   }
   .product-page-active .floating-actions-wrap {
     display: flex !important;
-  
-  z-index: 99999 !important;}
-  .floating-whatsapp-btn {
-    padding: 9px;
-    width: 40px;
-    height: 40px;
-    justify-content: center;
-    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35);
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    z-index: 99995 !important;
   }
-  .back-to-top-btn {
-    width: 36px;
-    height: 36px;
+  .floating-whatsapp-btn {
+    width: 48px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 18px rgba(37, 211, 102, 0.45) !important;
+  }
+  .floating-whatsapp-btn span {
+    display: none !important;
+  }
+  .floating-whatsapp-btn svg {
+    width: 26px !important;
+    height: 26px !important;
   }
   /* Bottom safe padding for catalog and products so cards are never obscured */
   .catalog-main-content,

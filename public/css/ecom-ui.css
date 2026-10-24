@@ -225,8 +225,14 @@
     padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
+  .back-to-top-btn {
+    display: none !important;
+  }
   .floating-actions-wrap {
-    bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    right: 16px !important;
+    gap: 0 !important;
+    z-index: 99995 !important;
   }
 }
 
@@ -1377,6 +1383,9 @@
 }
 
 @media (max-width: 767px) {
+  .categories-showcase-section {
+    padding-bottom: 90px !important;
+  }
   .categories-main-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
