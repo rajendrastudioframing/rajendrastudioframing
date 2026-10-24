@@ -371,31 +371,10 @@ body.admin-dashboard-body[data-theme="dark"] {
 }
 
 .sidebar-badge {
-  margin-left: auto;
-  background: rgba(255, 255, 255, 0.25);
-  color: #FFFFFF;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 1px 7px;
-  border-radius: 9999px;
-  transition: all 0.2s ease;
-}
-
-/* Hide notification badge when section is currently open / active */
-.sidebar-link.active .sidebar-badge {
   display: none !important;
-}
-
-[data-theme="light"] .sidebar-link:not(.active) .sidebar-badge {
-  background: #F5F1E8;
-  color: #666666;
-  border: 1px solid var(--border-subtle);
-}
-
-[data-theme="dark"] .sidebar-link:not(.active) .sidebar-badge {
-  background: var(--bg-hover);
-  color: var(--text-muted);
-  border: 1px solid var(--border-subtle);
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 /* Sidebar Footer Profile */

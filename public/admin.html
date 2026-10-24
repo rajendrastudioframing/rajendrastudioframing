@@ -186,19 +186,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/admin.css?v=stock_pill_v3" />
+  <link rel="stylesheet" href="css/admin.css?v=no_badge_v4" />
   <style id="rf-active-badge-guard">
-    /* Instant guard: Never show notification badge on active / open sidebar section */
-    .sidebar-link.active .sidebar-badge {
+    /* Remove sidebar notification number badges completely */
+    .sidebar-badge {
       display: none !important;
-    }
-    /* Stop background page scroll when any modal is open */
-    html:has(.admin-modal-overlay.open),
-    body:has(.admin-modal-overlay.open),
-    body.modal-open {
+      visibility: hidden !important;
+      opacity: 0 !important;
+      width: 0 !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
       overflow: hidden !important;
-      height: 100vh !important;
-      touch-action: none;
     }
   </style>
   <style id="rf-stock-pill-styles">
@@ -2321,7 +2320,7 @@
   <!-- Modern Floating Toast Container -->
   <div class="admin-toast-container" id="adminToastContainer"></div>
 
-  <script src="js/admin.js?v=stock_pill_v3"></script>
+  <script src="js/admin.js?v=no_badge_v4"></script>
   <script>
     // Direct click safeguard: Instantly hide badge when clicking any sidebar link
     document.addEventListener('DOMContentLoaded', function () {

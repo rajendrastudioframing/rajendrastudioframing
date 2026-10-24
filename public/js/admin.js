@@ -114,7 +114,7 @@ function updateNotificationBadges() {
       badgeOrders.style.display = 'none';
     } else {
       badgeOrders.textContent = unseenOrders;
-      badgeOrders.style.display = 'inline-block';
+      badgeOrders.style.display = 'none';
     }
   }
 
@@ -136,7 +136,7 @@ function updateNotificationBadges() {
       badgeLeads.style.display = 'none';
     } else {
       badgeLeads.textContent = unseenLeads;
-      badgeLeads.style.display = 'inline-block';
+      badgeLeads.style.display = 'none';
     }
   }
 
@@ -159,7 +159,7 @@ function updateNotificationBadges() {
       badgeCustomers.style.display = 'none';
     } else {
       badgeCustomers.textContent = unseenCustomers;
-      badgeCustomers.style.display = 'inline-block';
+      badgeCustomers.style.display = 'none';
     }
   }
 
@@ -3723,7 +3723,7 @@ async function loadMessages() {
     const badgeMessages = document.getElementById('sidebarUnreadMessagesBadge');
     if (badgeMessages) {
       badgeMessages.textContent = unreadCount;
-      badgeMessages.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+      badgeMessages.style.display = 'none';
     }
   } catch (err) {
     console.error('Failed to load messages:', err);
