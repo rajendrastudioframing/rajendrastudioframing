@@ -310,17 +310,41 @@ function renderCatalog() {
         </div>
         <div class="capsule-bottom-row product-card-actions">
           <button type="button" class="capsule-action-btn btn-catalog-cart" data-add-to-cart data-product-id="${product.id}" onclick="quickAddToCart('${product.id}', event);" title="Add to Cart">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="btn-cart-icon"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="btn-cart-icon"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             <span class="btn-cart-text"><span class="btn-cart-prefix">Add to </span>Cart</span>
           </button>
           <button type="button" class="capsule-action-btn btn-catalog-buynow" onclick="event.stopPropagation(); window.quickBuyNow('${product.id}', event);" title="Buy Now">
             <span>Buy Now</span>
+          </button>
+          <button type="button" class="capsule-action-btn btn-catalog-whatsapp" onclick="event.stopPropagation(); window.quickWhatsApp('${product.id}', event);" title="Chat on WhatsApp">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.058-2.18-.553-1.638-.673-2.684-2.336-2.766-2.445-.082-.109-.661-.88-.661-1.678 0-.798.419-1.189.569-1.353.15-.164.33-.205.441-.205.111 0 .222.001.32.006.103.004.24-.039.375.285.144.344.49 1.196.533 1.284.043.088.072.19.014.305-.058.115-.087.186-.173.287-.087.1-.183.224-.262.301-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.174.232-.145.39-.087.159.058 1.009.477 1.182.564.173.087.289.13.332.204.043.074.043.431-.101.836z"/>
+            </svg>
+            <span class="btn-whatsapp-text">WhatsApp</span>
           </button>
         </div>
       </div>
     </article>
   `}).join('');
 }
+
+window.quickWhatsApp = function(productId, event) {
+  if (event) {
+    if (typeof event.stopPropagation === 'function') event.stopPropagation();
+    if (typeof event.preventDefault === 'function') event.preventDefault();
+  }
+  const products = (typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) ? PRODUCTS_DATA : [];
+  const product = products.find(p => p.id === productId);
+
+  const productName = product ? product.name : 'Photo Frame & Printing Product';
+  const productPrice = product ? `₹${product.price}` : '';
+  const productCategory = (product && product.categoryLabel) ? `Category: ${product.categoryLabel}` : '';
+
+  const message = `Hello Rajendra Studio!\n\nI am interested in:\n• Product: ${productName}${productPrice ? `\n• Price: ${productPrice}` : ''}${productCategory ? `\n• ${productCategory}` : ''}\n\nPlease share more details and customization options.`;
+
+  const waUrl = `https://wa.me/919510757513?text=${encodeURIComponent(message)}`;
+  window.open(waUrl, '_blank');
+};
 
 window.changeCatalogCardImage = function(productId, newImgSrc, swatchEl, event, finishId, finishName) {
   if (event) {

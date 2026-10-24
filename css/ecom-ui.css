@@ -909,29 +909,30 @@
 /* Card Actions (Add to Cart) */
 .capsule-bottom-row,
 .product-card-actions {
-  margin-top: 4px !important;
+  margin-top: 6px !important;
   display: flex !important;
-  gap: 8px !important;
+  gap: 5px !important;
   width: 100% !important;
   border-top: none !important;
   padding-top: 0 !important;
+  align-items: center !important;
 }
 
 .capsule-action-btn,
 .product-add-cart-btn,
 .product-cart-btn {
-  flex: 1 !important;
-  width: 100% !important;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 7px !important;
-  padding: 10px 14px !important;
-  border-radius: 10px !important;
+  gap: 4px !important;
+  padding: 8px 6px !important;
+  border-radius: 9px !important;
   font-family: var(--font-heading, 'DM Sans', sans-serif) !important;
-  font-size: 0.8125rem !important;
+  font-size: 0.735rem !important;
   font-weight: 700 !important;
-  letter-spacing: 0.2px !important;
+  letter-spacing: 0.15px !important;
   background: #111827 !important;
   color: #FFFFFF !important;
   border: 1px solid #111827 !important;
@@ -940,7 +941,7 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
   text-transform: none !important;
   white-space: nowrap !important;
-  height: auto !important;
+  height: 34px !important;
   box-sizing: border-box !important;
 }
 
@@ -950,8 +951,8 @@
   background: #C99A3D !important;
   border-color: #C99A3D !important;
   color: #FFFFFF !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 16px rgba(201, 154, 61, 0.35) !important;
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 5px 14px rgba(201, 154, 61, 0.32) !important;
 }
 
 .capsule-action-btn:active,
@@ -960,15 +961,15 @@
   transform: scale(0.97) !important;
 }
 
-/* Dual button support (Catalog: Cart + Buy Now) */
+/* 1. Cart Button */
 .btn-catalog-cart {
   background: linear-gradient(135deg, #D4AF37 0%, #C99A3D 50%, #B8860B 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.28) !important;
   color: #FFFFFF !important;
-  border-radius: 10px !important;
+  border-radius: 9px !important;
   font-weight: 600 !important;
-  letter-spacing: 0.25px !important;
-  box-shadow: 0 3px 10px rgba(184, 134, 11, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.38) !important;
+  letter-spacing: 0.15px !important;
+  box-shadow: 0 2px 7px rgba(184, 134, 11, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.38) !important;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.16) !important;
 }
@@ -978,7 +979,7 @@
   border-color: rgba(255, 255, 255, 0.45) !important;
   color: #FFFFFF !important;
   transform: translateY(-1.5px) !important;
-  box-shadow: 0 6px 18px rgba(184, 134, 11, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 5px 14px rgba(184, 134, 11, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
 }
 
 .btn-catalog-cart:active {
@@ -989,6 +990,8 @@
 .btn-catalog-cart .btn-cart-icon,
 .btn-catalog-cart svg {
   flex-shrink: 0;
+  width: 12px !important;
+  height: 12px !important;
   transition: transform 0.2s ease;
 }
 
@@ -997,19 +1000,14 @@
   transform: scale(1.12);
 }
 
-@media (max-width: 480px) {
-  .btn-catalog-cart .btn-cart-prefix {
-    display: none !important;
-  }
-}
-
+/* 2. Buy Now Button */
 .btn-catalog-buynow {
   background: #111827 !important;
   border: 1px solid #111827 !important;
   color: #FFFFFF !important;
-  border-radius: 10px !important;
+  border-radius: 9px !important;
   font-weight: 600 !important;
-  letter-spacing: 0.25px !important;
+  letter-spacing: 0.15px !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
@@ -1019,11 +1017,64 @@
   border-color: #000000 !important;
   color: #FFFFFF !important;
   transform: translateY(-1.5px) !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22) !important;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.22) !important;
 }
 
 .btn-catalog-buynow:active {
   transform: scale(0.97) translateY(0) !important;
+}
+
+/* 3. WhatsApp Direct Button */
+.btn-catalog-whatsapp {
+  background: linear-gradient(135deg, #25D366 0%, #20BA5A 50%, #128C7E 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  color: #FFFFFF !important;
+  border-radius: 9px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.15px !important;
+  box-shadow: 0 2px 7px rgba(37, 211, 102, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.38) !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.16) !important;
+}
+
+.btn-catalog-whatsapp:hover {
+  background: linear-gradient(135deg, #2ee06e 0%, #25D366 50%, #169b52 100%) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  color: #FFFFFF !important;
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 5px 14px rgba(37, 211, 102, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+}
+
+.btn-catalog-whatsapp:active {
+  transform: scale(0.97) translateY(0) !important;
+}
+
+.btn-catalog-whatsapp svg {
+  flex-shrink: 0;
+  width: 13px !important;
+  height: 13px !important;
+  transition: transform 0.2s ease;
+}
+
+.btn-catalog-whatsapp:hover svg {
+  transform: scale(1.15);
+}
+
+/* Responsive label optimizations for catalog 5-col / mobile */
+@media (max-width: 1300px) {
+  .btn-catalog-cart .btn-cart-prefix {
+    display: none !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .btn-catalog-whatsapp .btn-whatsapp-text {
+    display: none !important;
+  }
+  .btn-catalog-whatsapp {
+    flex: 0 0 32px !important;
+    padding: 0 !important;
+  }
 }
 
 /* Color swatches removed per user request */
