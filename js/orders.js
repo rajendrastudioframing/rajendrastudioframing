@@ -310,21 +310,35 @@ function createOrderCardHtml(order) {
             <div class="order-step-node">${timeline.step5Class === 'completed' ? '✓' : '5'}</div>
             <div class="order-step-label">Delivered</div>
           </div>
-        </div>
-      </div>
-
-      <!-- Ordered Items Showcase -->
+           <!-- Ordered Items Showcase -->
       <div class="order-items-wrap">
-        ${items.map(item => `
+        ${items.map(item => {
+          let targetId = item.id || item.productId || '';
+          if (!targetId && typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) {
+            const found = PRODUCTS_DATA.find(p => p.name && p.name.trim().toLowerCase() === (item.name || '').trim().toLowerCase());
+            if (found) targetId = found.id;
+          }
+          const isHtml = window.location.protocol === 'file:' || (window.location.pathname && window.location.pathname.endsWith('.html') && window.location.protocol !== 'http:' && window.location.protocol !== 'https:');
+          const base = isHtml ? 'product-detail.html' : 'product-detail';
+          let productUrl = targetId ? `${base}?id=${encodeURIComponent(targetId)}` : 'products';
+          if (targetId && item.finishId) productUrl += `&finish=${encodeURIComponent(item.finishId)}`;
+
+          return `
           <div class="order-item-row">
-            <img 
-              src="${escapeHtml(item.image || 'assets/images/glass_frame.jpg')}" 
-              alt="${escapeHtml(item.name || 'Custom Framed Piece')}" 
-              class="order-item-thumb" 
-              onerror="this.src='assets/images/glass_frame.jpg'"
-            />
+            <a href="${productUrl}" class="order-item-thumb-link" title="View product details" style="display: block; flex-shrink: 0;">
+              <img 
+                src="${escapeHtml(item.image || 'assets/images/glass_frame.jpg')}" 
+                alt="${escapeHtml(item.name || 'Custom Framed Piece')}" 
+                class="order-item-thumb" 
+                onerror="this.src='assets/images/glass_frame.jpg'" 
+              />
+            </a>
             <div class="order-item-details">
-              <div class="order-item-title">${escapeHtml(item.name || 'Bespoke Framing')}</div>
+              <div class="order-item-title">
+                <a href="${productUrl}" class="order-item-title-link" title="View product details" style="color: inherit; text-decoration: none;">
+                  ${escapeHtml(item.name || 'Bespoke Framing')}
+                </a>
+              </div>
               <div class="order-item-specs">
                 ${item.size ? `<span class="order-item-spec-tag">📐 ${escapeHtml(item.size)}</span>` : ''}
                 ${item.finish ? `<span class="order-item-spec-tag">🎨 ${escapeHtml(item.finish)}</span>` : ''}
@@ -336,7 +350,7 @@ function createOrderCardHtml(order) {
               <div class="order-item-qty">Qty: ${item.quantity || 1}</div>
             </div>
           </div>
-        `).join('')}
+        `;}).join('')}
       </div>
 
       <!-- Delivery Details & Billing -->

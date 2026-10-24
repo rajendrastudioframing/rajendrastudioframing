@@ -109,12 +109,40 @@ function renderCheckoutOrderSummary() {
   if (subtotalEl) subtotalEl.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
   if (totalEl) totalEl.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
 
+function getItemProductUrl(item) {
+  if (!item) return 'products';
+  let targetId = item.id || item.productId || '';
+  if (!targetId && typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) {
+    const found = PRODUCTS_DATA.find(p => p.name && p.name.trim().toLowerCase() === (item.name || '').trim().toLowerCase());
+    if (found) targetId = found.id;
+  }
+  if (!targetId) return 'products';
+
+  const isHtml = window.location.protocol === 'file:' || (window.location.pathname && window.location.pathname.endsWith('.html') && window.location.protocol !== 'http:' && window.location.protocol !== 'https:');
+  const base = isHtml ? 'product-detail.html' : 'product-detail';
+  let url = `${base}?id=${encodeURIComponent(targetId)}`;
+
+  let finishId = item.finishId;
+  if (!finishId && item.finish && item.finish !== 'Standard' && typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) {
+    const p = PRODUCTS_DATA.find(prod => prod.id === targetId);
+    if (p && Array.isArray(p.finishes)) {
+      const matchedFinish = p.finishes.find(f => f.name && f.name.trim().toLowerCase() === item.finish.trim().toLowerCase());
+      if (matchedFinish && matchedFinish.id) finishId = matchedFinish.id;
+    }
+  }
+  if (finishId) {
+    url += `&finish=${encodeURIComponent(finishId)}`;
+  }
+  return url;
+}
+
   if (itemsList) {
     itemsList.innerHTML = cart.map((item, idx) => {
       const qty = Number(item.quantity) || 1;
       const price = Number(item.price) || 0;
       const lineTotal = price * qty;
       const image = item.image || 'assets/images/custom_canvas.jpg';
+      const productUrl = getItemProductUrl(item);
 
       const metaParts = [];
       if (item.size && item.size !== 'Standard') {
@@ -127,9 +155,13 @@ function renderCheckoutOrderSummary() {
 
       return `
         <div class="order-item-row" data-index="${idx}">
-          <img src="${escapeHtml(image)}" alt="${escapeHtml(item.name || 'Product')}" class="order-item-img" onerror="this.src='assets/images/custom_canvas.jpg'" />
+          <a href="${productUrl}" class="order-item-img-link" title="Open ${escapeHtml(item.name || 'Product')} page">
+            <img src="${escapeHtml(image)}" alt="${escapeHtml(item.name || 'Product')}" class="order-item-img" onerror="this.src='assets/images/custom_canvas.jpg'" />
+          </a>
           <div class="order-item-details">
-            <div class="order-item-name">${escapeHtml(item.name || 'Custom Product')}</div>
+            <a href="${productUrl}" class="order-item-name" title="Open ${escapeHtml(item.name || 'Product')} page">
+              ${escapeHtml(item.name || 'Custom Product')}
+            </a>
             <div class="order-item-qty">
               ${metaHtml}Qty: ${qty} × ₹${price.toLocaleString('en-IN')}
             </div>

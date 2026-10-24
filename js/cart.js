@@ -313,13 +313,39 @@ function renderCartDrawer() {
 
   body.innerHTML = cart.map((item, index) => {
     const itemTotal = (Number(item.price) || 0) * (Number(item.quantity) || 1);
+    
+    // Resolve product detail URL
+    let targetId = item.id || item.productId || '';
+    if (!targetId && typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) {
+      const found = PRODUCTS_DATA.find(p => p.name && p.name.trim().toLowerCase() === (item.name || '').trim().toLowerCase());
+      if (found) targetId = found.id;
+    }
+    const isHtml = window.location.protocol === 'file:' || (window.location.pathname && window.location.pathname.endsWith('.html') && window.location.protocol !== 'http:' && window.location.protocol !== 'https:');
+    const base = isHtml ? 'product-detail.html' : 'product-detail';
+    let productUrl = targetId ? `${base}?id=${encodeURIComponent(targetId)}` : 'products';
+    let finishId = item.finishId;
+    if (!finishId && item.finish && item.finish !== 'Standard' && typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) {
+      const p = PRODUCTS_DATA.find(prod => prod.id === targetId);
+      if (p && Array.isArray(p.finishes)) {
+        const matchedFinish = p.finishes.find(f => f.name && f.name.trim().toLowerCase() === item.finish.trim().toLowerCase());
+        if (matchedFinish && matchedFinish.id) finishId = matchedFinish.id;
+      }
+    }
+    if (finishId) productUrl += `&finish=${encodeURIComponent(finishId)}`;
+
     return `
       <div class="cart-item" data-index="${index}">
-        <img src="${item.image || 'assets/images/custom_canvas.jpg'}" alt="${item.name}" class="cart-item-img" onerror="this.src='assets/images/custom_canvas.jpg'" />
+        <a href="${productUrl}" class="cart-item-img-link" title="View ${escapeCartHtml(item.name)}" onclick="closeCartDrawer();">
+          <img src="${item.image || 'assets/images/custom_canvas.jpg'}" alt="${item.name}" class="cart-item-img" onerror="this.src='assets/images/custom_canvas.jpg'" />
+        </a>
         
         <div class="cart-item-info">
           <div>
-            <h4 class="cart-item-title">${escapeCartHtml(item.name)}</h4>
+            <h4 class="cart-item-title">
+              <a href="${productUrl}" class="cart-item-title-link" title="View ${escapeCartHtml(item.name)}" onclick="closeCartDrawer();">
+                ${escapeCartHtml(item.name)}
+              </a>
+            </h4>
             <div class="cart-item-meta">
               ${item.size && item.size !== 'Standard' ? `<span>Size: <strong>${escapeCartHtml(item.size)}</strong></span> • ` : ''}
               ${item.finish && item.finish !== 'Standard' ? `<span>Finish: <strong>${escapeCartHtml(item.finish)}</strong></span>` : ''}
