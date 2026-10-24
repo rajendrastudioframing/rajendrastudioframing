@@ -962,23 +962,68 @@
 
 /* Dual button support (Catalog: Cart + Buy Now) */
 .btn-catalog-cart {
-  background: #C99A3D !important;
-  border-color: #C99A3D !important;
+  background: linear-gradient(135deg, #D4AF37 0%, #C99A3D 50%, #B8860B 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
   color: #FFFFFF !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.25px !important;
+  box-shadow: 0 3px 10px rgba(184, 134, 11, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.38) !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.16) !important;
 }
+
 .btn-catalog-cart:hover {
-  background: #B6862B !important;
-  border-color: #B6862B !important;
+  background: linear-gradient(135deg, #DEB843 0%, #D4AF37 50%, #C6922A 100%) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  color: #FFFFFF !important;
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 6px 18px rgba(184, 134, 11, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+}
+
+.btn-catalog-cart:active {
+  transform: scale(0.97) translateY(0) !important;
+  box-shadow: 0 2px 6px rgba(184, 134, 11, 0.2) !important;
+}
+
+.btn-catalog-cart .btn-cart-icon,
+.btn-catalog-cart svg {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.btn-catalog-cart:hover .btn-cart-icon,
+.btn-catalog-cart:hover svg {
+  transform: scale(1.12);
+}
+
+@media (max-width: 480px) {
+  .btn-catalog-cart .btn-cart-prefix {
+    display: none !important;
+  }
 }
 
 .btn-catalog-buynow {
   background: #111827 !important;
-  border-color: #111827 !important;
+  border: 1px solid #111827 !important;
   color: #FFFFFF !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.25px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
+
 .btn-catalog-buynow:hover {
   background: #000000 !important;
   border-color: #000000 !important;
+  color: #FFFFFF !important;
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22) !important;
+}
+
+.btn-catalog-buynow:active {
+  transform: scale(0.97) translateY(0) !important;
 }
 
 /* Color swatches removed per user request */
