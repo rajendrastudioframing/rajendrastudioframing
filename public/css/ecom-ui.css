@@ -906,53 +906,49 @@
   border-radius: 4px !important;
 }
 
-/* Card Actions (Add to Cart) */
+/* Card Actions (2-Tier Layout: Primary Cart + Buy Now / Full-Width WhatsApp) */
 .capsule-bottom-row,
 .product-card-actions {
   margin-top: 6px !important;
   display: flex !important;
+  flex-direction: column !important;
   gap: 5px !important;
   width: 100% !important;
   border-top: none !important;
   padding-top: 0 !important;
-  align-items: center !important;
+  box-sizing: border-box !important;
+}
+
+/* Row 1: Dual Primary Buttons (Cart + Buy Now side-by-side) */
+.card-action-row-primary {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 5px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .capsule-action-btn,
 .product-add-cart-btn,
 .product-cart-btn {
-  flex: 1 1 0% !important;
+  width: 100% !important;
   min-width: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 4px !important;
-  padding: 8px 6px !important;
-  border-radius: 9px !important;
+  padding: 7px 4px !important;
+  border-radius: 8px !important;
   font-family: var(--font-heading, 'DM Sans', sans-serif) !important;
   font-size: 0.735rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.15px !important;
-  background: #111827 !important;
-  color: #FFFFFF !important;
-  border: 1px solid #111827 !important;
   cursor: pointer !important;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
   text-transform: none !important;
   white-space: nowrap !important;
-  height: 34px !important;
+  height: 32px !important;
   box-sizing: border-box !important;
-}
-
-.capsule-action-btn:hover,
-.product-add-cart-btn:hover,
-.product-cart-btn:hover {
-  background: #C99A3D !important;
-  border-color: #C99A3D !important;
-  color: #FFFFFF !important;
-  transform: translateY(-1.5px) !important;
-  box-shadow: 0 5px 14px rgba(201, 154, 61, 0.32) !important;
 }
 
 .capsule-action-btn:active,
@@ -961,16 +957,15 @@
   transform: scale(0.97) !important;
 }
 
-/* 1. Cart Button */
+/* 1. Cart Button (Gold Luxury Gradient) */
 .btn-catalog-cart {
   background: linear-gradient(135deg, #D4AF37 0%, #C99A3D 50%, #B8860B 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.28) !important;
   color: #FFFFFF !important;
-  border-radius: 9px !important;
-  font-weight: 600 !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
   letter-spacing: 0.15px !important;
   box-shadow: 0 2px 7px rgba(184, 134, 11, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.38) !important;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.16) !important;
 }
 
@@ -1000,13 +995,13 @@
   transform: scale(1.12);
 }
 
-/* 2. Buy Now Button */
+/* 2. Buy Now Button (Charcoal Black Luxury) */
 .btn-catalog-buynow {
   background: #111827 !important;
   border: 1px solid #111827 !important;
   color: #FFFFFF !important;
-  border-radius: 9px !important;
-  font-weight: 600 !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
   letter-spacing: 0.15px !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -1024,15 +1019,19 @@
   transform: scale(0.97) translateY(0) !important;
 }
 
-/* 3. WhatsApp Direct Button */
+/* 3. WhatsApp Direct Button (Full-width, Official WhatsApp Green Pill) */
 .btn-catalog-whatsapp {
+  width: 100% !important;
+  height: 30px !important;
   background: linear-gradient(135deg, #25D366 0%, #20BA5A 50%, #128C7E 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.28) !important;
   color: #FFFFFF !important;
-  border-radius: 9px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.15px !important;
-  box-shadow: 0 2px 7px rgba(37, 211, 102, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.38) !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  font-size: 0.735rem !important;
+  letter-spacing: 0.2px !important;
+  gap: 6px !important;
+  box-shadow: 0 2px 7px rgba(37, 211, 102, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.16) !important;
 }
@@ -1042,11 +1041,12 @@
   border-color: rgba(255, 255, 255, 0.45) !important;
   color: #FFFFFF !important;
   transform: translateY(-1.5px) !important;
-  box-shadow: 0 5px 14px rgba(37, 211, 102, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 5px 14px rgba(37, 211, 102, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
 }
 
 .btn-catalog-whatsapp:active {
   transform: scale(0.97) translateY(0) !important;
+  box-shadow: 0 2px 5px rgba(37, 211, 102, 0.2) !important;
 }
 
 .btn-catalog-whatsapp svg {
@@ -1058,23 +1058,6 @@
 
 .btn-catalog-whatsapp:hover svg {
   transform: scale(1.15);
-}
-
-/* Responsive label optimizations for catalog 5-col / mobile */
-@media (max-width: 1300px) {
-  .btn-catalog-cart .btn-cart-prefix {
-    display: none !important;
-  }
-}
-
-@media (max-width: 520px) {
-  .btn-catalog-whatsapp .btn-whatsapp-text {
-    display: none !important;
-  }
-  .btn-catalog-whatsapp {
-    flex: 0 0 32px !important;
-    padding: 0 !important;
-  }
 }
 
 /* Color swatches removed per user request */
