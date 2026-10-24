@@ -375,9 +375,8 @@ function createOrderCardHtml(order) {
       <!-- Delivery Details & Billing -->
       <div class="order-info-footer">
         <div class="order-delivery-box">
-          <div class="order-delivery-title">Delivery Destination &amp; Recipient</div>
+          <div class="order-delivery-title">Order Recipient &amp; Contact</div>
           <div class="order-delivery-row"><strong>Recipient:</strong> ${escapeHtml(customer.name || 'Customer')} (${escapeHtml(customer.phone || '')})</div>
-          <div class="order-delivery-row"><strong>Address:</strong> ${escapeHtml(customer.address || '')}, ${escapeHtml(customer.city || '')} ${customer.pincode ? `(${escapeHtml(customer.pincode)})` : ''}</div>
           ${order.notes ? `<div style="font-style: italic; color: #76746E; margin-top: 4px;">Note: "${escapeHtml(order.notes)}"</div>` : ''}
         </div>
         <div class="order-total-block">
@@ -402,7 +401,7 @@ function createOrderCardHtml(order) {
         ${isOrderActive(order) ? `
           <button type="button" class="order-btn order-btn-outline" onclick="openEditOrderModal('${escapeHtml(orderId)}')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            <span>Edit Address</span>
+            <span>Edit Details</span>
           </button>
         ` : ''}
 

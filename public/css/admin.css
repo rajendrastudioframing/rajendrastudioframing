@@ -1173,10 +1173,10 @@ body.admin-dashboard-body[data-theme="dark"] {
   box-shadow: var(--shadow-hover);
 }
 
-/* 9-Column Slim Grid (Customer Photo & Deliver To Destination integrated) */
+/* 8-Column Slim Grid (Customer Photo & Delivery Status integrated) */
 .order-card-body {
   display: grid;
-  grid-template-columns: 46px 115px 120px 130px 85px minmax(130px, 1.4fr) 95px 95px 90px;
+  grid-template-columns: 46px 115px 135px minmax(140px, 1.6fr) 85px 100px 105px 90px;
   align-items: center;
   gap: 10px;
   padding: 12px 18px;
@@ -2496,7 +2496,7 @@ body.modal-open {
     grid-template-columns: 1fr;
   }
   .order-card-body {
-    grid-template-columns: 44px 110px 115px 120px 80px minmax(110px, 1fr) 90px 90px 85px;
+    grid-template-columns: 44px 110px 125px minmax(120px, 1fr) 80px 95px 100px 85px;
     gap: 8px;
     padding: 10px 14px;
   }

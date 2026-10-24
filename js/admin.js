@@ -954,17 +954,7 @@ function createOrderCardRowHTML(order) {
           `}
         </div>
 
-        <!-- 6. Deliver To (Dedicated Column) -->
-        <div class="order-col-info order-col-delivery">
-          <span class="col-field-label">Deliver To</span>
-          <div class="order-delivery-address" title="${escapeHtml(deliveryAddress)}">
-            <span class="delivery-pin-icon">📍</span>
-            <span class="delivery-address-text" title="${escapeHtml(deliveryAddress)}">${escapeHtml(deliveryAddress)}</span>
-          </div>
-          <span class="delivery-type-tag">${trackingText}</span>
-        </div>
-
-        <!-- 7. Payment Status -->
+<!-- 6. Payment Status -->
         <div class="order-col-info order-col-payment">
           <span class="col-field-label">Payment</span>
           <span class="status-pill ${paymentClass}">
@@ -974,7 +964,7 @@ function createOrderCardRowHTML(order) {
           <span class="sub-meta-text">${paymentMethod}</span>
         </div>
 
-        <!-- 8. Delivery Status -->
+        <!-- 7. Delivery Status -->
         <div class="order-col-info order-col-status">
           <span class="col-field-label">Delivery Status</span>
           <span class="status-pill ${deliveryClass}">
@@ -984,7 +974,7 @@ function createOrderCardRowHTML(order) {
           <span class="sub-meta-text">${trackingText}</span>
         </div>
 
-        <!-- 9. Amount (Right Aligned, Guaranteed No Cutoff) -->
+        <!-- 8. Amount (Right Aligned, Guaranteed No Cutoff) -->
         <div class="order-col-info order-col-amount">
           <span class="col-field-label" style="text-align: right;">Amount</span>
           <span class="order-amount-text">₹${Number(order.estimatedValue || 0).toLocaleString('en-IN')}</span>
