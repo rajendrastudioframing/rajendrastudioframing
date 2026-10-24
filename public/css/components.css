@@ -1699,12 +1699,15 @@ body.product-page-active {
 
 @media (max-width: 768px) {
   body.product-page-active .floating-actions-wrap {
-    display: none !important;
+  z-index: 99999 !important;
+    display: flex !important;
+    bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
 @media (min-width: 769px) {
   body.product-page-active .floating-actions-wrap {
+  z-index: 99999 !important;
     bottom: 88px !important;
   }
 }
@@ -4725,6 +4728,7 @@ body:has(.modal-overlay.open) {
   }
 
   .floating-actions-wrap {
+  z-index: 99999 !important;
     bottom: 14px !important;
     right: 12px !important;
   }

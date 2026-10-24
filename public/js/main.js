@@ -4,6 +4,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  initGlobalWhatsAppButton();
   initStickyNavbar();
   initMobileDrawer();
   initBackToTop();
@@ -592,3 +593,65 @@ document.addEventListener('click', (e) => {
   }
 });
 
+
+
+/* --- Global Floating WhatsApp Button & Back to Top Assurance --- */
+function initGlobalWhatsAppButton() {
+  let wrap = document.querySelector('.floating-actions-wrap');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.className = 'floating-actions-wrap';
+    const footer = document.querySelector('.site-footer') || document.querySelector('.mobile-bottom-nav');
+    if (footer && footer.parentNode) {
+      footer.parentNode.insertBefore(wrap, footer);
+    } else {
+      document.body.appendChild(wrap);
+    }
+  }
+
+  // Ensure WhatsApp button exists
+  let waBtn = wrap.querySelector('.floating-whatsapp-btn');
+  if (!waBtn) {
+    waBtn = document.createElement('a');
+    waBtn.href = 'https://wa.me/919510757513?text=Hello%20Rajendra%20Studio%20%26%20Framing,%20I%20have%20an%20enquiry.';
+    waBtn.target = '_blank';
+    waBtn.rel = 'noopener noreferrer';
+    waBtn.className = 'floating-whatsapp-btn pulse-ring';
+    waBtn.setAttribute('aria-label', 'Chat on WhatsApp');
+    waBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.058-2.18-.553-1.638-.673-2.684-2.336-2.766-2.445-.082-.109-.661-.88-.661-1.678 0-.798.419-1.189.569-1.353.15-.164.33-.205.441-.205.111 0 .222.001.32.006.103.004.24-.039.375.285.144.344.49 1.196.533 1.284.043.088.072.19.014.305-.058.115-.087.186-.173.287-.087.1-.183.224-.262.301-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.174.232-.145.39-.087.159.058 1.009.477 1.182.564.173.087.289.13.332.204.043.074.043.431-.101.836z"></path>
+      </svg>
+      <span>Chat on WhatsApp</span>
+    `;
+    wrap.insertBefore(waBtn, wrap.firstChild);
+  }
+
+  // Ensure Back to Top button exists
+  let topBtn = wrap.querySelector('.back-to-top-btn');
+  if (!topBtn) {
+    topBtn = document.createElement('button');
+    topBtn.type = 'button';
+    topBtn.className = 'back-to-top-btn';
+    topBtn.setAttribute('aria-label', 'Back to top');
+    topBtn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    `;
+    wrap.appendChild(topBtn);
+  }
+
+  // Attach click listener to back to top if not already attached
+  if (topBtn && !topBtn.dataset.bound) {
+    topBtn.dataset.bound = 'true';
+    topBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+}
+
+// Auto-run if DOM is already loaded
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
+  initGlobalWhatsAppButton();
+}
