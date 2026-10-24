@@ -487,9 +487,6 @@
               <span id="custAuthSendSpinner" class="auth-spinner" style="display: none;"></span>
             </button>
 
-            <button type="button" id="custAuthDirectLoginBtn" class="btn btn-outline" style="width: 100%; justify-content: center; padding: 10px; font-weight: 600; margin-top: 8px; border-radius: 12px; font-size: 0.82rem;">
-              <span>⚡ Instant 1-Click Login</span>
-            </button>
             
             <div style="font-size: 0.72rem; color: #6B7280; text-align: center; margin-top: 12px; line-height: 1.4;">
               By signing in, you can place orders, view digital framing proofs, and track your deliveries in real-time.
@@ -832,52 +829,6 @@
       });
     }
 
-    // 1b. Direct 1-Click Login Event
-    const directLoginBtn = document.getElementById('custAuthDirectLoginBtn');
-    if (directLoginBtn) {
-      directLoginBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const emailInput = document.getElementById('custAuthEmail');
-        const nameInput = document.getElementById('custAuthName');
-        const phoneInput = document.getElementById('custAuthPhone');
-
-        const email = (emailInput?.value || '').trim();
-        const name = (nameInput?.value || '').trim();
-        const phone = (phoneInput?.value || '').trim();
-
-        if (!email) {
-          showModalAlert('danger', 'Please enter your email address to sign in.');
-          emailInput?.focus();
-          return;
-        }
-
-        directLoginBtn.disabled = true;
-        directLoginBtn.innerHTML = '<span>Signing in...</span>';
-
-        try {
-          const res = await window.CustomerAuth.directLogin(email, name, phone);
-          if (res && res.success) {
-            showModalAlert('success', 'Logged in successfully!');
-            setTimeout(() => {
-              window.CustomerAuth.closeAuthModal();
-              if (typeof window.CustomerAuth._onAuthSuccessCallback === 'function') {
-                const cb = window.CustomerAuth._onAuthSuccessCallback;
-                window.CustomerAuth._onAuthSuccessCallback = null;
-                cb(res.customer);
-              }
-            }, 500);
-          } else {
-            showModalAlert('danger', res.message || 'Direct login failed. Please try sending a passcode.');
-          }
-        } catch (err) {
-          console.error('Customer direct login error:', err);
-          showModalAlert('danger', 'Could not complete login. Please try again.');
-        } finally {
-          directLoginBtn.disabled = false;
-          directLoginBtn.innerHTML = '<span>⚡ Instant 1-Click Login</span>';
-        }
-      });
-    }
 
     // 2. OTP Inputs Navigation
     const boxes = [
