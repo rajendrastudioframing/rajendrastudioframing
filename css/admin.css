@@ -4181,3 +4181,35 @@ body.admin-login-body {
       font-weight: 700 !important;
     }
   }
+
+
+/* Product Options Consolidated Dropdown & Dynamic Panels */
+.product-options-card {
+  background: var(--bg-surface, #FBF8F3);
+  border: 1px solid var(--border-subtle, #E6DEC8);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .product-options-card {
+  background: #1A1F26 !important;
+  border-color: #2D3748 !important;
+}
+
+.product-option-panel {
+  animation: fadeInOptionPanel 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInOptionPanel {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

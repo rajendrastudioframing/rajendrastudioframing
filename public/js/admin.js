@@ -3040,6 +3040,36 @@ function initProductModals() {
     if (nameInput) nameInput.value = '';
   };
 
+  
+  // Product Option Switcher & Price Mirroring (Dropdown for Size, Color, Price)
+  window.switchAdminProductOption = (modalType, optionVal) => {
+    const prefix = modalType === 'new' ? 'newProductOption' : 'editProductOption';
+    const sizePanel = document.getElementById(prefix + 'SizePanel');
+    const colorPanel = document.getElementById(prefix + 'ColorPanel');
+    const pricePanel = document.getElementById(prefix + 'PricePanel');
+
+    if (sizePanel) sizePanel.style.display = optionVal === 'size' ? 'block' : 'none';
+    if (colorPanel) colorPanel.style.display = optionVal === 'color' ? 'block' : 'none';
+    if (pricePanel) pricePanel.style.display = optionVal === 'price' ? 'block' : 'none';
+  };
+
+  window.syncAdminPrice = (modalType, val) => {
+    if (modalType === 'new') {
+      const mainPrice = document.getElementById('newProductPrice');
+      if (mainPrice) mainPrice.value = val;
+    } else {
+      const mainPrice = document.getElementById('editProductPrice');
+      if (mainPrice) mainPrice.value = val;
+    }
+  };
+
+  window.syncAdminOrigPrice = (modalType, val) => {
+    if (modalType === 'edit') {
+      const origPrice = document.getElementById('editProductOriginalPrice');
+      if (origPrice) origPrice.value = val;
+    }
+  };
+
   window.openAddProductModal = () => {
     if (addForm) addForm.reset();
     window.removeAdminImage();
@@ -3082,6 +3112,29 @@ function initProductModals() {
       showToast('Error', 'Network error updating stock.', 'danger');
     }
   };
+
+  
+    const newPriceInput = document.getElementById('newProductPrice');
+    if (newPriceInput) {
+      newPriceInput.addEventListener('input', (e) => {
+        const mirror = document.getElementById('newProductBasePriceMirror');
+        if (mirror) mirror.value = e.target.value;
+      });
+    }
+    const editPriceInput = document.getElementById('editProductPrice');
+    if (editPriceInput) {
+      editPriceInput.addEventListener('input', (e) => {
+        const mirror = document.getElementById('editProductBasePriceMirror');
+        if (mirror) mirror.value = e.target.value;
+      });
+    }
+    const editOrigPriceInput = document.getElementById('editProductOriginalPrice');
+    if (editOrigPriceInput) {
+      editOrigPriceInput.addEventListener('input', (e) => {
+        const mirror = document.getElementById('editProductOriginalPriceMirror');
+        if (mirror) mirror.value = e.target.value;
+      });
+    }
 
   if (addForm) {
     addForm.addEventListener('submit', async (e) => {

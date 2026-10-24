@@ -186,7 +186,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/admin.css?v=no_badge_v4" />
+  <link rel="stylesheet" href="css/admin.css?v=opt_dd_v5" />
   <style id="rf-active-badge-guard">
     /* Remove sidebar notification number badges completely */
     .sidebar-badge {
@@ -1826,90 +1826,116 @@
             <textarea class="setting-input" id="editProductFullDesc" rows="3" placeholder="Comprehensive description, product features, and craft notes..."></textarea>
           </div>
 
-          <!-- Row 7: Size Options -->
-          <div class="setting-row" style="margin-bottom: 14px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <label class="setting-label" style="margin-bottom: 0;">Available Sizes</label>
-              <span style="font-size: 0.72rem; color: var(--text-muted);">Toggle standard sizes or type custom comma-separated</span>
+                    <!-- Product Options & Variants (Single Dropdown Switcher) -->
+          <div class="product-options-card" style="margin-bottom: 14px; background: var(--bg-surface, #FBF8F3); border: 1px solid var(--border-subtle, #E6DEC8); border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="margin-bottom: 10px;">
+              <label class="setting-label" style="margin-bottom: 2px; font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">Product Options &amp; Variants</label>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">Choose an option from the dropdown to configure Size, Color, or Pricing.</div>
             </div>
-            <div class="admin-pill-group" id="editSizePills">
-              <button type="button" class="admin-choice-pill" data-size='6" × 8"' onclick="toggleAdminPill(this)">6" × 8"</button>
-              <button type="button" class="admin-choice-pill" data-size='8" × 10"' onclick="toggleAdminPill(this)">8" × 10"</button>
-              <button type="button" class="admin-choice-pill" data-size='10" × 12"' onclick="toggleAdminPill(this)">10" × 12"</button>
-              <button type="button" class="admin-choice-pill" data-size='12" × 18"' onclick="toggleAdminPill(this)">12" × 18"</button>
-              <button type="button" class="admin-choice-pill" data-size='16" × 24"' onclick="toggleAdminPill(this)">16" × 24"</button>
-              <button type="button" class="admin-choice-pill" data-size='20" × 30"' onclick="toggleAdminPill(this)">20" × 30"</button>
-              <button type="button" class="admin-choice-pill" data-size='A4 (8.3" × 11.7")' onclick="toggleAdminPill(this)">A4</button>
-              <button type="button" class="admin-choice-pill" data-size='A3 (11.7" × 16.5")' onclick="toggleAdminPill(this)">A3</button>
-            </div>
-            <input type="text" class="setting-input" id="editProductCustomSizes" style="margin-top: 8px; font-size: 0.8rem;" placeholder="Custom sizes (comma separated, e.g. 14&quot; × 20&quot;, 24&quot; × 36&quot;)" />
-          </div>
 
-          <!-- Row 8: Color / Finish Options -->
-          <div class="setting-row" style="margin-bottom: 14px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <label class="setting-label" style="margin-bottom: 0;">Color &amp; Finish Options</label>
-              <span style="font-size: 0.72rem; color: var(--text-muted);">Choose available product colors / frame finishes</span>
+            <!-- Single Dropdown for Size, Color, and Price -->
+            <div class="setting-row" style="margin-bottom: 12px;">
+              <label class="setting-label" style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 4px;">Select Option to Configure:</label>
+              <select class="setting-select" id="editProductOptionSelect" onchange="switchAdminProductOption('edit', this.value)" style="font-weight: 600; border-color: var(--primary-color, #C99A3D); background-color: var(--bg-card, #FFFFFF); cursor: pointer;">
+                <option value="size" selected>📏 Size Options</option>
+                <option value="color">🎨 Color Options</option>
+                <option value="price">💰 Price &amp; Variant Pricing</option>
+              </select>
             </div>
-            <div class="admin-color-swatches" id="editColorSwatches">
-              <button type="button" class="admin-color-chip" data-name="Warm Gold" data-color="#C99A3D" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #C99A3D;"></span>
-                <span>Warm Gold</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip" data-name="Matte Black" data-color="#111111" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #111111;"></span>
-                <span>Matte Black</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip" data-name="Brushed Silver" data-color="#C0C0C0" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #C0C0C0; border: 1px solid #ddd;"></span>
-                <span>Silver</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip" data-name="Rose Gold" data-color="#B76E79" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #B76E79;"></span>
-                <span>Rose Gold</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip" data-name="Walnut Wood" data-color="#6A432D" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #6A432D;"></span>
-                <span>Walnut</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip" data-name="Pure White" data-color="#FFFFFF" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #FFFFFF; border: 1px solid #ccc;"></span>
-                <span>White</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip" data-name="Royal Navy" data-color="#1E3A8A" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #1E3A8A;"></span>
-                <span>Navy Blue</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-            </div>
-            <!-- Custom color adder for Edit -->
-            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-              <input type="color" id="editProductCustomColorPicker" value="#8B5CF6" style="width: 32px; height: 32px; padding: 2px; border-radius: 6px; border: 1px solid var(--border-medium); cursor: pointer; background: transparent;" title="Pick custom color" />
-              <input type="text" class="setting-input" id="editProductCustomColorName" style="flex: 1; font-size: 0.8rem;" placeholder="Custom color name (e.g. Emerald Green)" />
-              <button type="button" class="btn-sub-action outline" style="padding: 6px 12px; font-size: 0.78rem; white-space: nowrap;" onclick="addCustomEditColor()">+ Add Color</button>
-            </div>
-          </div>
 
-          <!-- Row 9: Variant / Style Options -->
-          <div class="setting-row" style="margin-bottom: 0;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <label class="setting-label" style="margin-bottom: 0;">Variant / Finish Styles</label>
-              <span style="font-size: 0.72rem; color: var(--text-muted);">Finish styles &amp; mounting types</span>
+            <!-- Panel 1: Size Options -->
+            <div id="editProductOptionSizePanel" class="product-option-panel">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Select Standard Sizes:</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Click to toggle sizes</span>
+              </div>
+              <div class="admin-pill-group" id="editSizePills">
+                <button type="button" class="admin-choice-pill" data-size='6" × 8"' onclick="toggleAdminPill(this)">6" × 8"</button>
+                <button type="button" class="admin-choice-pill" data-size='8" × 10"' onclick="toggleAdminPill(this)">8" × 10"</button>
+                <button type="button" class="admin-choice-pill" data-size='10" × 12"' onclick="toggleAdminPill(this)">10" × 12"</button>
+                <button type="button" class="admin-choice-pill" data-size='12" × 18"' onclick="toggleAdminPill(this)">12" × 18"</button>
+                <button type="button" class="admin-choice-pill" data-size='16" × 24"' onclick="toggleAdminPill(this)">16" × 24"</button>
+                <button type="button" class="admin-choice-pill" data-size='20" × 30"' onclick="toggleAdminPill(this)">20" × 30"</button>
+                <button type="button" class="admin-choice-pill" data-size='A4 (8.3" × 11.7")' onclick="toggleAdminPill(this)">A4</button>
+                <button type="button" class="admin-choice-pill" data-size='A3 (11.7" × 16.5")' onclick="toggleAdminPill(this)">A3</button>
+              </div>
+              <div style="margin-top: 10px;">
+                <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">Custom Size (Optional):</span>
+                <input type="text" class="setting-input" id="editProductCustomSizes" style="font-size: 0.8rem;" placeholder="Custom sizes (comma separated, e.g. 14&quot; × 20&quot;, 24&quot; × 36&quot;)" />
+              </div>
             </div>
-            <div class="admin-pill-group" id="editVariantPills">
-              <button type="button" class="admin-choice-pill" data-variant="Matte Finish" onclick="toggleAdminPill(this)">Matte Finish</button>
-              <button type="button" class="admin-choice-pill" data-variant="Glossy Finish" onclick="toggleAdminPill(this)">Glossy Finish</button>
-              <button type="button" class="admin-choice-pill" data-variant="Textured Canvas" onclick="toggleAdminPill(this)">Textured Canvas</button>
-              <button type="button" class="admin-choice-pill" data-variant="Floating Frame" onclick="toggleAdminPill(this)">Floating Frame</button>
-              <button type="button" class="admin-choice-pill" data-variant="Metallic Finish" onclick="toggleAdminPill(this)">Metallic Finish</button>
+
+            <!-- Panel 2: Color Options -->
+            <div id="editProductOptionColorPanel" class="product-option-panel" style="display: none;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Select Available Colors:</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Click to toggle colors</span>
+              </div>
+              <div class="admin-color-swatches" id="editColorSwatches">
+                <button type="button" class="admin-color-chip" data-name="Warm Gold" data-color="#C99A3D" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #C99A3D;"></span>
+                  <span>Warm Gold</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip" data-name="Matte Black" data-color="#111111" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #111111;"></span>
+                  <span>Matte Black</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip" data-name="Brushed Silver" data-color="#C0C0C0" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #C0C0C0; border: 1px solid #ddd;"></span>
+                  <span>Silver</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip" data-name="Rose Gold" data-color="#B76E79" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #B76E79;"></span>
+                  <span>Rose Gold</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip" data-name="Walnut Wood" data-color="#6A432D" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #6A432D;"></span>
+                  <span>Walnut</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip" data-name="Pure White" data-color="#FFFFFF" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #FFFFFF; border: 1px solid #ccc;"></span>
+                  <span>White</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip" data-name="Royal Navy" data-color="#1E3A8A" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #1E3A8A;"></span>
+                  <span>Navy Blue</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+              </div>
+              <!-- Custom color adder for Edit -->
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                <input type="color" id="editProductCustomColorPicker" value="#8B5CF6" style="width: 32px; height: 32px; padding: 2px; border-radius: 6px; border: 1px solid var(--border-medium); cursor: pointer; background: transparent;" title="Pick custom color" />
+                <input type="text" class="setting-input" id="editProductCustomColorName" style="flex: 1; font-size: 0.8rem;" placeholder="Custom color name (e.g. Emerald Green)" />
+                <button type="button" class="btn-sub-action outline" style="padding: 6px 12px; font-size: 0.78rem; white-space: nowrap;" onclick="addCustomEditColor()">+ Add Color</button>
+              </div>
             </div>
-            <input type="text" class="setting-input" id="editProductCustomVariants" style="margin-top: 8px; font-size: 0.8rem;" placeholder="Custom variant styles (comma separated, e.g. Beveled Edge, Acrylic Stand-off)" />
+
+            <!-- Panel 3: Price Options -->
+            <div id="editProductOptionPricePanel" class="product-option-panel" style="display: none;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Price &amp; Variant Pricing:</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Configure variant rates</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                  <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">Selling Price (₹)</span>
+                  <input type="number" class="setting-input" id="editProductBasePriceMirror" placeholder="e.g. 599" min="0" oninput="syncAdminPrice('edit', this.value)" />
+                </div>
+                <div>
+                  <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">MRP / Original Price (₹)</span>
+                  <input type="number" class="setting-input" id="editProductOriginalPriceMirror" placeholder="e.g. 899 (Optional)" min="0" oninput="syncAdminOrigPrice('edit', this.value)" />
+                </div>
+              </div>
+              <div style="padding: 10px 12px; border-radius: 8px; background: rgba(201, 154, 61, 0.08); border: 1px dashed rgba(201, 154, 61, 0.3); font-size: 0.73rem; color: var(--text-secondary); line-height: 1.4;">
+                💡 <strong>Auto Pricing Calculation:</strong> Smaller sizes use base selling price. Larger custom sizes scale automatically on the live catalog product page.
+              </div>
+            </div>
           </div>
 
         </div>
@@ -2040,90 +2066,116 @@
             </div>
           </div>
 
-          <!-- Size Options -->
-          <div class="setting-row" style="margin-bottom: 14px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <label class="setting-label" style="margin-bottom: 0;">Size Options</label>
-              <span style="font-size: 0.72rem; color: var(--text-muted);">Click to toggle standard sizes or type custom</span>
+                    <!-- Product Options & Variants (Single Dropdown Switcher) -->
+          <div class="product-options-card" style="margin-bottom: 14px; background: var(--bg-surface, #FBF8F3); border: 1px solid var(--border-subtle, #E6DEC8); border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="margin-bottom: 10px;">
+              <label class="setting-label" style="margin-bottom: 2px; font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">Product Options &amp; Variants</label>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">Choose an option from the dropdown to configure Size, Color, or Pricing.</div>
             </div>
-            <div class="admin-pill-group" id="adminSizePills">
-              <button type="button" class="admin-choice-pill" data-size='6" × 8"' onclick="toggleAdminPill(this)">6" × 8"</button>
-              <button type="button" class="admin-choice-pill active" data-size='8" × 10"' onclick="toggleAdminPill(this)">8" × 10"</button>
-              <button type="button" class="admin-choice-pill active" data-size='10" × 12"' onclick="toggleAdminPill(this)">10" × 12"</button>
-              <button type="button" class="admin-choice-pill active" data-size='12" × 18"' onclick="toggleAdminPill(this)">12" × 18"</button>
-              <button type="button" class="admin-choice-pill" data-size='16" × 24"' onclick="toggleAdminPill(this)">16" × 24"</button>
-              <button type="button" class="admin-choice-pill" data-size='20" × 30"' onclick="toggleAdminPill(this)">20" × 30"</button>
-              <button type="button" class="admin-choice-pill" data-size='A4 (8.3" × 11.7")' onclick="toggleAdminPill(this)">A4</button>
-              <button type="button" class="admin-choice-pill" data-size='A3 (11.7" × 16.5")' onclick="toggleAdminPill(this)">A3</button>
-            </div>
-            <input type="text" class="setting-input" id="newProductCustomSizes" style="margin-top: 8px; font-size: 0.8rem;" placeholder="Custom sizes (comma separated, e.g. 14&quot; × 20&quot;, 24&quot; × 36&quot;)" />
-          </div>
 
-          <!-- Color Options -->
-          <div class="setting-row" style="margin-bottom: 14px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <label class="setting-label" style="margin-bottom: 0;">Color Options</label>
-              <span style="font-size: 0.72rem; color: var(--text-muted);">Choose available frame / product colors</span>
+            <!-- Single Dropdown for Size, Color, and Price -->
+            <div class="setting-row" style="margin-bottom: 12px;">
+              <label class="setting-label" style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 4px;">Select Option to Configure:</label>
+              <select class="setting-select" id="newProductOptionSelect" onchange="switchAdminProductOption('new', this.value)" style="font-weight: 600; border-color: var(--primary-color, #C99A3D); background-color: var(--bg-card, #FFFFFF); cursor: pointer;">
+                <option value="size" selected>📏 Size Options</option>
+                <option value="color">🎨 Color Options</option>
+                <option value="price">💰 Price &amp; Variant Pricing</option>
+              </select>
             </div>
-            <div class="admin-color-swatches" id="adminColorSwatches">
-              <button type="button" class="admin-color-chip active" data-name="Warm Gold" data-color="#C99A3D" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #C99A3D;"></span>
-                <span>Warm Gold</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip active" data-name="Matte Black" data-color="#111111" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #111111;"></span>
-                <span>Matte Black</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip" data-name="Brushed Silver" data-color="#C0C0C0" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #C0C0C0; border: 1px solid #ddd;"></span>
-                <span>Silver</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip" data-name="Rose Gold" data-color="#B76E79" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #B76E79;"></span>
-                <span>Rose Gold</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip" data-name="Walnut Wood" data-color="#6A432D" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #6A432D;"></span>
-                <span>Walnut</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip" data-name="Pure White" data-color="#FFFFFF" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #FFFFFF; border: 1px solid #ccc;"></span>
-                <span>White</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-              <button type="button" class="admin-color-chip" data-name="Royal Navy" data-color="#1E3A8A" onclick="toggleAdminColor(this)">
-                <span class="color-dot" style="background-color: #1E3A8A;"></span>
-                <span>Navy Blue</span>
-                <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              </button>
-            </div>
-            <!-- Custom color adder -->
-            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-              <input type="color" id="newProductCustomColorPicker" value="#8B5CF6" style="width: 32px; height: 32px; padding: 2px; border-radius: 6px; border: 1px solid var(--border-medium); cursor: pointer; background: transparent;" title="Pick custom color" />
-              <input type="text" class="setting-input" id="newProductCustomColorName" style="flex: 1; font-size: 0.8rem;" placeholder="Custom color name (e.g. Emerald Green)" />
-              <button type="button" class="btn-sub-action outline" style="padding: 6px 12px; font-size: 0.78rem; white-space: nowrap;" onclick="addCustomAdminColor()">+ Add Color</button>
-            </div>
-          </div>
 
-          <!-- Variant / Finish Options -->
-          <div class="setting-row" style="margin-bottom: 14px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <label class="setting-label" style="margin-bottom: 0;">Variant / Finish Options</label>
-              <span style="font-size: 0.72rem; color: var(--text-muted);">Finish styles &amp; mounting types</span>
+            <!-- Panel 1: Size Options -->
+            <div id="newProductOptionSizePanel" class="product-option-panel">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Select Standard Sizes:</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Click to toggle sizes</span>
+              </div>
+              <div class="admin-pill-group" id="adminSizePills">
+                <button type="button" class="admin-choice-pill" data-size='6" × 8"' onclick="toggleAdminPill(this)">6" × 8"</button>
+                <button type="button" class="admin-choice-pill active" data-size='8" × 10"' onclick="toggleAdminPill(this)">8" × 10"</button>
+                <button type="button" class="admin-choice-pill active" data-size='10" × 12"' onclick="toggleAdminPill(this)">10" × 12"</button>
+                <button type="button" class="admin-choice-pill active" data-size='12" × 18"' onclick="toggleAdminPill(this)">12" × 18"</button>
+                <button type="button" class="admin-choice-pill" data-size='16" × 24"' onclick="toggleAdminPill(this)">16" × 24"</button>
+                <button type="button" class="admin-choice-pill" data-size='20" × 30"' onclick="toggleAdminPill(this)">20" × 30"</button>
+                <button type="button" class="admin-choice-pill" data-size='A4 (8.3" × 11.7")' onclick="toggleAdminPill(this)">A4</button>
+                <button type="button" class="admin-choice-pill" data-size='A3 (11.7" × 16.5")' onclick="toggleAdminPill(this)">A3</button>
+              </div>
+              <div style="margin-top: 10px;">
+                <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">Custom Size (Optional):</span>
+                <input type="text" class="setting-input" id="newProductCustomSizes" style="font-size: 0.8rem;" placeholder="Custom sizes (comma separated, e.g. 14&quot; × 20&quot;, 24&quot; × 36&quot;)" />
+              </div>
             </div>
-            <div class="admin-pill-group" id="adminVariantPills">
-              <button type="button" class="admin-choice-pill active" data-variant="Matte Finish" onclick="toggleAdminPill(this)">Matte Finish</button>
-              <button type="button" class="admin-choice-pill active" data-variant="Glossy Finish" onclick="toggleAdminPill(this)">Glossy Finish</button>
-              <button type="button" class="admin-choice-pill" data-variant="Textured Canvas" onclick="toggleAdminPill(this)">Textured Canvas</button>
-              <button type="button" class="admin-choice-pill" data-variant="Floating Frame" onclick="toggleAdminPill(this)">Floating Frame</button>
-              <button type="button" class="admin-choice-pill" data-variant="Metallic Finish" onclick="toggleAdminPill(this)">Metallic Finish</button>
+
+            <!-- Panel 2: Color Options -->
+            <div id="newProductOptionColorPanel" class="product-option-panel" style="display: none;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Select Available Colors:</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Click to toggle colors</span>
+              </div>
+              <div class="admin-color-swatches" id="adminColorSwatches">
+                <button type="button" class="admin-color-chip active" data-name="Warm Gold" data-color="#C99A3D" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #C99A3D;"></span>
+                  <span>Warm Gold</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip active" data-name="Matte Black" data-color="#111111" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #111111;"></span>
+                  <span>Matte Black</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip" data-name="Brushed Silver" data-color="#C0C0C0" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #C0C0C0; border: 1px solid #ddd;"></span>
+                  <span>Silver</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip" data-name="Rose Gold" data-color="#B76E79" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #B76E79;"></span>
+                  <span>Rose Gold</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip" data-name="Walnut Wood" data-color="#6A432D" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #6A432D;"></span>
+                  <span>Walnut</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip" data-name="Pure White" data-color="#FFFFFF" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #FFFFFF; border: 1px solid #ccc;"></span>
+                  <span>White</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+                <button type="button" class="admin-color-chip" data-name="Royal Navy" data-color="#1E3A8A" onclick="toggleAdminColor(this)">
+                  <span class="color-dot" style="background-color: #1E3A8A;"></span>
+                  <span>Navy Blue</span>
+                  <svg class="check-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+              </div>
+              <!-- Custom color adder -->
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                <input type="color" id="newProductCustomColorPicker" value="#8B5CF6" style="width: 32px; height: 32px; padding: 2px; border-radius: 6px; border: 1px solid var(--border-medium); cursor: pointer; background: transparent;" title="Pick custom color" />
+                <input type="text" class="setting-input" id="newProductCustomColorName" style="flex: 1; font-size: 0.8rem;" placeholder="Custom color name (e.g. Emerald Green)" />
+                <button type="button" class="btn-sub-action outline" style="padding: 6px 12px; font-size: 0.78rem; white-space: nowrap;" onclick="addCustomAdminColor()">+ Add Color</button>
+              </div>
             </div>
-            <input type="text" class="setting-input" id="newProductCustomVariants" style="margin-top: 8px; font-size: 0.8rem;" placeholder="Custom variant styles (comma separated, e.g. Beveled Edge, Acrylic Stand-off)" />
+
+            <!-- Panel 3: Price Options -->
+            <div id="newProductOptionPricePanel" class="product-option-panel" style="display: none;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Price &amp; Variant Pricing:</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Configure variant rates</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                  <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">Base Selling Price (₹)</span>
+                  <input type="number" class="setting-input" id="newProductBasePriceMirror" placeholder="e.g. 599" min="1" oninput="syncAdminPrice('new', this.value)" />
+                </div>
+                <div>
+                  <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">MRP / Original Price (₹)</span>
+                  <input type="number" class="setting-input" id="newProductOriginalPrice" placeholder="e.g. 899 (Optional)" min="1" />
+                </div>
+              </div>
+              <div style="padding: 10px 12px; border-radius: 8px; background: rgba(201, 154, 61, 0.08); border: 1px dashed rgba(201, 154, 61, 0.3); font-size: 0.73rem; color: var(--text-secondary); line-height: 1.4;">
+                💡 <strong>Auto Pricing Calculation:</strong> Smaller sizes use base selling price. Larger custom sizes scale automatically on the live catalog product page.
+              </div>
+            </div>
           </div>
 
           <div class="setting-row" style="margin-bottom: 12px;">
@@ -2320,7 +2372,7 @@
   <!-- Modern Floating Toast Container -->
   <div class="admin-toast-container" id="adminToastContainer"></div>
 
-  <script src="js/admin.js?v=no_badge_v4"></script>
+  <script src="js/admin.js?v=opt_dd_v5"></script>
   <script>
     // Direct click safeguard: Instantly hide badge when clicking any sidebar link
     document.addEventListener('DOMContentLoaded', function () {
