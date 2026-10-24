@@ -179,249 +179,309 @@ function getItemProductUrl(item) {
 }
 
 /**
- * Bind form submit and place order action
+ * Submit Checkout Order (Exposed globally for button and form triggers)
  */
-function bindCheckoutForm() {
-  if (isCheckoutFormBound) return;
-  const form = document.getElementById('checkoutOrderForm');
+async function submitCheckoutOrder(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
   const desktopBtn = document.getElementById('desktopPlaceOrderBtn');
   const mobileBtn = document.getElementById('mobilePlaceOrderBtn');
   const btnText = document.getElementById('placeOrderBtnText');
 
-  if (!form) return;
-  isCheckoutFormBound = true;
+  const nameInput = document.getElementById('custName');
+  const phoneInput = document.getElementById('custPhone');
+  const emailInput = document.getElementById('custEmail');
+  const notesInput = document.getElementById('orderNotes');
+  const addressEl = document.getElementById('custAddress');
+  const cityEl = document.getElementById('custCity');
+  const stateEl = document.getElementById('custState');
+  const pincodeEl = document.getElementById('custPincode');
+  const fulfillmentEl = document.getElementById('fulfillmentMethod');
+  const utrInput = document.getElementById('upiUtrNumber');
 
-  const submitOrder = async (e) => {
-    if (e) e.preventDefault();
+  let name = nameInput ? nameInput.value.trim() : '';
+  let phone = phoneInput ? phoneInput.value.trim() : '';
+  let email = emailInput ? emailInput.value.trim() : '';
+  const notes = notesInput ? notesInput.value.trim() : '';
+  const address = addressEl && addressEl.value.trim() ? addressEl.value.trim() : 'Studio Pickup - Dahej Shop';
+  const city = cityEl && cityEl.value.trim() ? cityEl.value.trim() : 'Dahej / Bharuch';
+  const state = stateEl && stateEl.value.trim() ? stateEl.value.trim() : 'Gujarat';
+  const pincode = pincodeEl && pincodeEl.value.trim() ? pincodeEl.value.trim() : '392130';
+  const fulfillment = fulfillmentEl ? fulfillmentEl.value : 'pickup';
+  const utr = utrInput ? utrInput.value.trim() : '';
 
-    const name = document.getElementById('custName').value.trim();
-    const phone = document.getElementById('custPhone').value.trim();
-    const addressEl = document.getElementById('custAddress');
-    const cityEl = document.getElementById('custCity');
-    const stateEl = document.getElementById('custState');
-    const pincodeEl = document.getElementById('custPincode');
-    const fulfillmentEl = document.getElementById('fulfillmentMethod');
-    const address = addressEl ? addressEl.value.trim() : 'Studio Pickup - Dahej Shop';
-    const city = cityEl ? cityEl.value.trim() : 'Dahej / Bharuch';
-    const state = stateEl ? stateEl.value.trim() : 'Gujarat';
-    const pincode = pincodeEl ? pincodeEl.value.trim() : '392130';
-    const fulfillment = fulfillmentEl ? fulfillmentEl.value : 'pickup';
-    const notes = document.getElementById('orderNotes').value.trim();
-    const utrInput = document.getElementById('upiUtrNumber');
-    const utr = utrInput ? utrInput.value.trim() : '';
-
-    // Validations
-    if (!name) {
-      alert('Please enter your full name.');
-      document.getElementById('custName').focus();
-      return;
-    }
-
-    if (!phone || phone.replace(/\D/g, '').length < 10) {
-      alert('Please provide a valid 10-digit mobile number.');
-      document.getElementById('custPhone').focus();
-      return;
-    }
-
-    // Auto-fill from active customer session if empty
-    if (!email) {
-      const activeUser = typeof getCustomerUser === 'function'
-        ? getCustomerUser()
-        : (window.CustomerAuth ? window.CustomerAuth.getCustomerUser() : null);
-      if (activeUser && activeUser.email) {
-        email = activeUser.email.trim();
-        const emailEl = document.getElementById('custEmail');
-        if (emailEl) emailEl.value = email;
-      }
-    }
-
-    if (!email || !email.includes('@')) {
-      alert('Please provide a valid email address so we can email your order receipt.');
-      document.getElementById('custEmail').focus();
-      return;
-    }
-
-    const cart = typeof getCart === 'function' ? getCart() : JSON.parse(localStorage.getItem('rf_cart') || '[]');
-    if (!cart || cart.length === 0) {
-      alert('Your cart is empty. Please add products before placing an order.');
-      window.location.href = 'products';
-      return;
-    }
-
-    // GATE: Customer MUST be logged in before placing an order
-    const loggedIn = typeof isCustomerLoggedIn === 'function'
-      ? isCustomerLoggedIn()
-      : (window.CustomerAuth ? window.CustomerAuth.isCustomerLoggedIn() : !!localStorage.getItem('rf_customer_token'));
-
-    if (!loggedIn) {
-      if (typeof openCustomerAuthModal === 'function') {
-        openCustomerAuthModal((customer) => {
-          updateCheckoutAuthUI();
-          // After customer authenticates, auto-proceed with order placement
-          submitOrder();
-        });
-      } else {
-        alert('Please log in to your customer account to place an order.');
-      }
-      return;
-    }
-
-    const subtotal = typeof getCartSubtotal === 'function'
-      ? getCartSubtotal()
-      : cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.quantity) || 1)), 0);
-    const total = subtotal; // Free shipping
-
-    // UI Loading state
-    if (desktopBtn) desktopBtn.disabled = true;
-    if (mobileBtn) mobileBtn.disabled = true;
-    if (btnText) btnText.textContent = 'Processing Order...';
-
-    const paymentLabel = 'Pick up from shop';
-
-    const orderPayload = {
-      customerName: name,
-      customerPhone: phone,
-      customerEmail: email.toLowerCase(),
-      address: address,
-      city: city,
-      state: state,
-      pincode: pincode,
-      fulfillmentMethod: fulfillment,
-      paymentMethod: paymentLabel,
-      upiUtr: utr || null,
-      items: cart,
-      subtotal: subtotal,
-      shipping: 0,
-      total: total,
-      notes: notes
-    };
-
-    const headers = { 'Content-Type': 'application/json' };
-    const customerToken = typeof getCustomerToken === 'function'
-      ? getCustomerToken()
-      : (window.CustomerAuth ? window.CustomerAuth.getCustomerToken() : localStorage.getItem('rf_customer_token'));
-    if (customerToken) {
-      headers['Authorization'] = `Bearer ${customerToken}`;
-    }
-
-    const apiBase = typeof CART_API_BASE !== 'undefined'
-      ? CART_API_BASE
-      : (window.location.origin.includes(':5500') ? 'http://localhost:5000' : window.location.origin);
-
+  // 1. Cart validation
+  let cart = typeof getCart === 'function' ? getCart() : [];
+  if (!cart || cart.length === 0) {
     try {
-      const response = await fetch(`${apiBase}/api/orders`, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(orderPayload)
-      });
-
-      const result = await response.json();
-
-      if (response.status === 401 && result.requiresLogin) {
-        if (desktopBtn) desktopBtn.disabled = false;
-        if (mobileBtn) mobileBtn.disabled = false;
-        if (btnText) btnText.textContent = 'Place Order';
-        if (typeof openCustomerAuthModal === 'function') {
-          openCustomerAuthModal(() => submitOrder());
-        } else {
-          alert(result.message || 'Please log in to your customer account to place an order.');
-        }
-        return;
-      }
-
-      if (response.ok && result.success) {
-        // Success!
-        const orderId = result.orderId || `RF-ORD-2026-${Math.floor(100 + Math.random() * 900)}`;
-
-        // Populate Success Modal
-        const successNameEl = document.getElementById('successCustName');
-        if (successNameEl) successNameEl.textContent = name;
-        const successIdEl = document.getElementById('successOrderId');
-        if (successIdEl) successIdEl.textContent = orderId;
-        const successTotalEl = document.getElementById('successOrderTotal');
-        if (successTotalEl) successTotalEl.textContent = `₹${total.toLocaleString('en-IN')}`;
-
-        const successPayEl = document.getElementById('successPaymentMethod');
-        if (successPayEl) {
-          successPayEl.textContent = 'Pick up from shop';
-        }
-
-        // Configure WhatsApp Follow-up button
-        const itemNames = cart.map(i => `${i.name} (x${i.quantity})`).join(', ');
-        const waMsg = encodeURIComponent(
-          `Hello Rajesh Framing!\n\n` +
-          `I have just placed an order on your website:\n` +
-          `• Order ID: ${orderId}\n` +
-          `• Name: ${name}\n` +
-          `• Phone: ${phone}\n` +
-          `• Items: ${itemNames}\n` +
-          `• Total Amount: ₹${total.toLocaleString('en-IN')}\n` +
-          `• Payment Method: Pick up from shop (Pay on Collection)\n` +
-          `• Delivery Address: ${address}, ${city} (${pincode})\n\n` +
-          `Please confirm my order and share the digital preview proof!`
-        );
-
-        const waBtn = document.getElementById('successWhatsAppBtn');
-        if (waBtn) {
-          waBtn.href = `https://wa.me/919510757513?text=${waMsg}`;
-        }
-
-        const trackBtn = document.getElementById('successTrackBtn');
-        if (trackBtn) {
-          trackBtn.href = `track-order?id=${encodeURIComponent(orderId)}`;
-        }
-
-        // Clear cart
-        if (typeof clearCart === 'function') {
-          clearCart();
-        } else {
-          localStorage.removeItem('rf_cart');
-        }
-
-        // Show Modal exclusively now that order is confirmed
-        const modal = document.getElementById('orderSuccessModal');
-        if (modal) {
-          modal.style.setProperty('display', 'flex', 'important');
-          modal.classList.add('open');
-          document.body.style.overflow = 'hidden';
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-      } else {
-        alert(result.message || 'Could not process order. Please try again or contact us directly on WhatsApp.');
-      }
+      const raw = localStorage.getItem('rf_cart');
+      cart = raw ? JSON.parse(raw) : [];
     } catch (err) {
-      console.error('Order submission error:', err);
-      // Fallback local confirmation if server unreachable
-      alert('Order noted! Connecting to WhatsApp studio...');
-      const fallbackId = `RF-ORD-${Date.now().toString().slice(-4)}`;
+      cart = [];
+    }
+  }
+  if (!cart || cart.length === 0) {
+    alert('Your cart is empty. Please add products before placing an order.');
+    window.location.href = 'products';
+    return;
+  }
+
+  // 2. GATE: Check Customer Login First
+  const loggedIn = typeof isCustomerLoggedIn === 'function'
+    ? isCustomerLoggedIn()
+    : (window.CustomerAuth ? window.CustomerAuth.isCustomerLoggedIn() : !!localStorage.getItem('rf_customer_token'));
+
+  if (!loggedIn) {
+    if (typeof openCustomerAuthModal === 'function') {
+      openCustomerAuthModal((customer) => {
+        updateCheckoutAuthUI();
+        if (customer) {
+          if (nameInput && !nameInput.value.trim() && customer.name && customer.name !== 'Valued Customer') {
+            nameInput.value = customer.name;
+          }
+          if (phoneInput && !phoneInput.value.trim() && customer.phone) {
+            phoneInput.value = customer.phone;
+          }
+          if (emailInput && !emailInput.value.trim() && customer.email) {
+            emailInput.value = customer.email;
+          }
+        }
+        submitCheckoutOrder();
+      }, {
+        title: 'Sign In to Place Order',
+        subtitle: 'Please sign in or enter your email to receive your OTP passcode and complete your order.'
+      });
+    } else {
+      alert('Please log in to your customer account to place an order.');
+    }
+    return;
+  }
+
+  // 3. Auto-fill from active customer user if empty
+  const activeUser = typeof getCustomerUser === 'function'
+    ? getCustomerUser()
+    : (window.CustomerAuth ? window.CustomerAuth.getCustomerUser() : null);
+
+  if (activeUser) {
+    if (!name && activeUser.name && activeUser.name !== 'Valued Customer') {
+      name = activeUser.name.trim();
+      if (nameInput) nameInput.value = name;
+    }
+    if (!phone && activeUser.phone) {
+      phone = activeUser.phone.trim();
+      if (phoneInput) phoneInput.value = phone;
+    }
+    if (!email && activeUser.email) {
+      email = activeUser.email.trim();
+      if (emailInput) emailInput.value = email;
+    }
+  }
+
+  // 4. Input Validations with focus and highlight
+  function highlightInput(el, msg) {
+    alert(msg);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.focus();
+      el.style.borderColor = '#EF4444';
+      el.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+      setTimeout(() => {
+        el.style.borderColor = '';
+        el.style.boxShadow = '';
+      }, 3000);
+    }
+  }
+
+  if (!name) {
+    highlightInput(nameInput, 'Please enter your full name.');
+    return;
+  }
+
+  if (!phone || phone.replace(/\D/g, '').length < 10) {
+    highlightInput(phoneInput, 'Please provide a valid 10-digit mobile number.');
+    return;
+  }
+
+  if (!email || !email.includes('@')) {
+    highlightInput(emailInput, 'Please provide a valid email address so we can email your order receipt.');
+    return;
+  }
+
+  const subtotal = typeof getCartSubtotal === 'function'
+    ? getCartSubtotal()
+    : cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.quantity) || 1)), 0);
+  const total = subtotal; // Free shipping
+
+  // UI Loading state
+  if (desktopBtn) desktopBtn.disabled = true;
+  if (mobileBtn) mobileBtn.disabled = true;
+  if (btnText) btnText.textContent = 'Processing Order...';
+
+  const paymentLabel = 'Pick up from shop';
+
+  const orderPayload = {
+    customerName: name,
+    customerPhone: phone,
+    customerEmail: email.toLowerCase(),
+    address: address,
+    city: city,
+    state: state,
+    pincode: pincode,
+    fulfillmentMethod: fulfillment,
+    paymentMethod: paymentLabel,
+    upiUtr: utr || null,
+    items: cart,
+    subtotal: subtotal,
+    shipping: 0,
+    total: total,
+    notes: notes
+  };
+
+  const headers = { 'Content-Type': 'application/json' };
+  const customerToken = typeof getCustomerToken === 'function'
+    ? getCustomerToken()
+    : (window.CustomerAuth ? window.CustomerAuth.getCustomerToken() : localStorage.getItem('rf_customer_token'));
+  if (customerToken) {
+    headers['Authorization'] = `Bearer ${customerToken}`;
+  }
+
+  const apiBase = typeof CART_API_BASE !== 'undefined'
+    ? CART_API_BASE
+    : (window.location.origin.includes(':5500') ? 'http://localhost:5000' : window.location.origin);
+
+  try {
+    const response = await fetch(`${apiBase}/api/orders`, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(orderPayload)
+    });
+
+    const result = await response.json();
+
+    if (response.status === 401 && result.requiresLogin) {
+      if (desktopBtn) desktopBtn.disabled = false;
+      if (mobileBtn) mobileBtn.disabled = false;
+      if (btnText) btnText.textContent = 'Place Order';
+      if (typeof openCustomerAuthModal === 'function') {
+        openCustomerAuthModal(() => submitCheckoutOrder());
+      } else {
+        alert(result.message || 'Please log in to your customer account to place an order.');
+      }
+      return;
+    }
+
+    if (response.ok && result.success) {
+      // Success!
+      const orderId = result.orderId || `RF-ORD-2026-${Math.floor(100 + Math.random() * 900)}`;
+
+      // Populate Success Modal
       const successNameEl = document.getElementById('successCustName');
       if (successNameEl) successNameEl.textContent = name;
       const successIdEl = document.getElementById('successOrderId');
-      if (successIdEl) successIdEl.textContent = fallbackId;
+      if (successIdEl) successIdEl.textContent = orderId;
       const successTotalEl = document.getElementById('successOrderTotal');
       if (successTotalEl) successTotalEl.textContent = `₹${total.toLocaleString('en-IN')}`;
+
+      const successPayEl = document.getElementById('successPaymentMethod');
+      if (successPayEl) {
+        successPayEl.textContent = 'Pick up from shop';
+      }
+
+      // Configure WhatsApp Follow-up button
+      const itemNames = cart.map(i => `${i.name} (x${i.quantity})`).join(', ');
+      const waMsg = encodeURIComponent(
+        `Hello Rajesh Framing!\n\n` +
+        `I have just placed an order on your website:\n` +
+        `• Order ID: ${orderId}\n` +
+        `• Name: ${name}\n` +
+        `• Phone: ${phone}\n` +
+        `• Items: ${itemNames}\n` +
+        `• Total Amount: ₹${total.toLocaleString('en-IN')}\n` +
+        `• Payment Method: Pick up from shop (Pay on Collection)\n` +
+        `• Delivery Address: ${address}, ${city} (${pincode})\n\n` +
+        `Please confirm my order and share the digital preview proof!`
+      );
+
+      const waBtn = document.getElementById('successWhatsAppBtn');
+      if (waBtn) {
+        waBtn.href = `https://wa.me/919510757513?text=${waMsg}`;
+      }
+
+      const trackBtn = document.getElementById('successTrackBtn');
+      if (trackBtn) {
+        trackBtn.href = `track-order?id=${encodeURIComponent(orderId)}`;
+      }
+
+      // Clear cart
       if (typeof clearCart === 'function') {
         clearCart();
       } else {
         localStorage.removeItem('rf_cart');
       }
+
+      // Show Modal exclusively now that order is confirmed
       const modal = document.getElementById('orderSuccessModal');
       if (modal) {
         modal.style.setProperty('display', 'flex', 'important');
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-    } finally {
-      if (desktopBtn) desktopBtn.disabled = false;
-      if (mobileBtn) mobileBtn.disabled = false;
-      if (btnText) btnText.textContent = 'Place Order';
-    }
-  };
 
-  form.addEventListener('submit', submitOrder);
-  if (desktopBtn) desktopBtn.addEventListener('click', submitOrder);
-  if (mobileBtn) mobileBtn.addEventListener('click', submitOrder);
+    } else {
+      alert(result.message || 'Could not process order. Please try again or contact us directly on WhatsApp.');
+    }
+  } catch (err) {
+    console.error('Order submission error:', err);
+    // Fallback local confirmation if server unreachable
+    alert('Order noted! Connecting to WhatsApp studio...');
+    const fallbackId = `RF-ORD-${Date.now().toString().slice(-4)}`;
+    const successNameEl = document.getElementById('successCustName');
+    if (successNameEl) successNameEl.textContent = name;
+    const successIdEl = document.getElementById('successOrderId');
+    if (successIdEl) successIdEl.textContent = fallbackId;
+    const successTotalEl = document.getElementById('successOrderTotal');
+    if (successTotalEl) successTotalEl.textContent = `₹${total.toLocaleString('en-IN')}`;
+    if (typeof clearCart === 'function') {
+      clearCart();
+    } else {
+      localStorage.removeItem('rf_cart');
+    }
+    const modal = document.getElementById('orderSuccessModal');
+    if (modal) {
+      modal.style.setProperty('display', 'flex', 'important');
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+  } finally {
+    if (desktopBtn) desktopBtn.disabled = false;
+    if (mobileBtn) mobileBtn.disabled = false;
+    if (btnText) btnText.textContent = 'Place Order';
+  }
+}
+
+window.submitCheckoutOrder = submitCheckoutOrder;
+
+/**
+ * Bind form submit and place order action
+ */
+function bindCheckoutForm() {
+  const form = document.getElementById('checkoutOrderForm');
+  const desktopBtn = document.getElementById('desktopPlaceOrderBtn');
+  const mobileBtn = document.getElementById('mobilePlaceOrderBtn');
+
+  if (form && !isCheckoutFormBound) {
+    form.addEventListener('submit', submitCheckoutOrder);
+    isCheckoutFormBound = true;
+  }
+  if (desktopBtn) {
+    desktopBtn.removeEventListener('click', submitCheckoutOrder);
+    desktopBtn.addEventListener('click', submitCheckoutOrder);
+  }
+  if (mobileBtn) {
+    mobileBtn.removeEventListener('click', submitCheckoutOrder);
+    mobileBtn.addEventListener('click', submitCheckoutOrder);
+  }
 }
 
 function escapeHtml(str) {

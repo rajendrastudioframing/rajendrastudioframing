@@ -317,7 +317,7 @@
 
             <!-- Submit Button (Mobile/Tablet View duplicate for convenience) -->
             <div style="margin-top: 24px; display: none;" class="mobile-submit-wrap">
-              <button type="submit" class="btn-place-order" id="mobilePlaceOrderBtn">
+              <button type="submit" class="btn-place-order" id="mobilePlaceOrderBtn" onclick="if(window.submitCheckoutOrder) window.submitCheckoutOrder(event);">
                 <span>Place Order Now</span>
               </button>
             </div>
@@ -362,7 +362,7 @@
           </div>
 
           <!-- Place Order Button -->
-          <button type="button" class="btn-place-order" id="desktopPlaceOrderBtn">
+          <button type="button" class="btn-place-order" id="desktopPlaceOrderBtn" onclick="if(window.submitCheckoutOrder) window.submitCheckoutOrder(event);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
