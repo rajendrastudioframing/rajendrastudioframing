@@ -2857,8 +2857,22 @@ function renderAdminProducts(products) {
           ${badgeHtml}
         </td>
         <td style="text-align: center; vertical-align: middle;">
-          <button type="button" class="btn-stock-toggle ${statusBtnClass}" onclick="toggleProductStock('${escapeHtml(pId)}')" title="Click to toggle availability">
-            ${statusText}
+          <button type="button" 
+                  class="stock-status-pill btn-stock-toggle ${statusBtnClass}" 
+                  onclick="toggleProductStock('${escapeHtml(pId)}')" 
+                  title="Click to toggle stock: Currently ${isAvailable ? 'In Stock (Click to switch to Out of Stock)' : 'Out of Stock (Click to switch to In Stock)'}">
+            <span class="stock-pill-indicator">
+              <span class="stock-pill-dot"></span>
+              <span class="stock-pill-ping"></span>
+            </span>
+            <span class="stock-pill-label">${isAvailable ? 'In Stock' : 'Out of Stock'}</span>
+            <span class="stock-pill-switch-icon" aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </span>
           </button>
         </td>
         <td style="vertical-align: middle; font-size: 0.78rem; color: var(--text-muted);">
