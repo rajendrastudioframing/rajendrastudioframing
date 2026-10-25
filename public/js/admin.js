@@ -2692,7 +2692,7 @@ function renderCategoryTabs() {
     const isActive = adminActiveCategory === cat.id;
     tabsHtml += `
       <button type="button" class="admin-tab-btn ${isActive ? 'active' : ''}" data-category="${escapeHtml(cat.id)}" onclick="selectAdminCategory('${escapeHtml(cat.id)}')">
-        <span>${escapeHtml(cat.icon || '🏷️')} ${escapeHtml(cat.name)}</span>
+        <span>${cat.icon ? escapeHtml(cat.icon) + ' ' : ''}${escapeHtml(cat.name)}</span>
         <span class="category-badge-count" id="count_${escapeHtml(cat.id)}">${count}</span>
       </button>
     `;
@@ -2751,8 +2751,6 @@ window.openAddCategoryModal = function(origin = null) {
   const colorHex = document.getElementById('newCategoryColorHex');
   if (colorInput) colorInput.value = '#C99A3D';
   if (colorHex) colorHex.textContent = '#C99A3D';
-  const iconInput = document.getElementById('newCategoryIcon');
-  if (iconInput) iconInput.value = '🏷️';
 
   if (modal) modal.classList.add('open');
 };
@@ -3837,7 +3835,8 @@ function initProductModals() {
       e.preventDefault();
       const name = document.getElementById('newCategoryName').value.trim();
       const id = document.getElementById('newCategoryId').value.trim();
-      const icon = document.getElementById('newCategoryIcon').value.trim() || '🏷️';
+      const iconEl = document.getElementById('newCategoryIcon');
+      const icon = iconEl ? iconEl.value.trim() : '';
       const desc = document.getElementById('newCategoryDesc').value.trim();
       const badge = document.getElementById('newCategoryBadge').value.trim() || name;
       const color = document.getElementById('newCategoryColor').value || '#C99A3D';

@@ -3817,25 +3817,10 @@
             <input type="text" class="setting-input" id="newCategoryName" placeholder="e.g. Apparel &amp; T-Shirts" required oninput="autoGenerateCategorySlug(this.value)" />
           </div>
 
-          <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 12px;">
-            <div class="setting-row" style="margin-bottom: 0;">
-              <label class="setting-label">Category Key / Slug *</label>
-              <input type="text" class="setting-input" id="newCategoryId" placeholder="e.g. apparel" required />
-              <div style="font-size: 0.70rem; color: var(--text-muted); margin-top: 3px;">Unique identifier used in URLs &amp; database</div>
-            </div>
-            <div class="setting-row" style="margin-bottom: 0;">
-              <label class="setting-label">Emoji / Icon</label>
-              <div style="display: flex; gap: 6px; align-items: center;">
-                <input type="text" class="setting-input" id="newCategoryIcon" value="🏷️" style="width: 54px; text-align: center; font-size: 1.15rem;" maxlength="4" />
-                <div class="category-icon-presets" style="display: flex; gap: 4px; flex-wrap: wrap;">
-                  <button type="button" class="btn-icon-preset" onclick="document.getElementById('newCategoryIcon').value='🖼️'" style="background: none; border: 1px solid var(--border-subtle); border-radius: 4px; padding: 4px 6px; cursor: pointer;">🖼️</button>
-                  <button type="button" class="btn-icon-preset" onclick="document.getElementById('newCategoryIcon').value='👕'" style="background: none; border: 1px solid var(--border-subtle); border-radius: 4px; padding: 4px 6px; cursor: pointer;">👕</button>
-                  <button type="button" class="btn-icon-preset" onclick="document.getElementById('newCategoryIcon').value='🎁'" style="background: none; border: 1px solid var(--border-subtle); border-radius: 4px; padding: 4px 6px; cursor: pointer;">🎁</button>
-                  <button type="button" class="btn-icon-preset" onclick="document.getElementById('newCategoryIcon').value='✨'" style="background: none; border: 1px solid var(--border-subtle); border-radius: 4px; padding: 4px 6px; cursor: pointer;">✨</button>
-                  <button type="button" class="btn-icon-preset" onclick="document.getElementById('newCategoryIcon').value='🎨'" style="background: none; border: 1px solid var(--border-subtle); border-radius: 4px; padding: 4px 6px; cursor: pointer;">🎨</button>
-                </div>
-              </div>
-            </div>
+          <div class="setting-row">
+            <label class="setting-label">Category Key / Slug *</label>
+            <input type="text" class="setting-input" id="newCategoryId" placeholder="e.g. apparel" required />
+            <div style="font-size: 0.70rem; color: var(--text-muted); margin-top: 3px;">Unique identifier used in URLs &amp; database</div>
           </div>
 
           <div class="setting-row">
