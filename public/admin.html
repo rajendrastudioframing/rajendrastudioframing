@@ -650,7 +650,7 @@
     }
   }
 
-  
+  @media (max-width: 991px) {
     /* ==========================================================================
        PRODUCTS CATALOG MOBILE POLISH (CLEAN MOBILE CARDS TRANSFORMATION)
        ========================================================================== */
@@ -1636,8 +1636,402 @@
       overflow-x: auto !important;
       -webkit-overflow-scrolling: touch !important;
     }
+  }
 
-    /* Ultra compact tweak for tiny screens (<= 380px) */
+  /* ==========================================================================
+     DESKTOP / LAPTOP EXECUTIVE LUXURY REDESIGN (MIN-WIDTH: 992PX)
+     Restores clean, high-density, executive admin table architectures on laptop & desktop.
+     Eliminates awkward stretched cards and massive empty voids.
+     ========================================================================== */
+  @media (min-width: 992px) {
+    /* 1. Global Table Card Wrap Container */
+    .graphura-card-table-wrap {
+      background: var(--bg-card) !important;
+      border: 1px solid var(--border-subtle) !important;
+      border-radius: 14px !important;
+      box-shadow: 0 2px 14px rgba(0, 0, 0, 0.04) !important;
+      overflow: hidden !important;
+      overflow-x: auto !important;
+      margin-bottom: 24px !important;
+      display: block !important;
+      padding: 0 !important;
+    }
+
+    /* 2. Real Table Semantics on Laptop/Desktop */
+    .graphura-table,
+    .products-table,
+    .leads-table,
+    .customers-table,
+    .messages-table,
+    .reviews-table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+      text-align: left !important;
+      display: table !important;
+      margin: 0 !important;
+    }
+
+    .graphura-table thead,
+    .products-table thead,
+    .leads-table thead,
+    .customers-table thead,
+    .messages-table thead,
+    .reviews-table thead {
+      display: table-header-group !important;
+    }
+
+    .graphura-table tbody,
+    .products-table tbody,
+    .leads-table tbody,
+    .customers-table tbody,
+    .messages-table tbody,
+    .reviews-table tbody {
+      display: table-row-group !important;
+      gap: 0 !important;
+    }
+
+    .graphura-table tr,
+    .products-table tr.admin-product-row,
+    .leads-table tr.admin-lead-row,
+    .customers-table tr.admin-customer-row,
+    .messages-table tr.admin-message-row,
+    .reviews-table tr.admin-review-row {
+      display: table-row !important;
+      background: var(--bg-card) !important;
+      border: none !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+      grid-template-columns: none !important;
+      grid-template-areas: none !important;
+      transition: background-color 0.16s ease !important;
+    }
+
+    .graphura-table th,
+    .products-table th,
+    .leads-table th,
+    .customers-table th,
+    .messages-table th,
+    .reviews-table th {
+      display: table-cell !important;
+      padding: 13px 18px !important;
+      background: var(--bg-card-subtle) !important;
+      border-bottom: 1px solid var(--border-subtle) !important;
+      font-size: 0.73rem !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.6px !important;
+      color: var(--text-muted) !important;
+      white-space: nowrap !important;
+      vertical-align: middle !important;
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 2 !important;
+    }
+
+    .graphura-table td,
+    .products-table td,
+    .leads-table td,
+    .customers-table td,
+    .messages-table td,
+    .reviews-table td {
+      display: table-cell !important;
+      padding: 13px 18px !important;
+      border-bottom: 1px solid var(--border-subtle) !important;
+      font-size: 0.85rem !important;
+      color: var(--text-main) !important;
+      vertical-align: middle !important;
+      background: var(--bg-card) !important;
+      width: auto !important;
+      box-sizing: border-box !important;
+    }
+
+    .graphura-table tr:hover td,
+    .products-table tr.admin-product-row:hover td,
+    .leads-table tr.admin-lead-row:hover td,
+    .customers-table tr.admin-customer-row:hover td,
+    .messages-table tr.admin-message-row:hover td,
+    .reviews-table tr.admin-review-row:hover td {
+      background: var(--bg-hover) !important;
+    }
+
+    .graphura-table tr:last-child td,
+    .products-table tr.admin-product-row:last-child td,
+    .leads-table tr.admin-lead-row:last-child td,
+    .customers-table tr.admin-customer-row:last-child td,
+    .messages-table tr.admin-message-row:last-child td,
+    .reviews-table tr.admin-review-row:last-child td {
+      border-bottom: none !important;
+    }
+
+    /* 3. Products Table Desktop Row Elements */
+    .products-table td.prod-cell-img {
+      width: 65px !important;
+      text-align: center !important;
+      padding: 10px 14px !important;
+    }
+
+    .products-table .prod-row-thumb {
+      width: 48px !important;
+      height: 48px !important;
+      border-radius: 9px !important;
+      object-fit: cover !important;
+      border: 1px solid var(--border-subtle) !important;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+      display: inline-block !important;
+      vertical-align: middle !important;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease !important;
+    }
+
+    .products-table .prod-row-thumb:hover {
+      transform: scale(1.08) !important;
+      box-shadow: 0 4px 12px rgba(201, 154, 61, 0.25) !important;
+    }
+
+    .products-table td.prod-cell-title {
+      min-width: 220px !important;
+    }
+
+    .products-table .prod-row-name {
+      font-size: 0.88rem !important;
+      font-weight: 700 !important;
+      color: var(--text-main) !important;
+      margin-bottom: 3px !important;
+      line-height: 1.3 !important;
+    }
+
+    .products-table .prod-row-meta {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      font-size: 0.73rem !important;
+      color: var(--text-muted) !important;
+    }
+
+    .products-table .prod-sku-code {
+      background: var(--bg-hover) !important;
+      border: 1px solid var(--border-subtle) !important;
+      padding: 1px 6px !important;
+      border-radius: 4px !important;
+      font-family: monospace !important;
+      font-size: 0.70rem !important;
+      color: var(--text-muted) !important;
+    }
+
+    .products-table .prod-selling-price {
+      font-weight: 800 !important;
+      font-size: 0.94rem !important;
+      color: var(--text-main) !important;
+    }
+
+    .products-table .prod-orig-price {
+      font-size: 0.74rem !important;
+      color: var(--text-muted) !important;
+      text-decoration: line-through !important;
+      margin-left: 5px !important;
+    }
+
+    .products-table .prod-discount-badge {
+      font-size: 0.68rem !important;
+      font-weight: 700 !important;
+      color: #16a34a !important;
+      margin-left: 4px !important;
+    }
+
+    .products-table td.prod-cell-stock {
+      text-align: center !important;
+      white-space: nowrap !important;
+    }
+
+    .products-table td.prod-cell-actions {
+      text-align: center !important;
+      white-space: nowrap !important;
+    }
+
+    /* 4. Leads Table Desktop Row Elements */
+    .leads-table .lead-cust-cell {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+    }
+
+    .leads-table .lead-avatar-circle {
+      width: 38px !important;
+      height: 38px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: 800 !important;
+      font-size: 0.82rem !important;
+      flex-shrink: 0 !important;
+    }
+
+    .leads-table .lead-cust-info {
+      display: flex !important;
+      flex-direction: column !important;
+      min-width: 0 !important;
+    }
+
+    .leads-table .lead-cust-name {
+      font-weight: 700 !important;
+      font-size: 0.88rem !important;
+      color: var(--text-main) !important;
+    }
+
+    .leads-table .lead-cust-email {
+      font-size: 0.74rem !important;
+      color: var(--text-muted) !important;
+    }
+
+    .leads-table .lead-phone-link {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      padding: 4px 10px !important;
+      background: var(--bg-hover) !important;
+      border: 1px solid var(--border-subtle) !important;
+      border-radius: 6px !important;
+      transition: all 0.15s ease !important;
+      text-decoration: none !important;
+      color: inherit !important;
+    }
+
+    .leads-table .lead-phone-link:hover {
+      border-color: #25D366 !important;
+      background: rgba(37, 211, 102, 0.08) !important;
+    }
+
+    .leads-table td.lead-cell-actions {
+      text-align: center !important;
+      border-top: none !important;
+      padding-top: 13px !important;
+      margin-top: 0 !important;
+    }
+
+    /* 5. Customers Table Desktop Row Elements */
+    .customers-table .lead-cust-cell {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+    }
+
+    .customers-table td.cust-cell-profile .lead-cust-name {
+      font-size: 0.88rem !important;
+      font-weight: 700 !important;
+      color: var(--text-main) !important;
+    }
+
+    .customers-table td.cust-cell-profile .lead-cust-email {
+      font-size: 0.74rem !important;
+      color: var(--text-muted) !important;
+    }
+
+    .customers-table td.cust-cell-spent strong {
+      font-size: 0.94rem !important;
+      font-weight: 800 !important;
+      color: var(--text-main) !important;
+    }
+
+    /* 6. Messages Table Desktop Row Elements */
+    .messages-table td.msg-cell-msg .msg-preview-text {
+      max-width: 380px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      font-size: 0.82rem !important;
+      color: var(--text-secondary) !important;
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      line-height: 1.4 !important;
+    }
+
+    .messages-table td.msg-cell-actions {
+      text-align: center !important;
+      border-top: none !important;
+      padding-top: 13px !important;
+      margin-top: 0 !important;
+    }
+
+    /* 7. Reviews Table Desktop Row Elements */
+    .reviews-table td.rev-cell-comment .rev-comment-text {
+      max-width: 420px !important;
+      font-size: 0.82rem !important;
+      color: var(--text-secondary) !important;
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      line-height: 1.45 !important;
+    }
+
+    .reviews-table td.rev-cell-actions {
+      text-align: center !important;
+      border-top: none !important;
+      padding-top: 13px !important;
+      margin-top: 0 !important;
+    }
+
+    /* 8. Desktop Section Header, Search & Filter Alignments */
+    .section-title-bar {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 14px !important;
+      margin-bottom: 18px !important;
+    }
+
+    .section-filters-group {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 12px !important;
+      width: auto !important;
+    }
+
+    .pill-tabs-group {
+      width: auto !important;
+      display: inline-flex !important;
+    }
+
+    .pill-tabs-group .pill-tab-btn {
+      flex: initial !important;
+      padding: 6px 14px !important;
+      font-size: 0.80rem !important;
+    }
+
+    .graphura-search-input {
+      width: 280px !important;
+      max-width: 360px !important;
+    }
+
+    .graphura-sort-select {
+      width: auto !important;
+    }
+
+    .admin-category-tabs-bar {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 8px !important;
+      margin: 18px 0 14px 0 !important;
+    }
+
+    .subheader-actions {
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      gap: 10px !important;
+      width: auto !important;
+    }
+
+    .subheader-actions .btn-sub-action {
+      width: auto !important;
+      flex: initial !important;
+    }
+  }
+
+  /* Ultra compact tweak for tiny screens (<= 380px) */
   @media (max-width: 380px) {
     .subheader-actions .btn-sub-action:not(.primary) {
       font-size: 0.67rem !important;

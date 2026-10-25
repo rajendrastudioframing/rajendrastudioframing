@@ -5071,3 +5071,268 @@ body.admin-login-body {
     }
 
     }
+
+/* ==========================================================================
+   DESKTOP / LAPTOP EXECUTIVE LUXURY REDESIGN (MIN-WIDTH: 992PX)
+   ========================================================================== */
+@media (min-width: 992px) {
+  .graphura-card-table-wrap {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.04) !important;
+    overflow: hidden !important;
+    overflow-x: auto !important;
+    margin-bottom: 24px !important;
+    display: block !important;
+    padding: 0 !important;
+  }
+
+  .graphura-table,
+  .products-table,
+  .leads-table,
+  .customers-table,
+  .messages-table,
+  .reviews-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    text-align: left !important;
+    display: table !important;
+    margin: 0 !important;
+  }
+
+  .graphura-table thead,
+  .products-table thead,
+  .leads-table thead,
+  .customers-table thead,
+  .messages-table thead,
+  .reviews-table thead {
+    display: table-header-group !important;
+  }
+
+  .graphura-table tbody,
+  .products-table tbody,
+  .leads-table tbody,
+  .customers-table tbody,
+  .messages-table tbody,
+  .reviews-table tbody {
+    display: table-row-group !important;
+    gap: 0 !important;
+  }
+
+  .graphura-table tr,
+  .products-table tr.admin-product-row,
+  .leads-table tr.admin-lead-row,
+  .customers-table tr.admin-customer-row,
+  .messages-table tr.admin-message-row,
+  .reviews-table tr.admin-review-row {
+    display: table-row !important;
+    background: var(--bg-card) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    grid-template-columns: none !important;
+    grid-template-areas: none !important;
+    transition: background-color 0.16s ease !important;
+  }
+
+  .graphura-table th,
+  .products-table th,
+  .leads-table th,
+  .customers-table th,
+  .messages-table th,
+  .reviews-table th {
+    display: table-cell !important;
+    padding: 13px 18px !important;
+    background: var(--bg-card-subtle) !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    font-size: 0.73rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.6px !important;
+    color: var(--text-muted) !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 2 !important;
+  }
+
+  .graphura-table td,
+  .products-table td,
+  .leads-table td,
+  .customers-table td,
+  .messages-table td,
+  .reviews-table td {
+    display: table-cell !important;
+    padding: 13px 18px !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    font-size: 0.85rem !important;
+    color: var(--text-main) !important;
+    vertical-align: middle !important;
+    background: var(--bg-card) !important;
+    width: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .graphura-table tr:hover td,
+  .products-table tr.admin-product-row:hover td,
+  .leads-table tr.admin-lead-row:hover td,
+  .customers-table tr.admin-customer-row:hover td,
+  .messages-table tr.admin-message-row:hover td,
+  .reviews-table tr.admin-review-row:hover td {
+    background: var(--bg-hover) !important;
+  }
+
+  .graphura-table tr:last-child td,
+  .products-table tr.admin-product-row:last-child td,
+  .leads-table tr.admin-lead-row:last-child td,
+  .customers-table tr.admin-customer-row:last-child td,
+  .messages-table tr.admin-message-row:last-child td,
+  .reviews-table tr.admin-review-row:last-child td {
+    border-bottom: none !important;
+  }
+
+  .products-table td.prod-cell-img {
+    width: 65px !important;
+    text-align: center !important;
+    padding: 10px 14px !important;
+  }
+
+  .products-table .prod-row-thumb {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 9px !important;
+    object-fit: cover !important;
+    border: 1px solid var(--border-subtle) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+  }
+
+  .products-table td.prod-cell-title {
+    min-width: 220px !important;
+  }
+
+  .products-table .prod-row-name {
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    color: var(--text-main) !important;
+    margin-bottom: 3px !important;
+  }
+
+  .products-table .prod-row-meta {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.73rem !important;
+    color: var(--text-muted) !important;
+  }
+
+  .products-table .prod-sku-code {
+    background: var(--bg-hover) !important;
+    border: 1px solid var(--border-subtle) !important;
+    padding: 1px 6px !important;
+    border-radius: 4px !important;
+    font-family: monospace !important;
+    font-size: 0.70rem !important;
+    color: var(--text-muted) !important;
+  }
+
+  .products-table .prod-selling-price {
+    font-weight: 800 !important;
+    font-size: 0.94rem !important;
+    color: var(--text-main) !important;
+  }
+
+  .leads-table .lead-cust-cell {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .leads-table .lead-avatar-circle {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 800 !important;
+    font-size: 0.82rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .leads-table .lead-phone-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 4px 10px !important;
+    background: var(--bg-hover) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 6px !important;
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  .customers-table .lead-cust-cell {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .messages-table td.msg-cell-msg .msg-preview-text {
+    max-width: 380px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 0.82rem !important;
+    color: var(--text-secondary) !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  .reviews-table td.rev-cell-comment .rev-comment-text {
+    max-width: 420px !important;
+    font-size: 0.82rem !important;
+    color: var(--text-secondary) !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  .section-title-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 14px !important;
+    margin-bottom: 18px !important;
+  }
+
+  .section-filters-group {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: auto !important;
+  }
+
+  .pill-tabs-group {
+    width: auto !important;
+    display: inline-flex !important;
+  }
+
+  .graphura-search-input {
+    width: 280px !important;
+    max-width: 360px !important;
+  }
+
+  .graphura-sort-select {
+    width: auto !important;
+  }
+}
+
