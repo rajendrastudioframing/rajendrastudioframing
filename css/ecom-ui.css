@@ -2236,7 +2236,7 @@
 
   .product-capsule,
   .product-card-body {
-    padding: 8px 8px 10px !important;
+    padding: 8px 6px 10px !important;
     gap: 4px !important;
     display: flex !important;
     flex-direction: column !important;
@@ -2369,16 +2369,18 @@
   .btn-catalog-cart,
   .btn-catalog-buynow {
     height: 30px !important;
-    padding: 0 2px !important;
+    padding: 0 4px !important;
     border-radius: 7px !important;
-    font-size: 0.71rem !important;
+    font-size: 0.62rem !important;
     font-weight: 700 !important;
-    letter-spacing: 0 !important;
+    letter-spacing: -0.15px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
     transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
   }
 
   .btn-catalog-cart {
@@ -2386,10 +2388,20 @@
     border: 1px solid rgba(201, 154, 61, 0.4) !important;
     color: #FFFFFF !important;
     box-shadow: 0 2px 5px rgba(168, 122, 36, 0.22) !important;
+    padding: 0 4px !important;
   }
 
   .btn-catalog-cart .btn-cart-icon {
     display: none !important;
+  }
+
+  .btn-catalog-cart .btn-cart-text {
+    font-size: 0.61rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.18px !important;
+    white-space: nowrap !important;
+    display: inline-block !important;
+    line-height: 1 !important;
   }
 
   .btn-catalog-buynow {
@@ -2397,15 +2409,17 @@
     border: 1px solid #111827 !important;
     color: #FFFFFF !important;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12) !important;
+    font-size: 0.64rem !important;
+    padding: 0 4px !important;
   }
 
   /* WhatsApp Pill - Sleek Studio Concierge Style */
   .btn-catalog-whatsapp {
-    height: 27px !important;
+    height: 29px !important;
     background: #F0FDF4 !important;
     border: 1px solid #BBF7D0 !important;
     color: #15803D !important;
-    font-size: 0.69rem !important;
+    font-size: 0.68rem !important;
     font-weight: 700 !important;
     border-radius: 7px !important;
     padding: 0 4px !important;
