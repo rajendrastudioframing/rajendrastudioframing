@@ -338,7 +338,7 @@ function renderWishlistDrawer() {
       
       <div class="wishlist-item-info">
         <h4 class="wishlist-item-title">${escapeWishlistHtml(item.name)}</h4>
-        <div class="wishlist-item-price">₹${Number(item.price).toLocaleString('en-IN')}</div>
+        <div class="wishlist-item-price">₹${(Number(item.price) || 650).toLocaleString('en-IN')}</div>
         
         <div class="wishlist-item-actions">
           <button type="button" class="btn-wishlist-cart" onclick="moveWishlistItemToCart('${item.id}', event)">
@@ -421,6 +421,8 @@ function openWishlistDrawer() {
 
   renderWishlistDrawer();
   overlay.classList.add('open');
+  document.body.classList.add('drawer-open', 'wishlist-open');
+  document.body.classList.add('drawer-open', 'wishlist-open');
   document.body.style.overflow = 'hidden';
 }
 
@@ -428,6 +430,8 @@ function closeWishlistDrawer() {
   const overlay = document.getElementById('wishlistDrawerOverlay');
   if (!overlay) return;
   overlay.classList.remove('open');
+  document.body.classList.remove('drawer-open', 'wishlist-open');
+  document.body.classList.remove('drawer-open', 'wishlist-open');
   document.body.style.overflow = '';
   unhighlightWishlistNav();
 }

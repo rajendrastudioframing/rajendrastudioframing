@@ -448,6 +448,8 @@ function openCartDrawer() {
   }
   renderCartDrawer();
   overlay.classList.add('open');
+  document.body.classList.add('drawer-open', 'cart-open');
+  document.body.classList.add('drawer-open', 'cart-open');
   document.body.style.overflow = 'hidden';
 
   // Dismiss toast if currently showing
@@ -459,6 +461,8 @@ function closeCartDrawer() {
   const overlay = document.getElementById('cartDrawerOverlay');
   if (!overlay) return;
   overlay.classList.remove('open');
+  document.body.classList.remove('drawer-open', 'cart-open');
+  document.body.classList.remove('drawer-open', 'cart-open');
   document.body.style.overflow = '';
   unhighlightCartNav();
 }

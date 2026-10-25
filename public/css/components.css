@@ -4276,7 +4276,7 @@ body:has(.modal-overlay.open) {
   background: rgba(15, 16, 20, 0.65);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 9999;
+  z-index: 100001 !important;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -4295,7 +4295,7 @@ body:has(.modal-overlay.open) {
   width: 100%;
   max-width: min(440px, 100vw);
   background: #FFFFFF;
-  z-index: 10000;
+  z-index: 100002 !important;
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
@@ -4458,7 +4458,7 @@ body:has(.modal-overlay.open) {
 
 /* Wishlist Drawer Footer */
 .wishlist-drawer-footer {
-  padding: 20px 24px;
+  padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px)) !important;
   background: #FAF8F5;
   border-top: 1px solid #F0ECE4;
   display: flex;
@@ -4845,3 +4845,21 @@ body:has(.modal-overlay.open) {
   border-top: 1px dashed rgba(0, 0, 0, 0.08);
 }
 
+
+
+/* Phone View Drawer & Floating Actions Fix */
+.wishlist-drawer-overlay {
+  z-index: 100001 !important;
+}
+.wishlist-drawer {
+  z-index: 100002 !important;
+}
+body.drawer-open .floating-actions-wrap,
+body.wishlist-open .floating-actions-wrap,
+body.cart-open .floating-actions-wrap,
+.wishlist-drawer-overlay.open ~ .floating-actions-wrap,
+.cart-drawer-overlay.open ~ .floating-actions-wrap {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

@@ -66,6 +66,55 @@
   color: #374151;
 }
 
+.orders-user-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.orders-user-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+  line-height: 1.35;
+}
+
+.orders-user-title {
+  font-size: 0.84rem;
+  color: #1F2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orders-user-email {
+  font-size: 0.74rem;
+  color: #6B7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orders-user-switch-btn {
+  flex-shrink: 0;
+  background: #FEE2E2;
+  border: 1px solid #FECACA;
+  color: #DC2626;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.orders-user-switch-btn:hover {
+  background: #DC2626;
+  color: #FFFFFF;
+}
+
 .orders-user-avatar {
   width: 26px;
   height: 26px;
@@ -919,5 +968,53 @@
 
   .invoice-modal-dialog {
     padding: 20px;
+  }
+}
+
+/* Mobile Phone Specific Optimizations */
+@media (max-width: 768px) {
+  .orders-user-pill {
+    display: flex !important;
+    width: 100% !important;
+    max-width: 440px !important;
+    margin: 0 auto 16px !important;
+    border-radius: 14px !important;
+    padding: 10px 14px !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+  }
+  .orders-tabs-bar {
+    display: flex !important;
+    width: 100% !important;
+    gap: 4px !important;
+    padding: 3px !important;
+    background: #F3F4F6 !important;
+    border-radius: 12px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    box-sizing: border-box !important;
+  }
+  .orders-tabs-bar::-webkit-scrollbar {
+    display: none !important;
+  }
+  .orders-tab-btn {
+    flex: 1 1 0% !important;
+    padding: 8px 6px !important;
+    font-size: 0.76rem !important;
+    border-radius: 9px !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+  }
+  .orders-tab-count {
+    font-size: 0.68rem !important;
+    padding: 1px 5px !important;
+  }
+  .orders-main-section,
+  .orders-container,
+  #ordersListContainer {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }

@@ -1390,7 +1390,7 @@
 
 @media (max-width: 767px) {
   .categories-showcase-section {
-    padding-bottom: 90px !important;
+    padding-bottom: calc(115px + env(safe-area-inset-bottom, 0px)) !important;
   }
   .categories-main-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -2204,3 +2204,39 @@
 }
 
 
+
+
+/* Mobile Catalog Action Buttons (No Clipping) */
+@media (max-width: 768px) {
+  .card-action-row-primary {
+    gap: 4px !important;
+  }
+  .capsule-action-btn {
+    font-size: 0.70rem !important;
+    padding: 6px 2px !important;
+    letter-spacing: 0 !important;
+  }
+  .btn-catalog-cart .btn-cart-icon {
+    display: none !important;
+  }
+  .catalog-layout-container,
+  #catalogProductsGrid {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+@media (max-width: 440px) {
+  .btn-catalog-cart .btn-cart-prefix {
+    display: none !important;
+  }
+  .btn-catalog-cart .btn-cart-text::before {
+    content: "+ ";
+    font-weight: 800;
+  }
+  .btn-catalog-whatsapp .btn-whatsapp-text {
+    font-size: 0.74rem !important;
+  }
+  .luxury-category-card:nth-child(5) {
+    margin-bottom: 24px !important;
+  }
+}

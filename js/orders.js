@@ -76,11 +76,16 @@ function updateUserGreetingUI(user, isLoggedIn) {
       : (user.email ? user.email.split('@')[0] : 'Valued Customer');
     const firstLetter = (displayName.charAt(0) || 'K').toUpperCase();
 
-    pill.style.display = 'inline-flex';
+    pill.style.display = 'flex';
     pill.innerHTML = `
-      <span class="orders-user-avatar">${escapeHtml(firstLetter)}</span>
-      <span>Viewing orders for <strong>${escapeHtml(displayName)}</strong> (${escapeHtml(user.email || '')})</span>
-      <button type="button" onclick="logoutCustomer(true)" style="background:none; border:none; color:#DC2626; font-size:0.78rem; font-weight:700; cursor:pointer; margin-left:6px; text-decoration:underline;">Switch</button>
+      <div class="orders-user-left">
+        <span class="orders-user-avatar">${escapeHtml(firstLetter)}</span>
+        <div class="orders-user-details">
+          <span class="orders-user-title">Viewing orders for <strong>${escapeHtml(displayName)}</strong></span>
+          <span class="orders-user-email">${escapeHtml(user.email || '')}</span>
+        </div>
+      </div>
+      <button type="button" class="orders-user-switch-btn" onclick="logoutCustomer(true)" title="Switch Account">Switch</button>
     `;
   } else {
     pill.style.display = 'none';
