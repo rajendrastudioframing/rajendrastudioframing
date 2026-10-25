@@ -1842,6 +1842,83 @@ body.admin-dashboard-body[data-theme="dark"] {
   box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);
 }
 
+/* Mark Completed / Delivered Button */
+[data-theme="light"] .btn-card-action.complete {
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+  font-weight: 700;
+}
+[data-theme="light"] .btn-card-action.complete:hover {
+  background: #D1FAE5;
+  border-color: #6EE7B7;
+  transform: translateY(-1px);
+}
+[data-theme="dark"] .btn-card-action.complete {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  font-weight: 700;
+}
+[data-theme="dark"] .btn-card-action.complete:hover {
+  background: rgba(16, 185, 129, 0.26);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Status Chips on Order Cards */
+.order-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 7px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.order-status-chip.in-production {
+  background: #EFF8FF;
+  color: #175CD3;
+  border: 1px solid #B2DDFF;
+}
+[data-theme="dark"] .order-status-chip.in-production {
+  background: rgba(59, 130, 246, 0.16);
+  color: #60A5FA;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+.order-status-chip.ready {
+  background: #F4EBFF;
+  color: #6941C6;
+  border: 1px solid #D6BBFB;
+}
+[data-theme="dark"] .order-status-chip.ready {
+  background: rgba(168, 85, 247, 0.16);
+  color: #C084FC;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+.order-status-chip.completed {
+  background: #ECFDF3;
+  color: #027A48;
+  border: 1px solid #ABEFC6;
+}
+[data-theme="dark"] .order-status-chip.completed {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.order-status-chip.cancelled {
+  background: #FEF3F2;
+  color: #B42318;
+  border: 1px solid #FECDCA;
+}
+[data-theme="dark"] .order-status-chip.cancelled {
+  background: rgba(239, 68, 68, 0.14);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 [data-theme="light"] .btn-card-action.reopen {
   background: #EFF8FF;
   color: #175CD3;

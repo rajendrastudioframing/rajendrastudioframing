@@ -850,15 +850,20 @@ function createOrderCardRowHTML(order) {
   const paymentStatus = isOnlinePayment ? 'Paid' : (order.status === 'Completed' ? 'Paid' : 'Pending');
   const paymentClass = paymentStatus.toLowerCase();
   const paymentMethod = isOnlinePayment ? 'Online UPI' : 'Pay on Delivery';
-
+  const isCancelled = order.status === 'Cancelled';
+  const isCompleted = order.status === 'Completed' || order.status === 'Delivered';
+  const isPickupReady = order.status === 'Shipped' || order.status === 'Dispatched' || order.status === 'Pickup Ready';
   const isAccepted = order.status === 'Confirmed' || order.status === 'Accepted' || order.status === 'In Progress';
-  const isPickupReady = order.status === 'Shipped' || order.status === 'Dispatched' || order.status === 'Completed' || order.status === 'Pickup Ready';
 
   let displayStatus = order.status || 'New';
-  if (isAccepted) {
-    displayStatus = 'Accepted';
+  if (isCancelled) {
+    displayStatus = 'Cancelled';
+  } else if (isCompleted) {
+    displayStatus = 'Completed';
   } else if (isPickupReady) {
     displayStatus = 'Pick Up Ready';
+  } else if (isAccepted) {
+    displayStatus = 'In Production';
   } else if (order.status === 'New' || order.status === 'Pending') {
     displayStatus = 'New Order';
   }
@@ -954,7 +959,7 @@ function createOrderCardRowHTML(order) {
           `}
         </div>
 
-<!-- 6. Payment Status -->
+        <!-- 6. Payment Status -->
         <div class="order-col-info order-col-payment">
           <span class="col-field-label">Payment</span>
           <span class="status-pill ${paymentClass}">
@@ -989,19 +994,27 @@ function createOrderCardRowHTML(order) {
           <span class="order-note-content">${escapeHtml(noteText)}</span>
         </div>
         <div class="order-action-buttons">
-          <button type="button" 
-                  class="btn-card-action accept ${isAccepted ? 'active-state' : ''}" 
-                  onclick="acceptOrderQuick('${order.id}')" 
-                  title="Accept order and move to production">
-            ${isAccepted ? '✓ Order Accepted' : '✓ Accept Order'}
-          </button>
-          
-          <button type="button" 
-                  class="btn-card-action pickup-ready ${isPickupReady ? 'active-state' : ''}" 
-                  onclick="markPickupReadyQuick('${order.id}')" 
-                  title="Mark order ready for collection and notify customer">
-            ${isPickupReady ? '🛍️ Pick Up Ready ✓' : '🛍️ Pick Up Ready'}
-          </button>
+          ${isCancelled ? `
+            <span class="order-status-chip cancelled">✕ Cancelled</span>
+            <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="View complete order details">👁️ Details</button>
+          ` : isCompleted ? `
+            <span class="order-status-chip completed">✓ Completed</span>
+            <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="View complete order details">👁️ Details</button>
+          ` : isPickupReady ? `
+            <span class="order-status-chip ready">🛍️ Ready for Pick Up ✓</span>
+            <button type="button" class="btn-card-action complete" onclick="markOrderCompletedQuick('${escapeHtml(order.id)}')" title="Customer collected frame — mark as delivered">✓ Mark Delivered</button>
+            <button type="button" class="btn-card-action update" onclick="openEditOrderModal('${escapeHtml(order.id)}')" title="Edit order details">✏️ Edit</button>
+            <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="View details">👁️ Details</button>
+          ` : isAccepted ? `
+            <span class="order-status-chip in-production">🔨 In Production</span>
+            <button type="button" class="btn-card-action pickup-ready" onclick="markPickupReadyQuick('${escapeHtml(order.id)}')" title="Mark order ready for collection and notify customer">🛍️ Pick Up Ready</button>
+            <button type="button" class="btn-card-action update" onclick="openEditOrderModal('${escapeHtml(order.id)}')" title="Edit order details">✏️ Edit</button>
+            <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="View details">👁️ Details</button>
+          ` : `
+            <button type="button" class="btn-card-action accept" onclick="acceptOrderQuick('${escapeHtml(order.id)}')" title="Accept order and move to production">✓ Accept Order</button>
+            <button type="button" class="btn-card-action pickup-ready" onclick="markPickupReadyQuick('${escapeHtml(order.id)}')" title="Mark order ready for collection and notify customer">🛍️ Pick Up Ready</button>
+            <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="View details">👁️ Details</button>
+          `}
         </div>
       </div>
     </div>
@@ -2143,12 +2156,11 @@ window.acceptOrderQuick = async (id) => {
   if (!item) return;
 
   try {
-    showToast('Confirming Order', `Confirming Order #${cleanId} and sending confirmation email to customer...`, 'info');
-    const res = await fetch(`${API_BASE}/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
+    showToast('Confirming Order', `Confirming Order #${cleanId} and moving to framing production...`, 'info');
+    const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         status: 'Confirmed',
@@ -2163,7 +2175,7 @@ window.acceptOrderQuick = async (id) => {
       await loadInquiries();
       await loadDashboardStats();
       const emailNotice = data.emailResult && data.emailResult.sent ? ` Confirmation email sent to ${data.emailResult.recipient}!` : '';
-      showToast('Order Confirmed! ✓', `Order #${cleanId} is now Confirmed.${emailNotice}`, 'success');
+      showToast('Order Accepted! ✓', `Order #${cleanId} is now In Production.${emailNotice}`, 'success');
     } else {
       showToast('Action Failed', data.message || 'Could not confirm order.', 'danger');
     }
@@ -2183,11 +2195,10 @@ window.markPickupReadyQuick = async (id) => {
 
   try {
     showToast('Updating Order', `Marking Order #${cleanId} as Ready for Pick Up...`, 'info');
-    const res = await fetch(`${API_BASE}/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
+    const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         status: 'Shipped',
@@ -2208,6 +2219,43 @@ window.markPickupReadyQuick = async (id) => {
     }
   } catch (err) {
     console.error('Error marking order as ready for pickup:', err);
+    showToast('Network Error', 'Failed to connect to server.', 'danger');
+  }
+};
+
+/* ==========================================================================
+   MARK ORDER COMPLETED / DELIVERED
+   ========================================================================== */
+window.markOrderCompletedQuick = async (id) => {
+  const cleanId = (id || '').replace(/^#/, '');
+  const item = allInquiries.find(i => i.id === cleanId || i.id === id);
+  if (!item) return;
+
+  try {
+    showToast('Completing Order', `Marking Order #${cleanId} as Completed...`, 'info');
+    const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        status: 'Completed',
+        notes: 'Order collected and handed over successfully. Thank you for choosing Rajendra Studio!',
+        notifyCustomer: true
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      if (item) item.status = 'Completed';
+      await loadInquiries();
+      await loadDashboardStats();
+      showToast('Order Completed! ✓', `Order #${cleanId} has been marked Completed.`, 'success');
+    } else {
+      showToast('Action Failed', data.message || 'Could not complete order.', 'danger');
+    }
+  } catch (err) {
+    console.error('Error completing order:', err);
     showToast('Network Error', 'Failed to connect to server.', 'danger');
   }
 };
