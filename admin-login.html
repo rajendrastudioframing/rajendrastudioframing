@@ -10,7 +10,7 @@
   <meta name="description" content="Administrative login and authentication for Rajesh Framing." />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/admin.css?v=luxury_gold_v5" />
-  <link rel="stylesheet" href="css/admin-login.css?v=luxury_gold_v5" />
+  <link rel="stylesheet" href="css/admin-login.css?v=luxury_light_v7" />
   </head>
 <body class="admin-login-body">
 
@@ -64,7 +64,7 @@
         <div style="font-size: 0.95rem; display: flex; align-items: center; gap: 8px; cursor: pointer;" id="autoFillOtpRow">
           <span>6-Digit OTP:</span>
           <code id="testOtpCode" style="font-size: 1.2rem; color: #111111; background: #C99A3D; padding: 3px 10px; border-radius: 5px; font-weight: 800; letter-spacing: 3px;">------</code>
-          <span style="font-size: 0.75rem; color: #9CA3AF;">(Click to Auto-Fill)</span>
+          <span style="font-size: 0.75rem; color: #555555;">(Click to Auto-Fill)</span>
         </div>
       </div>
 
@@ -87,7 +87,7 @@
           <div class="autofill-cred-row">
             <span class="autofill-icon">📧</span>
             <span class="autofill-label">Email:</span>
-            <strong class="autofill-val" id="autoCredEmail">shop@rajendrastudioandgifts.in</strong>
+            <strong class="autofill-val" id="autoCredEmail">rajendrastudioframing@gmail.com</strong>
           </div>
           <div class="autofill-cred-row">
             <span class="autofill-icon">🔑</span>
@@ -108,8 +108,8 @@
               type="email" 
               id="adminEmail" 
               class="login-input" 
-              value="shop@rajendrastudioandgifts.in"
-              placeholder="e.g. shop@rajendrastudioandgifts.in" 
+              value="rajendrastudioframing@gmail.com"
+              placeholder="e.g. rajendrastudioframing@gmail.com" 
               required 
               autocomplete="username"
             />
@@ -150,7 +150,7 @@
             <span id="directLoginBtnText">⚡ Instant Sign In</span>
             <div class="admin-spinner" id="directLoginSpinner" style="display: none;"></div>
           </button>
-          <button type="submit" class="btn-admin-outline" id="sendOtpBtn" style="width: 100%; border: 1px solid rgba(201, 154, 61, 0.4); color: #E5B558; font-weight: 600; padding: 11px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <button type="submit" class="btn-admin-outline" id="sendOtpBtn" >
             <span id="sendOtpBtnText">📩 Sign In via Email OTP</span>
             <div class="admin-spinner" id="sendOtpSpinner" style="display: none;"></div>
           </button>
@@ -205,13 +205,13 @@
       <!-- Back to Main Website -->
       <div style="text-align: center; margin-top: 24px;">
         <a href="/" style="font-size: 0.8rem; color: #9CA3AF; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-          <span>← Back to Rajesh Framing Homepage</span>
+          <span>← Back to Rajendra Studio & Framing Website</span>
         </a>
       </div>
 
     </div>
   </div>
 
-  <script src="js/admin-login.js"></script>
+  <script src="js/admin-login.js?v=luxury_light_v7"></script>
 </body>
 </html>

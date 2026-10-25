@@ -1,5 +1,5 @@
 {
-  "adminEmail": "shop@rajendrastudioandgifts.in",
+  "adminEmail": "rajendrastudioframing@gmail.com",
   "secondaryAdminEmail": "order@rajendrastudioandgifts.in",
   "adminPassword": "Admin@Rajesh2026",
   "adminName": "Rajendra Studio Admin",
@@ -9,8 +9,8 @@
     "host": "smtp-relay.brevo.com",
     "port": 587,
     "secure": false,
-    "user": "shop@rajendrastudioandgifts.in",
+    "user": "rajendrastudioframing@gmail.com",
     "pass": "",
-    "fromEmail": "Rajendra Studio & Gifts <shop@rajendrastudioandgifts.in>"
+    "fromEmail": "Rajendra Studio & Framing <rajendrastudioframing@gmail.com>"
   }
 }
