@@ -3204,6 +3204,14 @@ function initProductModals() {
       const presetSelect = document.getElementById('newProductImagePreset');
       if (presetSelect) presetSelect.value = 'assets/images/glass_frame.jpg';
     }
+    const sizeSel = document.getElementById('newProductSizeSelect');
+    if (sizeSel) sizeSel.value = '8" × 10"';
+    const colorSel = document.getElementById('newProductColorSelect');
+    if (colorSel) colorSel.value = 'Warm Gold';
+    const varSel = document.getElementById('newProductVariantSelect');
+    if (varSel) varSel.value = 'Standard Finish';
+    const priceInput = document.getElementById('newProductPrice');
+    if (priceInput) priceInput.value = '';
     const targetModal = document.getElementById('addProductModal');
     if (targetModal) targetModal.classList.add('open');
   };
@@ -3293,33 +3301,22 @@ function initProductModals() {
         return;
       }
 
-      // Sizes: construct structured sizes array with name and calculated variant prices
-      const activeSizePills = Array.from(document.querySelectorAll('#adminSizePills .admin-choice-pill.active')).map(p => p.getAttribute('data-size')).filter(Boolean);
-      const customSizesVal = document.getElementById('newProductCustomSizes') ? document.getElementById('newProductCustomSizes').value.trim() : '';
-      if (customSizesVal) {
-        customSizesVal.split(',').map(s => s.trim()).filter(Boolean).forEach(s => {
-          if (!activeSizePills.includes(s)) activeSizePills.push(s);
-        });
-      }
-      const resolvedSizes = (activeSizePills.length > 0 ? activeSizePills : ['8" × 10"', '10" × 12"', '12" × 18"']).map((sizeName, idx) => ({
-        name: sizeName,
-        price: idx === 0 ? priceNum : Math.round(priceNum * (1 + (idx * 0.25)))
-      }));
+      // 4 Options in 1 Row: 1 Size, 1 Color, 1 Variant, 1 Price
+      const sizeSelect = document.getElementById('newProductSizeSelect');
+      const selectedSize = (sizeSelect && sizeSelect.value) ? sizeSelect.value : '8" × 10"';
 
-      // Colors
-      const activeColorChips = Array.from(document.querySelectorAll('#adminColorSwatches .admin-color-chip.active')).map(c => ({
-        name: c.getAttribute('data-name'),
-        color: c.getAttribute('data-color')
-      })).filter(c => c.name);
+      const colorSelect = document.getElementById('newProductColorSelect');
+      const selectedColorOpt = colorSelect ? colorSelect.selectedOptions[0] : null;
+      const selectedColorName = selectedColorOpt ? selectedColorOpt.value : 'Warm Gold';
+      const selectedColorHex = selectedColorOpt ? (selectedColorOpt.getAttribute('data-color') || '#C99A3D') : '#C99A3D';
 
-      // Variants
-      const activeVariantPills = Array.from(document.querySelectorAll('#adminVariantPills .admin-choice-pill.active')).map(v => v.getAttribute('data-variant')).filter(Boolean);
-      const customVariantsVal = document.getElementById('newProductCustomVariants') ? document.getElementById('newProductCustomVariants').value.trim() : '';
-      if (customVariantsVal) {
-        customVariantsVal.split(',').map(v => v.trim()).filter(Boolean).forEach(v => {
-          if (!activeVariantPills.includes(v)) activeVariantPills.push(v);
-        });
-      }
+      const variantSelect = document.getElementById('newProductVariantSelect');
+      const selectedVariant = (variantSelect && variantSelect.value) ? variantSelect.value : 'Standard Finish';
+
+      const resolvedSizes = [{ name: selectedSize, price: priceNum }];
+      const resolvedColors = [{ name: selectedColorName, color: selectedColorHex }];
+      const resolvedFinishes = [{ id: 'finish-1', name: selectedColorName, color: selectedColorHex, image: '', priceDelta: 0 }];
+      const resolvedVariants = [ selectedVariant ];
 
       // Image selection: Upload or selected preset or smart category default
       let finalImage = '';
@@ -3335,6 +3332,7 @@ function initProductModals() {
         else if (category === 'office') finalImage = 'assets/images/printed_file.jpg';
         else finalImage = 'assets/images/custom_canvas.jpg';
       }
+      resolvedFinishes[0].image = finalImage;
 
       const submitBtn = document.getElementById('btnSubmitAddProduct') || addForm.querySelector('button[type="submit"]');
       const origBtnContent = submitBtn ? submitBtn.innerHTML : '<span>Add Product &amp; Stock</span>';
@@ -3376,8 +3374,9 @@ function initProductModals() {
             description: desc,
             image: finalImage,
             sizes: resolvedSizes,
-            colors: activeColorChips,
-            variants: activeVariantPills
+            colors: resolvedColors,
+            finishes: resolvedFinishes,
+            variants: resolvedVariants
           })
         });
 
@@ -3589,60 +3588,52 @@ function initProductModals() {
       }
     }
 
-    // Sizes
-    const prodSizes = Array.isArray(prod.sizes) ? prod.sizes.map(s => typeof s === 'object' ? s.name : s) : [];
-    const sizePills = document.querySelectorAll('#editSizePills .admin-choice-pill');
-    const customSizes = [];
-    sizePills.forEach(pill => {
-      const pillSize = pill.getAttribute('data-size');
-      if (prodSizes.some(s => s === pillSize)) {
-        pill.classList.add('active');
-      } else {
-        pill.classList.remove('active');
+    // Populate 4 options in single row: Size, Color, Variant, Price
+    const editSizeSelect = document.getElementById('editProductSizeSelect');
+    if (editSizeSelect) {
+      const firstSize = Array.isArray(prod.sizes) && prod.sizes.length > 0 ? (typeof prod.sizes[0] === 'object' ? prod.sizes[0].name : prod.sizes[0]) : '';
+      if (firstSize) {
+        if (!Array.from(editSizeSelect.options).some(o => o.value === firstSize)) {
+          const opt = new Option(firstSize, firstSize, true, true);
+          editSizeSelect.add(opt);
+        }
+        editSizeSelect.value = firstSize;
       }
-    });
-    prodSizes.forEach(s => {
-      if (!Array.from(sizePills).some(p => p.getAttribute('data-size') === s)) {
-        customSizes.push(s);
-      }
-    });
-    const customSizesEl = document.getElementById('editProductCustomSizes');
-    if (customSizesEl) customSizesEl.value = customSizes.join(', ');
+    }
 
-    // Color swatches
-    const prodFinishes = Array.isArray(prod.finishes) ? prod.finishes : [];
-    const colorChips = document.querySelectorAll('#editColorSwatches .admin-color-chip');
-    colorChips.forEach(chip => {
-      const chipName = chip.getAttribute('data-name');
-      const match = prodFinishes.find(f => (f.name && f.name.toLowerCase().includes(chipName.toLowerCase())) || (f.id && f.id.toLowerCase().includes(chipName.toLowerCase())));
-      if (match) {
-        chip.classList.add('active');
-      } else {
-        chip.classList.remove('active');
+    const editColorSelect = document.getElementById('editProductColorSelect');
+    if (editColorSelect) {
+      const firstColor = (Array.isArray(prod.finishes) && prod.finishes[0] && prod.finishes[0].name) ||
+                         (Array.isArray(prod.colors) && prod.colors[0] && prod.colors[0].name) || '';
+      if (firstColor) {
+        let matchOpt = Array.from(editColorSelect.options).find(o => o.value.toLowerCase() === firstColor.toLowerCase() || firstColor.toLowerCase().includes(o.value.toLowerCase()));
+        if (matchOpt) {
+          editColorSelect.value = matchOpt.value;
+        } else {
+          const opt = new Option(firstColor, firstColor, true, true);
+          editColorSelect.add(opt);
+          editColorSelect.value = firstColor;
+        }
       }
-    });
+    }
 
-    // Variant pills & custom variants
-    const prodVariants = Array.isArray(prod.variants) ? prod.variants : [];
-    const variantPills = document.querySelectorAll('#editVariantPills .admin-choice-pill');
-    const customVariants = [];
-    variantPills.forEach(pill => {
-      const vName = pill.getAttribute('data-variant');
-      const match = prodVariants.some(v => v.toLowerCase() === vName.toLowerCase()) || 
-                    prodFinishes.some(f => f.name && f.name.toLowerCase().includes(vName.toLowerCase()));
-      if (match) {
-        pill.classList.add('active');
-      } else {
-        pill.classList.remove('active');
+    const editVariantSelect = document.getElementById('editProductVariantSelect');
+    if (editVariantSelect) {
+      const firstVariant = Array.isArray(prod.variants) && prod.variants.length > 0 ? prod.variants[0] : '';
+      if (firstVariant) {
+        let matchOpt = Array.from(editVariantSelect.options).find(o => o.value.toLowerCase() === firstVariant.toLowerCase());
+        if (matchOpt) {
+          editVariantSelect.value = matchOpt.value;
+        } else {
+          const opt = new Option(firstVariant, firstVariant, true, true);
+          editVariantSelect.add(opt);
+          editVariantSelect.value = firstVariant;
+        }
       }
-    });
-    prodVariants.forEach(v => {
-      if (!Array.from(variantPills).some(p => p.getAttribute('data-variant').toLowerCase() === v.toLowerCase())) {
-        customVariants.push(v);
-      }
-    });
-    const customVariantsEl = document.getElementById('editProductCustomVariants');
-    if (customVariantsEl) customVariantsEl.value = customVariants.join(', ');
+    }
+
+    const editRowPrice = document.getElementById('editProductRowPrice');
+    if (editRowPrice) editRowPrice.value = prod.price || '';
 
     editModal.classList.add('open');
   };
@@ -3670,37 +3661,6 @@ function initProductModals() {
       const desc = document.getElementById('editProductDesc') ? document.getElementById('editProductDesc').value.trim() : '';
       const fullDesc = document.getElementById('editProductFullDesc') ? document.getElementById('editProductFullDesc').value.trim() : desc;
 
-      // Sizes
-      const activeSizePills = Array.from(document.querySelectorAll('#editSizePills .admin-choice-pill.active')).map(p => p.getAttribute('data-size')).filter(Boolean);
-      const customSizesVal = document.getElementById('editProductCustomSizes') ? document.getElementById('editProductCustomSizes').value.trim() : '';
-      if (customSizesVal) {
-        customSizesVal.split(',').map(s => s.trim()).filter(Boolean).forEach(s => {
-          if (!activeSizePills.includes(s)) activeSizePills.push(s);
-        });
-      }
-      const resolvedSizes = (activeSizePills.length > 0 ? activeSizePills : ['8" × 10"', '10" × 12"', '12" × 18"']).map((s, idx) => ({
-        name: s,
-        price: Math.round(Number(price) * (1 + (idx * 0.25)))
-      }));
-
-      // Colors / Finishes
-      const activeColorChips = Array.from(document.querySelectorAll('#editColorSwatches .admin-color-chip.active')).map((c, idx) => ({
-        id: `finish-${idx + 1}`,
-        name: c.getAttribute('data-name'),
-        color: c.getAttribute('data-color'),
-        image: prod ? prod.image : 'assets/images/custom_canvas.jpg',
-        priceDelta: 0
-      }));
-
-      // Variants
-      const activeVariantPills = Array.from(document.querySelectorAll('#editVariantPills .admin-choice-pill.active')).map(v => v.getAttribute('data-variant')).filter(Boolean);
-      const customVariantsVal = document.getElementById('editProductCustomVariants') ? document.getElementById('editProductCustomVariants').value.trim() : '';
-      if (customVariantsVal) {
-        customVariantsVal.split(',').map(v => v.trim()).filter(Boolean).forEach(v => {
-          if (!activeVariantPills.includes(v)) activeVariantPills.push(v);
-        });
-      }
-
       // Final image resolution
       let finalImage = document.getElementById('editProductCurrentImage').value;
       if (editAdminImageMode === 'upload' && uploadedEditProductImageBase64) {
@@ -3709,6 +3669,24 @@ function initProductModals() {
         const presetEl = document.getElementById('editProductImagePreset');
         if (presetEl && presetEl.value) finalImage = presetEl.value;
       }
+
+      // 4 Options in 1 Row: 1 Size, 1 Color, 1 Variant, 1 Price
+      const editSizeSelect = document.getElementById('editProductSizeSelect');
+      const selectedSize = (editSizeSelect && editSizeSelect.value) ? editSizeSelect.value : '8" × 10"';
+
+      const editColorSelect = document.getElementById('editProductColorSelect');
+      const selectedColorOpt = editColorSelect ? editColorSelect.selectedOptions[0] : null;
+      const selectedColorName = selectedColorOpt ? selectedColorOpt.value : 'Warm Gold';
+      const selectedColorHex = selectedColorOpt ? (selectedColorOpt.getAttribute('data-color') || '#C99A3D') : '#C99A3D';
+
+      const editVariantSelect = document.getElementById('editProductVariantSelect');
+      const selectedVariant = (editVariantSelect && editVariantSelect.value) ? editVariantSelect.value : 'Standard Finish';
+
+      const priceNum = Number(price);
+      const resolvedSizes = [{ name: selectedSize, price: priceNum }];
+      const resolvedColors = [{ name: selectedColorName, color: selectedColorHex }];
+      const resolvedFinishes = [{ id: 'finish-1', name: selectedColorName, color: selectedColorHex, image: finalImage, priceDelta: 0 }];
+      const resolvedVariants = [ selectedVariant ];
 
       const saveBtn = document.getElementById('btnSaveEditProduct');
       const originalBtnHtml = saveBtn ? saveBtn.innerHTML : 'Save Changes';

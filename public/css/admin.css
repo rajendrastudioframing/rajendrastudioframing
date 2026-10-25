@@ -4144,6 +4144,25 @@ body.admin-login-body {
   border-color: #2D3748 !important;
 }
 
+.product-options-row-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+@media (max-width: 680px) {
+  .product-options-row-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 440px) {
+  .product-options-row-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 .product-option-panel {
   animation: fadeInOptionPanel 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
