@@ -3716,15 +3716,16 @@
           <div class="product-options-card" style="margin-bottom: 14px; background: var(--bg-surface, #FBF8F3); border: 1px solid var(--border-subtle, #E6DEC8); border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
             <div style="margin-bottom: 10px;">
               <label class="setting-label" style="margin-bottom: 2px; font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">Product Options &amp; Variants</label>
-              <div style="font-size: 0.72rem; color: var(--text-muted);">Choose an option from the dropdown to configure Size, Color, or Pricing.</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">Choose an option from the dropdown to configure Size, Color, Variants, or Pricing.</div>
             </div>
 
-            <!-- Single Dropdown for Size, Color, and Price -->
+            <!-- Single Dropdown for Size, Color, Variants, and Price -->
             <div class="setting-row" style="margin-bottom: 12px;">
               <label class="setting-label" style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 4px;">Select Option to Configure:</label>
               <select class="setting-select" id="editProductOptionSelect" onchange="switchAdminProductOption('edit', this.value)" style="font-weight: 600; border-color: var(--primary-color, #C99A3D); background-color: var(--bg-card, #FFFFFF); cursor: pointer;">
                 <option value="size" selected>📏 Size Options</option>
                 <option value="color">🎨 Color Options</option>
+                <option value="variant">✨ Variant Options</option>
                 <option value="price">💰 Price &amp; Variant Pricing</option>
               </select>
             </div>
@@ -3802,7 +3803,28 @@
               </div>
             </div>
 
-            <!-- Panel 3: Price Options -->
+            <!-- Panel 3: Variant Options -->
+            <div id="editProductOptionVariantPanel" class="product-option-panel" style="display: none;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Select Standard Variants &amp; Finishes:</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Click to toggle variants</span>
+              </div>
+              <div class="admin-pill-group" id="editVariantPills">
+                <button type="button" class="admin-choice-pill" data-variant="Matte Finish" onclick="toggleAdminPill(this)">Matte Finish</button>
+                <button type="button" class="admin-choice-pill" data-variant="Glossy Finish" onclick="toggleAdminPill(this)">Glossy Finish</button>
+                <button type="button" class="admin-choice-pill" data-variant="Textured Canvas" onclick="toggleAdminPill(this)">Textured Canvas</button>
+                <button type="button" class="admin-choice-pill" data-variant="Floating Frame" onclick="toggleAdminPill(this)">Floating Frame</button>
+                <button type="button" class="admin-choice-pill" data-variant="Metallic Finish" onclick="toggleAdminPill(this)">Metallic Finish</button>
+                <button type="button" class="admin-choice-pill" data-variant="Wooden Border" onclick="toggleAdminPill(this)">Wooden Border</button>
+                <button type="button" class="admin-choice-pill" data-variant="Acrylic Block" onclick="toggleAdminPill(this)">Acrylic Block</button>
+              </div>
+              <div style="margin-top: 10px;">
+                <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">Custom Variant (Optional):</span>
+                <input type="text" class="setting-input" id="editProductCustomVariants" style="font-size: 0.8rem;" placeholder="Custom variant styles (comma separated, e.g. Beveled Edge, Acrylic Stand-off)" />
+              </div>
+            </div>
+
+            <!-- Panel 4: Price Options -->
             <div id="editProductOptionPricePanel" class="product-option-panel" style="display: none;">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
                 <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Price &amp; Variant Pricing:</span>
@@ -3953,15 +3975,16 @@
           <div class="product-options-card" style="margin-bottom: 14px; background: var(--bg-surface, #FBF8F3); border: 1px solid var(--border-subtle, #E6DEC8); border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
             <div style="margin-bottom: 10px;">
               <label class="setting-label" style="margin-bottom: 2px; font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">Product Options &amp; Variants</label>
-              <div style="font-size: 0.72rem; color: var(--text-muted);">Choose an option from the dropdown to configure Size, Color, or Pricing.</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">Choose an option from the dropdown to configure Size, Color, Variants, or Pricing.</div>
             </div>
 
-            <!-- Single Dropdown for Size, Color, and Price -->
+            <!-- Single Dropdown for Size, Color, Variants, and Price -->
             <div class="setting-row" style="margin-bottom: 12px;">
               <label class="setting-label" style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 4px;">Select Option to Configure:</label>
               <select class="setting-select" id="newProductOptionSelect" onchange="switchAdminProductOption('new', this.value)" style="font-weight: 600; border-color: var(--primary-color, #C99A3D); background-color: var(--bg-card, #FFFFFF); cursor: pointer;">
                 <option value="size" selected>📏 Size Options</option>
                 <option value="color">🎨 Color Options</option>
+                <option value="variant">✨ Variant Options</option>
                 <option value="price">💰 Price &amp; Variant Pricing</option>
               </select>
             </div>
@@ -4039,7 +4062,28 @@
               </div>
             </div>
 
-            <!-- Panel 3: Price Options -->
+            <!-- Panel 3: Variant Options -->
+            <div id="newProductOptionVariantPanel" class="product-option-panel" style="display: none;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Select Standard Variants &amp; Finishes:</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">Click to toggle variants</span>
+              </div>
+              <div class="admin-pill-group" id="adminVariantPills">
+                <button type="button" class="admin-choice-pill active" data-variant="Matte Finish" onclick="toggleAdminPill(this)">Matte Finish</button>
+                <button type="button" class="admin-choice-pill active" data-variant="Glossy Finish" onclick="toggleAdminPill(this)">Glossy Finish</button>
+                <button type="button" class="admin-choice-pill" data-variant="Textured Canvas" onclick="toggleAdminPill(this)">Textured Canvas</button>
+                <button type="button" class="admin-choice-pill" data-variant="Floating Frame" onclick="toggleAdminPill(this)">Floating Frame</button>
+                <button type="button" class="admin-choice-pill" data-variant="Metallic Finish" onclick="toggleAdminPill(this)">Metallic Finish</button>
+                <button type="button" class="admin-choice-pill" data-variant="Wooden Border" onclick="toggleAdminPill(this)">Wooden Border</button>
+                <button type="button" class="admin-choice-pill" data-variant="Acrylic Block" onclick="toggleAdminPill(this)">Acrylic Block</button>
+              </div>
+              <div style="margin-top: 10px;">
+                <span style="font-size: 0.73rem; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px;">Custom Variant (Optional):</span>
+                <input type="text" class="setting-input" id="newProductCustomVariants" style="font-size: 0.8rem;" placeholder="Custom variant styles (comma separated, e.g. Beveled Edge, Acrylic Stand-off)" />
+              </div>
+            </div>
+
+            <!-- Panel 4: Price Options -->
             <div id="newProductOptionPricePanel" class="product-option-panel" style="display: none;">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
                 <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">Price &amp; Variant Pricing:</span>

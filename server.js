@@ -3172,6 +3172,14 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
     }
   }
 
+  if (updates.variants !== undefined) {
+    if (Array.isArray(updates.variants)) {
+      target.variants = updates.variants;
+    } else if (typeof updates.variants === 'string') {
+      target.variants = updates.variants.split(',').map(v => v.trim()).filter(Boolean);
+    }
+  }
+
   target.updatedAt = new Date().toISOString();
 
   await db.saveProduct(target);

@@ -3163,15 +3163,17 @@ function initProductModals() {
     if (nameInput) nameInput.value = '';
   };
 
-  // Product Option Switcher & Price Mirroring (Dropdown for Size, Color, Price)
+  // Product Option Switcher & Price Mirroring (Dropdown for Size, Color, Variants, Price)
   window.switchAdminProductOption = (modalType, optionVal) => {
     const prefix = modalType === 'new' ? 'newProductOption' : 'editProductOption';
     const sizePanel = document.getElementById(prefix + 'SizePanel');
     const colorPanel = document.getElementById(prefix + 'ColorPanel');
+    const variantPanel = document.getElementById(prefix + 'VariantPanel');
     const pricePanel = document.getElementById(prefix + 'PricePanel');
 
     if (sizePanel) sizePanel.style.display = optionVal === 'size' ? 'block' : 'none';
     if (colorPanel) colorPanel.style.display = optionVal === 'color' ? 'block' : 'none';
+    if (variantPanel) variantPanel.style.display = optionVal === 'variant' ? 'block' : 'none';
     if (pricePanel) pricePanel.style.display = optionVal === 'price' ? 'block' : 'none';
   };
 
@@ -3620,17 +3622,27 @@ function initProductModals() {
       }
     });
 
-    // Variant pills
+    // Variant pills & custom variants
+    const prodVariants = Array.isArray(prod.variants) ? prod.variants : [];
     const variantPills = document.querySelectorAll('#editVariantPills .admin-choice-pill');
+    const customVariants = [];
     variantPills.forEach(pill => {
       const vName = pill.getAttribute('data-variant');
-      const match = prodFinishes.some(f => f.name && f.name.toLowerCase().includes(vName.toLowerCase()));
+      const match = prodVariants.some(v => v.toLowerCase() === vName.toLowerCase()) || 
+                    prodFinishes.some(f => f.name && f.name.toLowerCase().includes(vName.toLowerCase()));
       if (match) {
         pill.classList.add('active');
       } else {
         pill.classList.remove('active');
       }
     });
+    prodVariants.forEach(v => {
+      if (!Array.from(variantPills).some(p => p.getAttribute('data-variant').toLowerCase() === v.toLowerCase())) {
+        customVariants.push(v);
+      }
+    });
+    const customVariantsEl = document.getElementById('editProductCustomVariants');
+    if (customVariantsEl) customVariantsEl.value = customVariants.join(', ');
 
     editModal.classList.add('open');
   };
@@ -3680,6 +3692,15 @@ function initProductModals() {
         priceDelta: 0
       }));
 
+      // Variants
+      const activeVariantPills = Array.from(document.querySelectorAll('#editVariantPills .admin-choice-pill.active')).map(v => v.getAttribute('data-variant')).filter(Boolean);
+      const customVariantsVal = document.getElementById('editProductCustomVariants') ? document.getElementById('editProductCustomVariants').value.trim() : '';
+      if (customVariantsVal) {
+        customVariantsVal.split(',').map(v => v.trim()).filter(Boolean).forEach(v => {
+          if (!activeVariantPills.includes(v)) activeVariantPills.push(v);
+        });
+      }
+
       // Final image resolution
       let finalImage = document.getElementById('editProductCurrentImage').value;
       if (editAdminImageMode === 'upload' && uploadedEditProductImageBase64) {
@@ -3718,7 +3739,8 @@ function initProductModals() {
             description: fullDesc,
             image: finalImage,
             sizes: resolvedSizes,
-            finishes: activeColorChips.length > 0 ? activeColorChips : (prod && prod.finishes ? prod.finishes : [])
+            finishes: activeColorChips.length > 0 ? activeColorChips : (prod && prod.finishes ? prod.finishes : []),
+            variants: activeVariantPills
           })
         });
 
