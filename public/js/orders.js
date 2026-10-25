@@ -267,9 +267,6 @@ function createOrderCardHtml(order) {
   const paymentMethod = order.paymentMethod || 'UPI';
   const customer = order.customer || {};
 
-  // Timeline progress & stage calculation
-  const timeline = getTimelineStage(rawStatus);
-
   // Craft WhatsApp Pre-filled message
   const waMsg = encodeURIComponent(`Hello Dahej Support Studio! I have a question regarding my Order #${orderId} (${rawStatus}). Please share an update.`);
 
@@ -290,47 +287,6 @@ function createOrderCardHtml(order) {
         <div class="order-status-badge status-${statusSlug}">
           <span class="order-status-dot"></span>
           <span>${escapeHtml(rawStatus)}</span>
-        </div>
-      </div>
-
-      <!-- Craftsmanship Timeline Bar -->
-      <div class="order-timeline-wrap">
-        <div class="order-timeline-title">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          <span>Craftsmanship &amp; Fulfillment Timeline</span>
-        </div>
-        <div class="order-timeline-steps">
-          <div class="order-timeline-progress" style="width: ${timeline.progressPercent}%;"></div>
-
-          <!-- Step 1: Placed -->
-          <div class="order-timeline-step ${timeline.step1Class}">
-            <div class="order-step-node">✓</div>
-            <div class="order-step-label">Order Placed</div>
-          </div>
-
-          <!-- Step 2: In Production -->
-          <div class="order-timeline-step ${timeline.step2Class}">
-            <div class="order-step-node">${timeline.step2Class === 'completed' ? '✓' : '2'}</div>
-            <div class="order-step-label">In Production</div>
-          </div>
-
-          <!-- Step 3: Studio Framing -->
-          <div class="order-timeline-step ${timeline.step3Class}">
-            <div class="order-step-node">${timeline.step3Class === 'completed' ? '✓' : '3'}</div>
-            <div class="order-step-label">Studio Crafting</div>
-          </div>
-
-          <!-- Step 4: Dispatched -->
-          <div class="order-timeline-step ${timeline.step4Class}">
-            <div class="order-step-node">${timeline.step4Class === 'completed' ? '✓' : '4'}</div>
-            <div class="order-step-label">Dispatched</div>
-          </div>
-
-          <!-- Step 5: Delivered -->
-          <div class="order-timeline-step ${timeline.step5Class}">
-            <div class="order-step-node">${timeline.step5Class === 'completed' ? '✓' : '5'}</div>
-            <div class="order-step-label">Delivered</div>
-          </div>
         </div>
       </div>
 
