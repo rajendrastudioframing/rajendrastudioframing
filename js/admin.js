@@ -2786,10 +2786,9 @@ function renderAdminProducts(products) {
     gifts: { label: 'Photo Gifts', color: '#9d174d', bg: 'rgba(236, 72, 153, 0.15)' }
   };
 
-  tbody.innerHTML = products.map(p => {
+    tbody.innerHTML = products.map(p => {
     const isAvailable = p.inStock !== false && p.stockStatus !== 'Out of Stock' && p.status !== 'Out of Stock';
     const statusBtnClass = isAvailable ? 'in-stock' : 'out-stock';
-    const statusText = isAvailable ? '🟢 In Stock' : '🔴 Out of Stock';
     const currentPrice = Number(p.price) || 0;
     const origPrice = p.originalPrice ? Number(p.originalPrice) : null;
     const discountPercent = origPrice && origPrice > currentPrice ? Math.round(((origPrice - currentPrice) / origPrice) * 100) : 0;
@@ -2801,8 +2800,8 @@ function renderAdminProducts(products) {
     const revCount = p.reviewsCount || p.reviews || 42;
 
     const badgeHtml = p.badge 
-      ? `<span class="badge" style="background: rgba(201, 154, 61, 0.15); color: #b8860b; border: 1px solid rgba(201, 154, 61, 0.3); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; font-weight: 600;">${escapeHtml(p.badge)}</span>`
-      : '<span style="color: var(--text-muted); font-size: 0.75rem;">—</span>';
+      ? `<span class="badge prod-badge-pill" style="background: rgba(201, 154, 61, 0.15); color: #b8860b; border: 1px solid rgba(201, 154, 61, 0.3); font-size: 0.70rem; padding: 2px 7px; border-radius: 4px; font-weight: 600;">${escapeHtml(p.badge)}</span>`
+      : '<span class="prod-badge-empty" style="color: var(--text-muted); font-size: 0.75rem;">—</span>';
 
     const pName = p.name || p.title || 'Untitled Product';
     const pId = p.id || 'rf-prod';
@@ -2810,53 +2809,67 @@ function renderAdminProducts(products) {
     const leadTime = p.leadTime || '24-48 Hours';
 
     return `
-      <tr data-product-id="${escapeHtml(pId)}" data-category="${escapeHtml(catKey)}">
-        <td style="text-align: center; vertical-align: middle;">
+      <tr data-product-id="${escapeHtml(pId)}" data-category="${escapeHtml(catKey)}" class="admin-product-row">
+        <!-- 1. Thumbnail -->
+        <td class="prod-cell-img" style="text-align: center; vertical-align: middle;">
           <a href="product-detail.html?id=${encodeURIComponent(pId)}" target="_blank" title="Preview on Storefront" style="display: inline-block;">
-            <img src="${escapeHtml(pImage)}" alt="${escapeHtml(pName)}" style="width: 46px; height: 46px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" onerror="this.src='assets/images/custom_canvas.jpg'" />
+            <img src="${escapeHtml(pImage)}" alt="${escapeHtml(pName)}" class="prod-row-thumb" onerror="this.src='assets/images/custom_canvas.jpg'" />
           </a>
         </td>
-        <td style="vertical-align: middle;">
-          <div style="font-weight: 600; color: var(--text-main); font-size: 0.88rem; line-height: 1.3;">
+
+        <!-- 2. Product Name, ID & Specs -->
+        <td class="prod-cell-title" style="vertical-align: middle;">
+          <div class="prod-row-name">
             <a href="product-detail.html?id=${encodeURIComponent(pId)}" target="_blank" style="color: inherit; text-decoration: none;" title="Open Product Page">
               ${escapeHtml(pName)}
             </a>
           </div>
-          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 8px;">
-            <code>${escapeHtml(pId)}</code>
-            <span>&bull;</span>
-            <span style="color: var(--text-muted);">${escapeHtml(p.primaryMaterial || p.material || 'Studio Archival')}</span>
+          <div class="prod-row-meta">
+            <code class="prod-sku-code">${escapeHtml(pId)}</code>
+            <span class="prod-meta-dot">&bull;</span>
+            <span class="prod-material-text">${escapeHtml(p.primaryMaterial || p.material || 'Studio Archival')}</span>
           </div>
         </td>
-        <td style="vertical-align: middle;">
-          <span style="font-size: 0.74rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; background: ${catStyle.bg}; color: ${catStyle.color}; display: inline-block;">
+
+        <!-- 3. Category -->
+        <td class="prod-cell-cat" style="vertical-align: middle;">
+          <span class="prod-category-chip" style="font-size: 0.74rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; background: ${catStyle.bg}; color: ${catStyle.color}; display: inline-block;">
             ${escapeHtml(catStyle.label)}
           </span>
+          ${p.badge ? `<span class="badge prod-badge-pill" style="background: rgba(201, 154, 61, 0.15); color: #b8860b; border: 1px solid rgba(201, 154, 61, 0.3); font-size: 0.70rem; padding: 2px 7px; border-radius: 4px; font-weight: 600; margin-left: 4px;">${escapeHtml(p.badge)}</span>` : ''}
         </td>
-        <td style="vertical-align: middle;">
-          <div style="font-weight: 700; color: var(--text-main); font-size: 0.92rem;">
+
+        <!-- 4. Price & MRP -->
+        <td class="prod-cell-price" style="vertical-align: middle;">
+          <div class="prod-row-price" style="font-weight: 700; color: var(--text-main); font-size: 0.92rem;">
             ₹${currentPrice.toLocaleString('en-IN')}
           </div>
           ${origPrice && origPrice > currentPrice ? `
-            <div style="font-size: 0.72rem; color: var(--text-muted);">
+            <div class="prod-row-mrp" style="font-size: 0.72rem; color: var(--text-muted);">
               <span style="text-decoration: line-through;">₹${origPrice.toLocaleString('en-IN')}</span>
-              <span style="color: #16a34a; font-weight: 600; margin-left: 4px;">${discountPercent}% OFF</span>
+              <span class="prod-discount-pill" style="color: #16a34a; font-weight: 600; margin-left: 4px;">${discountPercent}% OFF</span>
             </div>
           ` : ''}
         </td>
-        <td style="vertical-align: middle;">
-          <div style="display: flex; align-items: center; gap: 4px; font-size: 0.82rem; font-weight: 600; color: #b45309;">
+
+        <!-- 5. Rating -->
+        <td class="prod-cell-rating" style="vertical-align: middle;">
+          <div class="prod-rating-box" style="display: flex; align-items: center; gap: 4px; font-size: 0.82rem; font-weight: 600; color: #b45309;">
             <span>★</span>
             <span>${ratingVal}</span>
           </div>
-          <div style="font-size: 0.7rem; color: var(--text-muted);">
+          <div class="prod-reviews-count" style="font-size: 0.7rem; color: var(--text-muted);">
             (${revCount} reviews)
           </div>
         </td>
-        <td style="vertical-align: middle;">
+
+        <!-- 6. Badge -->
+        <td class="prod-cell-badge" style="vertical-align: middle;">
           ${badgeHtml}
         </td>
-        <td style="text-align: center; vertical-align: middle;">
+
+        <!-- 7. Stock Status -->
+        <td class="prod-cell-stock" style="text-align: center; vertical-align: middle;">
           <button type="button" 
                   class="stock-status-pill btn-stock-toggle ${statusBtnClass}" 
                   onclick="toggleProductStock('${escapeHtml(pId)}')" 
@@ -2875,10 +2888,14 @@ function renderAdminProducts(products) {
             </span>
           </button>
         </td>
-        <td style="vertical-align: middle; font-size: 0.78rem; color: var(--text-muted);">
+
+        <!-- 8. Lead Time -->
+        <td class="prod-cell-lead" style="vertical-align: middle; font-size: 0.78rem; color: var(--text-muted);">
           ${escapeHtml(leadTime)}
         </td>
-        <td style="text-align: center; vertical-align: middle;">
+
+        <!-- 9. Actions -->
+        <td class="prod-cell-actions" style="text-align: center; vertical-align: middle;">
           <div class="table-action-icons" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
             <button type="button" class="btn-table-icon edit" onclick="openEditProductModal('${escapeHtml(pId)}')" title="Edit Product Details &amp; Pricing">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

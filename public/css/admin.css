@@ -4081,3 +4081,303 @@ body.admin-login-body {
     transform: translateY(0);
   }
 }
+
+@media (max-width: 768px) {
+
+    /* ==========================================================================
+       PRODUCTS CATALOG MOBILE POLISH (CLEAN MOBILE CARDS TRANSFORMATION)
+       ========================================================================== */
+    /* Interactive Category Tabs Bar on Mobile (Horizontal Smooth Scroll) */
+    .admin-category-tabs-bar {
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      gap: 6px !important;
+      padding-bottom: 6px !important;
+      margin: 12px 0 10px !important;
+    }
+
+    .admin-category-tabs-bar::-webkit-scrollbar {
+      height: 3px;
+    }
+
+    .admin-category-tabs-bar::-webkit-scrollbar-thumb {
+      background: rgba(201, 154, 61, 0.3);
+      border-radius: 3px;
+    }
+
+    .admin-tab-btn {
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
+      padding: 6px 12px !important;
+      font-size: 0.76rem !important;
+      border-radius: 9999px !important;
+    }
+
+    /* Compact Category Info Banner */
+    .admin-category-info-card {
+      padding: 12px 14px !important;
+      border-radius: 12px !important;
+      margin-bottom: 12px !important;
+    }
+
+    .admin-category-info-card > div:first-child {
+      gap: 10px !important;
+    }
+
+    .category-icon-box {
+      width: 36px !important;
+      height: 36px !important;
+      font-size: 1.15rem !important;
+      flex-shrink: 0 !important;
+    }
+
+    #categoryInfoTitle {
+      font-size: 0.95rem !important;
+    }
+
+    #categoryInfoDesc {
+      font-size: 0.74rem !important;
+      line-height: 1.3 !important;
+      display: -webkit-box !important;
+      -webkit-line-clamp: 2 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+    }
+
+    .admin-category-info-card > div:last-child {
+      display: none !important;
+    }
+
+    /* Search & Filter Controls Full Width on Mobile */
+    #productSearchInput {
+      width: 100% !important;
+      height: 38px !important;
+      font-size: 0.82rem !important;
+    }
+
+    #productStockFilterSelect,
+    #productSortSelect {
+      flex: 1 1 calc(50% - 6px) !important;
+      min-width: 0 !important;
+      height: 36px !important;
+      font-size: 0.76rem !important;
+    }
+
+    #productFilteredCountLabel {
+      width: 100% !important;
+      font-size: 0.74rem !important;
+      margin-left: 0 !important;
+      margin-top: 4px !important;
+      display: block !important;
+      color: var(--text-muted) !important;
+    }
+
+    /* Products Table Container on Mobile */
+    .graphura-card-table-wrap:has(.products-table) {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      overflow: visible !important;
+      padding: 0 !important;
+    }
+
+    /* Transform Products Table into Clean Mobile Cards */
+    .products-table,
+    .products-table tbody,
+    .products-table tr.admin-product-row,
+    .products-table td {
+      display: block !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .products-table thead {
+      display: none !important;
+    }
+
+    .products-table tbody {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 12px !important;
+    }
+
+    .products-table tr.admin-product-row {
+      background: var(--bg-card) !important;
+      border: 1px solid var(--border-subtle) !important;
+      border-radius: 14px !important;
+      padding: 12px 14px !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+      display: grid !important;
+      grid-template-columns: 54px 1fr auto !important;
+      grid-template-areas:
+        "thumb title price"
+        "thumb cat cat"
+        "stock stock actions";
+      gap: 5px 12px !important;
+      align-items: center !important;
+      margin-bottom: 10px !important;
+    }
+
+    /* 1. Thumbnail */
+    .products-table td.prod-cell-img {
+      grid-area: thumb !important;
+      padding: 0 !important;
+      border: none !important;
+      width: 54px !important;
+      height: 54px !important;
+      align-self: start !important;
+    }
+
+    .products-table .prod-row-thumb {
+      width: 54px !important;
+      height: 54px !important;
+      border-radius: 10px !important;
+      object-fit: cover !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+      border: 1px solid var(--border-subtle) !important;
+    }
+
+    /* 2. Title & ID */
+    .products-table td.prod-cell-title {
+      grid-area: title !important;
+      padding: 0 !important;
+      border: none !important;
+      min-width: 0 !important;
+      align-self: start !important;
+    }
+
+    .products-table .prod-row-name {
+      font-size: 0.92rem !important;
+      font-weight: 700 !important;
+      color: var(--text-main) !important;
+      line-height: 1.25 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .products-table .prod-row-meta {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      margin-top: 3px !important;
+    }
+
+    .products-table .prod-sku-code {
+      font-size: 0.68rem !important;
+      background: var(--bg-hover) !important;
+      padding: 1px 6px !important;
+      border-radius: 4px !important;
+      border: 1px solid var(--border-subtle) !important;
+      color: var(--primary) !important;
+      font-weight: 700 !important;
+      white-space: nowrap !important;
+      font-family: inherit !important;
+    }
+
+    .products-table .prod-meta-dot,
+    .products-table .prod-material-text {
+      display: none !important;
+    }
+
+    /* 4. Price & MRP */
+    .products-table td.prod-cell-price {
+      grid-area: price !important;
+      padding: 0 !important;
+      border: none !important;
+      text-align: right !important;
+      justify-self: end !important;
+      align-self: start !important;
+    }
+
+    .products-table .prod-row-price {
+      font-size: 1.15rem !important;
+      font-weight: 800 !important;
+      color: var(--primary) !important;
+      letter-spacing: -0.02em !important;
+      line-height: 1 !important;
+    }
+
+    .products-table .prod-row-mrp {
+      font-size: 0.68rem !important;
+      color: var(--text-muted) !important;
+      margin-top: 2px !important;
+      white-space: nowrap !important;
+    }
+
+    /* 3. Category & Badge */
+    .products-table td.prod-cell-cat {
+      grid-area: cat !important;
+      padding: 0 !important;
+      border: none !important;
+      display: flex !important;
+      align-items: center !important;
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+    }
+
+    .products-table .prod-category-chip {
+      font-size: 0.70rem !important;
+      font-weight: 600 !important;
+      padding: 2px 7px !important;
+      border-radius: 6px !important;
+    }
+
+    /* Desktop Columns Hidden on Mobile Card */
+    .products-table td.prod-cell-badge,
+    .products-table td.prod-cell-lead,
+    .products-table td.prod-cell-rating {
+      display: none !important;
+    }
+
+    /* 7. Stock Status Pill (Bottom Left) */
+    .products-table td.prod-cell-stock {
+      grid-area: stock !important;
+      border-top: 1px dashed var(--border-subtle) !important;
+      padding-top: 8px !important;
+      margin-top: 6px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+    }
+
+    .products-table td.prod-cell-stock .stock-status-pill {
+      padding: 4px 12px !important;
+      font-size: 0.74rem !important;
+      height: 30px !important;
+    }
+
+    /* 9. Actions (Bottom Right) */
+    .products-table td.prod-cell-actions {
+      grid-area: actions !important;
+      border-top: 1px dashed var(--border-subtle) !important;
+      padding-top: 8px !important;
+      margin-top: 6px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-end !important;
+      justify-self: end !important;
+    }
+
+    .products-table .table-action-icons {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+    }
+
+    .products-table .btn-table-icon {
+      width: 32px !important;
+      height: 32px !important;
+      border-radius: 8px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    /* General Horizontal Scroll Safety for Customers and Other Tables */
+    .customers-table {
+      min-width: 680px !important;
+    }
+    }
