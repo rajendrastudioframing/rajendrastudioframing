@@ -996,24 +996,33 @@ function createOrderCardRowHTML(order) {
         <div class="order-action-buttons">
           ${isCancelled ? `
             <span class="order-status-chip cancelled">✕ Cancelled</span>
-            <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="View complete order details">👁️ Details</button>
-          ` : isCompleted ? `
-            <span class="order-status-chip completed">✓ Completed</span>
-            <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="View complete order details">👁️ Details</button>
           ` : isPickupReady ? `
-            <span class="order-status-chip ready">🛍️ Ready for Pick Up ✓</span>
-            <button type="button" class="btn-card-action complete" onclick="markOrderCompletedQuick('${escapeHtml(order.id)}')" title="Customer collected frame — mark as delivered">✓ Mark Delivered</button>
-            <button type="button" class="btn-card-action update" onclick="openEditOrderModal('${escapeHtml(order.id)}')" title="Edit order details">✏️ Edit</button>
-            <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="View details">👁️ Details</button>
+            <button type="button" 
+                    class="btn-card-action pickup-ready active-state" 
+                    style="cursor: default;" 
+                    title="Order is ready for pick up">
+              🛍️ Pick Up Order ✓
+            </button>
           ` : isAccepted ? `
-            <span class="order-status-chip in-production">🔨 In Production</span>
-            <button type="button" class="btn-card-action pickup-ready" onclick="markPickupReadyQuick('${escapeHtml(order.id)}')" title="Mark order ready for collection and notify customer">🛍️ Pick Up Ready</button>
-            <button type="button" class="btn-card-action update" onclick="openEditOrderModal('${escapeHtml(order.id)}')" title="Edit order details">✏️ Edit</button>
-            <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="View details">👁️ Details</button>
+            <button type="button" 
+                    class="btn-card-action pickup-ready" 
+                    onclick="markPickupReadyQuick('${escapeHtml(order.id)}')" 
+                    title="Mark order ready for collection and notify customer">
+              🛍️ Pick Up Order
+            </button>
           ` : `
-            <button type="button" class="btn-card-action accept" onclick="acceptOrderQuick('${escapeHtml(order.id)}')" title="Accept order and move to production">✓ Accept Order</button>
-            <button type="button" class="btn-card-action pickup-ready" onclick="markPickupReadyQuick('${escapeHtml(order.id)}')" title="Mark order ready for collection and notify customer">🛍️ Pick Up Ready</button>
-            <button type="button" class="btn-card-action details" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="View details">👁️ Details</button>
+            <button type="button" 
+                    class="btn-card-action accept" 
+                    onclick="acceptOrderQuick('${escapeHtml(order.id)}')" 
+                    title="Accept order and move to production">
+              ✓ Accept Order
+            </button>
+            <button type="button" 
+                    class="btn-card-action pickup-ready" 
+                    onclick="markPickupReadyQuick('${escapeHtml(order.id)}')" 
+                    title="Mark order ready for collection and notify customer">
+              🛍️ Pick Up Order
+            </button>
           `}
         </div>
       </div>
