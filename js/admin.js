@@ -1415,8 +1415,8 @@ function renderAllLeads(leads) {
     const waText = encodeURIComponent(`Hello ${lead.name}, Dahej Support here regarding your inquiry for ${inquiryType}.`);
 
     return `
-      <tr>
-        <td>
+      <tr class="admin-lead-row">
+        <td class="lead-cell-cust">
           <div class="lead-cust-cell">
             <div class="lead-avatar-circle ${color}">${initials}</div>
             <div class="lead-cust-info">
@@ -1425,20 +1425,22 @@ function renderAllLeads(leads) {
             </div>
           </div>
         </td>
-        <td>
-          <strong style="color: var(--text-main); font-size: 0.85rem;">📞 ${escapeHtml(lead.phone)}</strong>
+        <td class="lead-cell-contact">
+          <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" class="lead-phone-link" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 5px;">
+            <strong style="color: var(--text-main); font-size: 0.85rem; white-space: nowrap;">📞 ${escapeHtml(lead.phone)}</strong>
+          </a>
         </td>
-        <td>
+        <td class="lead-cell-type">
           <span class="status-pill inquiry">${escapeHtml(inquiryType)}</span>
         </td>
-        <td>
+        <td class="lead-cell-specs">
           <strong style="font-size: 0.82rem; color: var(--text-main); display: block;">${escapeHtml(lead.specs || 'Website Inquiry')}</strong>
           <span class="status-pill ${lead.status === 'Completed' ? 'completed' : (lead.status === 'In Progress' ? 'processing' : 'active')}" style="font-size: 0.68rem; padding: 1px 6px; margin-top: 2px;">${escapeHtml(lead.status || 'New')}</span>
         </td>
-        <td>
+        <td class="lead-cell-date">
           ${dateFormatted}
         </td>
-        <td style="text-align: center;">
+        <td class="lead-cell-actions" style="text-align: center;">
           <div class="table-action-icons">
             <button type="button" class="btn-table-icon edit" onclick="viewInquiryDetail('${lead.id}')" title="View Full Specs">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3699,8 +3701,8 @@ function renderCustomersTable(customers) {
     const logins = Number(cust.loginCount) || 1;
 
     return `
-      <tr>
-        <td>
+      <tr class="admin-customer-row">
+        <td class="cust-cell-profile">
           <div class="lead-cust-cell">
             <div class="lead-avatar-circle ${color}" style="position: relative;">
               ${initials}
@@ -3712,28 +3714,28 @@ function renderCustomersTable(customers) {
             </div>
           </div>
         </td>
-        <td>
+        <td class="cust-cell-phone">
           ${cust.phone ? `
-            <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" style="text-decoration: none; color: var(--text-main); font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+            <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" style="text-decoration: none; color: var(--text-main); font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
               <span style="color: #25D366; font-size: 0.95rem;">💬</span> ${escapeHtml(cust.phone)}
             </a>
           ` : `<span style="color: var(--text-muted); font-size: 0.82rem;">Not provided</span>`}
         </td>
-        <td>
+        <td class="cust-cell-regdate">
           ${regDateFormatted}
         </td>
-        <td>
+        <td class="cust-cell-login">
           ${lastLoginFormatted}
         </td>
-        <td style="text-align: center;">
+        <td class="cust-cell-logincount" style="text-align: center;">
           <span class="status-pill neutral" style="font-weight: 700; padding: 2px 8px;">${logins}</span>
         </td>
-        <td style="text-align: center;">
+        <td class="cust-cell-orders" style="text-align: center;">
           <span class="status-pill ${totalOrders > 0 ? 'completed' : 'neutral'}" style="font-weight: 700; padding: 2px 8px;">
             ${totalOrders}
           </span>
         </td>
-        <td>
+        <td class="cust-cell-spent">
           <strong style="color: var(--text-main); font-size: 0.9rem;">₹${totalSpent.toLocaleString('en-IN')}</strong>
         </td>
       </tr>
@@ -3814,28 +3816,30 @@ function renderContactMessages(messages) {
     const waText = encodeURIComponent(`Hello ${msg.name}, Rajesh Framing here responding to your message regarding ${subject}.`);
 
     return `
-      <tr>
-        <td>
+      <tr class="admin-message-row">
+        <td class="msg-cell-cust">
           <strong style="color: var(--text-main); font-size: 0.88rem;">${escapeHtml(msg.name)}</strong>
         </td>
-        <td>
-          <span style="font-size: 0.82rem; color: var(--text-muted);">💬 ${escapeHtml(msg.phone)}</span>
+        <td class="msg-cell-phone">
+          <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" style="text-decoration: none; color: inherit; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;">
+            <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">💬 ${escapeHtml(msg.phone)}</span>
+          </a>
         </td>
-        <td>
+        <td class="msg-cell-email">
           <span style="font-size: 0.82rem; color: var(--text-muted);">${escapeHtml(msg.email || 'No email provided')}</span>
         </td>
-        <td>
+        <td class="msg-cell-subj">
           <strong style="font-size: 0.82rem; color: var(--text-main);">${escapeHtml(subject)}</strong>
         </td>
-        <td>
-          <div style="font-size: 0.8rem; color: var(--text-secondary); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(msg.message)}">
+        <td class="msg-cell-msg">
+          <div class="msg-preview-text" style="font-size: 0.8rem; color: var(--text-secondary); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(msg.message)}">
             ${escapeHtml(msg.message)}
           </div>
         </td>
-        <td>
+        <td class="msg-cell-date">
           <span style="font-size: 0.78rem; color: var(--text-muted);">${dateFormatted}</span>
         </td>
-        <td style="text-align: center;">
+        <td class="msg-cell-actions" style="text-align: center;">
           <div class="table-action-icons">
             <button type="button" class="btn-table-icon edit" onclick="viewMessageDetail('${msg.id}')" title="View Full Message">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4247,30 +4251,30 @@ function renderReviewsTable(reviews) {
     const prodName = prod ? prod.name : (r.productId || 'General Catalog');
 
     return `
-      <tr>
-        <td>
+      <tr class="admin-review-row">
+        <td class="rev-cell-prod">
           <strong style="font-size: 0.84rem; color: var(--text-main); font-weight: 700;">${escapeHtml(prodName)}</strong>
         </td>
-        <td>
+        <td class="rev-cell-cust">
           <div style="font-weight: 700; font-size: 0.84rem; color: var(--text-main);">${escapeHtml(r.author || 'Anonymous')}</div>
           <div style="font-size: 0.74rem; color: var(--text-muted);">📍 ${escapeHtml(r.city || 'Dahej / Bharuch')}</div>
         </td>
-        <td>
+        <td class="rev-cell-rating">
           <div style="color: #F59E0B; font-size: 0.95rem; letter-spacing: 1px;">${stars}</div>
           <span style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted);">${r.rating}.0 / 5.0</span>
         </td>
-        <td>
+        <td class="rev-cell-headline">
           <strong style="font-size: 0.82rem; color: var(--text-main);">${escapeHtml(r.headline || '')}</strong>
         </td>
-        <td>
-          <div style="font-size: 0.8rem; color: var(--text-secondary); max-width: 320px; line-height: 1.45;">
+        <td class="rev-cell-comment">
+          <div class="rev-comment-text" style="font-size: 0.8rem; color: var(--text-secondary); max-width: 320px; line-height: 1.45;">
             ${escapeHtml(r.comment || '')}
           </div>
         </td>
-        <td>
+        <td class="rev-cell-date">
           <span style="font-size: 0.76rem; color: var(--text-muted);">${escapeHtml(r.date || '')}</span>
         </td>
-        <td style="text-align: center;">
+        <td class="rev-cell-actions" style="text-align: center;">
           <button type="button" class="btn-table-icon delete" onclick="deleteReview('${r.id}')" title="Delete Review">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3 6 5 6 21 6"></polyline>
