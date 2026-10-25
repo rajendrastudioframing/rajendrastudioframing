@@ -2206,37 +2206,407 @@
 
 
 
-/* Mobile Catalog Action Buttons (No Clipping) */
+
+
+/* --- REDESIGNED MOBILE PHONE EXPERIENCE (PRODUCTS & CATEGORIES) --- */
 @media (max-width: 768px) {
-  .card-action-row-primary {
+  /* -------------------------------------------------
+     1. REDESIGNED PRODUCT CARD (CLEAN, BALANCED, LUXURY)
+     ------------------------------------------------- */
+  .catalog-main-content .products-grid,
+  .products-grid {
+    gap: 10px !important;
+  }
+
+  .product-card {
+    border-radius: 12px !important;
+    border: 1px solid #EFEAE1 !important;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04) !important;
+    background: #FFFFFF !important;
+    overflow: hidden !important;
+  }
+
+  .product-image-box,
+  .product-image-wrap {
+    height: 155px !important;
+    min-height: 155px !important;
+    max-height: 155px !important;
+    background: #F8F6F0 !important;
+  }
+
+  .product-capsule,
+  .product-card-body {
+    padding: 8px 8px 10px !important;
     gap: 4px !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
-  .capsule-action-btn {
+
+  /* Category Eyebrow & Rating in a single pristine row */
+  .product-card-meta {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 4px !important;
+    margin-bottom: 1px !important;
+    width: 100% !important;
+  }
+
+  .product-card-category {
+    font-size: 0.60rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+    color: #926C15 !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 58% !important;
+    display: inline-block !important;
+  }
+
+  .product-card-rating {
+    font-size: 0.65rem !important;
+    font-weight: 700 !important;
+    color: #D97706 !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+  }
+
+  .product-card-rating .rating-star {
     font-size: 0.70rem !important;
-    padding: 6px 2px !important;
-    letter-spacing: 0 !important;
+    color: #F59E0B !important;
   }
+
+  .product-card-rating .rating-count {
+    color: #9CA3AF !important;
+    font-weight: 500 !important;
+    font-size: 0.62rem !important;
+  }
+
+  /* Product Title (Clean 2-line clamp, uniform height) */
+  .capsule-title,
+  .product-card-title {
+    font-size: 0.80rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    color: #111827 !important;
+    margin: 1px 0 2px !important;
+    min-height: 2.1em !important;
+    max-height: 2.5em !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-align: left !important;
+  }
+
+  /* Price Row (Single line, aligned, never wraps) */
+  .product-card-price-row,
+  .capsule-price-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+    margin: 2px 0 5px !important;
+    width: 100% !important;
+  }
+
+  .capsule-price,
+  .product-card-price,
+  .product-price-amount {
+    font-size: 0.92rem !important;
+    font-weight: 800 !important;
+    color: #111827 !important;
+    white-space: nowrap !important;
+  }
+
+  .product-card-mrp {
+    font-size: 0.70rem !important;
+    color: #9CA3AF !important;
+    text-decoration: line-through !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+  }
+
+  .product-card-discount {
+    font-size: 0.60rem !important;
+    font-weight: 800 !important;
+    color: #047857 !important;
+    background: #ECFDF5 !important;
+    border: 1px solid #A7F3D0 !important;
+    padding: 1px 4px !important;
+    border-radius: 4px !important;
+    white-space: nowrap !important;
+    margin-left: auto !important;
+  }
+
+  /* Action Buttons (Unified Studio Luxury Palette) */
+  .capsule-bottom-row,
+  .product-card-actions {
+    margin-top: 3px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+
+  .card-action-row-primary {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+
+  .capsule-action-btn,
+  .product-add-cart-btn,
+  .product-cart-btn,
+  .btn-catalog-cart,
+  .btn-catalog-buynow {
+    height: 30px !important;
+    padding: 0 2px !important;
+    border-radius: 7px !important;
+    font-size: 0.71rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .btn-catalog-cart {
+    background: linear-gradient(135deg, #C99A3D 0%, #A87A24 100%) !important;
+    border: 1px solid rgba(201, 154, 61, 0.4) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 5px rgba(168, 122, 36, 0.22) !important;
+  }
+
   .btn-catalog-cart .btn-cart-icon {
     display: none !important;
   }
+
+  .btn-catalog-buynow {
+    background: #111827 !important;
+    border: 1px solid #111827 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  /* WhatsApp Pill - Sleek Studio Concierge Style */
+  .btn-catalog-whatsapp {
+    height: 27px !important;
+    background: #F0FDF4 !important;
+    border: 1px solid #BBF7D0 !important;
+    color: #15803D !important;
+    font-size: 0.69rem !important;
+    font-weight: 700 !important;
+    border-radius: 7px !important;
+    padding: 0 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .btn-catalog-whatsapp:active {
+    background: #DCFCE7 !important;
+    border-color: #86EFAC !important;
+    color: #166534 !important;
+  }
+
+  .btn-catalog-whatsapp svg {
+    width: 12px !important;
+    height: 12px !important;
+    fill: #16A34A !important;
+    flex-shrink: 0 !important;
+  }
+
   .catalog-layout-container,
   #catalogProductsGrid {
-    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
   }
-}
 
-@media (max-width: 440px) {
-  .btn-catalog-cart .btn-cart-prefix {
+  /* -------------------------------------------------
+     2. REDESIGNED CATEGORIES SHOWCASE (EDITORIAL CARDS)
+     ------------------------------------------------- */
+  .categories-showcase-section {
+    padding: 24px 0 calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .categories-showcase-header {
+    margin-bottom: 20px !important;
+    padding: 0 12px !important;
+  }
+
+  .categories-showcase-header h2 {
+    font-size: 1.45rem !important;
+    margin-bottom: 6px !important;
+  }
+
+  .categories-showcase-header p {
+    font-size: 0.84rem !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Beautiful 1-Column Editorial Stack - All 5 Cards Identical & Pristine */
+  .categories-main-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 0 2px !important;
+  }
+
+  .luxury-category-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    background: #FFFFFF !important;
+    border: 1px solid #EFEAE1 !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.22s ease !important;
+    max-width: none !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    min-height: 110px !important;
+  }
+
+  .luxury-category-card:active {
+    transform: scale(0.985) !important;
+    border-color: rgba(201, 154, 61, 0.5) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  /* Left Media Thumbnail */
+  .luxury-category-card .category-card-media {
+    width: 110px !important;
+    min-width: 110px !important;
+    max-width: 110px !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: #F3F4F6 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .luxury-category-card .category-card-media img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  .category-card-badge {
+    position: absolute !important;
+    top: 6px !important;
+    left: 6px !important;
+    font-size: 0.55rem !important;
+    padding: 2px 6px !important;
+    border-radius: 6px !important;
+    background: rgba(17, 17, 17, 0.85) !important;
+    color: #C99A3D !important;
+    border: 1px solid rgba(201, 154, 61, 0.4) !important;
+  }
+
+  .category-card-count {
     display: none !important;
   }
-  .btn-catalog-cart .btn-cart-text::before {
-    content: "+ ";
-    font-weight: 800;
+
+  /* Right Content Area */
+  .category-card-content {
+    flex: 1 !important;
+    padding: 10px 12px 10px 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    min-width: 0 !important;
   }
-  .btn-catalog-whatsapp .btn-whatsapp-text {
-    font-size: 0.74rem !important;
+
+  .category-card-eyebrow {
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    color: #C99A3D !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-bottom: 1px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
+
+  .category-card-title {
+    font-size: 0.92rem !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin: 0 0 3px !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .category-card-desc {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    font-size: 0.73rem !important;
+    color: #6B7280 !important;
+    line-height: 1.35 !important;
+    margin: 0 0 6px !important;
+    min-height: auto !important;
+  }
+
+  .category-card-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-top: 5px !important;
+    border-top: 1px solid #F3F4F6 !important;
+    margin-top: auto !important;
+  }
+
+  .category-card-link-text {
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    color: #C99A3D !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+
+  .category-card-arrow {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 50% !important;
+    background: #FAF8F5 !important;
+    border: 1px solid #EFEAE1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #C99A3D !important;
+  }
+
+  .category-card-arrow svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  /* Reset 5th card so it matches exactly */
   .luxury-category-card:nth-child(5) {
-    margin-bottom: 24px !important;
+    grid-column: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    width: 100% !important;
   }
 }
