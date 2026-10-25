@@ -8,30 +8,249 @@
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="apple-touch-icon" href="assets/images/favicon.png" />
   <!-- Security Shield & Immediate Auth Guard: Completely shields DOM until active admin session is verified -->
-  <style id="rf-auth-shield">html { display: none !important; }
-    /* Permanent Fixed Sidebar: Never scroll when page scrolls */
-    @media (min-width: 769px) {
-      .admin-sidebar,
-      #adminSidebar {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        bottom: 0 !important;
-        height: 100vh !important;
-        width: 250px !important;
-        z-index: 100 !important;
-        overflow-y: auto !important;
-      }
-      .admin-main {
-        margin-left: 250px !important;
-        width: calc(100% - 250px) !important;
-      }
-    }
-  
+    <style id="rf-auth-shield">html { display: none !important; }</style>
+  <style id="rf-mobile-polish">
   /* ==========================================================================
-     ATTRACTIVE COMPACT 2-COLUMN METRIC CARDS ON MOBILE (PHONE POLISH)
+     STUNNING NATIVE-APP MOBILE RESPONSIVE POLISH (PHONE VIEW REDESIGN)
      ========================================================================== */
   @media (max-width: 768px) {
+    /* 1. Sleek Sticky Glassmorphic Topbar */
+    .admin-topbar {
+      padding: 8px 12px !important;
+      height: auto !important;
+      min-height: 54px !important;
+      background: var(--bg-card) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+      border-bottom: 1px solid var(--border-subtle) !important;
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 100 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    .topbar-left {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      min-width: 0 !important;
+      flex: 1 !important;
+    }
+
+    .sidebar-toggle-btn {
+      width: 36px !important;
+      height: 36px !important;
+      min-width: 36px !important;
+      border-radius: 10px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: var(--bg-hover) !important;
+      border: 1px solid var(--border-subtle) !important;
+      color: var(--text-main) !important;
+      flex-shrink: 0 !important;
+    }
+
+    .topbar-title {
+      font-size: 1.15rem !important;
+      font-weight: 800 !important;
+      letter-spacing: -0.3px !important;
+      line-height: 1.2 !important;
+      margin: 0 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      color: var(--text-main) !important;
+    }
+
+    .topbar-breadcrumb {
+      display: none !important;
+    }
+
+    .topbar-right {
+      display: flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      flex-shrink: 0 !important;
+    }
+
+    /* Standardized Compact Circular Buttons in Header */
+    .btn-theme-toggle {
+      width: 34px !important;
+      height: 34px !important;
+      min-width: 34px !important;
+      padding: 0 !important;
+      border-radius: 50% !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border: 1px solid var(--border-subtle) !important;
+      background: var(--bg-hover) !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+      cursor: pointer !important;
+    }
+
+    .btn-theme-toggle span:not(#themeToggleIcon) {
+      display: none !important;
+    }
+
+    .btn-theme-toggle #themeToggleIcon {
+      font-size: 0.95rem !important;
+      margin: 0 !important;
+      line-height: 1 !important;
+    }
+
+    .server-status-chip {
+      padding: 0 !important;
+      width: 32px !important;
+      height: 32px !important;
+      min-width: 32px !important;
+      border-radius: 50% !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: rgba(16, 185, 129, 0.12) !important;
+      border: 1px solid rgba(16, 185, 129, 0.3) !important;
+      cursor: default !important;
+    }
+
+    .server-status-chip span:last-child {
+      display: none !important;
+    }
+
+    .server-status-chip .status-pulse-dot {
+      margin: 0 !important;
+      width: 7px !important;
+      height: 7px !important;
+    }
+
+    .btn-topbar-icon {
+      width: 34px !important;
+      height: 34px !important;
+      min-width: 34px !important;
+      border-radius: 50% !important;
+      padding: 0 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border: 1px solid var(--border-subtle) !important;
+      background: var(--bg-hover) !important;
+      color: var(--text-main) !important;
+      position: relative !important;
+    }
+
+    .btn-view-site {
+      width: 34px !important;
+      height: 34px !important;
+      min-width: 34px !important;
+      border-radius: 50% !important;
+      padding: 0 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border: 1px solid var(--border-subtle) !important;
+      background: var(--bg-hover) !important;
+      color: var(--text-main) !important;
+    }
+
+    .btn-view-site span {
+      display: none !important;
+    }
+
+    .header-profile-avatar {
+      width: 32px !important;
+      height: 32px !important;
+      min-width: 32px !important;
+      font-size: 0.74rem !important;
+      font-weight: 700 !important;
+      border-radius: 50% !important;
+      margin-left: 2px !important;
+      background: linear-gradient(135deg, #c99a3d 0%, #aa7a22 100%) !important;
+      color: #fff !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.6) !important;
+      box-shadow: 0 2px 6px rgba(201, 154, 61, 0.3) !important;
+    }
+
+    /* 2. Container & Subheader Redesign */
+    .admin-content {
+      padding: 12px 10px 30px !important;
+    }
+
+    .admin-container {
+      max-width: 100% !important;
+    }
+
+    .page-subheader {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 10px !important;
+      margin-bottom: 14px !important;
+      padding: 0 !important;
+    }
+
+    .subheader-text {
+      font-size: 0.78rem !important;
+      line-height: 1.35 !important;
+      color: var(--text-muted) !important;
+    }
+
+    .subheader-actions {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 6px !important;
+      width: 100% !important;
+    }
+
+    /* Hero CTA Button: + New Order (Spans full width on top) */
+    .subheader-actions .btn-sub-action.primary {
+      grid-column: 1 / -1 !important;
+      order: -1 !important;
+      height: 42px !important;
+      font-size: 0.88rem !important;
+      font-weight: 700 !important;
+      border-radius: 12px !important;
+      background: linear-gradient(135deg, #d4a74a 0%, #b38228 100%) !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(201, 154, 61, 0.35) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 8px !important;
+      border: none !important;
+    }
+
+    /* Secondary Compact Action Row: Export Orders, Export All, Filter (Symmetric 3 columns) */
+    .subheader-actions .btn-sub-action:not(.primary) {
+      grid-column: span 1 !important;
+      height: 36px !important;
+      padding: 5px 3px !important;
+      font-size: 0.72rem !important;
+      font-weight: 600 !important;
+      border-radius: 10px !important;
+      background: var(--bg-card) !important;
+      border: 1px solid var(--border-subtle) !important;
+      color: var(--text-main) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 4px !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+      white-space: nowrap !important;
+    }
+
+    .subheader-actions .btn-sub-action:not(.primary) svg {
+      width: 14px !important;
+      height: 14px !important;
+      flex-shrink: 0 !important;
+    }
+
+    /* 3. Balanced 5-Segment Metric Cards */
     .metric-segment-bar,
     .metric-segment-bar.five-cols {
       display: grid !important;
@@ -41,32 +260,20 @@
       border: none !important;
       border-radius: 0 !important;
       box-shadow: none !important;
-      margin-bottom: 14px !important;
+      margin-bottom: 16px !important;
       overflow: visible !important;
-    }
-
-    .metric-segment-bar.five-cols .metric-segment:last-child {
-      grid-column: span 2 !important;
     }
 
     .metric-segment {
       background: var(--bg-card) !important;
-      border: 1px solid var(--border-subtle) !important;
-      border-radius: 12px !important;
+      border: 1px solid rgba(201, 154, 61, 0.18) !important;
+      border-radius: 14px !important;
       padding: 10px 12px !important;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: space-between !important;
-      min-height: 82px !important;
-      border-right: 1px solid var(--border-subtle) !important;
-      border-bottom: 1px solid var(--border-subtle) !important;
-      transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-    }
-
-    .metric-segment:hover {
-      background: var(--bg-card) !important;
-      box-shadow: 0 2px 6px rgba(201, 154, 61, 0.12) !important;
+      min-height: 84px !important;
     }
 
     .metric-segment-top {
@@ -87,6 +294,7 @@
     .metric-icon-dot {
       width: 6px !important;
       height: 6px !important;
+      border-radius: 50% !important;
       flex-shrink: 0 !important;
     }
 
@@ -94,6 +302,7 @@
       font-size: 0.64rem !important;
       font-weight: 700 !important;
       letter-spacing: 0.4px !important;
+      text-transform: uppercase !important;
       color: var(--text-muted) !important;
       white-space: nowrap !important;
       overflow: hidden !important;
@@ -107,7 +316,7 @@
     .metric-segment-val {
       font-size: 1.35rem !important;
       font-weight: 800 !important;
-      margin: 3px 0 5px !important;
+      margin: 2px 0 5px !important;
       line-height: 1.15 !important;
       letter-spacing: -0.02em !important;
       color: var(--text-main) !important;
@@ -121,49 +330,339 @@
       white-space: nowrap !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
-      max-width: 100% !important;
+      width: fit-content !important;
     }
 
-    .page-subheader {
+    /* 5th Card: Customers (Executive Horizontal Highlight Card with Proper Separation) */
+    .metric-segment-bar.five-cols .metric-segment:last-child {
+      grid-column: 1 / -1 !important;
+      display: grid !important;
+      grid-template-columns: 1fr auto auto !important;
+      align-items: center !important;
+      gap: 12px !important;
+      padding: 12px 14px !important;
+      min-height: auto !important;
+      background: linear-gradient(135deg, rgba(201, 154, 61, 0.08) 0%, rgba(201, 154, 61, 0.02) 100%), var(--bg-card) !important;
+      border: 1px solid rgba(201, 154, 61, 0.3) !important;
+      cursor: pointer !important;
+    }
+
+    .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-top {
+      margin-bottom: 0 !important;
+      display: flex !important;
       flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 8px !important;
-      margin-bottom: 12px !important;
-      padding: 0 !important;
+      align-items: flex-start !important;
+      gap: 2px !important;
     }
 
-    .subheader-text {
-      font-size: 0.78rem !important;
-      line-height: 1.35 !important;
+    .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-label {
+      font-size: 0.72rem !important;
+      color: var(--text-main) !important;
+      font-weight: 800 !important;
+    }
+
+    .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-val {
+      margin: 0 !important;
+      font-size: 1.55rem !important;
+      font-weight: 800 !important;
+      color: var(--primary) !important;
+    }
+
+    .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-tag {
+      display: none !important;
+    }
+
+    .metric-segment-bar.five-cols .metric-segment:last-child::after {
+      content: "View Directory →" !important;
+      font-size: 0.70rem !important;
+      font-weight: 700 !important;
+      color: var(--primary) !important;
+      padding: 4px 9px !important;
+      background: var(--bg-hover) !important;
+      border-radius: 9999px !important;
+      border: 1px solid rgba(201, 154, 61, 0.25) !important;
+      white-space: nowrap !important;
+    }
+
+    /* 4. Section Title Bar */
+    .section-title-bar {
+      margin: 14px 0 10px !important;
+    }
+
+    .section-title-text {
+      font-size: 1.05rem !important;
+      font-weight: 800 !important;
+      letter-spacing: -0.2px !important;
+    }
+
+    .btn-text-link {
+      font-size: 0.76rem !important;
+      font-weight: 700 !important;
+    }
+
+    /* 5. Mobile Native Order Card Row */
+    .order-card-row {
+      border-radius: 14px !important;
+      margin-bottom: 12px !important;
+      border: 1px solid var(--border-subtle) !important;
+      background: var(--bg-card) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+      overflow: hidden !important;
+    }
+
+    .order-card-body {
+      display: grid !important;
+      grid-template-columns: 46px 1fr auto !important;
+      grid-template-areas:
+        "thumb id amount"
+        "cust cust cust"
+        "prod prod prod"
+        "photo photo photo"
+        "status status status";
+      gap: 8px 10px !important;
+      padding: 12px !important;
+      align-items: center !important;
+    }
+
+    /* 1. Thumbnail */
+    .order-thumb-wrap {
+      grid-area: thumb !important;
+      width: 46px !important;
+      height: 46px !important;
+      border-radius: 9px !important;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06) !important;
+      flex-shrink: 0 !important;
+    }
+
+    /* 2. Order ID & Date */
+    .order-col-id {
+      grid-area: id !important;
+      justify-self: start !important;
+      min-width: 0 !important;
+    }
+
+    .order-id-num {
+      font-size: 0.92rem !important;
+      font-weight: 800 !important;
+      color: var(--primary) !important;
+      letter-spacing: -0.2px !important;
+    }
+
+    .order-timestamp {
+      font-size: 0.68rem !important;
       color: var(--text-muted) !important;
     }
 
-    .subheader-actions {
+    /* 8. Amount */
+    .order-col-amount {
+      grid-area: amount !important;
+      align-items: flex-end !important;
+      text-align: right !important;
+      justify-self: end !important;
+    }
+
+    .order-col-amount .col-field-label {
+      display: none !important;
+    }
+
+    .order-amount-text {
+      font-size: 1.15rem !important;
+      font-weight: 800 !important;
+      color: var(--primary) !important;
+      letter-spacing: -0.02em !important;
+    }
+
+    /* 3. Customer Info */
+    .order-col-cust {
+      grid-area: cust !important;
+      border-top: 1px dashed var(--border-subtle) !important;
+      padding-top: 6px !important;
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: wrap !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 5px !important;
+    }
+
+    .order-col-cust .col-field-label {
+      display: none !important;
+    }
+
+    .cust-name-text {
+      font-size: 0.86rem !important;
+      font-weight: 700 !important;
+      color: var(--text-main) !important;
+    }
+
+    .cust-phone-text {
+      margin-top: 0 !important;
+      font-size: 0.74rem !important;
+    }
+
+    .cust-phone-text a {
+      background: rgba(16, 185, 129, 0.10) !important;
+      color: #059669 !important;
+      padding: 2px 7px !important;
+      border-radius: 6px !important;
+      font-weight: 600 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 3px !important;
+      text-decoration: none !important;
+    }
+
+    .cust-email-text {
+      width: 100% !important;
+      max-width: 100% !important;
+      font-size: 0.70rem !important;
+      color: var(--text-muted) !important;
+      margin-top: 1px !important;
+    }
+
+    /* 4. Product Info */
+    .order-col-prod {
+      grid-area: prod !important;
+      background: var(--bg-hover) !important;
+      padding: 7px 9px !important;
+      border-radius: 8px !important;
+      border: 1px solid var(--border-subtle) !important;
+    }
+
+    .order-col-prod .col-field-label {
+      display: none !important;
+    }
+
+    .prod-name-text {
+      font-size: 0.82rem !important;
+      font-weight: 700 !important;
+      color: var(--text-main) !important;
+      white-space: normal !important;
+      line-height: 1.3 !important;
+    }
+
+    .order-prod-specs-tags {
+      margin-top: 4px !important;
+      gap: 4px !important;
+    }
+
+    /* 5. Customer Photo */
+    .order-col-photo {
+      grid-area: photo !important;
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 8px !important;
+      padding: 3px 6px !important;
+      background: rgba(201, 154, 61, 0.05) !important;
+      border: 1px solid rgba(201, 154, 61, 0.18) !important;
+      border-radius: 7px !important;
+      width: fit-content !important;
+    }
+
+    .order-col-photo .col-field-label {
+      display: none !important;
+    }
+
+    .cust-photo-preview-box {
+      width: 26px !important;
+      height: 26px !important;
+      border-radius: 5px !important;
+    }
+
+    .photo-attached-tag {
+      font-size: 0.70rem !important;
+      font-weight: 700 !important;
+      color: #059669 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+    }
+
+    .cust-photo-none-box,
+    .photo-none-tag {
+      display: none !important;
+    }
+
+    /* 6 & 7. Status Row */
+    .order-col-payment {
+      display: none !important;
+    }
+
+    .order-col-status {
+      grid-area: status !important;
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 6px !important;
+      padding-top: 2px !important;
+    }
+
+    .order-col-status .col-field-label {
+      display: none !important;
+    }
+
+    .order-col-status .status-pill {
+      font-size: 0.72rem !important;
+      padding: 3px 9px !important;
+    }
+
+    .order-col-status .sub-meta-text {
+      font-size: 0.72rem !important;
+      color: var(--text-muted) !important;
+      margin-top: 0 !important;
+    }
+
+    /* Footer with Note & Actions */
+    .order-card-footer {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 8px !important;
+      padding: 8px 12px 10px !important;
+      background: var(--bg-hover) !important;
+      border-top: 1px solid var(--border-subtle) !important;
+    }
+
+    .order-note-block {
+      font-size: 0.72rem !important;
+      color: var(--text-muted) !important;
+      line-height: 1.3 !important;
+    }
+
+    .order-action-buttons {
       display: grid !important;
       grid-template-columns: repeat(2, 1fr) !important;
       gap: 6px !important;
       width: 100% !important;
+      margin: 0 !important;
     }
 
-    .subheader-actions .btn-sub-action {
-      padding: 7px 10px !important;
+    .order-action-buttons .btn-card-action {
+      height: 35px !important;
       font-size: 0.76rem !important;
-      font-weight: 600 !important;
-      border-radius: 9px !important;
-      min-height: 34px !important;
-      display: inline-flex !important;
+      font-weight: 700 !important;
+      border-radius: 8px !important;
+      display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      gap: 5px !important;
-    }
-
-    .subheader-actions .btn-sub-action.primary {
-      grid-column: span 2 !important;
-      padding: 8px 12px !important;
-      font-weight: 700 !important;
+      padding: 0 6px !important;
     }
   }
 
+  /* Ultra compact tweak for tiny screens (<= 380px) */
+  @media (max-width: 380px) {
+    .subheader-actions .btn-sub-action:not(.primary) {
+      font-size: 0.67rem !important;
+      padding: 4px 1px !important;
+    }
+    .metric-segment-val {
+      font-size: 1.25rem !important;
+    }
+    .order-amount-text {
+      font-size: 1.05rem !important;
+    }
+  }
   </style>
   <script>
     (function () {
