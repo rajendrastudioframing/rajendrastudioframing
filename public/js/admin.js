@@ -3101,7 +3101,10 @@ function initProductModals() {
   const addModal = document.getElementById('addProductModal');
   const addForm = document.getElementById('addProductForm');
 
-  let uploadedProductImageBase64 = null;
+  let uploadedProductImages = []; // Array of up to 5 photos for Add Product
+  let uploadedProductImageBase64 = null; // fallback compatibility
+  let uploadedEditProductImages = []; // Array of up to 5 photos for Edit Product
+  let uploadedEditProductImageBase64 = null;
   let adminImageMode = 'upload'; // 'upload' or 'preset'
 
   window.switchAdminImageMode = (mode) => {
@@ -3124,42 +3127,162 @@ function initProductModals() {
     }
   };
 
-  window.handleAdminImageUpload = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
+  window.renderAdminPhotosGrid = function() {
+    const grid = document.getElementById('adminPhotosGrid');
+    const wrapper = document.getElementById('adminPhotosGridWrapper');
+    const dropzone = document.getElementById('adminImageDropzone');
+    const countBadge = document.getElementById('adminPhotoCountBadge');
 
-    if (!file.type.startsWith('image/')) {
-      showToast('Invalid File', 'Please select an image file (PNG, JPG, WEBP).', 'warning');
+    if (countBadge) {
+      countBadge.textContent = `${uploadedProductImages.length} / 5 photos`;
+    }
+
+    if (!grid) return;
+
+    if (uploadedProductImages.length === 0) {
+      if (dropzone) dropzone.style.display = 'flex';
+      if (wrapper) wrapper.style.display = 'none';
       return;
     }
 
-    const compressed = await compressAdminImage(file);
-    uploadedProductImageBase64 = compressed || null;
-    const previewImg = document.getElementById('adminDropzonePreviewImg');
-    const previewBox = document.getElementById('adminDropzonePreview');
-    const emptyBox = document.getElementById('adminDropzoneEmpty');
-    const fileNameEl = document.getElementById('adminDropzoneFileName');
-    const fileSizeEl = document.getElementById('adminDropzoneFileSize');
+    if (dropzone) dropzone.style.display = 'none';
+    if (wrapper) wrapper.style.display = 'block';
 
-    if (previewImg && uploadedProductImageBase64) previewImg.src = uploadedProductImageBase64;
-    if (fileNameEl) fileNameEl.textContent = file.name;
-    if (fileSizeEl) fileSizeEl.textContent = (file.size / 1024 < 1024) ? `${Math.round(file.size / 1024)} KB` : `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
-    if (emptyBox) emptyBox.style.display = 'none';
-    if (previewBox) previewBox.style.display = 'flex';
+    let html = '';
+    uploadedProductImages.forEach((src, idx) => {
+      const isCover = idx === 0;
+      html += `
+        <div class="admin-photo-card ${isCover ? 'is-cover' : ''}" title="${isCover ? '⭐ Primary Cover Photo' : 'Photo #' + (idx + 1)}">
+          <img src="${escapeHtml(src)}" alt="Product Photo ${idx + 1}" />
+          <span class="admin-photo-badge">${isCover ? '⭐ Cover' : '#' + (idx + 1)}</span>
+          <button type="button" class="admin-photo-remove" onclick="removeAdminPhotoAt(${idx}, event)" title="Remove photo">&times;</button>
+          ${!isCover ? `<button type="button" class="admin-photo-make-cover" onclick="makeCoverPhoto(${idx}, event)" title="Set as primary cover">Make Cover</button>` : ''}
+        </div>
+      `;
+    });
+
+    if (uploadedProductImages.length < 5) {
+      html += `
+        <div class="admin-photo-add-slot" onclick="document.getElementById('newProductImageFile').click()" title="Add another photo (${5 - uploadedProductImages.length} slots left)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Add Photo</span>
+        </div>
+      `;
+    }
+
+    grid.innerHTML = html;
   };
 
-  window.removeAdminImage = (e) => {
+  window.renderEditAdminPhotosGrid = function() {
+    const grid = document.getElementById('editPhotosGrid');
+    const countBadge = document.getElementById('editPhotoCountBadge');
+
+    if (countBadge) {
+      countBadge.textContent = `${uploadedEditProductImages.length} / 5 photos`;
+    }
+
+    if (!grid) return;
+
+    let html = '';
+    uploadedEditProductImages.forEach((src, idx) => {
+      const isCover = idx === 0;
+      html += `
+        <div class="admin-photo-card ${isCover ? 'is-cover' : ''}" title="${isCover ? '⭐ Primary Cover Photo' : 'Photo #' + (idx + 1)}">
+          <img src="${escapeHtml(src)}" alt="Product Photo ${idx + 1}" />
+          <span class="admin-photo-badge">${isCover ? '⭐ Cover' : '#' + (idx + 1)}</span>
+          <button type="button" class="admin-photo-remove" onclick="removeEditAdminPhotoAt(${idx}, event)" title="Remove photo">&times;</button>
+          ${!isCover ? `<button type="button" class="admin-photo-make-cover" onclick="makeEditCoverPhoto(${idx}, event)" title="Set as primary cover">Make Cover</button>` : ''}
+        </div>
+      `;
+    });
+
+    if (uploadedEditProductImages.length < 5) {
+      html += `
+        <div class="admin-photo-add-slot" onclick="document.getElementById('editProductImageFile').click()" title="Add another photo (${5 - uploadedEditProductImages.length} slots left)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Add Photo</span>
+        </div>
+      `;
+    }
+
+    grid.innerHTML = html;
+  };
+
+  window.handleAdminMultiImageUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const remainingSlots = 5 - uploadedProductImages.length;
+    if (remainingSlots <= 0) {
+      showToast('Photo Limit', 'Maximum 5 photos allowed per product.', 'warning');
+      e.target.value = '';
+      return;
+    }
+
+    const filesToUpload = files.slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      showToast('Limit Reached', `Only ${remainingSlots} photo(s) added (max 5 photos per product).`, 'info');
+    }
+
+    for (const file of filesToUpload) {
+      if (!file.type.startsWith('image/')) continue;
+      const compressed = await compressAdminImage(file);
+      if (compressed && uploadedProductImages.length < 5) {
+        uploadedProductImages.push(compressed);
+      }
+    }
+
+    uploadedProductImageBase64 = uploadedProductImages[0] || null;
+    e.target.value = '';
+    renderAdminPhotosGrid();
+  };
+
+  window.removeAdminPhotoAt = (idx, e) => {
     if (e) e.stopPropagation();
+    if (idx >= 0 && idx < uploadedProductImages.length) {
+      uploadedProductImages.splice(idx, 1);
+      uploadedProductImageBase64 = uploadedProductImages[0] || null;
+      renderAdminPhotosGrid();
+    }
+  };
+
+  window.makeCoverPhoto = (idx, e) => {
+    if (e) e.stopPropagation();
+    if (idx > 0 && idx < uploadedProductImages.length) {
+      const [item] = uploadedProductImages.splice(idx, 1);
+      uploadedProductImages.unshift(item);
+      uploadedProductImageBase64 = uploadedProductImages[0] || null;
+      renderAdminPhotosGrid();
+      showToast('Cover Updated', 'First photo is now the primary catalog cover.', 'info');
+    }
+  };
+
+  window.removeAllAdminPhotos = (e) => {
+    if (e) e.stopPropagation();
+    uploadedProductImages = [];
     uploadedProductImageBase64 = null;
     const fileInput = document.getElementById('newProductImageFile');
     if (fileInput) fileInput.value = '';
-    const previewBox = document.getElementById('adminDropzonePreview');
-    const emptyBox = document.getElementById('adminDropzoneEmpty');
-    const previewImg = document.getElementById('adminDropzonePreviewImg');
-    if (previewImg) previewImg.src = '';
-    if (previewBox) previewBox.style.display = 'none';
-    if (emptyBox) emptyBox.style.display = 'flex';
+    renderAdminPhotosGrid();
   };
+
+  window.addPresetAsProductPhoto = () => {
+    const presetEl = document.getElementById('newProductImagePreset');
+    const val = presetEl ? presetEl.value : '';
+    if (!val) return;
+    if (uploadedProductImages.length >= 5) {
+      showToast('Photo Limit', 'Maximum 5 photos allowed per product.', 'warning');
+      return;
+    }
+    uploadedProductImages.push(val);
+    uploadedProductImageBase64 = uploadedProductImages[0] || null;
+    renderAdminPhotosGrid();
+    window.switchAdminImageMode('upload');
+    showToast('Photo Added', 'Preset photo added to product gallery (Max 5).', 'success');
+  };
+
+  window.handleAdminImageUpload = window.handleAdminMultiImageUpload;
+  window.removeAdminImage = window.removeAllAdminPhotos;
 
   // Category change listener to set intelligent preset default
   const newCatSelect = document.getElementById('newProductCategory');
@@ -3404,20 +3527,18 @@ function initProductModals() {
       const resolvedFinishes = [{ id: 'finish-1', name: selectedColorName, color: selectedColorHex, image: '', priceDelta: 0 }];
       const resolvedVariants = [ selectedVariant ];
 
-      // Image selection: Upload or selected preset or smart category default
-      let finalImage = '';
-      if (adminImageMode === 'upload' && uploadedProductImageBase64) {
-        finalImage = uploadedProductImageBase64;
-      } else {
+      // Image selection: Uploaded photos (up to 5) or catalog preset default
+      let productPhotos = uploadedProductImages.length > 0 ? [...uploadedProductImages] : [];
+      if (productPhotos.length === 0) {
         const presetEl = document.getElementById('newProductImagePreset');
-        finalImage = (presetEl && presetEl.value) ? presetEl.value : '';
+        const fallbackPreset = (presetEl && presetEl.value) ? presetEl.value : '';
+        if (fallbackPreset) productPhotos.push(fallbackPreset);
+        else if (category === 'frames') productPhotos.push('assets/images/glass_frame.jpg');
+        else if (category === 'personalized') productPhotos.push('assets/images/printed_bottle.jpg');
+        else if (category === 'office') productPhotos.push('assets/images/printed_file.jpg');
+        else productPhotos.push('assets/images/custom_canvas.jpg');
       }
-      if (!finalImage) {
-        if (category === 'frames') finalImage = 'assets/images/glass_frame.jpg';
-        else if (category === 'personalized') finalImage = 'assets/images/printed_bottle.jpg';
-        else if (category === 'office') finalImage = 'assets/images/printed_file.jpg';
-        else finalImage = 'assets/images/custom_canvas.jpg';
-      }
+      const finalImage = productPhotos[0];
       resolvedFinishes[0].image = finalImage;
 
       const submitBtn = document.getElementById('btnSubmitAddProduct') || addForm.querySelector('button[type="submit"]');
@@ -3459,6 +3580,7 @@ function initProductModals() {
             shortDescription: desc,
             description: desc,
             image: finalImage,
+            images: productPhotos,
             sizes: resolvedSizes,
             colors: resolvedColors,
             finishes: resolvedFinishes,
@@ -3492,7 +3614,6 @@ function initProductModals() {
     const editModal = document.getElementById('editProductModal');
   const editForm = document.getElementById('editProductForm');
 
-  let uploadedEditProductImageBase64 = null;
   let editAdminImageMode = 'upload'; // 'upload' or 'preset'
 
   window.switchEditImageMode = (mode) => {
@@ -3617,6 +3738,10 @@ function initProductModals() {
     if (!prod || !editModal) return;
 
     uploadedEditProductImageBase64 = null;
+    uploadedEditProductImages = Array.isArray(prod.images) && prod.images.length > 0 
+      ? [...prod.images] 
+      : (prod.image ? [prod.image] : []);
+    renderEditAdminPhotosGrid();
     window.switchEditImageMode('upload');
 
     document.getElementById('editProductId').value = prod.id;
@@ -3748,13 +3873,13 @@ function initProductModals() {
       const fullDesc = document.getElementById('editProductFullDesc') ? document.getElementById('editProductFullDesc').value.trim() : desc;
 
       // Final image resolution
-      let finalImage = document.getElementById('editProductCurrentImage').value;
-      if (editAdminImageMode === 'upload' && uploadedEditProductImageBase64) {
-        finalImage = uploadedEditProductImageBase64;
-      } else if (editAdminImageMode === 'preset') {
-        const presetEl = document.getElementById('editProductImagePreset');
-        if (presetEl && presetEl.value) finalImage = presetEl.value;
+      let editPhotos = uploadedEditProductImages.length > 0 ? [...uploadedEditProductImages] : [];
+      if (editPhotos.length === 0) {
+        let curr = document.getElementById('editProductCurrentImage') ? document.getElementById('editProductCurrentImage').value : '';
+        if (curr) editPhotos.push(curr);
+        else editPhotos.push('assets/images/custom_canvas.jpg');
       }
+      const finalImage = editPhotos[0];
 
       // 4 Options in 1 Row: 1 Size, 1 Color, 1 Variant, 1 Price
       const editSizeSelect = document.getElementById('editProductSizeSelect');
@@ -3802,9 +3927,11 @@ function initProductModals() {
             shortDescription: desc,
             description: fullDesc,
             image: finalImage,
+            images: editPhotos,
             sizes: resolvedSizes,
-            finishes: activeColorChips.length > 0 ? activeColorChips : (prod && prod.finishes ? prod.finishes : []),
-            variants: activeVariantPills
+            colors: resolvedColors,
+            finishes: resolvedFinishes,
+            variants: resolvedVariants
           })
         });
 

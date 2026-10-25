@@ -155,10 +155,14 @@ function populateProductData() {
   // Thumbnails & Image Gallery
   const thumbsContainer = document.getElementById('detailThumbsContainer');
   if (thumbsContainer) {
-    // Assemble rich image gallery from variant finish images + craft perspectives
+    // Assemble rich image gallery from product photos (up to 5), finishes & craft perspectives
+    const productPhotos = (Array.isArray(p.images) && p.images.length > 0)
+      ? p.images.map((src, i) => ({ src, finishId: '', label: `${p.name} - Photo ${i + 1}` }))
+      : [{ src: p.image, finishId: '', label: p.name }];
+
     const finishImages = (p.finishes && p.finishes.length)
       ? p.finishes.map(f => ({ src: f.image || p.image, finishId: f.id, label: `${p.name} - ${f.name}` }))
-      : [{ src: p.image, finishId: '', label: p.name }];
+      : [];
 
     const perspectiveImages = [
       { src: 'assets/images/workshop.jpg', finishId: '', label: `${p.name} - Craft & Workshop Detail` },
@@ -168,7 +172,7 @@ function populateProductData() {
     // Combine and deduplicate by source
     const galleryItems = [];
     const seenSrcs = new Set();
-    [...finishImages, ...perspectiveImages].forEach(item => {
+    [...productPhotos, ...finishImages, ...perspectiveImages].forEach(item => {
       if (item.src && !seenSrcs.has(item.src)) {
         seenSrcs.add(item.src);
         galleryItems.push(item);

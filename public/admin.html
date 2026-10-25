@@ -3649,11 +3649,14 @@
           <!-- Row 4: Product Image (Upload, Change, or Catalog Presets) -->
           <div class="setting-row" style="margin-bottom: 14px;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <label class="setting-label" style="margin-bottom: 0;">Product Image</label>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <label class="setting-label" style="margin-bottom: 0;">Product Photos (Max 5)</label>
+                <span class="admin-photos-count-badge" id="editPhotoCountBadge">1 / 5 photos</span>
+              </div>
               <div class="admin-image-mode-tabs">
                 <button type="button" class="admin-tab-btn active" id="tabEditUploadImage" onclick="switchEditImageMode('upload')">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                  Upload / Change
+                  Upload / Manage Photos
                 </button>
                 <button type="button" class="admin-tab-btn" id="tabEditPresetImage" onclick="switchEditImageMode('preset')">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
@@ -3664,40 +3667,43 @@
 
             <!-- Upload Option for Edit -->
             <div id="editImageUploadBox">
-              <input type="file" id="editProductImageFile" accept="image/png,image/jpeg,image/webp,image/jpg" style="display: none;" onchange="handleEditAdminImageUpload(event)" />
-              <div class="admin-image-dropzone" id="editImageDropzone" onclick="document.getElementById('editProductImageFile').click()">
-                <div class="dropzone-preview" id="editDropzonePreview" style="display: flex;">
-                  <img id="editDropzonePreviewImg" src="assets/images/custom_canvas.jpg" alt="Preview" />
-                  <div class="dropzone-preview-info">
-                    <div class="preview-filename" id="editDropzoneFileName">Current Image</div>
-                    <div class="preview-filesize" id="editDropzoneFileSize">Click or drop new photo to replace</div>
-                    <button type="button" class="btn-remove-preview" onclick="event.stopPropagation(); document.getElementById('editProductImageFile').click();">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                      Choose New Photo
-                    </button>
-                  </div>
-                </div>
+              <input type="file" id="editProductImageFile" accept="image/png,image/jpeg,image/webp,image/jpg" multiple style="display: none;" onchange="handleEditAdminMultiImageUpload(event)" />
+              <div class="admin-photos-grid" id="editPhotosGrid">
+                <!-- Populated dynamically with up to 5 photo cards -->
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                <span style="font-size: 0.72rem; color: var(--text-muted);">
+                  ⭐ 1st photo is main catalog cover. Click "Make Cover" to reorder.
+                </span>
+                <button type="button" class="btn-remove-preview" onclick="removeAllEditPhotos(event)">
+                  Clear All Photos
+                </button>
               </div>
             </div>
 
             <!-- Preset Dropdown Option for Edit -->
             <div id="editImagePresetBox" style="display: none;">
-              <select class="setting-select" id="editProductImagePreset" onchange="handleEditPresetChange(this.value)">
-                <option value="assets/images/glass_frame.jpg">Classic Glass Photo Frame</option>
-                <option value="assets/images/plastic_frame.jpg">Matte Black Plastic Frame</option>
-                <option value="assets/images/printed_bottle.jpg">Insulated Steel Bottle (Black)</option>
-                <option value="assets/images/printed_bottle_blue.jpg">Insulated Steel Bottle (Navy Blue)</option>
-                <option value="assets/images/printed_bottle_silver.jpg">Insulated Steel Bottle (Silver)</option>
-                <option value="assets/images/custom_mug.jpg">Ceramic Coffee Mug (White)</option>
-                <option value="assets/images/custom_mug_black.jpg">Magic Coffee Mug (Black)</option>
-                <option value="assets/images/printed_file.jpg">Office File Binder (Navy Blue)</option>
-                <option value="assets/images/printed_file_green.jpg">Office File Binder (Forest Green)</option>
-                <option value="assets/images/printed_file_black.jpg">Office File Binder (Charcoal Black)</option>
-                <option value="assets/images/printed_folder_navy.jpg">Executive Presentation Folder (Navy)</option>
-                <option value="assets/images/printed_folder_green.jpg">Executive Presentation Folder (Green)</option>
-                <option value="assets/images/printed_folder_black.jpg">Executive Presentation Folder (Black)</option>
-                <option value="assets/images/custom_canvas.jpg">Fine Art Canvas Gallery Wrap</option>
-              </select>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <select class="setting-select" id="editProductImagePreset" style="flex: 1;">
+                  <option value="assets/images/glass_frame.jpg">Classic Glass Photo Frame</option>
+                  <option value="assets/images/plastic_frame.jpg">Matte Black Plastic Frame</option>
+                  <option value="assets/images/printed_bottle.jpg">Insulated Steel Bottle (Black)</option>
+                  <option value="assets/images/printed_bottle_blue.jpg">Insulated Steel Bottle (Navy Blue)</option>
+                  <option value="assets/images/printed_bottle_silver.jpg">Insulated Steel Bottle (Silver)</option>
+                  <option value="assets/images/custom_mug.jpg">Ceramic Coffee Mug (White)</option>
+                  <option value="assets/images/custom_mug_black.jpg">Magic Coffee Mug (Black)</option>
+                  <option value="assets/images/printed_file.jpg">Office File Binder (Navy Blue)</option>
+                  <option value="assets/images/printed_file_green.jpg">Office File Binder (Forest Green)</option>
+                  <option value="assets/images/printed_file_black.jpg">Office File Binder (Charcoal Black)</option>
+                  <option value="assets/images/printed_folder_navy.jpg">Executive Presentation Folder (Navy)</option>
+                  <option value="assets/images/printed_folder_green.jpg">Executive Presentation Folder (Green)</option>
+                  <option value="assets/images/printed_folder_black.jpg">Executive Presentation Folder (Black)</option>
+                  <option value="assets/images/custom_canvas.jpg">Fine Art Canvas Gallery Wrap</option>
+                </select>
+                <button type="button" class="btn-sub-action primary" style="white-space: nowrap; padding: 7px 12px; font-size: 0.78rem;" onclick="addPresetAsEditProductPhoto()">
+                  + Add to Photos
+                </button>
+              </div>
             </div>
           </div>
 
@@ -3914,11 +3920,14 @@
           <!-- Product Image: Upload or Preset -->
           <div class="setting-row" style="margin-bottom: 14px;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <label class="setting-label" style="margin-bottom: 0;">Product Image *</label>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <label class="setting-label" style="margin-bottom: 0;">Product Photos (Max 5) *</label>
+                <span class="admin-photos-count-badge" id="adminPhotoCountBadge">0 / 5 photos</span>
+              </div>
               <div class="admin-image-mode-tabs">
                 <button type="button" class="admin-tab-btn active" id="tabUploadImage" onclick="switchAdminImageMode('upload')">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                  Upload Photo
+                  Upload Photos
                 </button>
                 <button type="button" class="admin-tab-btn" id="tabPresetImage" onclick="switchAdminImageMode('preset')">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
@@ -3929,49 +3938,60 @@
 
             <!-- Upload Option -->
             <div id="adminImageUploadBox">
-              <input type="file" id="newProductImageFile" accept="image/png,image/jpeg,image/webp,image/jpg" style="display: none;" onchange="handleAdminImageUpload(event)" />
+              <input type="file" id="newProductImageFile" accept="image/png,image/jpeg,image/webp,image/jpg" multiple style="display: none;" onchange="handleAdminMultiImageUpload(event)" />
+              
+              <!-- Dropzone shown when 0 photos uploaded -->
               <div class="admin-image-dropzone" id="adminImageDropzone" onclick="document.getElementById('newProductImageFile').click()">
                 <div class="dropzone-empty" id="adminDropzoneEmpty">
                   <div class="dropzone-icon">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                   </div>
                   <div class="dropzone-text">
-                    <span class="dropzone-cta">Click to upload photo</span> or drag &amp; drop
+                    <span class="dropzone-cta">Click to upload photos</span> or drag &amp; drop
                   </div>
-                  <span class="dropzone-hint">PNG, JPG, or WEBP (Saved directly to gallery)</span>
+                  <span class="dropzone-hint">Upload up to 5 photos (PNG, JPG, WEBP) • 1st photo is main catalog cover</span>
                 </div>
-                <div class="dropzone-preview" id="adminDropzonePreview" style="display: none;">
-                  <img id="adminDropzonePreviewImg" src="" alt="Preview" />
-                  <div class="dropzone-preview-info">
-                    <div class="preview-filename" id="adminDropzoneFileName">image.jpg</div>
-                    <div class="preview-filesize" id="adminDropzoneFileSize"></div>
-                    <button type="button" class="btn-remove-preview" onclick="removeAdminImage(event)">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                      Change Photo
-                    </button>
-                  </div>
+              </div>
+
+              <!-- Multi-Photo Gallery Preview Grid (1 to 5 photos) -->
+              <div id="adminPhotosGridWrapper" style="display: none;">
+                <div class="admin-photos-grid" id="adminPhotosGrid">
+                  <!-- Dynamically rendered photo cards -->
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                  <span style="font-size: 0.72rem; color: var(--text-muted);">
+                    ⭐ 1st photo is cover. Click "Make Cover" to reorder.
+                  </span>
+                  <button type="button" class="btn-remove-preview" onclick="removeAllAdminPhotos(event)">
+                    Clear All Photos
+                  </button>
                 </div>
               </div>
             </div>
 
             <!-- Preset Dropdown Option -->
             <div id="adminImagePresetBox" style="display: none;">
-              <select class="setting-select" id="newProductImagePreset">
-                <option value="assets/images/glass_frame.jpg">Classic Glass Photo Frame</option>
-                <option value="assets/images/plastic_frame.jpg">Matte Black Plastic Frame</option>
-                <option value="assets/images/printed_bottle.jpg">Insulated Steel Bottle (Black)</option>
-                <option value="assets/images/printed_bottle_blue.jpg">Insulated Steel Bottle (Navy Blue)</option>
-                <option value="assets/images/printed_bottle_silver.jpg">Insulated Steel Bottle (Silver)</option>
-                <option value="assets/images/custom_mug.jpg">Ceramic Coffee Mug (White)</option>
-                <option value="assets/images/custom_mug_black.jpg">Magic Coffee Mug (Black)</option>
-                <option value="assets/images/printed_file.jpg">Office File Binder (Navy Blue)</option>
-                <option value="assets/images/printed_file_green.jpg">Office File Binder (Forest Green)</option>
-                <option value="assets/images/printed_file_black.jpg">Office File Binder (Charcoal Black)</option>
-                <option value="assets/images/printed_folder_navy.jpg">Executive Presentation Folder (Navy)</option>
-                <option value="assets/images/printed_folder_green.jpg">Executive Presentation Folder (Green)</option>
-                <option value="assets/images/printed_folder_black.jpg">Executive Presentation Folder (Black)</option>
-                <option value="assets/images/custom_canvas.jpg" selected>Fine Art Canvas Gallery Wrap</option>
-              </select>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <select class="setting-select" id="newProductImagePreset" style="flex: 1;">
+                  <option value="assets/images/glass_frame.jpg">Classic Glass Photo Frame</option>
+                  <option value="assets/images/plastic_frame.jpg">Matte Black Plastic Frame</option>
+                  <option value="assets/images/printed_bottle.jpg">Insulated Steel Bottle (Black)</option>
+                  <option value="assets/images/printed_bottle_blue.jpg">Insulated Steel Bottle (Navy Blue)</option>
+                  <option value="assets/images/printed_bottle_silver.jpg">Insulated Steel Bottle (Silver)</option>
+                  <option value="assets/images/custom_mug.jpg">Ceramic Coffee Mug (White)</option>
+                  <option value="assets/images/custom_mug_black.jpg">Magic Coffee Mug (Black)</option>
+                  <option value="assets/images/printed_file.jpg">Office File Binder (Navy Blue)</option>
+                  <option value="assets/images/printed_file_green.jpg">Office File Binder (Forest Green)</option>
+                  <option value="assets/images/printed_file_black.jpg">Office File Binder (Charcoal Black)</option>
+                  <option value="assets/images/printed_folder_navy.jpg">Executive Presentation Folder (Navy)</option>
+                  <option value="assets/images/printed_folder_green.jpg">Executive Presentation Folder (Green)</option>
+                  <option value="assets/images/printed_folder_black.jpg">Executive Presentation Folder (Black)</option>
+                  <option value="assets/images/custom_canvas.jpg" selected>Fine Art Canvas Gallery Wrap</option>
+                </select>
+                <button type="button" class="btn-sub-action primary" style="white-space: nowrap; padding: 7px 12px; font-size: 0.78rem;" onclick="addPresetAsProductPhoto()">
+                  + Add to Photos
+                </button>
+              </div>
             </div>
           </div>
 

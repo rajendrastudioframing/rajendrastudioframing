@@ -2880,7 +2880,7 @@ app.get('/api/admin/products', requireAuth, async (req, res) => {
  * Add New Product (POST)
  */
 app.post('/api/admin/products', requireAuth, async (req, res) => {
-  const { name, category, categoryLabel, price, originalPrice, badge, shortDescription, description, material, printingType, leadTime, image, status, stockQty, sizes, finishes, colors, variants } = req.body;
+  const { name, category, categoryLabel, price, originalPrice, badge, shortDescription, description, material, printingType, leadTime, image, images, status, stockQty, sizes, finishes, colors, variants } = req.body;
 
   if (!name || !price) {
     return res.status(400).json({ success: false, message: 'Product name and price are required.' });
@@ -2894,36 +2894,50 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     uniqueSlug = `${rawSlug}-${slugCounter++}`;
   }
 
-  // Handle uploaded base64 image save to disk
-  let resolvedImage = image;
-  if (resolvedImage && typeof resolvedImage === 'string' && resolvedImage.startsWith('data:image/')) {
-    try {
-      const matches = resolvedImage.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,([\s\S]+)$/);
-      if (matches) {
-        const rawMime = matches[1].toLowerCase();
-        const ext = rawMime.includes('png') ? '.png' : (rawMime.includes('webp') ? '.webp' : '.jpg');
-        const buffer = Buffer.from(matches[2].trim(), 'base64');
-        const uploadDir = path.join(__dirname, 'assets', 'images', 'uploads');
-        const pubUploadDir = path.join(__dirname, 'public', 'assets', 'images', 'uploads');
-        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-        if (!fs.existsSync(pubUploadDir)) fs.mkdirSync(pubUploadDir, { recursive: true });
-        const cleanName = `prod_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${ext}`;
-        fs.writeFileSync(path.join(uploadDir, cleanName), buffer);
-        fs.writeFileSync(path.join(pubUploadDir, cleanName), buffer);
-        resolvedImage = `assets/images/uploads/${cleanName}`;
+  // Handle uploaded images (up to 5 photos)
+  let rawImages = [];
+  if (Array.isArray(images) && images.length > 0) {
+    rawImages = images.slice(0, 5);
+  } else if (image) {
+    rawImages = [image];
+  }
+
+  const uploadDir = path.join(__dirname, 'assets', 'images', 'uploads');
+  const pubUploadDir = path.join(__dirname, 'public', 'assets', 'images', 'uploads');
+  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+  if (!fs.existsSync(pubUploadDir)) fs.mkdirSync(pubUploadDir, { recursive: true });
+
+  const resolvedImages = [];
+  for (const imgItem of rawImages) {
+    if (typeof imgItem === 'string' && imgItem.startsWith('data:image/')) {
+      try {
+        const matches = imgItem.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,([\s\S]+)$/);
+        if (matches) {
+          const rawMime = matches[1].toLowerCase();
+          const ext = rawMime.includes('png') ? '.png' : (rawMime.includes('webp') ? '.webp' : '.jpg');
+          const buffer = Buffer.from(matches[2].trim(), 'base64');
+          const cleanName = `prod_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${ext}`;
+          fs.writeFileSync(path.join(uploadDir, cleanName), buffer);
+          fs.writeFileSync(path.join(pubUploadDir, cleanName), buffer);
+          resolvedImages.push(`assets/images/uploads/${cleanName}`);
+        }
+      } catch (e) {
+        console.warn('Error saving uploaded image to disk:', e.message);
       }
-    } catch (e) {
-      console.warn('Error saving uploaded image to disk:', e.message);
+    } else if (typeof imgItem === 'string' && imgItem.trim()) {
+      resolvedImages.push(imgItem.trim());
     }
   }
 
   // Default fallback image by category if none provided
-  if (!resolvedImage) {
-    if (category === 'frames') resolvedImage = 'assets/images/glass_frame.jpg';
-    else if (category === 'personalized') resolvedImage = 'assets/images/printed_bottle.jpg';
-    else if (category === 'office') resolvedImage = 'assets/images/printed_file.jpg';
-    else resolvedImage = 'assets/images/custom_canvas.jpg';
+  if (resolvedImages.length === 0) {
+    if (category === 'frames') resolvedImages.push('assets/images/glass_frame.jpg');
+    else if (category === 'personalized') resolvedImages.push('assets/images/printed_bottle.jpg');
+    else if (category === 'office') resolvedImages.push('assets/images/printed_file.jpg');
+    else resolvedImages.push('assets/images/custom_canvas.jpg');
   }
+
+  const resolvedImage = resolvedImages[0];
 
   // Resolve sizes: guarantee array of objects with { name, price }
   let resolvedSizes = [];
@@ -3007,6 +3021,7 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     reviewsCount: 1,
     badge: badge || '',
     image: resolvedImage,
+    images: resolvedImages,
     shortDescription: shortDescription || `${name.trim()} customized by Rajesh Framing Studio.`,
     description: description || shortDescription || `${name.trim()} handcrafted with premium materials and archival printing standards.`,
     material: material || 'Premium Archival Grade',
@@ -3040,8 +3055,39 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
 
   const target = { ...products[index] };
 
-  // Handle uploaded base64 image if updated
-  if (updates.image && typeof updates.image === 'string' && updates.image.startsWith('data:image/')) {
+  // Handle uploaded images (up to 5 photos) if updated
+  if (Array.isArray(updates.images)) {
+    const uploadDir = path.join(__dirname, 'assets', 'images', 'uploads');
+    const pubUploadDir = path.join(__dirname, 'public', 'assets', 'images', 'uploads');
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fs.existsSync(pubUploadDir)) fs.mkdirSync(pubUploadDir, { recursive: true });
+
+    const updatedImages = [];
+    for (const imgItem of updates.images.slice(0, 5)) {
+      if (typeof imgItem === 'string' && imgItem.startsWith('data:image/')) {
+        try {
+          const matches = imgItem.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,([\s\S]+)$/);
+          if (matches) {
+            const rawMime = matches[1].toLowerCase();
+            const ext = rawMime.includes('png') ? '.png' : (rawMime.includes('webp') ? '.webp' : '.jpg');
+            const buffer = Buffer.from(matches[2].trim(), 'base64');
+            const cleanName = `prod_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${ext}`;
+            fs.writeFileSync(path.join(uploadDir, cleanName), buffer);
+            fs.writeFileSync(path.join(pubUploadDir, cleanName), buffer);
+            updatedImages.push(`assets/images/uploads/${cleanName}`);
+          }
+        } catch (e) {
+          console.warn('Error saving updated product image to disk:', e.message);
+        }
+      } else if (typeof imgItem === 'string' && imgItem.trim()) {
+        updatedImages.push(imgItem.trim());
+      }
+    }
+    if (updatedImages.length > 0) {
+      target.images = updatedImages;
+      target.image = updatedImages[0];
+    }
+  } else if (updates.image && typeof updates.image === 'string' && updates.image.startsWith('data:image/')) {
     try {
       const matches = updates.image.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,([\s\S]+)$/);
       if (matches) {
@@ -3056,12 +3102,22 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
         fs.writeFileSync(path.join(uploadDir, cleanName), buffer);
         fs.writeFileSync(path.join(pubUploadDir, cleanName), buffer);
         target.image = `assets/images/uploads/${cleanName}`;
+        if (!Array.isArray(target.images) || target.images.length <= 1) {
+          target.images = [target.image];
+        } else {
+          target.images[0] = target.image;
+        }
       }
     } catch (e) {
       console.warn('Error saving updated product image to disk:', e.message);
     }
   } else if (updates.image && typeof updates.image === 'string' && updates.image.trim()) {
     target.image = updates.image.trim();
+    if (!Array.isArray(target.images) || target.images.length <= 1) {
+      target.images = [target.image];
+    } else {
+      target.images[0] = target.image;
+    }
   }
 
   // Update text & numerical fields
