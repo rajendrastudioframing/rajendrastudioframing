@@ -19,6 +19,7 @@ const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
 const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json');
+const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json');
 
 // Ensure local data dir exists when running in local development
 if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
@@ -299,6 +300,64 @@ module.exports = {
     products = products.filter(p => p.id !== id);
     writeJson(PRODUCTS_FILE, products);
     syncProductsDataFiles(products);
+    return true;
+  },
+
+  // --- CATEGORIES ---
+  async getCategories() {
+    const defaultCategories = [
+      { id: 'frames', name: 'Studio & Framing', icon: '🖼️', desc: 'Classic wood and acrylic glass frames, certificate frames, collage memory boxes, and gallery wall displays.', color: '#854d0e', bg: 'rgba(234, 179, 8, 0.15)', badge: 'Studio & Framing', isDefault: true },
+      { id: 'personalized', name: 'Personalized Printing', icon: '☕', desc: 'Custom printed ceramic mugs, insulated bottles, custom apparel, and personalized daily keepsakes.', color: '#1e40af', bg: 'rgba(59, 130, 246, 0.15)', badge: 'Personalized Printing', isDefault: true },
+      { id: 'office', name: 'Office Printing', icon: '📁', desc: 'Corporate presentation folders, customized file binders, business cards, letterheads, and executive desk accessories.', color: '#166534', bg: 'rgba(34, 197, 94, 0.15)', badge: 'Office Printing', isDefault: true },
+      { id: 'custom', name: 'Custom Printing', icon: '🎨', desc: 'Museum-grade canvas gallery wraps, edge-to-edge acrylic prints, metallic prints, and bespoke art installations.', color: '#6b21a8', bg: 'rgba(168, 85, 247, 0.15)', badge: 'Custom Printing', isDefault: true },
+      { id: 'gifts', name: 'Photo Gifts & Keepsakes', icon: '🎁', desc: 'Personalized 3D photo crystals, acrylic desktop plaques, customized keychains, and commemorative photo clocks.', color: '#9d174d', bg: 'rgba(236, 72, 153, 0.15)', badge: 'Photo Gifts & Keepsakes', isDefault: true }
+    ];
+    let categories = readJson(CATEGORIES_FILE, null);
+    if (!categories || !Array.isArray(categories) || categories.length === 0) {
+      categories = defaultCategories;
+      writeJson(CATEGORIES_FILE, categories);
+    }
+    return categories;
+  },
+
+  async saveCategory(category) {
+    let categories = await this.getCategories();
+    const cleanId = (category.id || category.name || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-|-$/g, '') || `cat-${Date.now()}`;
+    const cleanName = (category.name || '').trim();
+    const cleanIcon = (category.icon || '🏷️').trim();
+    const cleanDesc = (category.desc || category.description || '').trim();
+    const cleanBadge = (category.badge || cleanName).trim();
+    const cleanColor = category.color || '#C99A3D';
+    const cleanBg = category.bg || 'rgba(201, 154, 61, 0.15)';
+
+    const newCategory = {
+      id: cleanId,
+      name: cleanName,
+      icon: cleanIcon,
+      desc: cleanDesc,
+      badge: cleanBadge,
+      color: cleanColor,
+      bg: cleanBg,
+      isDefault: Boolean(category.isDefault),
+      createdAt: category.createdAt || new Date().toISOString()
+    };
+
+    const existingIndex = categories.findIndex(c => c.id.toLowerCase() === cleanId.toLowerCase());
+    if (existingIndex !== -1) {
+      categories[existingIndex] = { ...categories[existingIndex], ...newCategory };
+    } else {
+      categories.push(newCategory);
+    }
+
+    writeJson(CATEGORIES_FILE, categories);
+    return newCategory;
+  },
+
+  async deleteCategory(id) {
+    let categories = await this.getCategories();
+    const cleanId = (id || '').trim().toLowerCase();
+    categories = categories.filter(c => c.id.toLowerCase() !== cleanId);
+    writeJson(CATEGORIES_FILE, categories);
     return true;
   },
 

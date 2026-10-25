@@ -247,6 +247,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initial Data Load
   await loadDashboardStats();
   await loadInquiries();
+  await loadAdminCategories();
   await loadProducts();
   await loadCustomers();
   await loadMessages();
@@ -2581,7 +2582,11 @@ async function loadProducts() {
 
     if (data && (data.success || Array.isArray(data.products))) {
       allProducts = data.products || [];
-      updateAdminCategoryCounters(allProducts); window.filterAdminProducts();
+      if (allAdminCategories.length === 0) {
+        await loadAdminCategories();
+      }
+      updateAdminCategoryCounters(allProducts);
+      window.filterAdminProducts();
     }
   } catch (err) {
     console.error('Failed to load products:', err);
@@ -2590,7 +2595,11 @@ async function loadProducts() {
       const data = await fallbackRes.json();
       if (data && (data.success || Array.isArray(data.products))) {
         allProducts = data.products || [];
-        updateAdminCategoryCounters(allProducts); window.filterAdminProducts();
+        if (allAdminCategories.length === 0) {
+          await loadAdminCategories();
+        }
+        updateAdminCategoryCounters(allProducts);
+        window.filterAdminProducts();
       }
     } catch (e2) {
       console.error('Public products fallback also failed:', e2);
@@ -2598,14 +2607,16 @@ async function loadProducts() {
   }
 }
 
-
 /* ==========================================================================
-   CATEGORY & PRODUCT DASHBOARD CONTROLLER (RICH PRODUCT INFO & FILTERS)
+   CATEGORY & PRODUCT DASHBOARD CONTROLLER (DYNAMIC CATEGORIES & FILTERS)
    ========================================================================== */
 let adminActiveCategory = 'all';
 let adminProductSearchQuery = '';
 let adminProductStockFilter = 'all';
 let adminProductSort = 'default';
+
+let allAdminCategories = [];
+let categoryModalOrigin = null;
 
 const CATEGORY_META = {
   all: {
@@ -2614,42 +2625,141 @@ const CATEGORY_META = {
     icon: '📦',
     desc: 'Complete studio catalog featuring handcrafted frames, corporate stationery, personalized merchandise, and photo gifts.',
     anchor: 'products'
-  },
-  frames: {
-    name: 'Studio & Framing',
-    badge: 'Studio & Framing',
-    icon: '🖼️',
-    desc: 'Classic wood and acrylic glass frames, certificate frames, collage memory boxes, and gallery wall displays.',
-    anchor: 'cat-frames'
-  },
-  personalized: {
-    name: 'Personalized Printing',
-    badge: 'Personalized Printing',
-    icon: '☕',
-    desc: 'Custom printed ceramic mugs, insulated bottles, custom apparel, and personalized daily keepsakes.',
-    anchor: 'cat-personalized'
-  },
-  office: {
-    name: 'Office Printing',
-    badge: 'Office Printing',
-    icon: '📁',
-    desc: 'Corporate presentation folders, customized file binders, business cards, letterheads, and executive desk accessories.',
-    anchor: 'cat-office'
-  },
-  custom: {
-    name: 'Custom Printing',
-    badge: 'Custom Printing',
-    icon: '🎨',
-    desc: 'Museum-grade canvas gallery wraps, edge-to-edge acrylic prints, metallic prints, and bespoke art installations.',
-    anchor: 'cat-custom'
-  },
-  gifts: {
-    name: 'Photo Gifts & Keepsakes',
-    badge: 'Photo Gifts & Keepsakes',
-    icon: '🎁',
-    desc: 'Personalized 3D photo crystals, acrylic desktop plaques, customized keychains, and commemorative photo clocks.',
-    anchor: 'cat-gifts'
   }
+};
+
+const globalCategoryLabels = {
+  frames: { label: 'Studio & Framing', color: '#854d0e', bg: 'rgba(234, 179, 8, 0.15)' },
+  personalized: { label: 'Personalized Printing', color: '#1e40af', bg: 'rgba(59, 130, 246, 0.15)' },
+  office: { label: 'Office Printing', color: '#166534', bg: 'rgba(34, 197, 94, 0.15)' },
+  custom: { label: 'Custom Printing', color: '#6b21a8', bg: 'rgba(168, 85, 247, 0.15)' },
+  gifts: { label: 'Photo Gifts', color: '#9d174d', bg: 'rgba(236, 72, 153, 0.15)' }
+};
+
+async function loadAdminCategories() {
+  try {
+    let data;
+    try {
+      const res = await apiFetch('/api/admin/categories');
+      data = await res.json();
+    } catch (_) {}
+
+    if (!data || !data.success) {
+      const fallbackRes = await fetch(`${API_BASE}/api/categories`);
+      data = await fallbackRes.json();
+    }
+
+    if (data && (data.success || Array.isArray(data.categories))) {
+      allAdminCategories = data.categories || [];
+      allAdminCategories.forEach(c => {
+        CATEGORY_META[c.id] = {
+          name: c.name,
+          badge: c.badge || c.name,
+          icon: c.icon || '🏷️',
+          desc: c.desc || `Browse handcrafted ${c.name} collection.`,
+          anchor: `cat-${c.id}`
+        };
+        globalCategoryLabels[c.id] = {
+          label: c.name,
+          color: c.color || '#C99A3D',
+          bg: c.bg || 'rgba(201, 154, 61, 0.15)'
+        };
+      });
+
+      populateProductCategoryDropdowns();
+      renderCategoryTabs();
+    }
+  } catch (err) {
+    console.warn('Failed to load categories:', err);
+  }
+}
+
+function renderCategoryTabs() {
+  const tabsContainer = document.getElementById('productCategoryTabs');
+  if (!tabsContainer) return;
+
+  const totalCount = allProducts.length;
+
+  let tabsHtml = `
+    <button type="button" class="admin-tab-btn ${adminActiveCategory === 'all' ? 'active' : ''}" data-category="all" onclick="selectAdminCategory('all')">
+      <span>All Products</span>
+      <span class="category-badge-count" id="countAll">${totalCount}</span>
+    </button>
+  `;
+
+  allAdminCategories.forEach(cat => {
+    const count = allProducts.filter(p => (p.category || '').toLowerCase() === cat.id.toLowerCase()).length;
+    const isActive = adminActiveCategory === cat.id;
+    tabsHtml += `
+      <button type="button" class="admin-tab-btn ${isActive ? 'active' : ''}" data-category="${escapeHtml(cat.id)}" onclick="selectAdminCategory('${escapeHtml(cat.id)}')">
+        <span>${escapeHtml(cat.icon || '🏷️')} ${escapeHtml(cat.name)}</span>
+        <span class="category-badge-count" id="count_${escapeHtml(cat.id)}">${count}</span>
+      </button>
+    `;
+  });
+
+  tabsHtml += `
+    <button type="button" class="admin-tab-btn" onclick="openAddCategoryModal()" style="border-style: dashed; color: var(--primary); font-weight: 600;" title="Create new category">
+      <span>+ Add Category</span>
+    </button>
+  `;
+
+  tabsContainer.innerHTML = tabsHtml;
+}
+
+function populateProductCategoryDropdowns() {
+  const newCatSelect = document.getElementById('newProductCategory');
+  const editCatSelect = document.getElementById('editProductCategory');
+
+  if (allAdminCategories.length === 0) return;
+
+  const optionsHtml = allAdminCategories.map(c => 
+    `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`
+  ).join('');
+
+  if (newCatSelect) {
+    const currentVal = newCatSelect.value;
+    newCatSelect.innerHTML = optionsHtml;
+    if (currentVal && allAdminCategories.some(c => c.id === currentVal)) {
+      newCatSelect.value = currentVal;
+    }
+  }
+
+  if (editCatSelect) {
+    const currentVal = editCatSelect.value;
+    editCatSelect.innerHTML = optionsHtml;
+    if (currentVal && allAdminCategories.some(c => c.id === currentVal)) {
+      editCatSelect.value = currentVal;
+    }
+  }
+}
+
+window.autoGenerateCategorySlug = function(val) {
+  const slugInput = document.getElementById('newCategoryId');
+  if (!slugInput || slugInput.dataset.manualEdited === 'true') return;
+  slugInput.value = (val || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+};
+
+window.openAddCategoryModal = function(origin = null) {
+  categoryModalOrigin = origin;
+  const modal = document.getElementById('addCategoryModal');
+  const form = document.getElementById('addCategoryForm');
+  if (form) form.reset();
+  const slugInput = document.getElementById('newCategoryId');
+  if (slugInput) delete slugInput.dataset.manualEdited;
+  const colorInput = document.getElementById('newCategoryColor');
+  const colorHex = document.getElementById('newCategoryColorHex');
+  if (colorInput) colorInput.value = '#C99A3D';
+  if (colorHex) colorHex.textContent = '#C99A3D';
+  const iconInput = document.getElementById('newCategoryIcon');
+  if (iconInput) iconInput.value = '🏷️';
+
+  if (modal) modal.classList.add('open');
+};
+
+window.closeAddCategoryModal = function() {
+  const modal = document.getElementById('addCategoryModal');
+  if (modal) modal.classList.remove('open');
 };
 
 window.selectAdminCategory = function(catKey) {
@@ -2729,7 +2839,6 @@ window.filterAdminProducts = function() {
 };
 
 function updateAdminCategoryCounters(products) {
-  const counts = { all: products.length, frames: 0, personalized: 0, office: 0, custom: 0, gifts: 0 };
   let inStockCount = 0;
   let badgeCount = 0;
   let minPrice = Infinity;
@@ -2737,8 +2846,6 @@ function updateAdminCategoryCounters(products) {
   let ratingCount = 0;
 
   products.forEach(p => {
-    const cat = (p.category || '').toLowerCase();
-    if (counts[cat] !== undefined) counts[cat]++;
     const isAvail = p.inStock !== false && p.stockStatus !== 'Out of Stock' && p.status !== 'Out of Stock';
     if (isAvail) inStockCount++;
     if (p.badge) badgeCount++;
@@ -2750,19 +2857,8 @@ function updateAdminCategoryCounters(products) {
     }
   });
 
-  const elAll = document.getElementById('countAll');
-  const elFrames = document.getElementById('countFrames');
-  const elPers = document.getElementById('countPersonalized');
-  const elOff = document.getElementById('countOffice');
-  const elCust = document.getElementById('countCustom');
-  const elGifts = document.getElementById('countGifts');
-
-  if (elAll) elAll.textContent = counts.all;
-  if (elFrames) elFrames.textContent = counts.frames;
-  if (elPers) elPers.textContent = counts.personalized;
-  if (elOff) elOff.textContent = counts.office;
-  if (elCust) elCust.textContent = counts.custom;
-  if (elGifts) elGifts.textContent = counts.gifts;
+  // Re-render dynamic category tabs with updated product counts
+  renderCategoryTabs();
 
   // KPI Bar update
   const kpiActive = document.getElementById('kpiActiveProducts');
@@ -2837,14 +2933,6 @@ function renderAdminProducts(products) {
     return;
   }
 
-  const categoryLabels = {
-    frames: { label: 'Studio & Framing', color: '#854d0e', bg: 'rgba(234, 179, 8, 0.15)' },
-    personalized: { label: 'Personalized Printing', color: '#1e40af', bg: 'rgba(59, 130, 246, 0.15)' },
-    office: { label: 'Office Printing', color: '#166534', bg: 'rgba(34, 197, 94, 0.15)' },
-    custom: { label: 'Custom Printing', color: '#6b21a8', bg: 'rgba(168, 85, 247, 0.15)' },
-    gifts: { label: 'Photo Gifts', color: '#9d174d', bg: 'rgba(236, 72, 153, 0.15)' }
-  };
-
     tbody.innerHTML = products.map(p => {
     const isAvailable = p.inStock !== false && p.stockStatus !== 'Out of Stock' && p.status !== 'Out of Stock';
     const statusBtnClass = isAvailable ? 'in-stock' : 'out-stock';
@@ -2853,7 +2941,7 @@ function renderAdminProducts(products) {
     const discountPercent = origPrice && origPrice > currentPrice ? Math.round(((origPrice - currentPrice) / origPrice) * 100) : 0;
 
     const catKey = (p.category || 'frames').toLowerCase();
-    const catStyle = categoryLabels[catKey] || { label: p.categoryLabel || p.category || 'General', color: '#475569', bg: 'rgba(100, 116, 139, 0.15)' };
+    const catStyle = globalCategoryLabels[catKey] || { label: p.categoryLabel || p.category || 'General', color: '#475569', bg: 'rgba(100, 116, 139, 0.15)' };
 
     const ratingVal = p.rating ? Number(p.rating).toFixed(1) : '4.8';
     const revCount = p.reviewsCount || p.reviews || 42;
@@ -3741,6 +3829,72 @@ function initProductModals() {
       }
     });
   }
+
+  // Initialize Add Category Form Listener
+  const addCatForm = document.getElementById('addCategoryForm');
+  if (addCatForm) {
+    addCatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('newCategoryName').value.trim();
+      const id = document.getElementById('newCategoryId').value.trim();
+      const icon = document.getElementById('newCategoryIcon').value.trim() || '🏷️';
+      const desc = document.getElementById('newCategoryDesc').value.trim();
+      const badge = document.getElementById('newCategoryBadge').value.trim() || name;
+      const color = document.getElementById('newCategoryColor').value || '#C99A3D';
+
+      const submitBtn = document.getElementById('btnSubmitAddCategory');
+      const origHtml = submitBtn ? submitBtn.innerHTML : 'Save Category';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Saving...</span>';
+      }
+
+      try {
+        const res = await apiFetch('/api/admin/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, name, icon, desc, badge, color })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          showToast('Failed to Add Category', data.message || 'Could not save category.', 'danger');
+          return;
+        }
+
+        showToast('Category Created', `Category "${name}" created successfully!`, 'success');
+        closeAddCategoryModal();
+
+        // Refresh categories
+        await loadAdminCategories();
+        updateAdminCategoryCounters(allProducts);
+
+        // If opened from Add Product or Edit Product modal, select this new category
+        if (categoryModalOrigin === 'new') {
+          const newCatSelect = document.getElementById('newProductCategory');
+          if (newCatSelect) newCatSelect.value = data.category ? data.category.id : id;
+        } else if (categoryModalOrigin === 'edit') {
+          const editCatSelect = document.getElementById('editProductCategory');
+          if (editCatSelect) editCatSelect.value = data.category ? data.category.id : id;
+        }
+      } catch (err) {
+        console.error('Error submitting category:', err);
+        showToast('Error', 'Network error saving category: ' + err.message, 'danger');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = origHtml;
+        }
+      }
+    });
+  }
+
+  const catColorInput = document.getElementById('newCategoryColor');
+  if (catColorInput) {
+    catColorInput.addEventListener('input', (e) => {
+      const hexSpan = document.getElementById('newCategoryColorHex');
+      if (hexSpan) hexSpan.textContent = e.target.value.toUpperCase();
+    });
+  }
 }
 
 window.deleteProduct = async (id) => {
@@ -3765,11 +3919,17 @@ window.deleteProduct = async (id) => {
 };
 
 function getCategoryLabel(category) {
-  switch (category) {
+  if (!category) return 'Frames';
+  const clean = category.toLowerCase();
+  const match = allAdminCategories.find(c => c.id.toLowerCase() === clean);
+  if (match) return match.name;
+  if (CATEGORY_META[clean]) return CATEGORY_META[clean].name;
+  switch (clean) {
     case 'frames': return 'Glass & Plastic Frames';
     case 'personalized': return 'Personalized Printing';
     case 'office': return 'Office Printing';
     case 'custom': return 'Custom Printing';
+    case 'gifts': return 'Photo Gifts & Keepsakes';
     default: return category;
   }
 }
