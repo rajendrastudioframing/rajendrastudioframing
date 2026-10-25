@@ -3646,7 +3646,7 @@ function renderCustomersTable(customers) {
   if (customers.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 36px;">
+        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 36px;">
           No customer accounts found matching your query.
         </td>
       </tr>
@@ -3718,17 +3718,6 @@ function renderCustomersTable(customers) {
         </td>
         <td>
           <strong style="color: var(--text-main); font-size: 0.9rem;">₹${totalSpent.toLocaleString('en-IN')}</strong>
-        </td>
-        <td style="text-align: center;">
-          ${cust.isOnline ? `
-            <span class="status-pill completed" style="font-size: 0.72rem; padding: 3px 8px; background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700;">
-              <span class="status-dot pulse" style="background: #10B981;"></span> Online Now
-            </span>
-          ` : `
-            <span class="status-pill ${cust.status === 'Active' ? 'active' : 'neutral'}" style="font-size: 0.72rem; padding: 3px 8px;">
-              <span class="status-dot"></span> ${escapeHtml(cust.status || 'Active')}
-            </span>
-          `}
         </td>
       </tr>
     `;
