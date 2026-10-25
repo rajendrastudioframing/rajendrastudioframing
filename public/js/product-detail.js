@@ -431,11 +431,15 @@ function renderSizeOptions() {
   const container = document.getElementById('detailSizesContainer');
   if (!container || !currentProduct.sizes) return;
 
-  container.innerHTML = currentProduct.sizes.map((s, idx) => `
-    <button type="button" class="size-chip ${idx === 0 ? 'active' : ''}" data-size-name="${s.name}" data-size-price="${s.price}">
-      ${s.name}
-    </button>
-  `).join('');
+  container.innerHTML = currentProduct.sizes.map((s, idx) => {
+    const sName = typeof s === 'object' && s !== null ? (s.name || `Size ${idx + 1}`) : String(s);
+    const sPrice = typeof s === 'object' && s !== null && s.price !== undefined ? Number(s.price) : Number(currentProduct.price || 0);
+    return `
+      <button type="button" class="size-chip ${idx === 0 ? 'active' : ''}" data-size-name="${sName}" data-size-price="${sPrice}">
+        ${sName}
+      </button>
+    `;
+  }).join('');
 
   container.querySelectorAll('.size-chip').forEach(chip => {
     chip.addEventListener('click', () => {

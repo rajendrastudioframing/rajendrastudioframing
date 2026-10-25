@@ -2886,16 +2886,23 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     return res.status(400).json({ success: false, message: 'Product name and price are required.' });
   }
 
-  const idSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `product-${Date.now()}`;
+  const rawSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `product-${Date.now()}`;
+  const existingProducts = await db.getProducts();
+  let uniqueSlug = rawSlug;
+  let slugCounter = 1;
+  while (existingProducts.some(p => p.id === uniqueSlug)) {
+    uniqueSlug = `${rawSlug}-${slugCounter++}`;
+  }
 
   // Handle uploaded base64 image save to disk
   let resolvedImage = image;
-  if (resolvedImage && resolvedImage.startsWith('data:image/')) {
+  if (resolvedImage && typeof resolvedImage === 'string' && resolvedImage.startsWith('data:image/')) {
     try {
-      const matches = resolvedImage.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+      const matches = resolvedImage.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,([\s\S]+)$/);
       if (matches) {
-        const ext = matches[1] === 'png' ? '.png' : (matches[1] === 'webp' ? '.webp' : '.jpg');
-        const buffer = Buffer.from(matches[2], 'base64');
+        const rawMime = matches[1].toLowerCase();
+        const ext = rawMime.includes('png') ? '.png' : (rawMime.includes('webp') ? '.webp' : '.jpg');
+        const buffer = Buffer.from(matches[2].trim(), 'base64');
         const uploadDir = path.join(__dirname, 'assets', 'images', 'uploads');
         const pubUploadDir = path.join(__dirname, 'public', 'assets', 'images', 'uploads');
         if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -2918,10 +2925,21 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     else resolvedImage = 'assets/images/custom_canvas.jpg';
   }
 
-  // Resolve sizes
+  // Resolve sizes: guarantee array of objects with { name, price }
   let resolvedSizes = [];
   if (Array.isArray(sizes) && sizes.length > 0) {
-    resolvedSizes = sizes;
+    resolvedSizes = sizes.map((s, idx) => {
+      if (typeof s === 'object' && s !== null) {
+        return {
+          name: String(s.name || `Size ${idx + 1}`),
+          price: Number(s.price) || Math.round(Number(price) * (1 + (idx * 0.25)))
+        };
+      }
+      return {
+        name: String(s),
+        price: Math.round(Number(price) * (1 + (idx * 0.25)))
+      };
+    });
   } else if (typeof sizes === 'string' && sizes.trim()) {
     resolvedSizes = sizes.split(',').map(s => s.trim()).filter(Boolean).map((s, idx) => ({
       name: s,
@@ -2978,7 +2996,7 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
   }
 
   const newProduct = {
-    id: idSlug,
+    id: uniqueSlug,
     name: name.trim(),
     category: category || 'custom',
     categoryLabel: categoryLabel || 'Custom Printing',
@@ -3025,10 +3043,11 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
   // Handle uploaded base64 image if updated
   if (updates.image && typeof updates.image === 'string' && updates.image.startsWith('data:image/')) {
     try {
-      const matches = updates.image.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+      const matches = updates.image.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,([\s\S]+)$/);
       if (matches) {
-        const ext = matches[1] === 'png' ? '.png' : (matches[1] === 'webp' ? '.webp' : '.jpg');
-        const buffer = Buffer.from(matches[2], 'base64');
+        const rawMime = matches[1].toLowerCase();
+        const ext = rawMime.includes('png') ? '.png' : (rawMime.includes('webp') ? '.webp' : '.jpg');
+        const buffer = Buffer.from(matches[2].trim(), 'base64');
         const uploadDir = path.join(__dirname, 'assets', 'images', 'uploads');
         const pubUploadDir = path.join(__dirname, 'public', 'assets', 'images', 'uploads');
         if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -3098,10 +3117,35 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
   }
   if (updates.sizes !== undefined) {
     if (Array.isArray(updates.sizes)) {
-      target.sizes = updates.sizes;
+      target.sizes = updates.sizes.map((s, idx) => {
+        if (typeof s === 'object' && s !== null) {
+          return {
+            name: String(s.name || `Size ${idx + 1}`),
+            price: Number(s.price) || Math.round(target.price * (1 + (idx * 0.25)))
+          };
+        }
+        return {
+          name: String(s),
+          price: Math.round(target.price * (1 + (idx * 0.25)))
+        };
+      });
     } else if (typeof updates.sizes === 'string') {
       try {
-        target.sizes = JSON.parse(updates.sizes);
+        const parsed = JSON.parse(updates.sizes);
+        if (Array.isArray(parsed)) {
+          target.sizes = parsed.map((s, idx) => {
+            if (typeof s === 'object' && s !== null) {
+              return {
+                name: String(s.name || `Size ${idx + 1}`),
+                price: Number(s.price) || Math.round(target.price * (1 + (idx * 0.25)))
+              };
+            }
+            return {
+              name: String(s),
+              price: Math.round(target.price * (1 + (idx * 0.25)))
+            };
+          });
+        }
       } catch (_) {
         target.sizes = updates.sizes.split(',').map(s => s.trim()).filter(Boolean).map((s, idx) => ({
           name: s,

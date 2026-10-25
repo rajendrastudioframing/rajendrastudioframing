@@ -2918,6 +2918,41 @@ function renderAdminProducts(products) {
   }).join('');
 }
 
+function compressAdminImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.85) {
+  return new Promise((resolve) => {
+    if (!file || !file.type.startsWith('image/')) {
+      return resolve(null);
+    }
+    const reader = new FileReader();
+    reader.onload = (loadEvt) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(loadEvt.target.result);
+      img.src = loadEvt.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
 function initProductModals() {
   const openAddBtn = document.getElementById('openAddProductModalBtn');
   const addModal = document.getElementById('addProductModal');
@@ -2946,7 +2981,7 @@ function initProductModals() {
     }
   };
 
-  window.handleAdminImageUpload = (e) => {
+  window.handleAdminImageUpload = async (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
@@ -2955,22 +2990,19 @@ function initProductModals() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (loadEvt) => {
-      uploadedProductImageBase64 = loadEvt.target.result;
-      const previewImg = document.getElementById('adminDropzonePreviewImg');
-      const previewBox = document.getElementById('adminDropzonePreview');
-      const emptyBox = document.getElementById('adminDropzoneEmpty');
-      const fileNameEl = document.getElementById('adminDropzoneFileName');
-      const fileSizeEl = document.getElementById('adminDropzoneFileSize');
+    const compressed = await compressAdminImage(file);
+    uploadedProductImageBase64 = compressed || null;
+    const previewImg = document.getElementById('adminDropzonePreviewImg');
+    const previewBox = document.getElementById('adminDropzonePreview');
+    const emptyBox = document.getElementById('adminDropzoneEmpty');
+    const fileNameEl = document.getElementById('adminDropzoneFileName');
+    const fileSizeEl = document.getElementById('adminDropzoneFileSize');
 
-      if (previewImg) previewImg.src = uploadedProductImageBase64;
-      if (fileNameEl) fileNameEl.textContent = file.name;
-      if (fileSizeEl) fileSizeEl.textContent = (file.size / 1024 < 1024) ? `${Math.round(file.size / 1024)} KB` : `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
-      if (emptyBox) emptyBox.style.display = 'none';
-      if (previewBox) previewBox.style.display = 'flex';
-    };
-    reader.readAsDataURL(file);
+    if (previewImg && uploadedProductImageBase64) previewImg.src = uploadedProductImageBase64;
+    if (fileNameEl) fileNameEl.textContent = file.name;
+    if (fileSizeEl) fileSizeEl.textContent = (file.size / 1024 < 1024) ? `${Math.round(file.size / 1024)} KB` : `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+    if (emptyBox) emptyBox.style.display = 'none';
+    if (previewBox) previewBox.style.display = 'flex';
   };
 
   window.removeAdminImage = (e) => {
@@ -2985,6 +3017,21 @@ function initProductModals() {
     if (previewBox) previewBox.style.display = 'none';
     if (emptyBox) emptyBox.style.display = 'flex';
   };
+
+  // Category change listener to set intelligent preset default
+  const newCatSelect = document.getElementById('newProductCategory');
+  if (newCatSelect) {
+    newCatSelect.addEventListener('change', (e) => {
+      const cat = e.target.value;
+      const presetSelect = document.getElementById('newProductImagePreset');
+      if (presetSelect) {
+        if (cat === 'frames') presetSelect.value = 'assets/images/glass_frame.jpg';
+        else if (cat === 'personalized') presetSelect.value = 'assets/images/printed_bottle.jpg';
+        else if (cat === 'office') presetSelect.value = 'assets/images/printed_file.jpg';
+        else presetSelect.value = 'assets/images/custom_canvas.jpg';
+      }
+    });
+  }
 
   // Drag and drop for dropzone
   const dropzone = document.getElementById('adminImageDropzone');
@@ -3059,7 +3106,6 @@ function initProductModals() {
     if (nameInput) nameInput.value = '';
   };
 
-  
   // Product Option Switcher & Price Mirroring (Dropdown for Size, Color, Price)
   window.switchAdminProductOption = (modalType, optionVal) => {
     const prefix = modalType === 'new' ? 'newProductOption' : 'editProductOption';
@@ -3093,15 +3139,23 @@ function initProductModals() {
     if (addForm) addForm.reset();
     window.removeAdminImage();
     window.switchAdminImageMode('upload');
-    if (addModal) addModal.classList.add('open');
+    const newCat = document.getElementById('newProductCategory');
+    if (newCat) {
+      newCat.value = 'frames';
+      const presetSelect = document.getElementById('newProductImagePreset');
+      if (presetSelect) presetSelect.value = 'assets/images/glass_frame.jpg';
+    }
+    const targetModal = document.getElementById('addProductModal');
+    if (targetModal) targetModal.classList.add('open');
   };
 
-  if (openAddBtn && addModal) {
+  if (openAddBtn) {
     openAddBtn.addEventListener('click', window.openAddProductModal);
   }
 
   window.closeAddProductModal = () => {
-    if (addModal) addModal.classList.remove('open');
+    const targetModal = document.getElementById('addProductModal');
+    if (targetModal) targetModal.classList.remove('open');
   };
 
   window.toggleProductStock = async (id) => {
@@ -3110,12 +3164,9 @@ function initProductModals() {
 
     const nextStatus = prod.status === 'In Stock' ? 'Out of Stock' : 'In Stock';
     try {
-      const res = await fetch(`${API_BASE}/api/admin/products/${encodeURIComponent(id)}`, {
+      const res = await apiFetch(`/api/admin/products/${encodeURIComponent(id)}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus })
       });
       const data = await res.json();
@@ -3132,43 +3183,58 @@ function initProductModals() {
     }
   };
 
-  
-    const newPriceInput = document.getElementById('newProductPrice');
-    if (newPriceInput) {
-      newPriceInput.addEventListener('input', (e) => {
-        const mirror = document.getElementById('newProductBasePriceMirror');
-        if (mirror) mirror.value = e.target.value;
-      });
-    }
-    const editPriceInput = document.getElementById('editProductPrice');
-    if (editPriceInput) {
-      editPriceInput.addEventListener('input', (e) => {
-        const mirror = document.getElementById('editProductBasePriceMirror');
-        if (mirror) mirror.value = e.target.value;
-      });
-    }
-    const editOrigPriceInput = document.getElementById('editProductOriginalPrice');
-    if (editOrigPriceInput) {
-      editOrigPriceInput.addEventListener('input', (e) => {
-        const mirror = document.getElementById('editProductOriginalPriceMirror');
-        if (mirror) mirror.value = e.target.value;
-      });
-    }
+  const newPriceInput = document.getElementById('newProductPrice');
+  if (newPriceInput) {
+    newPriceInput.addEventListener('input', (e) => {
+      const mirror = document.getElementById('newProductBasePriceMirror');
+      if (mirror) mirror.value = e.target.value;
+    });
+  }
+  const editPriceInput = document.getElementById('editProductPrice');
+  if (editPriceInput) {
+    editPriceInput.addEventListener('input', (e) => {
+      const mirror = document.getElementById('editProductBasePriceMirror');
+      if (mirror) mirror.value = e.target.value;
+    });
+  }
+  const editOrigPriceInput = document.getElementById('editProductOriginalPrice');
+  if (editOrigPriceInput) {
+    editOrigPriceInput.addEventListener('input', (e) => {
+      const mirror = document.getElementById('editProductOriginalPriceMirror');
+      if (mirror) mirror.value = e.target.value;
+    });
+  }
 
   if (addForm) {
     addForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name = document.getElementById('newProductName').value.trim();
-      const category = document.getElementById('newProductCategory').value;
-      const price = document.getElementById('newProductPrice').value;
+      const name = document.getElementById('newProductName') ? document.getElementById('newProductName').value.trim() : '';
+      const category = document.getElementById('newProductCategory') ? document.getElementById('newProductCategory').value : 'frames';
+      const priceVal = document.getElementById('newProductPrice') ? document.getElementById('newProductPrice').value.trim() : '';
+      const originalPriceVal = document.getElementById('newProductOriginalPrice') ? document.getElementById('newProductOriginalPrice').value.trim() : '';
       const status = document.getElementById('newProductStatus') ? document.getElementById('newProductStatus').value : 'In Stock';
-      const stockQty = document.getElementById('newProductStockQty') ? document.getElementById('newProductStockQty').value : 100;
+      const stockQtyVal = document.getElementById('newProductStockQty') ? document.getElementById('newProductStockQty').value.trim() : '100';
       const badge = document.getElementById('newProductBadge') ? document.getElementById('newProductBadge').value.trim() : '';
       const leadTime = document.getElementById('newProductLeadTime') ? document.getElementById('newProductLeadTime').value.trim() : '24 - 48 Hours';
       const material = document.getElementById('newProductMaterial') ? document.getElementById('newProductMaterial').value.trim() : 'Premium Material';
       const desc = document.getElementById('newProductDesc') ? document.getElementById('newProductDesc').value.trim() : '';
 
-      // Sizes
+      if (!name) {
+        showToast('Name Required', 'Please enter a product name.', 'warning');
+        const nameInput = document.getElementById('newProductName');
+        if (nameInput) nameInput.focus();
+        return;
+      }
+
+      const priceNum = Number(priceVal);
+      if (!priceVal || isNaN(priceNum) || priceNum <= 0) {
+        showToast('Valid Price Required', 'Please enter a valid selling price in ₹.', 'warning');
+        const priceInput = document.getElementById('newProductPrice');
+        if (priceInput) priceInput.focus();
+        return;
+      }
+
+      // Sizes: construct structured sizes array with name and calculated variant prices
       const activeSizePills = Array.from(document.querySelectorAll('#adminSizePills .admin-choice-pill.active')).map(p => p.getAttribute('data-size')).filter(Boolean);
       const customSizesVal = document.getElementById('newProductCustomSizes') ? document.getElementById('newProductCustomSizes').value.trim() : '';
       if (customSizesVal) {
@@ -3176,6 +3242,10 @@ function initProductModals() {
           if (!activeSizePills.includes(s)) activeSizePills.push(s);
         });
       }
+      const resolvedSizes = (activeSizePills.length > 0 ? activeSizePills : ['8" × 10"', '10" × 12"', '12" × 18"']).map((sizeName, idx) => ({
+        name: sizeName,
+        price: idx === 0 ? priceNum : Math.round(priceNum * (1 + (idx * 0.25)))
+      }));
 
       // Colors
       const activeColorChips = Array.from(document.querySelectorAll('#adminColorSwatches .admin-color-chip.active')).map(c => ({
@@ -3192,51 +3262,85 @@ function initProductModals() {
         });
       }
 
-      // Image
+      // Image selection: Upload or selected preset or smart category default
       let finalImage = '';
       if (adminImageMode === 'upload' && uploadedProductImageBase64) {
         finalImage = uploadedProductImageBase64;
       } else {
-        finalImage = document.getElementById('newProductImagePreset') ? document.getElementById('newProductImagePreset').value : '';
+        const presetEl = document.getElementById('newProductImagePreset');
+        finalImage = (presetEl && presetEl.value) ? presetEl.value : '';
+      }
+      if (!finalImage) {
+        if (category === 'frames') finalImage = 'assets/images/glass_frame.jpg';
+        else if (category === 'personalized') finalImage = 'assets/images/printed_bottle.jpg';
+        else if (category === 'office') finalImage = 'assets/images/printed_file.jpg';
+        else finalImage = 'assets/images/custom_canvas.jpg';
+      }
+
+      const submitBtn = document.getElementById('btnSubmitAddProduct') || addForm.querySelector('button[type="submit"]');
+      const origBtnContent = submitBtn ? submitBtn.innerHTML : '<span>Add Product &amp; Stock</span>';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
+            <line x1="12" y1="2" x2="12" y2="6"></line>
+            <line x1="12" y1="18" x2="12" y2="22"></line>
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+            <line x1="2" y1="12" x2="6" y2="12"></line>
+            <line x1="18" y1="12" x2="22" y2="12"></line>
+            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+          </svg>
+          <span>Adding Product...</span>
+        `;
       }
 
       try {
-        const res = await fetch(`${API_BASE}/api/admin/products`, {
+        const res = await apiFetch('/api/admin/products', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             name,
             category,
             categoryLabel: getCategoryLabel(category),
-            price,
+            price: priceNum,
+            originalPrice: originalPriceVal ? Number(originalPriceVal) : null,
             status,
-            stockQty,
+            stockQty: Number(stockQtyVal) || 100,
             badge,
             leadTime,
             material,
             shortDescription: desc,
             description: desc,
             image: finalImage,
-            sizes: activeSizePills,
+            sizes: resolvedSizes,
             colors: activeColorChips,
             variants: activeVariantPills
           })
         });
 
         const data = await res.json();
-        if (data.success) {
-          closeAddProductModal();
+        if (res.ok && data && data.success) {
+          window.closeAddProductModal();
           await loadProducts();
-          showToast('Product & Stock Added', `"${name}" added successfully with status: ${status}!`, 'success');
+          if (typeof window.selectAdminCategory === 'function') {
+            window.selectAdminCategory(category);
+          }
+          showToast('Product Added Successfully', `"${name}" has been added to catalog and is now live!`, 'success');
         } else {
-          showToast('Add Failed', data.message || 'Failed to add product.', 'danger');
+          showToast('Add Failed', (data && data.message) || `Failed to add product (${res.status}).`, 'danger');
         }
       } catch (err) {
         console.error('Error adding product:', err);
-        showToast('Error', 'Network error adding product.', 'danger');
+        showToast('Error', 'Network error adding product: ' + err.message, 'danger');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = origBtnContent;
+        }
       }
     });
   }
@@ -3536,11 +3640,10 @@ function initProductModals() {
       }
 
       try {
-        const res = await fetch(`${API_BASE}/api/admin/products/${encodeURIComponent(id)}`, {
+        const res = await apiFetch(`/api/admin/products/${encodeURIComponent(id)}`, {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             name,
@@ -3587,9 +3690,8 @@ window.deleteProduct = async (id) => {
   if (!confirm(`Are you sure you want to remove this product from the catalog?`)) return;
 
   try {
-    const res = await fetch(`${API_BASE}/api/admin/products/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
+    const res = await apiFetch(`/api/admin/products/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
     });
     const data = await res.json();
     if (data.success) {
