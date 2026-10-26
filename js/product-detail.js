@@ -25,6 +25,9 @@ async function initProductDetailPage() {
       const data = await res.json();
       if (data && data.success && Array.isArray(data.products) && data.products.length > 0) {
         window.PRODUCTS_DATA = data.products;
+        if (typeof PRODUCTS_DATA !== 'undefined') {
+          try { PRODUCTS_DATA = data.products; } catch (_) {}
+        }
       }
     }
   } catch (e) {

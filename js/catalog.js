@@ -87,6 +87,16 @@ function renderCategorySelectors() {
   }
 }
 
+function getCatalogProducts() {
+  if (window.PRODUCTS_DATA && Array.isArray(window.PRODUCTS_DATA) && window.PRODUCTS_DATA.length > 0) {
+    return window.PRODUCTS_DATA;
+  }
+  if (typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) {
+    return PRODUCTS_DATA;
+  }
+  return [];
+}
+
 async function initCatalog() {
   const gridContainer = document.getElementById('catalogProductsGrid');
   if (!gridContainer) return;
@@ -117,13 +127,16 @@ async function initCatalog() {
       const data = await res.json();
       if (data && data.success && Array.isArray(data.products) && data.products.length > 0) {
         window.PRODUCTS_DATA = data.products;
+        if (typeof PRODUCTS_DATA !== 'undefined') {
+          try { PRODUCTS_DATA = data.products; } catch (_) {}
+        }
       }
     }
   } catch (e) {
     // Fallback to static PRODUCTS_DATA
   }
 
-  if (typeof PRODUCTS_DATA === 'undefined') return;
+  if (!getCatalogProducts().length) return;
 
   // Check URL query params for initial category filter
   const urlParams = new URLSearchParams(window.location.search);
@@ -280,7 +293,7 @@ function renderCatalog() {
   updateCategoryUI();
 
   // Filter products
-  let filtered = PRODUCTS_DATA.filter(item => {
+  let filtered = getCatalogProducts().filter(item => {
     const itemCat = (item.category || '').toLowerCase();
     const curCat = (currentCategory || 'all').toLowerCase();
     const matchesCategory = (curCat === 'all') || (itemCat === curCat);
@@ -425,7 +438,7 @@ window.quickWhatsApp = function(productId, event) {
     if (typeof event.stopPropagation === 'function') event.stopPropagation();
     if (typeof event.preventDefault === 'function') event.preventDefault();
   }
-  const products = (typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) ? PRODUCTS_DATA : [];
+  const products = getCatalogProducts();
   const product = products.find(p => p.id === productId);
 
   const productName = product ? product.name : 'Photo Frame & Printing Product';
@@ -443,7 +456,7 @@ window.changeCatalogCardImage = function(productId, newImgSrc, swatchEl, event, 
     if (typeof event.stopPropagation === 'function') event.stopPropagation();
     if (typeof event.preventDefault === 'function') event.preventDefault();
   }
-  const products = (typeof PRODUCTS_DATA !== 'undefined' ? PRODUCTS_DATA : []);
+  const products = getCatalogProducts();
   const product = products.find(p => p.id === productId);
 
   const cards = document.querySelectorAll(`.product-card[data-id="${productId}"]`);
