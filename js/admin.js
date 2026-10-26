@@ -3412,8 +3412,13 @@ function initProductModals() {
 
   window.openAddProductModal = () => {
     if (addForm) addForm.reset();
-    window.removeAdminImage();
-    window.switchAdminImageMode('upload');
+    try {
+      if (typeof window.removeAdminImage === 'function') window.removeAdminImage();
+      else if (typeof window.removeAllAdminPhotos === 'function') window.removeAllAdminPhotos();
+    } catch (_) {}
+    try {
+      if (typeof window.switchAdminImageMode === 'function') window.switchAdminImageMode('upload');
+    } catch (_) {}
     const newCat = document.getElementById('newProductCategory');
     if (newCat) {
       if (adminActiveCategory && adminActiveCategory !== 'all' && allAdminCategories.some(c => c.id === adminActiveCategory)) {
@@ -3439,6 +3444,10 @@ function initProductModals() {
     if (varSel) varSel.value = 'Standard Finish';
     const priceInput = document.getElementById('newProductPrice');
     if (priceInput) priceInput.value = '';
+    const optPriceInput = document.getElementById('newProductOptionPrice');
+    if (optPriceInput) optPriceInput.value = '';
+    const origPriceInput = document.getElementById('newProductOriginalPrice');
+    if (origPriceInput) origPriceInput.value = '';
     const targetModal = document.getElementById('addProductModal');
     if (targetModal) targetModal.classList.add('open');
   };
@@ -3480,8 +3489,17 @@ function initProductModals() {
   const newPriceInput = document.getElementById('newProductPrice');
   if (newPriceInput) {
     newPriceInput.addEventListener('input', (e) => {
+      const optPrice = document.getElementById('newProductOptionPrice');
+      if (optPrice) optPrice.value = e.target.value;
       const mirror = document.getElementById('newProductBasePriceMirror');
       if (mirror) mirror.value = e.target.value;
+    });
+  }
+  const optPriceInput = document.getElementById('newProductOptionPrice');
+  if (optPriceInput) {
+    optPriceInput.addEventListener('input', (e) => {
+      const mainPrice = document.getElementById('newProductPrice');
+      if (mainPrice && !mainPrice.value) mainPrice.value = e.target.value;
     });
   }
   const editPriceInput = document.getElementById('editProductPrice');
@@ -3504,13 +3522,16 @@ function initProductModals() {
       e.preventDefault();
       const name = document.getElementById('newProductName') ? document.getElementById('newProductName').value.trim() : '';
       const category = document.getElementById('newProductCategory') ? document.getElementById('newProductCategory').value : 'frames';
-      const priceVal = document.getElementById('newProductPrice') ? document.getElementById('newProductPrice').value.trim() : '';
+      const mainPriceVal = document.getElementById('newProductPrice') ? document.getElementById('newProductPrice').value.trim() : '';
+      const optPriceVal = document.getElementById('newProductOptionPrice') ? document.getElementById('newProductOptionPrice').value.trim() : '';
+      const priceVal = mainPriceVal || optPriceVal;
       const originalPriceVal = document.getElementById('newProductOriginalPrice') ? document.getElementById('newProductOriginalPrice').value.trim() : '';
       const status = document.getElementById('newProductStatus') ? document.getElementById('newProductStatus').value : 'In Stock';
       const stockQtyVal = document.getElementById('newProductStockQty') ? document.getElementById('newProductStockQty').value.trim() : '100';
       const badge = document.getElementById('newProductBadge') ? document.getElementById('newProductBadge').value.trim() : '';
       const leadTime = document.getElementById('newProductLeadTime') ? document.getElementById('newProductLeadTime').value.trim() : '24 - 48 Hours';
       const material = document.getElementById('newProductMaterial') ? document.getElementById('newProductMaterial').value.trim() : 'Premium Material';
+      const printingType = document.getElementById('newProductPrintingType') ? document.getElementById('newProductPrintingType').value.trim() : '';
       const desc = document.getElementById('newProductDesc') ? document.getElementById('newProductDesc').value.trim() : '';
 
       if (!name) {
@@ -3546,7 +3567,7 @@ function initProductModals() {
       const resolvedVariants = [ selectedVariant ];
 
       // Image selection: Uploaded photos (up to 5) or catalog preset default
-      let productPhotos = uploadedProductImages.length > 0 ? [...uploadedProductImages] : [];
+      let productPhotos = (typeof uploadedProductImages !== 'undefined' && Array.isArray(uploadedProductImages) && uploadedProductImages.length > 0) ? [...uploadedProductImages] : [];
       if (productPhotos.length === 0) {
         const presetEl = document.getElementById('newProductImagePreset');
         const fallbackPreset = (presetEl && presetEl.value) ? presetEl.value : '';
@@ -3595,6 +3616,7 @@ function initProductModals() {
             badge,
             leadTime,
             material,
+            printingType,
             shortDescription: desc,
             description: desc,
             image: finalImage,

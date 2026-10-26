@@ -1,6 +1,6 @@
 /**
  * RAJENDRA STUDIO & FRAMING - MASTER PRODUCTS CATALOG DATA
- * Total: 28 products - Auto-synced from Admin Panel
+ * Total: 30 products - Auto-synced from Admin Panel
  */
 
 const PRODUCTS_DATA = [
@@ -1316,6 +1316,86 @@ const PRODUCTS_DATA = [
       }
     ],
     "createdAt": "2026-10-26T04:07:08.871Z"
+  },
+  {
+    "id": "test-frame-2026",
+    "name": "Test Frame 2026",
+    "category": "frames",
+    "categoryLabel": "Studio & Framing",
+    "price": 699,
+    "originalPrice": null,
+    "priceDisplay": "Starting from ₹699",
+    "rating": 5,
+    "reviewsCount": 1,
+    "badge": "",
+    "image": "assets/images/glass_frame.jpg",
+    "images": [
+      "assets/images/glass_frame.jpg"
+    ],
+    "shortDescription": "Test Frame 2026 customized by Rajesh Framing Studio.",
+    "description": "Test Frame 2026 handcrafted with premium materials and archival printing standards.",
+    "material": "Glass",
+    "printingType": "High-Resolution Archival Print",
+    "status": "In Stock",
+    "inStock": true,
+    "stockQty": 25,
+    "leadTime": "24 - 48 Hours",
+    "sizes": [
+      {
+        "name": "8\" × 10\"",
+        "price": 699
+      }
+    ],
+    "finishes": [
+      {
+        "id": "finish-1",
+        "name": "Warm Gold",
+        "color": "#C99A3D",
+        "image": "assets/images/glass_frame.jpg",
+        "priceDelta": 0
+      }
+    ],
+    "createdAt": "2026-10-26T04:26:56.628Z"
+  },
+  {
+    "id": "test-executive-wooden-frame-2026",
+    "name": "Test Executive Wooden Frame 2026",
+    "category": "frames",
+    "categoryLabel": "Studio & Framing",
+    "price": 1499,
+    "originalPrice": 1999,
+    "priceDisplay": "Starting from ₹1499",
+    "rating": 5,
+    "reviewsCount": 1,
+    "badge": "",
+    "image": "assets/images/glass_frame.jpg",
+    "images": [
+      "assets/images/glass_frame.jpg"
+    ],
+    "shortDescription": "Handcrafted executive teak wood frame with museum glass.",
+    "description": "Handcrafted executive teak wood frame with museum glass.",
+    "material": "Premium Archival Grade",
+    "printingType": "High-Resolution Archival Print",
+    "status": "In Stock",
+    "inStock": true,
+    "stockQty": 50,
+    "leadTime": "24 - 48 Hours",
+    "sizes": [
+      {
+        "name": "8\" × 10\"",
+        "price": 1499
+      }
+    ],
+    "finishes": [
+      {
+        "id": "finish-1",
+        "name": "Warm Gold",
+        "color": "#C99A3D",
+        "image": "assets/images/glass_frame.jpg",
+        "priceDelta": 0
+      }
+    ],
+    "createdAt": "2026-10-26T04:53:30.217Z"
   }
 ];
 

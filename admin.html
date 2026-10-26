@@ -3883,7 +3883,8 @@
             <input type="text" class="setting-input" id="newProductName" placeholder="e.g. Acrylic Floating Wall Block" required />
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <!-- Row 2: Category, Selling Price & MRP / Original Price -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 12px; margin-bottom: 12px;">
             <div class="setting-row" style="margin-bottom: 0;">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
                 <label class="setting-label" style="margin-bottom: 0;">Category *</label>
@@ -3898,22 +3899,56 @@
               </select>
             </div>
             <div class="setting-row" style="margin-bottom: 0;">
+              <label class="setting-label">Selling Price (₹) *</label>
+              <input type="number" class="setting-input" id="newProductPrice" placeholder="e.g. 599" min="1" required style="font-weight: 700;" />
+            </div>
+            <div class="setting-row" style="margin-bottom: 0;">
+              <label class="setting-label">MRP / Original Price (₹)</label>
+              <input type="number" class="setting-input" id="newProductOriginalPrice" placeholder="Optional (e.g. 999)" min="0" />
+            </div>
+          </div>
+
+          <!-- Row 3: Stock Status, Stock Quantity, Lead Time & Marketing Badge -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div class="setting-row" style="margin-bottom: 0;">
               <label class="setting-label">Stock Status *</label>
               <select class="setting-select" id="newProductStatus">
                 <option value="In Stock" selected>In Stock (Available)</option>
                 <option value="Out of Stock">Out of Stock</option>
+                <option value="Limited Stock">Limited Stock</option>
+                <option value="Made to Order">Made to Order</option>
+              </select>
+            </div>
+            <div class="setting-row" style="margin-bottom: 0;">
+              <label class="setting-label">Stock Units</label>
+              <input type="number" class="setting-input" id="newProductStockQty" placeholder="100" value="100" min="0" />
+            </div>
+            <div class="setting-row" style="margin-bottom: 0;">
+              <label class="setting-label">Lead Time</label>
+              <input type="text" class="setting-input" id="newProductLeadTime" placeholder="24 - 48 Hours" value="24 - 48 Hours" />
+            </div>
+            <div class="setting-row" style="margin-bottom: 0;">
+              <label class="setting-label">Marketing Badge</label>
+              <select class="setting-select" id="newProductBadge">
+                <option value="">None</option>
+                <option value="Bestseller">Bestseller</option>
+                <option value="Trending">Trending</option>
+                <option value="Hot Deal">Hot Deal</option>
+                <option value="New Arrival">New Arrival</option>
+                <option value="Premium Choice">Premium Choice</option>
               </select>
             </div>
           </div>
 
+          <!-- Row 4: Specifications: Material & Printing Type -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-            <div class="setting-row" style="margin-bottom: 0;">
-              <label class="setting-label">Initial Stock Available (Units)</label>
-              <input type="number" class="setting-input" id="newProductStockQty" placeholder="100" value="100" min="0" />
-            </div>
             <div class="setting-row" style="margin-bottom: 0;">
               <label class="setting-label">Primary Material</label>
               <input type="text" class="setting-input" id="newProductMaterial" placeholder="Optic Cast Acrylic / Archival Pigments" />
+            </div>
+            <div class="setting-row" style="margin-bottom: 0;">
+              <label class="setting-label">Printing Technique</label>
+              <input type="text" class="setting-input" id="newProductPrintingType" placeholder="12-Color Archival Pigment" />
             </div>
           </div>
 
@@ -4047,10 +4082,10 @@
                 </select>
               </div>
 
-              <!-- 4. Price Field -->
+              <!-- 4. Variant Price Field (Auto-synced with primary Selling Price) -->
               <div class="setting-row" style="margin-bottom: 0;">
-                <label class="setting-label" style="font-size: 0.76rem; font-weight: 600; margin-bottom: 4px;">💰 Price (₹) *</label>
-                <input type="number" class="setting-input" id="newProductPrice" placeholder="599" min="1" required style="font-size: 0.82rem; padding: 7px 8px;" />
+                <label class="setting-label" style="font-size: 0.76rem; font-weight: 600; margin-bottom: 4px;">💰 Variant Price (₹)</label>
+                <input type="number" class="setting-input" id="newProductOptionPrice" placeholder="599" min="1" style="font-size: 0.82rem; padding: 7px 8px;" />
               </div>
             </div>
           </div>
