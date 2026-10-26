@@ -4,6 +4,22 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/api/categories/(.*)",
+      "destination": "/api/categories?id=$1"
+    },
+    {
+      "source": "/api/categories",
+      "destination": "/api/categories"
+    },
+    {
+      "source": "/api/admin/categories/(.*)",
+      "destination": "/api/admin/categories?id=$1"
+    },
+    {
+      "source": "/api/admin/categories",
+      "destination": "/api/admin/categories"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api"
     },

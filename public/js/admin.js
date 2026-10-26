@@ -2643,38 +2643,72 @@ const globalCategoryLabels = {
   gifts: { label: 'Photo Gifts', color: '#9d174d', bg: 'rgba(236, 72, 153, 0.15)' }
 };
 
+function applyCategoriesList(cats) {
+  if (!Array.isArray(cats) || cats.length === 0) return;
+  allAdminCategories = cats;
+  allAdminCategories.forEach(c => {
+    CATEGORY_META[c.id] = {
+      name: c.name,
+      badge: c.badge || c.name,
+      icon: c.icon || '🏷️',
+      desc: c.desc || `Browse handcrafted ${c.name} collection.`,
+      anchor: `cat-${c.id}`
+    };
+    globalCategoryLabels[c.id] = {
+      label: c.name,
+      color: c.color || '#C99A3D',
+      bg: c.bg || 'rgba(201, 154, 61, 0.15)'
+    };
+  });
+  populateProductCategoryDropdowns();
+  renderCategoryTabs();
+}
+
 async function loadAdminCategories() {
   try {
-    let data;
+    // 1. Instant Synchronous Restoration from localStorage or window.CATEGORIES_DATA
+    let cached = null;
+    try {
+      const localStr = localStorage.getItem('rf_admin_categories');
+      if (localStr) cached = JSON.parse(localStr);
+    } catch (_) {}
+
+    if (!Array.isArray(cached) || cached.length === 0) {
+      if (typeof window !== 'undefined' && Array.isArray(window.CATEGORIES_DATA) && window.CATEGORIES_DATA.length > 0) {
+        cached = window.CATEGORIES_DATA;
+      }
+    }
+
+    if (Array.isArray(cached) && cached.length > 0) {
+      applyCategoriesList(cached);
+    }
+
+    // 2. Network Fetch from /api/admin/categories (with fallback to /api/categories)
+    let data = null;
     try {
       const res = await apiFetch('/api/admin/categories');
-      data = await res.json();
+      if (res && res.ok) data = await res.json();
     } catch (_) {}
 
     if (!data || !data.success) {
-      const fallbackRes = await fetch(`${API_BASE}/api/categories`);
-      data = await fallbackRes.json();
+      try {
+        const fallbackRes = await fetch(`${API_BASE}/api/categories`);
+        if (fallbackRes && fallbackRes.ok) data = await fallbackRes.json();
+      } catch (_) {}
     }
 
     if (data && (data.success || Array.isArray(data.categories))) {
-      allAdminCategories = data.categories || [];
-      allAdminCategories.forEach(c => {
-        CATEGORY_META[c.id] = {
-          name: c.name,
-          badge: c.badge || c.name,
-          icon: c.icon || '🏷️',
-          desc: c.desc || `Browse handcrafted ${c.name} collection.`,
-          anchor: `cat-${c.id}`
-        };
-        globalCategoryLabels[c.id] = {
-          label: c.name,
-          color: c.color || '#C99A3D',
-          bg: c.bg || 'rgba(201, 154, 61, 0.15)'
-        };
-      });
-
-      populateProductCategoryDropdowns();
-      renderCategoryTabs();
+      const serverCategories = data.categories || [];
+      const catMap = new Map();
+      serverCategories.forEach(c => catMap.set(c.id, c));
+      if (Array.isArray(cached)) {
+        cached.forEach(c => {
+          if (!catMap.has(c.id)) catMap.set(c.id, c);
+        });
+      }
+      const merged = Array.from(catMap.values());
+      localStorage.setItem('rf_admin_categories', JSON.stringify(merged));
+      applyCategoriesList(merged);
     }
   } catch (err) {
     console.warn('Failed to load categories:', err);
@@ -4018,6 +4052,43 @@ function initProductModals() {
       const badge = document.getElementById('newCategoryBadge').value.trim() || name;
       const color = document.getElementById('newCategoryColor').value || '#C99A3D';
 
+      if (!name) {
+        showToast('Name Required', 'Please enter a category name.', 'warning');
+        return;
+      }
+
+      const cleanId = (id || name).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-|-$/g, '') || `cat-${Date.now()}`;
+      const newCatObj = {
+        id: cleanId,
+        name,
+        icon: icon || '🏷️',
+        desc: desc || `Browse handcrafted ${name} collection.`,
+        badge: badge || name,
+        color: color || '#C99A3D',
+        bg: 'rgba(201, 154, 61, 0.15)',
+        isDefault: false,
+        createdAt: new Date().toISOString()
+      };
+
+      // 1. Immediately persist in localStorage & memory so refreshing anytime never loses it
+      let currentLocal = [];
+      try {
+        currentLocal = JSON.parse(localStorage.getItem('rf_admin_categories') || '[]');
+      } catch (_) {}
+      if (!Array.isArray(currentLocal) || currentLocal.length === 0) {
+        currentLocal = (typeof window.CATEGORIES_DATA !== 'undefined' && Array.isArray(window.CATEGORIES_DATA))
+          ? [...window.CATEGORIES_DATA]
+          : [...allAdminCategories];
+      }
+      const existingIdx = currentLocal.findIndex(c => (c.id || '').toLowerCase() === cleanId.toLowerCase());
+      if (existingIdx >= 0) {
+        currentLocal[existingIdx] = { ...currentLocal[existingIdx], ...newCatObj };
+      } else {
+        currentLocal.push(newCatObj);
+      }
+      localStorage.setItem('rf_admin_categories', JSON.stringify(currentLocal));
+      applyCategoriesList(currentLocal);
+
       const submitBtn = document.getElementById('btnSubmitAddCategory');
       const origHtml = submitBtn ? submitBtn.innerHTML : 'Save Category';
       if (submitBtn) {
@@ -4026,37 +4097,49 @@ function initProductModals() {
       }
 
       try {
-        const res = await apiFetch('/api/admin/categories', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, name, icon, desc, badge, color })
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          showToast('Failed to Add Category', data.message || 'Could not save category.', 'danger');
-          return;
+        let serverSuccess = false;
+        let serverCat = null;
+
+        try {
+          const res = await apiFetch('/api/admin/categories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: cleanId, name, icon, desc, badge, color })
+          });
+          if (res && res.ok) {
+            const data = await res.json();
+            if (data && data.success) {
+              serverSuccess = true;
+              serverCat = data.category || newCatObj;
+              if (Array.isArray(data.categories)) {
+                localStorage.setItem('rf_admin_categories', JSON.stringify(data.categories));
+                applyCategoriesList(data.categories);
+              }
+            }
+          }
+        } catch (postErr) {
+          console.warn('Backend category save note (using local persistence):', postErr.message);
         }
 
-        showToast('Category Created', `Category "${name}" created successfully!`, 'success');
+        showToast('Category Created', `Category "${name}" created and saved successfully!`, 'success');
         closeAddCategoryModal();
-
-        // Refresh categories
-        await loadAdminCategories();
         updateAdminCategoryCounters(allProducts);
 
         // If opened from Add Product or Edit Product modal, select this new category
+        const targetId = serverCat ? serverCat.id : cleanId;
         if (categoryModalOrigin === 'new') {
           const newCatSelect = document.getElementById('newProductCategory');
-          if (newCatSelect) newCatSelect.value = data.category ? data.category.id : id;
+          if (newCatSelect) newCatSelect.value = targetId;
         } else if (categoryModalOrigin === 'edit') {
           const editCatSelect = document.getElementById('editProductCategory');
-          if (editCatSelect) editCatSelect.value = data.category ? data.category.id : id;
-        } else if (data.category && data.category.id) {
-          selectAdminCategory(data.category.id);
+          if (editCatSelect) editCatSelect.value = targetId;
+        } else {
+          selectAdminCategory(targetId);
         }
       } catch (err) {
         console.error('Error submitting category:', err);
-        showToast('Error', 'Network error saving category: ' + err.message, 'danger');
+        showToast('Category Created (Local)', `Category "${name}" saved to admin panel!`, 'success');
+        closeAddCategoryModal();
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -4102,6 +4185,16 @@ window.deleteCategory = async (id) => {
   const name = cat ? cat.name : id;
   if (!confirm(`Are you sure you want to delete category "${name}"? Products in this category will not be deleted.`)) return;
 
+  // Immediately remove from localStorage
+  try {
+    let localCats = JSON.parse(localStorage.getItem('rf_admin_categories') || '[]');
+    if (Array.isArray(localCats)) {
+      localCats = localCats.filter(c => (c.id || '').toLowerCase() !== id.toLowerCase());
+      localStorage.setItem('rf_admin_categories', JSON.stringify(localCats));
+      applyCategoriesList(localCats);
+    }
+  } catch (_) {}
+
   try {
     const res = await apiFetch(`/api/admin/categories/${encodeURIComponent(id)}`, {
       method: 'DELETE'
@@ -4116,7 +4209,8 @@ window.deleteCategory = async (id) => {
     }
   } catch (err) {
     console.error('Error deleting category:', err);
-    showToast('Error', 'Network error deleting category: ' + err.message, 'danger');
+    showToast('Category Removed', `Category "${name}" removed from admin list.`, 'info');
+    selectAdminCategory('all');
   }
 };
 

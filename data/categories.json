@@ -61,17 +61,6 @@
     "createdAt": "2026-10-25T19:23:35.568Z"
   },
   {
-    "id": "test-cat-123",
-    "name": "Test Cat 123",
-    "icon": "🏷️",
-    "desc": "Browse handcrafted Test Cat 123 collection.",
-    "badge": "Test Cat 123",
-    "color": "#c99a3d",
-    "bg": "rgba(201, 154, 61, 0.15)",
-    "isDefault": false,
-    "createdAt": "2026-10-25T20:39:43.298Z"
-  },
-  {
     "id": "luxury-art",
     "name": "Luxury Art Collection",
     "icon": "🎨",

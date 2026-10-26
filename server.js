@@ -2215,6 +2215,111 @@ app.get('/api/products/:id', async (req, res) => {
 });
 
 /**
+ * Master Category Routes (Public & Admin)
+ */
+app.get('/api/categories', async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  try {
+    const categories = await db.getCategories();
+    res.json({ success: true, categories });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch categories' });
+  }
+});
+
+app.get('/api/categories/:id', async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  try {
+    const categories = await db.getCategories();
+    const cat = categories.find(c => (c.id || '').toLowerCase() === req.params.id.toLowerCase());
+    if (!cat) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+    res.json({ success: true, category: cat });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch category' });
+  }
+});
+
+app.get('/api/admin/categories', async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  try {
+    const categories = await db.getCategories();
+    const products = await db.getProducts();
+    const categoriesWithCount = categories.map(cat => {
+      const count = products.filter(p => (p.category || '').toLowerCase() === (cat.id || '').toLowerCase()).length;
+      return { ...cat, productCount: count };
+    });
+    res.json({ success: true, categories: categoriesWithCount });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch categories' });
+  }
+});
+
+app.post('/api/admin/categories', async (req, res) => {
+  try {
+    const { id, name, icon, desc, badge, color, bg } = req.body;
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Category name is required.' });
+    }
+
+    const cleanId = (id || name).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-|-$/g, '') || `cat-${Date.now()}`;
+    const cleanName = name.trim();
+    const cleanIcon = (icon && typeof icon === 'string' && icon.trim()) ? icon.trim() : '🏷️';
+    const cleanDesc = (desc && typeof desc === 'string') ? desc.trim() : `Browse handcrafted ${cleanName} collection.`;
+    const cleanBadge = (badge && typeof badge === 'string' && badge.trim()) ? badge.trim() : cleanName;
+    const cleanColor = color || '#C99A3D';
+    const cleanBg = bg || 'rgba(201, 154, 61, 0.15)';
+
+    const newCategory = await db.saveCategory({
+      id: cleanId,
+      name: cleanName,
+      icon: cleanIcon,
+      desc: cleanDesc,
+      badge: cleanBadge,
+      color: cleanColor,
+      bg: cleanBg
+    });
+
+    const allCategories = await db.getCategories();
+    res.json({
+      success: true,
+      message: `Category "${cleanName}" saved successfully.`,
+      category: newCategory,
+      categories: allCategories
+    });
+  } catch (err) {
+    console.error('Error saving category:', err);
+    res.status(500).json({ success: false, message: 'Failed to save category.' });
+  }
+});
+
+app.delete('/api/admin/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ success: false, message: 'Category ID is required.' });
+
+    const categories = await db.getCategories();
+    const cat = categories.find(c => c.id.toLowerCase() === id.toLowerCase());
+    if (cat && cat.isDefault) {
+      return res.status(400).json({ success: false, message: 'Default studio categories cannot be removed.' });
+    }
+
+    await db.deleteCategory(id);
+    const updated = await db.getCategories();
+    res.json({ success: true, message: 'Category removed successfully.', categories: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to delete category.' });
+  }
+});
+
+/**
  * Public Customer Endpoint: Upload Photo for Framing / Custom Printing (POST)
  */
 app.post('/api/upload-photo', async (req, res) => {

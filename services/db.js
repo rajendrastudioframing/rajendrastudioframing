@@ -167,7 +167,12 @@ function syncCategoriesDataFiles(categories) {
  * Total: ${categories.length} categories - Auto-synced from Admin Panel
  */
 
-const CATEGORIES_DATA = ${JSON.stringify(categories, null, 2)};
+var CATEGORIES_DATA = ${JSON.stringify(categories, null, 2)};
+
+// Browser window global export
+if (typeof window !== 'undefined') {
+  window.CATEGORIES_DATA = CATEGORIES_DATA;
+}
 
 // Export for module environments if needed
 if (typeof module !== 'undefined' && module.exports) {

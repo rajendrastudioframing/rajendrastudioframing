@@ -1,9 +1,9 @@
 /**
  * RAJENDRA STUDIO & FRAMING - MASTER CATEGORIES DATA
- * Total: 8 categories - Auto-synced from Admin Panel
+ * Total: 7 categories - Auto-synced from Admin Panel
  */
 
-const CATEGORIES_DATA = [
+var CATEGORIES_DATA = [
   {
     "id": "frames",
     "name": "Studio & Framing",
@@ -66,17 +66,6 @@ const CATEGORIES_DATA = [
     "createdAt": "2026-10-25T19:23:35.568Z"
   },
   {
-    "id": "test-cat-123",
-    "name": "Test Cat 123",
-    "icon": "🏷️",
-    "desc": "Browse handcrafted Test Cat 123 collection.",
-    "badge": "Test Cat 123",
-    "color": "#c99a3d",
-    "bg": "rgba(201, 154, 61, 0.15)",
-    "isDefault": false,
-    "createdAt": "2026-10-25T20:39:43.298Z"
-  },
-  {
     "id": "luxury-art",
     "name": "Luxury Art Collection",
     "icon": "🎨",
@@ -88,6 +77,11 @@ const CATEGORIES_DATA = [
     "createdAt": "2026-10-26T04:07:08.823Z"
   }
 ];
+
+// Browser window global export
+if (typeof window !== 'undefined') {
+  window.CATEGORIES_DATA = CATEGORIES_DATA;
+}
 
 // Export for module environments if needed
 if (typeof module !== 'undefined' && module.exports) {
