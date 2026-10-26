@@ -240,6 +240,10 @@
             <div class="detail-badge-wrap" style="display: flex; gap: 8px; margin-bottom: 4px;">
               <span class="badge badge-gold" id="detailBadge">Bestseller</span>
               <span class="badge badge-dark" id="detailCategoryTag">Glass Frame</span>
+              <span class="badge badge-in-wishlist" id="productInWishlistBadge" style="display: none; background: #FFF1F2; color: #E11D48; border: 1px solid #FECDD3; font-weight: 700; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px; font-size: 0.74rem;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#E11D48" stroke="#E11D48" stroke-width="1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                Added in Wishlist
+              </span>
             </div>
 
             <h1 class="detail-title" id="detailProductTitle">Glass Photo Frame</h1>
@@ -389,6 +393,19 @@
                   <polyline points="14 2 14 8 20 8"></polyline>
                 </svg>
                 <span>Quick Enquiry</span>
+              </button>
+            </div>
+
+            <!-- Wishlist Active Status Banner -->
+            <div class="detail-wishlist-status-banner" id="wishlistStatusBanner" style="display: none; align-items: center; justify-content: space-between; background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 8px; padding: 7px 12px; margin-top: 10px; font-size: 0.82rem; color: #9F1239;">
+              <div style="display: flex; align-items: center; gap: 7px; font-weight: 600;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#E11D48" stroke="#E11D48" stroke-width="1" style="flex-shrink: 0;">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span>Added in Wishlist</span>
+              </div>
+              <button type="button" onclick="openWishlistDrawer()" style="background: none; border: none; color: #E11D48; font-size: 0.78rem; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0;">
+                View Wishlist →
               </button>
             </div>
           </div>

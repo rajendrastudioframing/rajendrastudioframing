@@ -301,6 +301,8 @@ function populateProductData() {
   renderSizeOptions();
   renderFinishOptions();
   updatePriceDisplay();
+  if (typeof syncWishlistButtons === 'function') syncWishlistButtons();
+  else if (typeof updateWishlistUI === 'function') updateWishlistUI();
 }
 
 let customSizeBuilderInitialized = false;
@@ -691,22 +693,44 @@ function setupOptionInteractions() {
   }
 
   function syncWishlistButtons() {
-    if (!currentProduct || typeof isProductInWishlist !== 'function') return;
-    const inWishlist = isProductInWishlist(currentProduct.id);
+    if (typeof updateWishlistUI === 'function') {
+      updateWishlistUI();
+      return;
+    }
+    if (!currentProduct) return;
+    const checkFn = (typeof isInWishlist === 'function') ? isInWishlist : (typeof isProductInWishlist === 'function' ? isProductInWishlist : null);
+    if (!checkFn) return;
+    const inWishlist = checkFn(currentProduct.id);
     const mainWishBtn = document.getElementById('detailWishlistBtn');
     const stickyWishBtn = document.getElementById('stickyWishlistBtn');
+    const badgeEl = document.getElementById('productInWishlistBadge');
+    const bannerEl = document.getElementById('wishlistStatusBanner');
 
-    [mainWishBtn, stickyWishBtn].forEach(btn => {
-      if (btn) {
-        btn.classList.toggle('active', inWishlist);
-        const label = btn.querySelector('.wishlist-btn-text, .sticky-wishlist-label');
-        if (label) {
-          label.textContent = inWishlist ? 'In Wishlist' : (btn === stickyWishBtn ? 'Wishlist' : 'Add to Wishlist');
-        }
+    if (mainWishBtn) {
+      mainWishBtn.classList.toggle('active', inWishlist);
+      mainWishBtn.title = inWishlist ? 'Added in Wishlist (Click to remove)' : 'Add to Wishlist';
+      mainWishBtn.setAttribute('aria-label', inWishlist ? 'Added in Wishlist' : 'Add to Wishlist');
+      const label = mainWishBtn.querySelector('.wishlist-btn-text');
+      if (label) {
+        label.textContent = inWishlist ? 'In Wishlist' : 'Add to Wishlist';
       }
-    });
+    }
+
+    if (stickyWishBtn) {
+      stickyWishBtn.classList.toggle('active', inWishlist);
+      stickyWishBtn.title = inWishlist ? 'Added in Wishlist (Click to remove)' : 'Add to Wishlist';
+      stickyWishBtn.setAttribute('aria-label', inWishlist ? 'Added in Wishlist' : 'Add to Wishlist');
+      const stickyLabel = stickyWishBtn.querySelector('.sticky-wishlist-label');
+      if (stickyLabel) {
+        stickyLabel.textContent = inWishlist ? 'Added in Wishlist' : 'Wishlist';
+      }
+    }
+
+    if (badgeEl) badgeEl.style.display = inWishlist ? 'inline-flex' : 'none';
+    if (bannerEl) bannerEl.style.display = inWishlist ? 'flex' : 'none';
   }
 
+  window.syncWishlistButtons = syncWishlistButtons;
   window.addEventListener('wishlistUpdated', syncWishlistButtons);
   setTimeout(syncWishlistButtons, 120);
 

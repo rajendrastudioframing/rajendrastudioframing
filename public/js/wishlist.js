@@ -20,6 +20,7 @@ function saveWishlist(wishlist) {
   try {
     localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlist));
     updateWishlistUI();
+    window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: { wishlist } }));
   } catch (e) {
     console.error('Error saving wishlist to localStorage:', e);
   }
@@ -228,17 +229,44 @@ function updateWishlistUI() {
     }
   });
 
-  // 3. Detail page wishlist button
+  // 3. Detail page wishlist elements
   const detailBtn = document.getElementById('detailWishlistBtn');
+  const stickyBtn = document.getElementById('stickyWishlistBtn');
+  const badgeEl = document.getElementById('productInWishlistBadge');
+  const bannerEl = document.getElementById('wishlistStatusBanner');
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const prodId = (typeof currentProduct !== 'undefined' && currentProduct && currentProduct.id) 
+    ? currentProduct.id 
+    : (urlParams.get('id') || 'glass-frame-classic');
+  const active = isInWishlist(prodId);
+
   if (detailBtn) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const prodId = urlParams.get('id') || 'glass-frame-classic';
-    const active = isInWishlist(prodId);
     detailBtn.classList.toggle('active', active);
+    detailBtn.title = active ? 'Added in Wishlist (Click to remove)' : 'Add to Wishlist';
+    detailBtn.setAttribute('aria-label', active ? 'Added in Wishlist' : 'Add to Wishlist');
     const label = detailBtn.querySelector('.wishlist-btn-text');
     if (label) {
-      label.textContent = active ? 'Saved to Wishlist' : 'Add to Wishlist';
+      label.textContent = active ? 'In Wishlist' : 'Add to Wishlist';
     }
+  }
+
+  if (stickyBtn) {
+    stickyBtn.classList.toggle('active', active);
+    stickyBtn.title = active ? 'Added in Wishlist (Click to remove)' : 'Add to Wishlist';
+    stickyBtn.setAttribute('aria-label', active ? 'Added in Wishlist' : 'Add to Wishlist');
+    const stickyLabel = stickyBtn.querySelector('.sticky-wishlist-label');
+    if (stickyLabel) {
+      stickyLabel.textContent = active ? 'Added in Wishlist' : 'Wishlist';
+    }
+  }
+
+  if (badgeEl) {
+    badgeEl.style.display = active ? 'inline-flex' : 'none';
+  }
+
+  if (bannerEl) {
+    bannerEl.style.display = active ? 'flex' : 'none';
   }
 }
 
@@ -514,6 +542,7 @@ window.getWishlist = getWishlist;
 window.saveWishlist = saveWishlist;
 window.getWishlistCount = getWishlistCount;
 window.isInWishlist = isInWishlist;
+window.isProductInWishlist = isInWishlist;
 window.toggleWishlist = toggleWishlist;
 window.removeFromWishlist = removeFromWishlist;
 window.moveWishlistItemToCart = moveWishlistItemToCart;

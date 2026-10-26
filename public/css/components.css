@@ -1595,14 +1595,14 @@
 }
 
 .sticky-wishlist-btn.active {
-  background: rgba(201, 154, 61, 0.1);
-  border-color: var(--accent-gold);
-  color: var(--accent-gold);
+  background: #FFF1F2 !important;
+  border-color: #E11D48 !important;
+  color: #E11D48 !important;
 }
 
 .sticky-wishlist-btn.active svg {
-  fill: var(--accent-gold);
-  stroke: var(--accent-gold);
+  fill: #E11D48 !important;
+  stroke: #E11D48 !important;
 }
 
 .sticky-btn-cart {
