@@ -1391,5 +1391,45 @@
       }
     ],
     "createdAt": "2026-10-26T04:53:30.217Z"
+  },
+  {
+    "id": "minimal-studio-frame",
+    "name": "Minimal Studio Frame",
+    "category": "personalized",
+    "categoryLabel": "Personalized Printing",
+    "price": 799,
+    "originalPrice": null,
+    "priceDisplay": "Starting from ₹799",
+    "rating": 5,
+    "reviewsCount": 1,
+    "badge": "",
+    "image": "assets/images/printed_bottle.jpg",
+    "images": [
+      "assets/images/printed_bottle.jpg"
+    ],
+    "shortDescription": "Elegant handcrafted minimal photo frame.",
+    "description": "Elegant handcrafted minimal photo frame.",
+    "material": "Premium Material",
+    "printingType": "High-Resolution Archival Print",
+    "status": "In Stock",
+    "inStock": true,
+    "stockQty": 25,
+    "leadTime": "24 - 48 Hours",
+    "sizes": [
+      {
+        "name": "8\" × 10\"",
+        "price": 799
+      }
+    ],
+    "finishes": [
+      {
+        "id": "finish-1",
+        "name": "Warm Gold",
+        "color": "#C99A3D",
+        "image": "assets/images/printed_bottle.jpg",
+        "priceDelta": 0
+      }
+    ],
+    "createdAt": "2026-10-26T05:14:50.161Z"
   }
 ]
