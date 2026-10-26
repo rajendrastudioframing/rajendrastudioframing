@@ -2918,6 +2918,16 @@ function updateAdminCategoryBanner(catKey, currentProducts) {
   if (storefrontLinkEl) {
     storefrontLinkEl.href = catKey === 'all' ? 'products.html' : `index.html#${meta.anchor}`;
   }
+
+  const deleteBtn = document.getElementById('categoryDeleteBtn');
+  if (deleteBtn) {
+    const currentCatObj = allAdminCategories.find(c => c.id === catKey);
+    if (catKey !== 'all' && currentCatObj && !currentCatObj.isDefault) {
+      deleteBtn.style.display = 'inline-flex';
+    } else {
+      deleteBtn.style.display = 'none';
+    }
+  }
 }
 
 function renderAdminProducts(products) {
@@ -4083,6 +4093,30 @@ window.deleteProduct = async (id) => {
   } catch (err) {
     console.error('Error deleting product:', err);
     showToast('Error', 'Network error deleting product.', 'danger');
+  }
+};
+
+window.deleteCategory = async (id) => {
+  if (!id || id === 'all') return;
+  const cat = allAdminCategories.find(c => c.id === id);
+  const name = cat ? cat.name : id;
+  if (!confirm(`Are you sure you want to delete category "${name}"? Products in this category will not be deleted.`)) return;
+
+  try {
+    const res = await apiFetch(`/api/admin/categories/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Category Removed', `Category "${name}" removed successfully.`, 'info');
+      await loadAdminCategories();
+      selectAdminCategory('all');
+    } else {
+      showToast('Cannot Remove Category', data.message || 'Failed to remove category.', 'danger');
+    }
+  } catch (err) {
+    console.error('Error deleting category:', err);
+    showToast('Error', 'Network error deleting category: ' + err.message, 'danger');
   }
 };
 

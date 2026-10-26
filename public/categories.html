@@ -514,7 +514,7 @@
       let products = (typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) ? PRODUCTS_DATA : [];
 
       try {
-        const res = await fetch('/api/categories');
+        const res = await fetch('/api/categories?t=' + Date.now());
         if (res.ok) {
           const data = await res.json();
           if (data && data.success && Array.isArray(data.categories) && data.categories.length > 0) {
@@ -526,7 +526,7 @@
       }
 
       try {
-        const resP = await fetch('/api/products');
+        const resP = await fetch('/api/products?t=' + Date.now());
         if (resP.ok) {
           const dataP = await resP.json();
           if (dataP && dataP.success && Array.isArray(dataP.products)) {

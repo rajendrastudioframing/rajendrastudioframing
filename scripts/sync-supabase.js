@@ -196,7 +196,33 @@ async function syncToSupabase() {
     console.error('   ❌ Inquiries sync failed:', err.message);
   }
 
-  // 6. SYNC ADMIN CONFIG
+  // 6. SYNC CATEGORIES
+  try {
+    const categories = readJsonFile('categories.json', []);
+    console.log(`📁 Syncing ${categories.length} catalog categories...`);
+    for (const cat of categories) {
+      const { error } = await supabase.from('categories').upsert({
+        id: cat.id,
+        name: cat.name,
+        icon: cat.icon || '🏷️',
+        desc: cat.desc || cat.description || '',
+        badge: cat.badge || cat.name,
+        color: cat.color || '#C99A3D',
+        bg: cat.bg || 'rgba(201, 154, 61, 0.15)',
+        is_default: Boolean(cat.isDefault),
+        created_at: cat.createdAt || new Date().toISOString()
+      }, { onConflict: 'id' });
+
+      if (error) {
+        console.warn(`   ⚠️ Category sync error (${cat.id}):`, error.message);
+      }
+    }
+    console.log('   ✅ Categories synchronized successfully.');
+  } catch (err) {
+    console.error('   ❌ Categories sync failed:', err.message);
+  }
+
+  // 7. SYNC ADMIN CONFIG
   try {
     const config = readJsonFile('admin-config.json', {});
     if (config.adminEmail) {

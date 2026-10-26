@@ -330,7 +330,7 @@ function createOrderCardHtml(order) {
               <div class="order-item-qty">Qty: ${item.quantity || 1}</div>
             </div>
           </div>
-        `}).join('')}
+        `;}).join('')}
       </div>
 
       <!-- Delivery Details & Billing -->

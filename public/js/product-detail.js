@@ -40,7 +40,22 @@ async function initProductDetailPage() {
   const productId = urlParams.get('id') || 'plastic-frame-gallery';
   const finishIdParam = urlParams.get('finish') || urlParams.get('color');
 
-  currentProduct = PRODUCTS_DATA.find(p => p.id === productId) || PRODUCTS_DATA[0];
+  currentProduct = PRODUCTS_DATA.find(p => p.id === productId);
+  if (!currentProduct && productId) {
+    try {
+      const singleRes = await fetch(`/api/products/${encodeURIComponent(productId)}?t=${Date.now()}`);
+      if (singleRes.ok) {
+        const singleData = await singleRes.json();
+        if (singleData && singleData.product) {
+          currentProduct = singleData.product;
+          PRODUCTS_DATA.push(currentProduct);
+        }
+      }
+    } catch (_) {}
+  }
+  if (!currentProduct) {
+    currentProduct = PRODUCTS_DATA[0];
+  }
 
   selectedSize = currentProduct.sizes && currentProduct.sizes.length > 0 ? currentProduct.sizes[0] : null;
 
@@ -1535,6 +1550,18 @@ async function initProductReviews() {
       helpful: 6
     }
   ];
+
+  if (!productReviews || productReviews.length === 0) {
+    try {
+      const revRes = await fetch(`/api/reviews?productId=${encodeURIComponent(pId)}&t=${Date.now()}`);
+      if (revRes.ok) {
+        const revData = await revRes.json();
+        if (revData && revData.success && Array.isArray(revData.reviews) && revData.reviews.length > 0) {
+          productReviews = revData.reviews;
+        }
+      }
+    } catch (_) {}
+  }
 
   if (!productReviews || productReviews.length === 0) {
     const local = localStorage.getItem(storageKey);

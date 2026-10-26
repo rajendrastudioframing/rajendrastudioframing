@@ -348,6 +348,19 @@ module.exports = {
       { id: 'custom', name: 'Custom Printing', icon: '🎨', desc: 'Museum-grade canvas gallery wraps, edge-to-edge acrylic prints, metallic prints, and bespoke art installations.', color: '#6b21a8', bg: 'rgba(168, 85, 247, 0.15)', badge: 'Custom Printing', isDefault: true },
       { id: 'gifts', name: 'Photo Gifts & Keepsakes', icon: '🎁', desc: 'Personalized 3D photo crystals, acrylic desktop plaques, customized keychains, and commemorative photo clocks.', color: '#9d174d', bg: 'rgba(236, 72, 153, 0.15)', badge: 'Photo Gifts & Keepsakes', isDefault: true }
     ];
+
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from('categories').select('*').order('created_at', { ascending: true });
+        if (!error && data && data.length > 0) {
+          syncCategoriesDataFiles(data);
+          return data;
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase getCategories exception:', err.message);
+      }
+    }
+
     let categories = readJson(CATEGORIES_FILE, null);
     if (!categories || !Array.isArray(categories) || categories.length === 0) {
       categories = defaultCategories;
@@ -379,6 +392,25 @@ module.exports = {
       createdAt: category.createdAt || new Date().toISOString()
     };
 
+    if (supabase) {
+      try {
+        const { error } = await supabase.from('categories').upsert({
+          id: newCategory.id,
+          name: newCategory.name,
+          icon: newCategory.icon,
+          desc: newCategory.desc,
+          badge: newCategory.badge,
+          color: newCategory.color,
+          bg: newCategory.bg,
+          is_default: newCategory.isDefault,
+          created_at: newCategory.createdAt
+        }, { onConflict: 'id' });
+        if (error) console.warn('⚠️ [DATABASE] Supabase saveCategory warning:', error.message);
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase saveCategory exception:', err.message);
+      }
+    }
+
     const existingIndex = categories.findIndex(c => c.id.toLowerCase() === cleanId.toLowerCase());
     if (existingIndex !== -1) {
       categories[existingIndex] = { ...categories[existingIndex], ...newCategory };
@@ -392,8 +424,17 @@ module.exports = {
   },
 
   async deleteCategory(id) {
-    let categories = await this.getCategories();
     const cleanId = (id || '').trim().toLowerCase();
+    if (supabase) {
+      try {
+        const { error } = await supabase.from('categories').delete().eq('id', cleanId);
+        if (error) console.warn('⚠️ [DATABASE] Supabase deleteCategory warning:', error.message);
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase deleteCategory exception:', err.message);
+      }
+    }
+
+    let categories = await this.getCategories();
     categories = categories.filter(c => c.id.toLowerCase() !== cleanId);
     writeJson(CATEGORIES_FILE, categories);
     syncCategoriesDataFiles(categories);

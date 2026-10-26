@@ -1,6 +1,6 @@
 /**
  * RAJENDRA STUDIO & FRAMING - MASTER PRODUCTS CATALOG DATA
- * Total: 31 products - Auto-synced from Admin Panel
+ * Total: 32 products - Auto-synced from Admin Panel
  */
 
 const PRODUCTS_DATA = [
@@ -1436,6 +1436,61 @@ const PRODUCTS_DATA = [
       }
     ],
     "createdAt": "2026-10-26T05:14:50.161Z"
+  },
+  {
+    "id": "executive-teakwood-wall-clock",
+    "name": "Executive Teakwood Wall Clock",
+    "category": "test-wall-clocks",
+    "categoryLabel": "Custom Printing",
+    "price": 1899,
+    "originalPrice": 2499,
+    "priceDisplay": "Starting from ₹1899",
+    "rating": 5,
+    "reviewsCount": 1,
+    "badge": "New Arrival",
+    "image": "assets/images/custom_canvas.jpg",
+    "images": [
+      "assets/images/custom_canvas.jpg"
+    ],
+    "shortDescription": "Luxury handcrafted wall clock featuring silent quartz movement.",
+    "description": "Luxury handcrafted wall clock featuring silent quartz movement.",
+    "material": "Premium Archival Grade",
+    "printingType": "High-Resolution Archival Print",
+    "status": "In Stock",
+    "inStock": true,
+    "stockQty": 100,
+    "leadTime": "24 - 48 Hours",
+    "sizes": [
+      {
+        "name": "8\" × 10\"",
+        "price": 1899
+      },
+      {
+        "name": "10\" × 12\"",
+        "price": 2564
+      },
+      {
+        "name": "12\" × 18\"",
+        "price": 3418
+      }
+    ],
+    "finishes": [
+      {
+        "id": "gold-standoffs",
+        "name": "Warm Gold",
+        "color": "#C99A3D",
+        "image": "assets/images/custom_canvas.jpg",
+        "priceDelta": 0
+      },
+      {
+        "id": "black-standoffs",
+        "name": "Matte Black",
+        "color": "#111111",
+        "image": "assets/images/custom_canvas.jpg",
+        "priceDelta": 0
+      }
+    ],
+    "createdAt": "2026-10-26T05:48:16.290Z"
   }
 ];
 

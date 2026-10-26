@@ -2202,6 +2202,18 @@ app.get('/api/products', async (req, res) => {
   res.json({ success: true, products });
 });
 
+app.get('/api/products/:id', async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  const products = await db.getProducts();
+  const prod = products.find(p => p.id === req.params.id);
+  if (!prod) {
+    return res.status(404).json({ success: false, message: 'Product not found' });
+  }
+  res.json({ success: true, product: prod });
+});
+
 /**
  * Public Customer Endpoint: Upload Photo for Framing / Custom Printing (POST)
  */
@@ -2902,13 +2914,13 @@ app.get('/api/admin/products', requireAuth, async (req, res) => {
  * Add New Product (POST)
  */
 app.post('/api/admin/products', requireAuth, async (req, res) => {
-  const { name, category, categoryLabel, price, originalPrice, badge, shortDescription, description, material, printingType, leadTime, image, images, status, stockQty, sizes, finishes, colors, variants } = req.body;
+  const { id, name, category, categoryLabel, price, originalPrice, badge, shortDescription, description, material, printingType, leadTime, image, images, status, stockQty, sizes, finishes, colors, variants } = req.body;
 
   if (!name || price === undefined || price === null || isNaN(Number(price))) {
     return res.status(400).json({ success: false, message: 'Product name and valid price are required.' });
   }
 
-  const rawSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `product-${Date.now()}`;
+  const rawSlug = (id || name).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-|-$/g, '') || `product-${Date.now()}`;
   const existingProducts = await db.getProducts();
   let uniqueSlug = rawSlug;
   let slugCounter = 1;
@@ -3034,6 +3046,7 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
   const newProduct = {
     id: uniqueSlug,
     name: name.trim(),
+    title: name.trim(),
     category: category || 'custom',
     categoryLabel: categoryLabel || 'Custom Printing',
     price: Number(price),
@@ -3277,6 +3290,9 @@ app.delete('/api/admin/products/:id', requireAuth, async (req, res) => {
  * Categories List (GET) - Public & Admin
  */
 app.get('/api/categories', async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   try {
     const categories = await db.getCategories();
     res.json({ success: true, categories });
@@ -3285,7 +3301,26 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
+app.get('/api/categories/:id', async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  try {
+    const categories = await db.getCategories();
+    const cat = categories.find(c => (c.id || '').toLowerCase() === req.params.id.toLowerCase());
+    if (!cat) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+    res.json({ success: true, category: cat });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch category' });
+  }
+});
+
 app.get('/api/admin/categories', requireAuth, async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   try {
     const categories = await db.getCategories();
     const products = await db.getProducts();

@@ -134,7 +134,22 @@ CREATE TABLE IF NOT EXISTS public.reviews (
 CREATE INDEX IF NOT EXISTS idx_reviews_product ON public.reviews(product_id);
 
 -- -----------------------------------------------------------------------------
--- 7. ADMIN CONFIG & SETTINGS TABLE
+-- 7. CATEGORIES TABLE
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.categories (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  icon TEXT DEFAULT '🏷️',
+  "desc" TEXT,
+  badge TEXT,
+  color TEXT DEFAULT '#C99A3D',
+  bg TEXT DEFAULT 'rgba(201, 154, 61, 0.15)',
+  is_default BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- -----------------------------------------------------------------------------
+-- 8. ADMIN CONFIG & SETTINGS TABLE
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.admin_config (
   id TEXT PRIMARY KEY DEFAULT 'default',
@@ -163,7 +178,15 @@ ALTER TABLE public.inquiries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_config ENABLE ROW LEVEL SECURITY;
+
+-- Categories: Everyone can read categories
+DROP POLICY IF EXISTS "Public Read Categories" ON public.categories;
+CREATE POLICY "Public Read Categories" ON public.categories FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Service Role All Categories" ON public.categories;
+CREATE POLICY "Service Role All Categories" ON public.categories USING (true) WITH CHECK (true);
 
 -- Products: Everyone can read catalog
 DROP POLICY IF EXISTS "Public Read Products" ON public.products;
