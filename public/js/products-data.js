@@ -1,6 +1,6 @@
 /**
  * RAJENDRA STUDIO & FRAMING - MASTER PRODUCTS CATALOG DATA
- * Total: 25 products - Auto-synced from Admin Panel
+ * Total: 28 products - Auto-synced from Admin Panel
  */
 
 const PRODUCTS_DATA = [
@@ -1166,6 +1166,156 @@ const PRODUCTS_DATA = [
         "priceDelta": 0
       }
     ]
+  },
+  {
+    "id": "test-test-wooden-frame",
+    "name": "Test Test Wooden Frame",
+    "category": "frames",
+    "categoryLabel": "Custom Printing",
+    "price": 699,
+    "originalPrice": null,
+    "priceDisplay": "Starting from ₹699",
+    "rating": 5,
+    "reviewsCount": 1,
+    "badge": "",
+    "image": "assets/images/glass_frame.jpg",
+    "images": [
+      "assets/images/glass_frame.jpg"
+    ],
+    "shortDescription": "Test Test Wooden Frame customized by Rajesh Framing Studio.",
+    "description": "Test Test Wooden Frame handcrafted with premium materials and archival printing standards.",
+    "material": "Premium Archival Grade",
+    "printingType": "High-Resolution Archival Print",
+    "status": "In Stock",
+    "inStock": true,
+    "stockQty": 50,
+    "leadTime": "24 - 48 Hours",
+    "sizes": [
+      {
+        "name": "8\" × 10\"",
+        "price": 699
+      },
+      {
+        "name": "10\" × 12\"",
+        "price": 944
+      },
+      {
+        "name": "12\" × 18\"",
+        "price": 1258
+      }
+    ],
+    "finishes": [
+      {
+        "id": "gold-standoffs",
+        "name": "Warm Gold",
+        "color": "#C99A3D",
+        "image": "assets/images/glass_frame.jpg",
+        "priceDelta": 0
+      },
+      {
+        "id": "black-standoffs",
+        "name": "Matte Black",
+        "color": "#111111",
+        "image": "assets/images/glass_frame.jpg",
+        "priceDelta": 0
+      }
+    ],
+    "createdAt": "2026-10-25T20:35:31.140Z"
+  },
+  {
+    "id": "user-test-photo-book",
+    "name": "User Test Photo Book",
+    "category": "frames",
+    "categoryLabel": "Studio & Framing",
+    "price": 499,
+    "originalPrice": null,
+    "priceDisplay": "Starting from ₹499",
+    "rating": 5,
+    "reviewsCount": 1,
+    "badge": "",
+    "image": "assets/images/glass_frame.jpg",
+    "images": [
+      "assets/images/glass_frame.jpg"
+    ],
+    "shortDescription": "User Test Photo Book customized by Rajesh Framing Studio.",
+    "description": "User Test Photo Book handcrafted with premium materials and archival printing standards.",
+    "material": "Premium Archival Grade",
+    "printingType": "High-Resolution Archival Print",
+    "status": "In Stock",
+    "inStock": true,
+    "stockQty": 100,
+    "leadTime": "24 - 48 Hours",
+    "sizes": [
+      {
+        "name": "8\" × 10\"",
+        "price": 499
+      }
+    ],
+    "finishes": [
+      {
+        "id": "finish-1",
+        "name": "Warm Gold",
+        "color": "#C99A3D",
+        "image": "assets/images/glass_frame.jpg",
+        "priceDelta": 0
+      }
+    ],
+    "createdAt": "2026-10-25T20:50:20.643Z"
+  },
+  {
+    "id": "royal-gold-leaf-canvas",
+    "name": "Royal Gold Leaf Canvas",
+    "category": "luxury-art",
+    "categoryLabel": "Luxury Art Collection",
+    "price": 1899,
+    "originalPrice": 2499,
+    "priceDisplay": "Starting from ₹1899",
+    "rating": 5,
+    "reviewsCount": 1,
+    "badge": "",
+    "image": "assets/images/custom_canvas.jpg",
+    "images": [
+      "assets/images/custom_canvas.jpg"
+    ],
+    "shortDescription": "Gilded luxury art frame with pure gold leaf detailing.",
+    "description": "Gilded luxury art frame with pure gold leaf detailing.",
+    "material": "Imported Teakwood & Gold Leaf",
+    "printingType": "High-Resolution Archival Print",
+    "status": "In Stock",
+    "inStock": true,
+    "stockQty": 50,
+    "leadTime": "24 - 48 Hours",
+    "sizes": [
+      {
+        "name": "8\" × 10\"",
+        "price": 1899
+      },
+      {
+        "name": "10\" × 12\"",
+        "price": 2564
+      },
+      {
+        "name": "12\" × 18\"",
+        "price": 3418
+      }
+    ],
+    "finishes": [
+      {
+        "id": "gold-standoffs",
+        "name": "Warm Gold",
+        "color": "#C99A3D",
+        "image": "assets/images/custom_canvas.jpg",
+        "priceDelta": 0
+      },
+      {
+        "id": "black-standoffs",
+        "name": "Matte Black",
+        "color": "#111111",
+        "image": "assets/images/custom_canvas.jpg",
+        "priceDelta": 0
+      }
+    ],
+    "createdAt": "2026-10-26T04:07:08.871Z"
   }
 ];
 

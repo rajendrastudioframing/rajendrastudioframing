@@ -157,6 +157,40 @@ if (typeof module !== 'undefined' && module.exports) {
   }
 }
 
+/**
+ * Automatically sync static JS categories files whenever categories are created, modified, or deleted
+ */
+function syncCategoriesDataFiles(categories) {
+  try {
+    const fileContent = `/**
+ * RAJENDRA STUDIO & FRAMING - MASTER CATEGORIES DATA
+ * Total: ${categories.length} categories - Auto-synced from Admin Panel
+ */
+
+const CATEGORIES_DATA = ${JSON.stringify(categories, null, 2)};
+
+// Export for module environments if needed
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { CATEGORIES_DATA };
+}
+`;
+
+    const publicPath = path.join(__dirname, '..', 'public', 'js', 'categories-data.js');
+    const rootPath = path.join(__dirname, '..', 'js', 'categories-data.js');
+
+    if (!process.env.VERCEL) {
+      if (fs.existsSync(path.dirname(publicPath))) {
+        fs.writeFileSync(publicPath, fileContent, 'utf8');
+      }
+      if (fs.existsSync(path.dirname(rootPath))) {
+        fs.writeFileSync(rootPath, fileContent, 'utf8');
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ [DATABASE] Failed to sync categories-data.js:', err.message);
+  }
+}
+
 // Initialize Supabase Client if env variables are present
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
@@ -177,6 +211,8 @@ if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
 module.exports = {
   isCloud: () => Boolean(supabase),
   supabase,
+  syncProductsDataFiles,
+  syncCategoriesDataFiles,
 
   // --- PRODUCTS ---
   _productsSynced: false,
@@ -317,6 +353,7 @@ module.exports = {
       categories = defaultCategories;
       writeJson(CATEGORIES_FILE, categories);
     }
+    syncCategoriesDataFiles(categories);
     return categories;
   },
 
@@ -350,6 +387,7 @@ module.exports = {
     }
 
     writeJson(CATEGORIES_FILE, categories);
+    syncCategoriesDataFiles(categories);
     return newCategory;
   },
 
@@ -358,6 +396,7 @@ module.exports = {
     const cleanId = (id || '').trim().toLowerCase();
     categories = categories.filter(c => c.id.toLowerCase() !== cleanId);
     writeJson(CATEGORIES_FILE, categories);
+    syncCategoriesDataFiles(categories);
     return true;
   },
 

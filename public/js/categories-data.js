@@ -1,0 +1,95 @@
+/**
+ * RAJENDRA STUDIO & FRAMING - MASTER CATEGORIES DATA
+ * Total: 8 categories - Auto-synced from Admin Panel
+ */
+
+const CATEGORIES_DATA = [
+  {
+    "id": "frames",
+    "name": "Studio & Framing",
+    "icon": "🖼️",
+    "desc": "Classic wood and acrylic glass frames, certificate frames, collage memory boxes, and gallery wall displays.",
+    "color": "#854d0e",
+    "bg": "rgba(234, 179, 8, 0.15)",
+    "badge": "Studio & Framing",
+    "isDefault": true
+  },
+  {
+    "id": "personalized",
+    "name": "Personalized Printing",
+    "icon": "☕",
+    "desc": "Custom printed ceramic mugs, insulated bottles, custom apparel, and personalized daily keepsakes.",
+    "color": "#1e40af",
+    "bg": "rgba(59, 130, 246, 0.15)",
+    "badge": "Personalized Printing",
+    "isDefault": true
+  },
+  {
+    "id": "office",
+    "name": "Office Printing",
+    "icon": "📁",
+    "desc": "Corporate presentation folders, customized file binders, business cards, letterheads, and executive desk accessories.",
+    "color": "#166534",
+    "bg": "rgba(34, 197, 94, 0.15)",
+    "badge": "Office Printing",
+    "isDefault": true
+  },
+  {
+    "id": "custom",
+    "name": "Custom Printing",
+    "icon": "🎨",
+    "desc": "Museum-grade canvas gallery wraps, edge-to-edge acrylic prints, metallic prints, and bespoke art installations.",
+    "color": "#6b21a8",
+    "bg": "rgba(168, 85, 247, 0.15)",
+    "badge": "Custom Printing",
+    "isDefault": true
+  },
+  {
+    "id": "gifts",
+    "name": "Photo Gifts & Keepsakes",
+    "icon": "🎁",
+    "desc": "Personalized 3D photo crystals, acrylic desktop plaques, customized keychains, and commemorative photo clocks.",
+    "color": "#9d174d",
+    "bg": "rgba(236, 72, 153, 0.15)",
+    "badge": "Photo Gifts & Keepsakes",
+    "isDefault": true
+  },
+  {
+    "id": "canvas-gallery",
+    "name": "Canvas Gallery",
+    "icon": "🖼️",
+    "desc": "Museum-quality wrapped canvas prints and framed canvas arts.",
+    "badge": "Premium Canvas",
+    "color": "#c99a3d",
+    "bg": "rgba(201, 154, 61, 0.15)",
+    "isDefault": false,
+    "createdAt": "2026-10-25T19:23:35.568Z"
+  },
+  {
+    "id": "test-cat-123",
+    "name": "Test Cat 123",
+    "icon": "🏷️",
+    "desc": "Browse handcrafted Test Cat 123 collection.",
+    "badge": "Test Cat 123",
+    "color": "#c99a3d",
+    "bg": "rgba(201, 154, 61, 0.15)",
+    "isDefault": false,
+    "createdAt": "2026-10-25T20:39:43.298Z"
+  },
+  {
+    "id": "luxury-art",
+    "name": "Luxury Art Collection",
+    "icon": "🎨",
+    "desc": "Exclusive handcrafted museum gallery art frames and master prints.",
+    "badge": "Luxury Art",
+    "color": "#d97706",
+    "bg": "rgba(201, 154, 61, 0.15)",
+    "isDefault": false,
+    "createdAt": "2026-10-26T04:07:08.823Z"
+  }
+];
+
+// Export for module environments if needed
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { CATEGORIES_DATA };
+}

@@ -91,6 +91,13 @@ if (!process.env.VERCEL) {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    // Guarantee sync of JS data bundles for products & categories on startup
+    if (typeof db.getProducts === 'function') {
+      db.getProducts().then(p => db.syncProductsDataFiles && db.syncProductsDataFiles(p)).catch(() => {});
+    }
+    if (typeof db.getCategories === 'function') {
+      db.getCategories().then(c => db.syncCategoriesDataFiles && db.syncCategoriesDataFiles(c)).catch(() => {});
+    }
   } catch (_) {}
 }
 
@@ -1004,7 +1011,7 @@ const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'rajesh_framing
 const revokedAdminTokens = new Set();
 
 function generateAdminToken(email) {
-  const sessionExpiresAt = Date.now() + 12 * 60 * 60 * 1000; // 12 hours validity
+  const sessionExpiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days validity
   const payload = {
     email: email.trim().toLowerCase(),
     createdAt: Date.now(),
@@ -1058,13 +1065,28 @@ async function requireAuth(req, res, next) {
     return next();
   }
 
-  // 3. Fallback: check stored sessions with strict expiration check
-  const session = activeSessions.get(token);
+  // 3. Fallback: check stored sessions (in-memory or re-hydrated from disk)
+  let session = activeSessions.get(token);
+  if (!session) {
+    const diskSessions = readJson(SESSIONS_FILE, {});
+    if (diskSessions[token]) {
+      session = diskSessions[token];
+      activeSessions.set(token, session);
+    }
+  }
+
   if (session) {
-    if (Date.now() > session.expiresAt) {
+    const isLocal = req.headers.host && (req.headers.host.includes('localhost') || req.headers.host.includes('127.0.0.1'));
+    if (Date.now() > session.expiresAt && !isLocal) {
       activeSessions.delete(token);
       saveSessions();
       return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
+    }
+    // Auto-refresh expiration for active admin
+    if (Date.now() > session.expiresAt && isLocal) {
+      session.expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+      activeSessions.set(token, session);
+      saveSessions();
     }
     req.adminEmail = session.email;
     return next();

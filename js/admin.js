@@ -293,15 +293,15 @@ async function apiFetch(urlOrEndpoint, options = {}) {
   }, options.headers || {});
   const opts = Object.assign({}, options, { headers });
 
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
   try {
     return await fetch(fullUrl, opts);
   } catch (err) {
-    if (API_BASE !== CLOUD_API_FALLBACK) {
-      console.warn(`Local API request failed (${fullUrl}). Auto-switching API_BASE to cloud fallback: ${CLOUD_API_FALLBACK}`);
+    if (!isLocalDev && API_BASE !== CLOUD_API_FALLBACK) {
+      console.warn(`API request failed (${fullUrl}). Auto-switching to cloud fallback: ${CLOUD_API_FALLBACK}`);
       API_BASE = CLOUD_API_FALLBACK;
-      const retryUrl = urlOrEndpoint.startsWith('http') 
-        ? urlOrEndpoint.replace(/http:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, CLOUD_API_FALLBACK)
-        : `${API_BASE}${urlOrEndpoint}`;
+      const retryUrl = `${API_BASE}${urlOrEndpoint}`;
       return await fetch(retryUrl, opts);
     }
     throw err;
@@ -309,6 +309,7 @@ async function apiFetch(urlOrEndpoint, options = {}) {
 }
 
 async function verifyAdminSession() {
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   try {
     let res;
     try {
@@ -316,7 +317,7 @@ async function verifyAdminSession() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
     } catch (networkErr) {
-      if (API_BASE !== CLOUD_API_FALLBACK) {
+      if (!isLocalDev && API_BASE !== CLOUD_API_FALLBACK) {
         console.warn('API at ' + API_BASE + ' unreachable. Falling back to live cloud API: ' + CLOUD_API_FALLBACK);
         API_BASE = CLOUD_API_FALLBACK;
         res = await fetch(`${API_BASE}/api/auth/me`, {
@@ -328,7 +329,7 @@ async function verifyAdminSession() {
     }
 
     if (!res || !res.ok) {
-      if (API_BASE !== CLOUD_API_FALLBACK) {
+      if (!isLocalDev && API_BASE !== CLOUD_API_FALLBACK) {
         try {
           console.warn('API returned ' + (res ? res.status : 'null') + '. Trying live cloud fallback: ' + CLOUD_API_FALLBACK);
           API_BASE = CLOUD_API_FALLBACK;
@@ -477,6 +478,10 @@ function initNavigation() {
       sidebar.classList.remove('open');
     }
 
+    try {
+      sessionStorage.setItem('rf_admin_active_view', viewId);
+    } catch (_) {}
+
     // Refresh specific section
     if (viewId === 'viewOverview') loadDashboardStats();
     if (viewId === 'viewOrders' || viewId === 'viewLeads') loadInquiries();
@@ -497,8 +502,9 @@ function initNavigation() {
     });
   });
 
-  // Handle URL hash on load
+  // Handle URL hash or saved view on load
   const hash = (window.location.hash || '').replace('#', '');
+  const savedView = sessionStorage.getItem('rf_admin_active_view');
   if (hash === 'orders') switchTab('viewOrders');
   else if (hash === 'leads') switchTab('viewLeads');
   else if (hash === 'customers') switchTab('viewCustomers');
@@ -506,6 +512,7 @@ function initNavigation() {
   else if (hash === 'reviews') switchTab('viewReviews');
   else if (hash === 'products') switchTab('viewProducts');
   else if (hash === 'settings') switchTab('viewSettings');
+  else if (savedView && titles[savedView]) switchTab(savedView);
   else switchTab('viewOverview');
 }
 
@@ -3409,9 +3416,20 @@ function initProductModals() {
     window.switchAdminImageMode('upload');
     const newCat = document.getElementById('newProductCategory');
     if (newCat) {
-      newCat.value = 'frames';
+      if (adminActiveCategory && adminActiveCategory !== 'all' && allAdminCategories.some(c => c.id === adminActiveCategory)) {
+        newCat.value = adminActiveCategory;
+      } else if (!newCat.value && allAdminCategories.length > 0) {
+        newCat.value = allAdminCategories[0].id;
+      } else if (!newCat.value) {
+        newCat.value = 'frames';
+      }
       const presetSelect = document.getElementById('newProductImagePreset');
-      if (presetSelect) presetSelect.value = 'assets/images/glass_frame.jpg';
+      if (presetSelect) {
+        if (newCat.value === 'frames') presetSelect.value = 'assets/images/glass_frame.jpg';
+        else if (newCat.value === 'personalized') presetSelect.value = 'assets/images/printed_bottle.jpg';
+        else if (newCat.value === 'office') presetSelect.value = 'assets/images/printed_file.jpg';
+        else presetSelect.value = 'assets/images/custom_canvas.jpg';
+      }
     }
     const sizeSel = document.getElementById('newProductSizeSelect');
     if (sizeSel) sizeSel.value = '8" × 10"';
@@ -4001,6 +4019,8 @@ function initProductModals() {
         } else if (categoryModalOrigin === 'edit') {
           const editCatSelect = document.getElementById('editProductCategory');
           if (editCatSelect) editCatSelect.value = data.category ? data.category.id : id;
+        } else if (data.category && data.category.id) {
+          selectAdminCategory(data.category.id);
         }
       } catch (err) {
         console.error('Error submitting category:', err);

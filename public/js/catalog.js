@@ -20,11 +20,97 @@ const CATEGORY_MAP = {
   'gifts': 'Photo Gifts & Keepsakes'
 };
 
+function refreshCategoryMap(categories) {
+  if (Array.isArray(categories)) {
+    categories.forEach(cat => {
+      if (cat && cat.id) {
+        CATEGORY_MAP[(cat.id || '').toLowerCase()] = cat.name || cat.id;
+      }
+    });
+  }
+}
+
+function renderCategorySelectors() {
+  const dropdownMenu = document.getElementById('categoryDropdownMenu');
+  const drawerPills = document.querySelector('.drawer-category-pills');
+
+  const categories = (typeof CATEGORIES_DATA !== 'undefined' && Array.isArray(CATEGORIES_DATA) && CATEGORIES_DATA.length > 0)
+    ? CATEGORIES_DATA
+    : [
+        { id: 'frames', name: 'Studio & Framing' },
+        { id: 'personalized', name: 'Personalized Printing' },
+        { id: 'office', name: 'Office Printing' },
+        { id: 'custom', name: 'Custom Printing' },
+        { id: 'gifts', name: 'Photo Gifts & Keepsakes' }
+      ];
+
+  const normCurrent = (currentCategory || 'all').toLowerCase();
+
+  if (dropdownMenu) {
+    let ddHtml = `
+      <button type="button" class="dropdown-item ${normCurrent === 'all' ? 'active' : ''}" data-filter="all" onclick="selectCatalogCategory('all', 'All Products')">
+        <span>All Products</span>
+      </button>
+    `;
+    categories.forEach(cat => {
+      const id = (cat.id || '').toLowerCase();
+      const name = cat.name || id;
+      const safeName = name.replace(/'/g, "\\'");
+      ddHtml += `
+        <button type="button" class="dropdown-item ${normCurrent === id ? 'active' : ''}" data-filter="${id}" onclick="selectCatalogCategory('${id}', '${safeName}')">
+          <span>${name}</span>
+        </button>
+      `;
+    });
+    dropdownMenu.innerHTML = ddHtml;
+  }
+
+  if (drawerPills) {
+    let pillsHtml = `
+      <button type="button" class="drawer-pill-btn ${normCurrent === 'all' ? 'active' : ''}" data-filter="all" onclick="selectCatalogCategory('all', 'All Products'); toggleFilterDrawer(false);">
+        <span>All Products</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    `;
+    categories.forEach(cat => {
+      const id = (cat.id || '').toLowerCase();
+      const name = cat.name || id;
+      const safeName = name.replace(/'/g, "\\'");
+      pillsHtml += `
+        <button type="button" class="drawer-pill-btn ${normCurrent === id ? 'active' : ''}" data-filter="${id}" onclick="selectCatalogCategory('${id}', '${safeName}'); toggleFilterDrawer(false);">
+          <span>${name}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      `;
+    });
+    drawerPills.innerHTML = pillsHtml;
+  }
+}
+
 async function initCatalog() {
   const gridContainer = document.getElementById('catalogProductsGrid');
   if (!gridContainer) return;
 
-  // Sync fresh products from server if available
+  // 1. Initial category map from local data if available
+  if (typeof CATEGORIES_DATA !== 'undefined' && Array.isArray(CATEGORIES_DATA)) {
+    refreshCategoryMap(CATEGORIES_DATA);
+  }
+
+  // 2. Fetch live categories from backend API
+  try {
+    const catRes = await fetch('/api/categories?t=' + Date.now());
+    if (catRes.ok) {
+      const catData = await catRes.json();
+      if (catData && catData.success && Array.isArray(catData.categories)) {
+        window.CATEGORIES_DATA = catData.categories;
+        refreshCategoryMap(catData.categories);
+      }
+    }
+  } catch (e) {
+    // Fallback to static CATEGORIES_DATA
+  }
+
+  // 3. Sync fresh products from server if available
   try {
     const res = await fetch('/api/products?t=' + Date.now());
     if (res.ok) {
@@ -41,11 +127,12 @@ async function initCatalog() {
 
   // Check URL query params for initial category filter
   const urlParams = new URLSearchParams(window.location.search);
-  const paramCategory = urlParams.get('category');
-  if (paramCategory && CATEGORY_MAP[paramCategory]) {
+  const paramCategory = (urlParams.get('category') || '').toLowerCase();
+  if (paramCategory && (paramCategory === 'all' || CATEGORY_MAP[paramCategory])) {
     currentCategory = paramCategory;
   }
 
+  renderCategorySelectors();
   setupFilterButtons();
   setupSearchInput();
   setupSortSelect();
@@ -55,13 +142,14 @@ async function initCatalog() {
 }
 
 function updateCategoryUI() {
-  const label = CATEGORY_MAP[currentCategory] || 'All Products';
+  const normCat = (currentCategory || 'all').toLowerCase();
+  const label = CATEGORY_MAP[normCat] || 'All Products';
   const labelEl = document.getElementById('currentCategoryText');
   if (labelEl) labelEl.textContent = label;
 
   // Sync all category buttons and dropdown items
   document.querySelectorAll('[data-filter]').forEach(btn => {
-    btn.classList.toggle('active', btn.getAttribute('data-filter') === currentCategory);
+    btn.classList.toggle('active', (btn.getAttribute('data-filter') || '').toLowerCase() === normCat);
   });
 }
 
@@ -193,7 +281,9 @@ function renderCatalog() {
 
   // Filter products
   let filtered = PRODUCTS_DATA.filter(item => {
-    const matchesCategory = (currentCategory === 'all') || (item.category === currentCategory);
+    const itemCat = (item.category || '').toLowerCase();
+    const curCat = (currentCategory || 'all').toLowerCase();
+    const matchesCategory = (curCat === 'all') || (itemCat === curCat);
 
     const nameText = (item.name || '').toLowerCase();
     const descText = (item.shortDescription || item.description || '').toLowerCase();
