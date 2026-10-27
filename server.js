@@ -3880,6 +3880,21 @@ app.delete('/api/admin/categories/:id', requireAuth, async (req, res) => {
 });
 
 /**
+ * Database & Supabase Status Diagnostic (GET)
+ */
+app.get('/api/db-status', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.json({
+    success: true,
+    isCloud: db.isCloud(),
+    supabaseConfigured: Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY)),
+    hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
+    hasSupabaseKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY),
+    supabaseHost: process.env.SUPABASE_URL ? (new URL(process.env.SUPABASE_URL)).host : null
+  });
+});
+
+/**
  * Contact Messages (GET)
  */
 app.get('/api/admin/messages', requireAuth, async (req, res) => {
