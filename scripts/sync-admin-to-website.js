@@ -2,7 +2,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-const url = 'https://rajesh-framing.vercel.app/api/products';
+const url = 'https://rajendrastudioframing.vercel.app/api/products';
 
 https.get(url, (res) => {
   let data = '';

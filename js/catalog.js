@@ -34,15 +34,17 @@ function renderCategorySelectors() {
   const dropdownMenu = document.getElementById('categoryDropdownMenu');
   const drawerPills = document.querySelector('.drawer-category-pills');
 
-  const categories = (typeof CATEGORIES_DATA !== 'undefined' && Array.isArray(CATEGORIES_DATA) && CATEGORIES_DATA.length > 0)
-    ? CATEGORIES_DATA
-    : [
-        { id: 'frames', name: 'Studio & Framing' },
-        { id: 'personalized', name: 'Personalized Printing' },
-        { id: 'office', name: 'Office Printing' },
-        { id: 'custom', name: 'Custom Printing' },
-        { id: 'gifts', name: 'Photo Gifts & Keepsakes' }
-      ];
+  const categories = (typeof window.CATEGORIES_DATA !== 'undefined' && Array.isArray(window.CATEGORIES_DATA) && window.CATEGORIES_DATA.length > 0)
+    ? window.CATEGORIES_DATA
+    : ((typeof CATEGORIES_DATA !== 'undefined' && Array.isArray(CATEGORIES_DATA) && CATEGORIES_DATA.length > 0)
+        ? CATEGORIES_DATA
+        : [
+            { id: 'frames', name: 'Studio & Framing' },
+            { id: 'personalized', name: 'Personalized Printing' },
+            { id: 'office', name: 'Office Printing' },
+            { id: 'custom', name: 'Custom Printing' },
+            { id: 'gifts', name: 'Photo Gifts & Keepsakes' }
+          ]);
 
   const normCurrent = (currentCategory || 'all').toLowerCase();
 
@@ -295,8 +297,12 @@ function renderCatalog() {
   // Filter products
   let filtered = getCatalogProducts().filter(item => {
     const itemCat = (item.category || '').toLowerCase();
+    const itemCatLabel = (item.categoryLabel || '').toLowerCase();
     const curCat = (currentCategory || 'all').toLowerCase();
-    const matchesCategory = (curCat === 'all') || (itemCat === curCat);
+    const curCatName = (CATEGORY_MAP[curCat] || '').toLowerCase();
+    const matchesCategory = (curCat === 'all') || 
+                            (itemCat === curCat) || 
+                            (curCatName && (itemCat === curCatName || itemCatLabel === curCatName));
 
     const nameText = (item.name || '').toLowerCase();
     const descText = (item.shortDescription || item.description || '').toLowerCase();
@@ -391,7 +397,7 @@ function renderCatalog() {
       </div>
 
       <div class="product-image-box">
-        <img src="${initialCardImg}" alt="${product.name}" class="product-image" loading="lazy" />
+        <img src="${initialCardImg}" alt="${product.name}" class="product-image" loading="lazy" onerror="this.onerror=null;this.src='assets/images/custom_canvas.jpg';" />
       </div>
 
       <div class="product-capsule product-card-body">

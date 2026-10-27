@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  const CLOUD_API_FALLBACK = 'https://rajesh-framing.vercel.app';
+  const CLOUD_API_FALLBACK = 'https://rajendrastudioframing.vercel.app';
 
   function getInitialApiBase() {
     const isLocalDev = window.location.hostname === 'localhost' || 

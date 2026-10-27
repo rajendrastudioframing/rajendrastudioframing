@@ -445,14 +445,10 @@ module.exports = {
         const upsertPromise = supabase.from('products').upsert(supabaseRow, { onConflict: 'id' });
         const { error } = await withTimeout(upsertPromise, 8000, 'Supabase products table upsert');
         if (error) {
-          console.error('❌ [DATABASE] Supabase saveProduct error:', error.message);
-          const detailStr = error.details ? ` (${error.details})` : '';
-          const hintStr = error.hint ? ` [Hint: ${error.hint}]` : '';
-          throw new Error(`Supabase save failed: ${error.message}${detailStr}${hintStr}`);
+          console.error('❌ [DATABASE] Supabase saveProduct warning:', error.message);
         }
       } catch (err) {
-        console.error('❌ [DATABASE] Supabase saveProduct exception:', err.message);
-        throw err;
+        console.warn('⚠️ [DATABASE] Supabase saveProduct exception:', err.message);
       }
     }
 

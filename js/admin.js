@@ -4,7 +4,7 @@
  * Features: Order Card Rows, Leads Avatar Table, Products Catalog, CSV Export, WhatsApp Connect
  */
 
-const CLOUD_API_FALLBACK = 'https://rajesh-framing.vercel.app';
+const CLOUD_API_FALLBACK = 'https://rajendrastudioframing.vercel.app';
 
 function resolveApiBase() {
   const isLocalDev = window.location.hostname === 'localhost' || 

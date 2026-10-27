@@ -2257,7 +2257,7 @@ app.post('/api/inquiries', async (req, res) => {
           from: fromAddress,
           to: adminRecipient,
           subject: `🔔 New Quote Request: ${name.trim()} (${newInquiry.product})`,
-          text: `New Custom Quote Inquiry!\n\nID: ${newId}\nCustomer: ${name.trim()}\nPhone: ${phone.trim()}\nEmail: ${email || 'N/A'}\nProduct: ${newInquiry.product}\nQuantity: ${quantity || 1}\nSpecs: ${specs || 'Standard'}\nNotes: ${notes || 'None'}\n\nView in Admin Panel: https://rajesh-framing.vercel.app/admin.html#leads`,
+          text: `New Custom Quote Inquiry!\n\nID: ${newId}\nCustomer: ${name.trim()}\nPhone: ${phone.trim()}\nEmail: ${email || 'N/A'}\nProduct: ${newInquiry.product}\nQuantity: ${quantity || 1}\nSpecs: ${specs || 'Standard'}\nNotes: ${notes || 'None'}\n\nView in Admin Panel: https://rajendrastudioframing.vercel.app/admin#leads`,
           html: `
             <div style="font-family: Arial, sans-serif; padding: 24px; background: #FAF8F5; border-radius: 12px; border: 1px solid #E5E0D5;">
               <h2 style="color: #1A1A18; margin-top: 0;">🔔 New Custom Quote Inquiry #${newId}</h2>
@@ -2273,7 +2273,7 @@ app.post('/api/inquiries', async (req, res) => {
                 <tr><td style="padding: 8px 0; color: #888888; vertical-align: top;">Notes:</td><td style="color: #333333; background: #FFFFFF; padding: 10px; border-radius: 6px; border: 1px solid #E5E0D8;">${notes || 'None'}</td></tr>
               </table>
               <div style="margin-top: 20px;">
-                <a href="https://rajesh-framing.vercel.app/admin#leads" style="background: #C89B3C; color: #FFFFFF; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">Open Admin Panel Leads &rarr;</a>
+                <a href="https://rajendrastudioframing.vercel.app/admin#leads" style="background: #C89B3C; color: #FFFFFF; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">Open Admin Panel Leads &rarr;</a>
               </div>
             </div>
           `
@@ -2313,110 +2313,7 @@ app.get('/api/products/:id', async (req, res) => {
   res.json({ success: true, product: prod });
 });
 
-/**
- * Master Category Routes (Public & Admin)
- */
-app.get('/api/categories', async (req, res) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  try {
-    const categories = await db.getCategories();
-    res.json({ success: true, categories });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to fetch categories' });
-  }
-});
 
-app.get('/api/categories/:id', async (req, res) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  try {
-    const categories = await db.getCategories();
-    const cat = categories.find(c => (c.id || '').toLowerCase() === req.params.id.toLowerCase());
-    if (!cat) {
-      return res.status(404).json({ success: false, message: 'Category not found' });
-    }
-    res.json({ success: true, category: cat });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to fetch category' });
-  }
-});
-
-app.get('/api/admin/categories', async (req, res) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  try {
-    const categories = await db.getCategories();
-    const products = await db.getProducts();
-    const categoriesWithCount = categories.map(cat => {
-      const count = products.filter(p => (p.category || '').toLowerCase() === (cat.id || '').toLowerCase()).length;
-      return { ...cat, productCount: count };
-    });
-    res.json({ success: true, categories: categoriesWithCount });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to fetch categories' });
-  }
-});
-
-app.post('/api/admin/categories', async (req, res) => {
-  try {
-    const { id, name, icon, desc, badge, color, bg } = req.body;
-    if (!name || typeof name !== 'string' || !name.trim()) {
-      return res.status(400).json({ success: false, message: 'Category name is required.' });
-    }
-
-    const cleanId = (id || name).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-|-$/g, '') || `cat-${Date.now()}`;
-    const cleanName = name.trim();
-    const cleanIcon = (icon && typeof icon === 'string' && icon.trim()) ? icon.trim() : '🏷️';
-    const cleanDesc = (desc && typeof desc === 'string') ? desc.trim() : `Browse handcrafted ${cleanName} collection.`;
-    const cleanBadge = (badge && typeof badge === 'string' && badge.trim()) ? badge.trim() : cleanName;
-    const cleanColor = color || '#C99A3D';
-    const cleanBg = bg || 'rgba(201, 154, 61, 0.15)';
-
-    const newCategory = await db.saveCategory({
-      id: cleanId,
-      name: cleanName,
-      icon: cleanIcon,
-      desc: cleanDesc,
-      badge: cleanBadge,
-      color: cleanColor,
-      bg: cleanBg
-    });
-
-    const allCategories = await db.getCategories();
-    res.json({
-      success: true,
-      message: `Category "${cleanName}" saved successfully.`,
-      category: newCategory,
-      categories: allCategories
-    });
-  } catch (err) {
-    console.error('Error saving category:', err);
-    res.status(500).json({ success: false, message: 'Failed to save category.' });
-  }
-});
-
-app.delete('/api/admin/categories/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ success: false, message: 'Category ID is required.' });
-
-    const categories = await db.getCategories();
-    const cat = categories.find(c => c.id.toLowerCase() === id.toLowerCase());
-    if (cat && cat.isDefault) {
-      return res.status(400).json({ success: false, message: 'Default studio categories cannot be removed.' });
-    }
-
-    await db.deleteCategory(id);
-    const updated = await db.getCategories();
-    res.json({ success: true, message: 'Category removed successfully.', categories: updated });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to delete category.' });
-  }
-});
 
 /**
  * Public Customer Endpoint: Upload Photo for Framing / Custom Printing (POST)
@@ -4189,7 +4086,7 @@ app.post('/api/contact', async (req, res) => {
           from: fromAddress,
           to: adminRecipient,
           subject: `🔔 New Website Enquiry: ${cleanName} (${cleanService})`,
-          text: `New Customer Enquiry!\n\nName: ${cleanName}\nPhone: ${cleanPhone}\nEmail: ${cleanEmail || 'Not provided'}\nProduct/Service: ${cleanService}\nMessage: ${cleanMessage}\n\nView and manage in Admin Panel: https://rajesh-framing.vercel.app/admin#leads`,
+          text: `New Customer Enquiry!\n\nName: ${cleanName}\nPhone: ${cleanPhone}\nEmail: ${cleanEmail || 'Not provided'}\nProduct/Service: ${cleanService}\nMessage: ${cleanMessage}\n\nView and manage in Admin Panel: https://rajendrastudioframing.vercel.app/admin#leads`,
           html: `
             <div style="font-family: Arial, sans-serif; padding: 24px; background: #FAF8F5; border-radius: 12px; border: 1px solid #E5E0D5;">
               <h2 style="color: #1A1A18; margin-top: 0;">🔔 New Customer Enquiry Received</h2>
@@ -4202,7 +4099,7 @@ app.post('/api/contact', async (req, res) => {
                 <tr><td style="padding: 8px 0; color: #888888; vertical-align: top;">Message:</td><td style="color: #333333; background: #FFFFFF; padding: 12px; border-radius: 8px; border: 1px solid #E5E0D8; line-height: 1.5;">${cleanMessage}</td></tr>
               </table>
               <div style="margin-top: 20px;">
-                <a href="https://rajesh-framing.vercel.app/admin#leads" style="background: #C89B3C; color: #FFFFFF; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">Open Admin Panel Leads &rarr;</a>
+                <a href="https://rajendrastudioframing.vercel.app/admin#leads" style="background: #C89B3C; color: #FFFFFF; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">Open Admin Panel Leads &rarr;</a>
               </div>
             </div>
           `

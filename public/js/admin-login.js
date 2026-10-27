@@ -30,7 +30,7 @@ let otpCountdownTimer = null;
 let countdownSeconds = 60;
 
 // Cloud fallback endpoint in case local server is not running
-const CLOUD_API_FALLBACK = 'https://rajesh-framing.vercel.app';
+const CLOUD_API_FALLBACK = 'https://rajendrastudioframing.vercel.app';
 
 function getInitialApiBase() {
   const isLocalDev = window.location.hostname === 'localhost' || 
