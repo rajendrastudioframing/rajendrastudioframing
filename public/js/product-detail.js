@@ -34,8 +34,12 @@ async function initProductDetailPage() {
     // Fallback to static PRODUCTS_DATA
   }
 
-  if (typeof PRODUCTS_DATA === 'undefined') {
-    console.warn('PRODUCTS_DATA is undefined');
+  const allProds = (window.PRODUCTS_DATA && Array.isArray(window.PRODUCTS_DATA) && window.PRODUCTS_DATA.length > 0)
+    ? window.PRODUCTS_DATA
+    : ((typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) ? PRODUCTS_DATA : []);
+
+  if (!allProds.length) {
+    console.warn('PRODUCTS_DATA is empty or undefined');
     return;
   }
 
@@ -43,7 +47,7 @@ async function initProductDetailPage() {
   const productId = urlParams.get('id') || 'plastic-frame-gallery';
   const finishIdParam = urlParams.get('finish') || urlParams.get('color');
 
-  currentProduct = PRODUCTS_DATA.find(p => p.id === productId);
+  currentProduct = allProds.find(p => p.id === productId);
   if (!currentProduct && productId) {
     try {
       const singleRes = await fetch(`/api/products/${encodeURIComponent(productId)}?t=${Date.now()}`);
@@ -51,14 +55,28 @@ async function initProductDetailPage() {
         const singleData = await singleRes.json();
         if (singleData && singleData.product) {
           currentProduct = singleData.product;
-          PRODUCTS_DATA.push(currentProduct);
+          if (Array.isArray(window.PRODUCTS_DATA)) {
+            window.PRODUCTS_DATA.push(currentProduct);
+          }
         }
       }
     } catch (_) {}
   }
   if (!currentProduct) {
-    currentProduct = PRODUCTS_DATA[0];
+    currentProduct = allProds[0];
   }
+
+  try {
+    const bc = new BroadcastChannel('rf_catalog_sync');
+    bc.onmessage = (ev) => {
+      if (ev.data && (ev.data.type === 'PRODUCT_UPDATED' || ev.data.type === 'PRODUCT_ADDED')) {
+        if (currentProduct && ev.data.product && ev.data.product.id === currentProduct.id) {
+          currentProduct = ev.data.product;
+          if (typeof renderProductDetails === 'function') renderProductDetails();
+        }
+      }
+    };
+  } catch (_) {}
 
   selectedSize = currentProduct.sizes && currentProduct.sizes.length > 0 ? currentProduct.sizes[0] : null;
 

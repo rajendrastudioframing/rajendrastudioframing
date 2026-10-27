@@ -130,7 +130,11 @@ function syncProductsDataFiles(products) {
  * Total: ${products.length} products - Auto-synced from Admin Panel
  */
 
-const PRODUCTS_DATA = ${JSON.stringify(products, null, 2)};
+var PRODUCTS_DATA = ${JSON.stringify(products, null, 2)};
+
+if (typeof window !== 'undefined') {
+  window.PRODUCTS_DATA = PRODUCTS_DATA;
+}
 
 // Business contact data
 const BUSINESS_INFO = ${JSON.stringify(businessInfo, null, 2)};
@@ -197,11 +201,13 @@ if (typeof module !== 'undefined' && module.exports) {
 }
 
 // Initialize Supabase Client if env variables are present
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+const rawSupabaseUrl = process.env.SUPABASE_URL || '';
+const rawSupabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || '';
+const supabaseUrl = rawSupabaseUrl.trim().replace(/^["']|["']$/g, '');
+const supabaseKey = rawSupabaseKey.trim().replace(/^["']|["']$/g, '');
 let supabase = null;
 
-if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
+if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder') && supabaseUrl.startsWith('http')) {
   try {
     supabase = createClient(supabaseUrl, supabaseKey);
     console.log('⚡ [DATABASE] Connected to Supabase Cloud Database:', supabaseUrl);
@@ -445,10 +451,12 @@ module.exports = {
         const upsertPromise = supabase.from('products').upsert(supabaseRow, { onConflict: 'id' });
         const { error } = await withTimeout(upsertPromise, 8000, 'Supabase products table upsert');
         if (error) {
-          console.error('❌ [DATABASE] Supabase saveProduct warning:', error.message);
+          console.error('❌ [DATABASE] Supabase saveProduct error:', error.message);
+          throw new Error('Supabase database error: ' + error.message);
         }
       } catch (err) {
-        console.warn('⚠️ [DATABASE] Supabase saveProduct exception:', err.message);
+        console.error('❌ [DATABASE] Supabase saveProduct exception:', err.message);
+        throw err;
       }
     }
 
@@ -470,9 +478,13 @@ module.exports = {
     if (supabase) {
       try {
         const { error } = await supabase.from('products').delete().eq('id', id);
-        if (error) console.warn('⚠️ [DATABASE] Supabase deleteProduct warning:', error.message);
+        if (error) {
+          console.error('❌ [DATABASE] Supabase deleteProduct error:', error.message);
+          throw new Error('Supabase database error: ' + error.message);
+        }
       } catch (err) {
-        console.warn('⚠️ [DATABASE] Supabase deleteProduct exception:', err.message);
+        console.error('❌ [DATABASE] Supabase deleteProduct exception:', err.message);
+        throw err;
       }
     }
     let products = readJson(PRODUCTS_FILE, []);
@@ -491,7 +503,9 @@ module.exports = {
       { id: 'personalized', name: 'Personalized Printing', icon: '☕', desc: 'Custom printed ceramic mugs, insulated bottles, custom apparel, and personalized daily keepsakes.', color: '#1e40af', bg: 'rgba(59, 130, 246, 0.15)', badge: 'Personalized Printing', isDefault: true },
       { id: 'office', name: 'Office Printing', icon: '📁', desc: 'Corporate presentation folders, customized file binders, business cards, letterheads, and executive desk accessories.', color: '#166534', bg: 'rgba(34, 197, 94, 0.15)', badge: 'Office Printing', isDefault: true },
       { id: 'custom', name: 'Custom Printing', icon: '🎨', desc: 'Museum-grade canvas gallery wraps, edge-to-edge acrylic prints, metallic prints, and bespoke art installations.', color: '#6b21a8', bg: 'rgba(168, 85, 247, 0.15)', badge: 'Custom Printing', isDefault: true },
-      { id: 'gifts', name: 'Photo Gifts & Keepsakes', icon: '🎁', desc: 'Personalized 3D photo crystals, acrylic desktop plaques, customized keychains, and commemorative photo clocks.', color: '#9d174d', bg: 'rgba(236, 72, 153, 0.15)', badge: 'Photo Gifts & Keepsakes', isDefault: true }
+      { id: 'gifts', name: 'Photo Gifts & Keepsakes', icon: '🎁', desc: 'Personalized 3D photo crystals, acrylic desktop plaques, customized keychains, and commemorative photo clocks.', color: '#9d174d', bg: 'rgba(236, 72, 153, 0.15)', badge: 'Photo Gifts & Keepsakes', isDefault: true },
+      { id: 'canvas-gallery', name: 'Canvas Gallery', icon: '🖼️', desc: 'Museum-quality wrapped canvas prints and framed canvas arts.', badge: 'Premium Canvas', color: '#c99a3d', bg: 'rgba(201, 154, 61, 0.15)', isDefault: false, createdAt: '2026-10-25T19:23:35.568Z' },
+      { id: 'luxury-art', name: 'Luxury Art Collection', icon: '🎨', desc: 'Exclusive handcrafted museum gallery art frames and master prints.', badge: 'Luxury Art', color: '#d97706', bg: 'rgba(201, 154, 61, 0.15)', isDefault: false, createdAt: '2026-10-26T04:07:08.823Z' }
     ];
 
     if (supabase) {
@@ -578,9 +592,13 @@ module.exports = {
           is_default: newCategory.isDefault,
           created_at: newCategory.createdAt
         }, { onConflict: 'id' });
-        if (error) console.warn('⚠️ [DATABASE] Supabase saveCategory warning:', error.message);
+        if (error) {
+          console.error('❌ [DATABASE] Supabase saveCategory error:', error.message);
+          throw new Error('Supabase database error: ' + error.message);
+        }
       } catch (err) {
-        console.warn('⚠️ [DATABASE] Supabase saveCategory exception:', err.message);
+        console.error('❌ [DATABASE] Supabase saveCategory exception:', err.message);
+        throw err;
       }
     }
 
@@ -601,9 +619,13 @@ module.exports = {
     if (supabase) {
       try {
         const { error } = await supabase.from('categories').delete().eq('id', cleanId);
-        if (error) console.warn('⚠️ [DATABASE] Supabase deleteCategory warning:', error.message);
+        if (error) {
+          console.error('❌ [DATABASE] Supabase deleteCategory error:', error.message);
+          throw new Error('Supabase database error: ' + error.message);
+        }
       } catch (err) {
-        console.warn('⚠️ [DATABASE] Supabase deleteCategory exception:', err.message);
+        console.error('❌ [DATABASE] Supabase deleteCategory exception:', err.message);
+        throw err;
       }
     }
 

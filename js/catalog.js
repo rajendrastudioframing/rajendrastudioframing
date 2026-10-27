@@ -99,6 +99,39 @@ function getCatalogProducts() {
   return [];
 }
 
+async function fetchLiveCatalogData() {
+  try {
+    const [catRes, prodRes] = await Promise.all([
+      fetch('/api/categories?t=' + Date.now(), { cache: 'no-store' }).catch(() => null),
+      fetch('/api/products?t=' + Date.now(), { cache: 'no-store' }).catch(() => null)
+    ]);
+
+    if (catRes && catRes.ok) {
+      const catData = await catRes.json();
+      if (catData && catData.success && Array.isArray(catData.categories) && catData.categories.length > 0) {
+        window.CATEGORIES_DATA = catData.categories;
+        refreshCategoryMap(catData.categories);
+        renderCategorySelectors();
+      }
+    }
+
+    if (prodRes && prodRes.ok) {
+      const prodData = await prodRes.json();
+      if (prodData && prodData.success && Array.isArray(prodData.products) && prodData.products.length > 0) {
+        window.PRODUCTS_DATA = prodData.products;
+        if (typeof PRODUCTS_DATA !== 'undefined') {
+          try { PRODUCTS_DATA = prodData.products; } catch (_) {}
+        }
+      }
+    }
+
+    renderCatalog();
+  } catch (err) {
+    console.warn('Live catalog data sync note:', err.message);
+  }
+}
+window.fetchLiveCatalogData = fetchLiveCatalogData;
+
 async function initCatalog() {
   const gridContainer = document.getElementById('catalogProductsGrid');
   if (!gridContainer) return;
@@ -107,38 +140,6 @@ async function initCatalog() {
   if (typeof CATEGORIES_DATA !== 'undefined' && Array.isArray(CATEGORIES_DATA)) {
     refreshCategoryMap(CATEGORIES_DATA);
   }
-
-  // 2. Fetch live categories from backend API
-  try {
-    const catRes = await fetch('/api/categories?t=' + Date.now());
-    if (catRes.ok) {
-      const catData = await catRes.json();
-      if (catData && catData.success && Array.isArray(catData.categories)) {
-        window.CATEGORIES_DATA = catData.categories;
-        refreshCategoryMap(catData.categories);
-      }
-    }
-  } catch (e) {
-    // Fallback to static CATEGORIES_DATA
-  }
-
-  // 3. Sync fresh products from server if available
-  try {
-    const res = await fetch('/api/products?t=' + Date.now());
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.success && Array.isArray(data.products) && data.products.length > 0) {
-        window.PRODUCTS_DATA = data.products;
-        if (typeof PRODUCTS_DATA !== 'undefined') {
-          try { PRODUCTS_DATA = data.products; } catch (_) {}
-        }
-      }
-    }
-  } catch (e) {
-    // Fallback to static PRODUCTS_DATA
-  }
-
-  if (!getCatalogProducts().length) return;
 
   // Check URL query params for initial category filter
   const urlParams = new URLSearchParams(window.location.search);
@@ -154,6 +155,28 @@ async function initCatalog() {
   initUnifiedBar();
   updateCategoryUI();
   renderCatalog();
+
+  // 2. Fetch live data immediately from server
+  await fetchLiveCatalogData();
+
+  // 3. Setup multi-tab BroadcastChannel synchronization
+  try {
+    const bc = new BroadcastChannel('rf_catalog_sync');
+    bc.onmessage = (ev) => {
+      console.log('⚡ [CATALOG] Instant sync message received:', ev.data);
+      fetchLiveCatalogData();
+    };
+  } catch (_) {}
+
+  // 4. Refetch on tab focus / visibility
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      fetchLiveCatalogData();
+    }
+  });
+
+  // 5. Background polling every 20s
+  setInterval(fetchLiveCatalogData, 20000);
 }
 
 function updateCategoryUI() {

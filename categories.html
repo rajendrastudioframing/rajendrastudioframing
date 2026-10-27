@@ -498,7 +498,7 @@
   <script src="js/customer-auth.js?v=cat_v2"></script>
   <script src="js/quote-modal.js?v=cat_v2"></script>
   <script>
-    (async function initCategoriesPage() {
+    async function loadAndRenderCategoriesPage() {
       const grid = document.getElementById('categoriesMainGrid');
       if (!grid) return;
 
@@ -507,18 +507,21 @@
         'personalized': 'assets/images/custom_mug.jpg',
         'office': 'assets/images/office_files.jpg',
         'custom': 'assets/images/acrylic_photo.jpg',
-        'gifts': 'assets/images/3d_crystal.jpg'
+        'gifts': 'assets/images/3d_crystal.jpg',
+        'canvas-gallery': 'assets/images/custom_canvas.jpg',
+        'luxury-art': 'assets/images/glass_frame.jpg'
       };
 
-      let categories = (typeof CATEGORIES_DATA !== 'undefined' && Array.isArray(CATEGORIES_DATA)) ? CATEGORIES_DATA : [];
-      let products = (typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) ? PRODUCTS_DATA : [];
+      let categories = (typeof window.CATEGORIES_DATA !== 'undefined' && Array.isArray(window.CATEGORIES_DATA)) ? window.CATEGORIES_DATA : ((typeof CATEGORIES_DATA !== 'undefined' && Array.isArray(CATEGORIES_DATA)) ? CATEGORIES_DATA : []);
+      let products = (typeof window.PRODUCTS_DATA !== 'undefined' && Array.isArray(window.PRODUCTS_DATA)) ? window.PRODUCTS_DATA : ((typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) ? PRODUCTS_DATA : []);
 
       try {
-        const res = await fetch('/api/categories?t=' + Date.now());
+        const res = await fetch('/api/categories?t=' + Date.now(), { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data && data.success && Array.isArray(data.categories) && data.categories.length > 0) {
             categories = data.categories;
+            window.CATEGORIES_DATA = categories;
           }
         }
       } catch (e) {
@@ -526,11 +529,12 @@
       }
 
       try {
-        const resP = await fetch('/api/products?t=' + Date.now());
+        const resP = await fetch('/api/products?t=' + Date.now(), { cache: 'no-store' });
         if (resP.ok) {
           const dataP = await resP.json();
           if (dataP && dataP.success && Array.isArray(dataP.products)) {
             products = dataP.products;
+            window.PRODUCTS_DATA = products;
           }
         }
       } catch (e) {
@@ -588,7 +592,24 @@
           </article>
         `;
       }).join('');
-    })();
+    }
+
+    loadAndRenderCategoriesPage();
+
+    try {
+      const bc = new BroadcastChannel('rf_catalog_sync');
+      bc.onmessage = () => {
+        loadAndRenderCategoriesPage();
+      };
+    } catch (_) {}
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        loadAndRenderCategoriesPage();
+      }
+    });
+
+    setInterval(loadAndRenderCategoriesPage, 20000);
   </script>
 
   <!-- Mobile Fixed Bottom Navigation Bar (5 Items Required) -->

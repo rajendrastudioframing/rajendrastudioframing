@@ -3763,9 +3763,14 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
  * Delete Product (DELETE)
  */
 app.delete('/api/admin/products/:id', requireAuth, async (req, res) => {
-  const { id } = req.params;
-  await db.deleteProduct(id);
-  res.json({ success: true, message: 'Product removed from catalog.' });
+  try {
+    const { id } = req.params;
+    await db.deleteProduct(id);
+    res.json({ success: true, message: 'Product removed from catalog.' });
+  } catch (err) {
+    console.error('Failed to delete product:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete product: ' + (err.message || err) });
+  }
 });
 
 /**
@@ -3853,7 +3858,7 @@ app.post('/api/admin/categories', requireAuth, async (req, res) => {
     });
   } catch (err) {
     console.error('Error saving category:', err);
-    res.status(500).json({ success: false, message: 'Failed to save category.' });
+    res.status(500).json({ success: false, message: 'Failed to save category: ' + (err.message || err) });
   }
 });
 
@@ -3875,7 +3880,7 @@ app.delete('/api/admin/categories/:id', requireAuth, async (req, res) => {
     const updated = await db.getCategories();
     res.json({ success: true, message: 'Category removed successfully.', categories: updated });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to delete category.' });
+    res.status(500).json({ success: false, message: 'Failed to delete category: ' + (err.message || err) });
   }
 });
 

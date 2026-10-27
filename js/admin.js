@@ -3047,16 +3047,10 @@ async function loadAdminCategories() {
 
     if (data && (data.success || Array.isArray(data.categories))) {
       const serverCategories = data.categories || [];
-      const catMap = new Map();
-      serverCategories.forEach(c => catMap.set(c.id, c));
-      if (Array.isArray(cached)) {
-        cached.forEach(c => {
-          if (!catMap.has(c.id)) catMap.set(c.id, c);
-        });
+      if (serverCategories.length > 0) {
+        localStorage.setItem('rf_admin_categories', JSON.stringify(serverCategories));
+        applyCategoriesList(serverCategories);
       }
-      const merged = Array.from(catMap.values());
-      localStorage.setItem('rf_admin_categories', JSON.stringify(merged));
-      applyCategoriesList(merged);
     }
   } catch (err) {
     console.warn('Failed to load categories:', err);
@@ -4062,6 +4056,11 @@ function initProductModals() {
           }
 
           // 4. Show success message immediately
+          try {
+            const bc = new BroadcastChannel('rf_catalog_sync');
+            bc.postMessage({ type: 'PRODUCT_ADDED', product: savedProduct, timestamp: Date.now() });
+          } catch (_) {}
+
           showToast('Product Added Successfully', `"${name}" has been added and saved permanently to Supabase!`, 'success');
 
           // 5. Clean up modal form & photo store
@@ -4447,6 +4446,10 @@ function initProductModals() {
           }
           updateAdminCategoryCounters(allProducts);
           window.filterAdminProducts();
+          try {
+            const bc = new BroadcastChannel('rf_catalog_sync');
+            bc.postMessage({ type: 'PRODUCT_UPDATED', product: updatedProduct, timestamp: Date.now() });
+          } catch (_) {}
           showToast('Product Updated', `"${name}" updated successfully. Changes are live on website!`, 'success');
           setTimeout(() => { loadProducts().catch(() => {}); }, 800);
         } else {
@@ -4501,76 +4504,62 @@ function initProductModals() {
         createdAt: new Date().toISOString()
       };
 
-      // 1. Immediately persist in localStorage & memory so refreshing anytime never loses it
-      let currentLocal = [];
-      try {
-        currentLocal = JSON.parse(localStorage.getItem('rf_admin_categories') || '[]');
-      } catch (_) {}
-      if (!Array.isArray(currentLocal) || currentLocal.length === 0) {
-        currentLocal = (typeof window.CATEGORIES_DATA !== 'undefined' && Array.isArray(window.CATEGORIES_DATA))
-          ? [...window.CATEGORIES_DATA]
-          : [...allAdminCategories];
-      }
-      const existingIdx = currentLocal.findIndex(c => (c.id || '').toLowerCase() === cleanId.toLowerCase());
-      if (existingIdx >= 0) {
-        currentLocal[existingIdx] = { ...currentLocal[existingIdx], ...newCatObj };
-      } else {
-        currentLocal.push(newCatObj);
-      }
-      localStorage.setItem('rf_admin_categories', JSON.stringify(currentLocal));
-      applyCategoriesList(currentLocal);
-
       const submitBtn = document.getElementById('btnSubmitAddCategory');
       const origHtml = submitBtn ? submitBtn.innerHTML : 'Save Category';
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span>Saving...</span>';
+        submitBtn.innerHTML = '<span>Saving to Database...</span>';
       }
 
       try {
-        let serverSuccess = false;
-        let serverCat = null;
+        const res = await apiFetch('/api/admin/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: cleanId, name, icon, desc, badge, color })
+        });
 
+        let data = null;
         try {
-          const res = await apiFetch('/api/admin/categories', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: cleanId, name, icon, desc, badge, color })
-          });
-          if (res && res.ok) {
-            const data = await res.json();
-            if (data && data.success) {
-              serverSuccess = true;
-              serverCat = data.category || newCatObj;
-              if (Array.isArray(data.categories)) {
-                localStorage.setItem('rf_admin_categories', JSON.stringify(data.categories));
-                applyCategoriesList(data.categories);
-              }
-            }
-          }
-        } catch (postErr) {
-          console.warn('Backend category save note (using local persistence):', postErr.message);
+          data = await res.json();
+        } catch (_) {
+          data = { success: false, message: `Server returned HTTP ${res.status}` };
         }
 
-        showToast('Category Created', `Category "${name}" created and saved successfully!`, 'success');
-        closeAddCategoryModal();
-        updateAdminCategoryCounters(allProducts);
+        if (res.ok && data && data.success) {
+          const savedCategories = Array.isArray(data.categories) ? data.categories : allAdminCategories;
+          const savedCat = data.category || newCatObj;
 
-        // If opened from Add Product or Edit Product modal, select this new category
-        const targetId = serverCat ? serverCat.id : cleanId;
-        if (categoryModalOrigin === 'new') {
-          const newCatSelect = document.getElementById('newProductCategory');
-          if (newCatSelect) newCatSelect.value = targetId;
-        } else if (categoryModalOrigin === 'edit') {
-          const editCatSelect = document.getElementById('editProductCategory');
-          if (editCatSelect) editCatSelect.value = targetId;
+          localStorage.setItem('rf_admin_categories', JSON.stringify(savedCategories));
+          applyCategoriesList(savedCategories);
+
+          try {
+            const bc = new BroadcastChannel('rf_catalog_sync');
+            bc.postMessage({ type: 'CATEGORY_ADDED', category: savedCat, timestamp: Date.now() });
+          } catch (_) {}
+
+          showToast('Category Created', `Category "${name}" created and saved successfully!`, 'success');
+          closeAddCategoryModal();
+          updateAdminCategoryCounters(allProducts);
+
+          // If opened from Add Product or Edit Product modal, select this new category
+          const targetId = savedCat ? savedCat.id : cleanId;
+          if (categoryModalOrigin === 'new') {
+            const newCatSelect = document.getElementById('newProductCategory');
+            if (newCatSelect) newCatSelect.value = targetId;
+          } else if (categoryModalOrigin === 'edit') {
+            const editCatSelect = document.getElementById('editProductCategory');
+            if (editCatSelect) editCatSelect.value = targetId;
+          } else {
+            selectAdminCategory(targetId);
+          }
         } else {
-          selectAdminCategory(targetId);
+          const errMsg = (data && data.message) || `Failed to save category (HTTP ${res.status}).`;
+          console.error('Failed to save category:', errMsg);
+          showToast('Category Save Failed', errMsg, 'danger');
         }
       } catch (err) {
         console.error('Error submitting category:', err);
-        showToast('Category Created (Local)', `Category "${name}" saved to admin panel!`, 'success');
-        closeAddCategoryModal();
+        showToast('Database Error', 'Network or database error saving category: ' + err.message, 'danger');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -4600,6 +4589,10 @@ window.deleteProduct = async (id) => {
     if (data.success) {
       allProducts = allProducts.filter(p => p.id !== id);
       updateAdminCategoryCounters(allProducts); window.filterAdminProducts();
+      try {
+        const bc = new BroadcastChannel('rf_catalog_sync');
+        bc.postMessage({ type: 'PRODUCT_DELETED', id, timestamp: Date.now() });
+      } catch (_) {}
       showToast('Product Removed', 'Product was removed from the catalog.', 'info');
     } else {
       showToast('Delete Failed', data.message || 'Could not delete product.', 'danger');
@@ -4616,32 +4609,33 @@ window.deleteCategory = async (id) => {
   const name = cat ? cat.name : id;
   if (!confirm(`Are you sure you want to delete category "${name}"? Products in this category will not be deleted.`)) return;
 
-  // Immediately remove from localStorage
-  try {
-    let localCats = JSON.parse(localStorage.getItem('rf_admin_categories') || '[]');
-    if (Array.isArray(localCats)) {
-      localCats = localCats.filter(c => (c.id || '').toLowerCase() !== id.toLowerCase());
-      localStorage.setItem('rf_admin_categories', JSON.stringify(localCats));
-      applyCategoriesList(localCats);
-    }
-  } catch (_) {}
-
   try {
     const res = await apiFetch(`/api/admin/categories/${encodeURIComponent(id)}`, {
       method: 'DELETE'
     });
     const data = await res.json();
-    if (data.success) {
+    if (res.ok && data && data.success) {
+      if (Array.isArray(data.categories)) {
+        allAdminCategories = data.categories;
+        localStorage.setItem('rf_admin_categories', JSON.stringify(data.categories));
+        applyCategoriesList(data.categories);
+      } else {
+        allAdminCategories = allAdminCategories.filter(c => c.id !== id);
+        localStorage.setItem('rf_admin_categories', JSON.stringify(allAdminCategories));
+        applyCategoriesList(allAdminCategories);
+      }
+      try {
+        const bc = new BroadcastChannel('rf_catalog_sync');
+        bc.postMessage({ type: 'CATEGORY_DELETED', id, timestamp: Date.now() });
+      } catch (_) {}
       showToast('Category Removed', `Category "${name}" removed successfully.`, 'info');
-      await loadAdminCategories();
       selectAdminCategory('all');
     } else {
-      showToast('Cannot Remove Category', data.message || 'Failed to remove category.', 'danger');
+      showToast('Cannot Remove Category', (data && data.message) || 'Failed to remove category from database.', 'danger');
     }
   } catch (err) {
     console.error('Error deleting category:', err);
-    showToast('Category Removed', `Category "${name}" removed from admin list.`, 'info');
-    selectAdminCategory('all');
+    showToast('Delete Failed', 'Database error deleting category: ' + err.message, 'danger');
   }
 };
 

@@ -3,7 +3,7 @@
  * Total: 8 products - Auto-synced from Admin Panel
  */
 
-const PRODUCTS_DATA = [
+var PRODUCTS_DATA = [
   {
     "id": "glass-frame-classic",
     "name": "Glass Photo Frame",
@@ -477,6 +477,10 @@ const PRODUCTS_DATA = [
     ]
   }
 ];
+
+if (typeof window !== 'undefined') {
+  window.PRODUCTS_DATA = PRODUCTS_DATA;
+}
 
 // Business contact data
 const BUSINESS_INFO = {
