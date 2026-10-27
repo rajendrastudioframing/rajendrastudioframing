@@ -2958,7 +2958,7 @@ body.modal-open {
   }
   .order-action-buttons {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
     width: 100%;
     margin-left: 0;
     gap: 6px;

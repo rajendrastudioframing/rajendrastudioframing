@@ -591,26 +591,26 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
   let primaryMessage = `Your order status has been updated to <strong>${newStatus}</strong>.`;
 
   if (isPlaced) {
-    badgeText = '🎉 ORDER PLACED SUCCESSFULLY';
+    badgeText = 'ORDER PLACED SUCCESSFULLY';
     badgeBg = '#ECFDF5';
     badgeColor = '#047857';
     badgeBorder = '#A7F3D0';
-    headline = 'Your Order Has Been Placed Successfully!';
-    primaryMessage = 'Thank you for placing your order with Dahej Support! We have received your order details and items. Our master craftsmen are reviewing your specifications and preparing your custom frames &amp; prints.';
+    headline = 'Thank You for Your Order!';
+    primaryMessage = `Your order <strong>#${orderId}</strong> has been successfully placed at Rajendra Studio &amp; Framing. Our team will review your order and notify you once it has been accepted.`;
   } else if (isAccepted) {
-    badgeText = '✓ ORDER CONFIRMED & IN PRODUCTION';
-    badgeBg = '#FEF9EE';
-    badgeColor = '#92400E';
-    badgeBorder = '#FDE68A';
-    headline = 'Great news! Your Order is Confirmed & In Production';
-    primaryMessage = 'We are excited to let you know that your order has been officially verified and confirmed by Dahej Support Studio! Our master craftsmen have queued your piece for precision framing and custom assembly.';
+    badgeText = 'ORDER CONFIRMED';
+    badgeBg = '#ECFDF5';
+    badgeColor = '#065F46';
+    badgeBorder = '#A7F3D0';
+    headline = 'Your Order Has Been Confirmed!';
+    primaryMessage = `Your order <strong>#${orderId}</strong> has been confirmed by our team.`;
   } else if (isCancelled) {
     badgeText = '⚠️ ORDER CANCELLED';
     badgeBg = '#FEF2F2';
     badgeColor = '#991B1B';
     badgeBorder = '#FECACA';
     headline = 'Important Notice: Order Cancelled';
-    primaryMessage = 'We are writing to inform you that your order has been cancelled by Dahej Support Studio. If this cancellation was requested by you, no further action is needed.';
+    primaryMessage = 'We are writing to inform you that your order has been cancelled by Rajendra Studio &amp; Framing. If this cancellation was requested by you, no further action is needed.';
   } else if (isShipped) {
     badgeText = '🚚 DISPATCHED & OUT FOR DELIVERY';
     badgeBg = '#F0FDF4';
@@ -623,8 +623,8 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
     badgeBg = '#ECFDF5';
     badgeColor = '#047857';
     badgeBorder = '#A7F3D0';
-    headline = 'Order Delivered! Thank You for Choosing Dahej Support';
-    primaryMessage = 'Your order has been marked as completed/delivered. We hope you enjoy your custom framed memory! Thank you for trusting Dahej Support Studio.';
+    headline = 'Order Delivered! Thank You for Choosing Rajendra Studio';
+    primaryMessage = 'Your order has been marked as completed/delivered. We hope you enjoy your custom framed memory! Thank you for trusting Rajendra Studio &amp; Framing.';
   }
 
   // Items rows
@@ -651,7 +651,7 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order #${orderId} - Dahej Support</title>
+    <title>Order #${orderId} - Rajendra Studio &amp; Framing</title>
   </head>
   <body style="margin: 0; padding: 0; background-color: #F8F6F0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111111; -webkit-font-smoothing: antialiased;">
     <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8F6F0; padding: 30px 15px;">
@@ -660,12 +660,12 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
           <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; border: 1px solid #E8E3DA; box-shadow: 0 10px 25px rgba(0,0,0,0.06);">
             <!-- Header Brand Matching Website Theme -->
             <tr>
-              <td style="background-color: #111111; padding: 28px 32px; text-align: center; border-bottom: 3px solid #C99A3D;">
-                <div style="font-size: 22px; font-weight: 800; letter-spacing: 2px; color: #FFFFFF; text-transform: uppercase;">
-                  RAJESH <span style="color: #C99A3D;">FRAMING</span>
+              <td style="background-color: #0F172A; padding: 28px 32px; text-align: center; border-bottom: 3px solid #D97706;">
+                <div style="font-size: 20px; font-weight: 800; letter-spacing: 2px; color: #FFFFFF; text-transform: uppercase;">
+                  RAJENDRA <span style="color: #F59E0B;">STUDIO &amp; FRAMING</span>
                 </div>
-                <div style="font-size: 11px; letter-spacing: 1.5px; color: #C5A880; text-transform: uppercase; margin-top: 5px;">
-                  Custom Framing Studio &bull; Dahej &amp; Bharuch
+                <div style="font-size: 11px; letter-spacing: 1.5px; color: #94A3B8; text-transform: uppercase; margin-top: 5px; font-weight: 600;">
+                  ONLINE ORDER DESK &bull; DAHEJ SUPPORT
                 </div>
               </td>
             </tr>
@@ -805,21 +805,21 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
 
 // Send Customer Order Notification Helper
 async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, req) {
-  // 1. If order is Placed / New / Order Placed, dispatch via Brevo notifyOrderConfirmation
-  const isPlacedStatus = (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed');
+  // 1. If order is Placed / pending / New, dispatch via Brevo notifyOrderPlaced
+  const isPlacedStatus = (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'pending' || newStatus === 'Order Placed');
   if (isPlacedStatus) {
     try {
-      const orderConfResult = await emailService.notifyOrderConfirmation({ order: orderOrInquiry, req });
+      const orderConfResult = await emailService.notifyOrderPlaced({ order: orderOrInquiry, req });
       if (orderConfResult && (orderConfResult.sent || orderConfResult.success)) {
         return orderConfResult;
       }
     } catch (e) {
-      console.warn('⚠️ [Brevo Order Confirmation Warning in sendCustomerOrderNotification]:', e.message);
+      console.warn('⚠️ [Brevo Order Placed Warning in sendCustomerOrderNotification]:', e.message);
     }
   }
 
-  // 2. If order is Ready for Pick Up / Shipped to shop counter, use specialized Brevo pick up notification
-  const isPickupReadyStatus = (newStatus === 'Shipped' || newStatus === 'Pickup Ready' || newStatus === 'Ready for Pickup' || (notes && notes.toLowerCase().includes('pick up')));
+  // 2. If order is Ready for Pick Up / ready_for_pickup, use specialized Brevo pick up notification
+  const isPickupReadyStatus = (newStatus === 'ready_for_pickup' || newStatus === 'Shipped' || newStatus === 'Pickup Ready' || newStatus === 'Ready for Pickup' || (notes && notes.toLowerCase().includes('pick up')));
   if (isPickupReadyStatus) {
     try {
       const pickupResult = await emailService.notifyOrderPickupReady({ order: orderOrInquiry, notes, req });
@@ -831,16 +831,29 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
     }
   }
 
-  // 3. If order is Confirmed / Accepted by Admin, dispatch via order@rajendrastudioandgifts.in
-  const isAcceptedStatusInNotice = (newStatus === 'Confirmed' || newStatus === 'Accepted' || newStatus === 'In Progress');
-  if (isAcceptedStatusInNotice) {
+  // 3. If order is Accepted / Confirmed by Admin, dispatch via notifyOrderAcceptedByAdmin
+  const isConfirmedStatus = (newStatus && (newStatus.toLowerCase() === 'confirmed' || newStatus.toLowerCase() === 'accepted'));
+  if (isConfirmedStatus) {
     try {
-      const acceptedResult = await emailService.notifyOrderAcceptedByAdmin({ order: orderOrInquiry, notes, req });
-      if (acceptedResult && (acceptedResult.sent || acceptedResult.success)) {
-        return acceptedResult;
+      const confirmedResult = await emailService.notifyOrderAcceptedByAdmin({ order: orderOrInquiry, notes, req });
+      if (confirmedResult && (confirmedResult.sent || confirmedResult.success)) {
+        return confirmedResult;
       }
     } catch (e) {
       console.warn('⚠️ [Brevo Order Accepted Warning in sendCustomerOrderNotification]:', e.message);
+    }
+  }
+
+  // 4. If order is Cancelled, dispatch via notifyOrderCancelledByAdmin
+  const isCancelledStatus = (newStatus && (newStatus.toLowerCase() === 'cancelled' || newStatus.toLowerCase() === 'canceled'));
+  if (isCancelledStatus) {
+    try {
+      const cancelResult = await emailService.notifyOrderCancelledByAdmin({ order: orderOrInquiry, notes, req });
+      if (cancelResult && (cancelResult.sent || cancelResult.success)) {
+        return cancelResult;
+      }
+    } catch (e) {
+      console.warn('⚠️ [Brevo Order Cancelled Warning in sendCustomerOrderNotification]:', e.message);
     }
   }
 
@@ -895,9 +908,9 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
     // Clean subject lines
     let subject = `Order #${orderId} Status Update: ${newStatus} - Dahej Support`;
     if (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed') {
-      subject = `🎉 Order Placed Successfully! #${orderId} - Dahej Support Studio`;
-    } else if (newStatus === 'In Progress' || newStatus === 'Confirmed' || newStatus === 'Accepted') {
-      subject = `Order #${orderId} Confirmed - Dahej Support Studio`;
+      subject = 'Your Order Has Been Placed Successfully!';
+    } else if (newStatus && (newStatus.toLowerCase() === 'confirmed' || newStatus === 'Accepted')) {
+      subject = 'Your Order Has Been Confirmed!';
     } else if (newStatus === 'Cancelled') {
       subject = `Order #${orderId} Cancellation Notice - Dahej Support Studio`;
     } else if (newStatus === 'Shipped' || newStatus === 'Dispatched') {
@@ -906,13 +919,14 @@ async function sendCustomerOrderNotification(orderOrInquiry, newStatus, notes, r
       subject = `Order #${orderId} Delivered - Thank You - Dahej Support`;
     }
 
+    const config = await db.getAdminConfig();
     const fromAddress = (config.smtp && config.smtp.fromEmail) || (process.env.BREVO_ORDER_EMAIL ? `${process.env.BREVO_ORDER_NAME || 'Rajendra Studio Orders'} <${process.env.BREVO_ORDER_EMAIL}>` : 'Rajendra Studio Orders <order@rajendrastudioandgifts.in>');
 
     let introText = `Your order #${orderId} status has been updated to: ${newStatus}.`;
-    if (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed') {
-      introText = `Your order #${orderId} has been placed successfully and received by Rajesh Framing Studio! We have recorded your items and delivery details.`;
-    } else if (newStatus === 'Confirmed' || newStatus === 'In Progress' || newStatus === 'Accepted') {
-      introText = `Great news! Your order #${orderId} has been officially confirmed by Rajesh Framing Studio and is now in production.`;
+    if (newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed' || newStatus === 'pending') {
+      introText = `Your order #${orderId} has been successfully placed at Rajendra Studio & Framing. Our team will review your order and notify you once it has been accepted.`;
+    } else if (newStatus && (newStatus.toLowerCase() === 'confirmed' || newStatus === 'Accepted')) {
+      introText = `Your order #${orderId} has been confirmed by our team.`;
     } else if (newStatus === 'Cancelled') {
       introText = `Your order #${orderId} has been cancelled by Dahej Support Studio.`;
     } else if (newStatus === 'Shipped' || newStatus === 'Dispatched') {
@@ -944,7 +958,6 @@ Dahej GIDC, Bharuch, Gujarat 392130
 `;
 
     try {
-      const config = await db.getAdminConfig();
       const transporter = createTransporter(config);
       if (transporter) {
         await transporter.sendMail({
@@ -2012,16 +2025,20 @@ app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
       });
     }
 
+    const seenOrderIds = new Set();
     const enrichedInquiries = inquiries.map(inq => {
       const cleanId = (inq.id || '').toLowerCase().trim();
       const matchedOrder = ordersMap.get(cleanId);
+      if (matchedOrder && matchedOrder.orderId) {
+        seenOrderIds.add(matchedOrder.orderId.toLowerCase().trim());
+      }
       
-      let deliveryAddress = '';
-      let customerPhotoUrl = inq.uploadedFileUrl || null;
-      let customerPhotoName = inq.uploadFileName || null;
+      let deliveryAddress = inq.deliveryAddress || '';
+      let customerPhotoUrl = inq.customerPhotoUrl || inq.uploadedFileUrl || null;
+      let customerPhotoName = inq.customerPhotoName || inq.uploadFileName || null;
 
       if (matchedOrder) {
-        if (matchedOrder.customer) {
+        if (!deliveryAddress && matchedOrder.customer) {
           const addrParts = [
             matchedOrder.customer.address,
             matchedOrder.customer.city,
@@ -2102,9 +2119,91 @@ app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
         upiUtr,
         subtotal: (matchedOrder && matchedOrder.subtotal) || inq.estimatedValue || 0,
         shipping: (matchedOrder && matchedOrder.shipping) || 0,
-        total: (matchedOrder && matchedOrder.total) || inq.estimatedValue || 0
+        total: (matchedOrder && matchedOrder.total) || inq.estimatedValue || 0,
+        confirmationDate: (matchedOrder && matchedOrder.confirmationDate) || inq.confirmationDate || inq.confirmed_date || null,
+        confirmedAt: (matchedOrder && matchedOrder.confirmedAt) || inq.confirmedAt || inq.confirmed_at || null,
+        pickupDate: (matchedOrder && matchedOrder.pickupDate) || inq.pickupDate || inq.pickup_date || null,
+        pickedUpAt: (matchedOrder && matchedOrder.pickedUpAt) || inq.pickedUpAt || inq.picked_up_at || null,
+        confirmedEmailSent: Boolean((matchedOrder && (matchedOrder.confirmedEmailSent || matchedOrder.confirmed_email_sent)) || inq.confirmedEmailSent || inq.confirmed_email_sent)
       };
     });
+
+    // Synthesis: Ensure EVERY order in the database is guaranteed to appear in the Admin Panel
+    if (Array.isArray(orders)) {
+      orders.forEach(o => {
+        if (!o || !o.orderId) return;
+        const cleanOrderId = o.orderId.toLowerCase().trim();
+        if (seenOrderIds.has(cleanOrderId)) return; // Already present in inquiries
+
+        let deliveryAddress = '';
+        if (o.customer) {
+          const addrParts = [
+            o.customer.address,
+            o.customer.city,
+            o.customer.state,
+            o.customer.pincode
+          ].filter(Boolean);
+          if (addrParts.length > 0) {
+            deliveryAddress = addrParts.join(', ');
+          }
+        }
+
+        let customerPhotoUrl = null;
+        let customerPhotoName = null;
+        if (Array.isArray(o.items)) {
+          const itWithPhoto = o.items.find(it => it && it.uploadedPhoto && (it.uploadedPhoto.fileUrl || typeof it.uploadedPhoto === 'string'));
+          if (itWithPhoto) {
+            customerPhotoUrl = itWithPhoto.uploadedPhoto.fileUrl || itWithPhoto.uploadedPhoto;
+            customerPhotoName = itWithPhoto.uploadedPhoto.fileName || itWithPhoto.uploadedPhoto.originalName || 'Customer Photo';
+          }
+        }
+        if (!customerPhotoUrl && o.orderPhoto) {
+          customerPhotoUrl = o.orderPhoto.fileUrl || (typeof o.orderPhoto === 'string' ? o.orderPhoto : null);
+          customerPhotoName = o.orderPhoto.fileName || 'Customer Photo';
+        }
+
+        const itemSummary = Array.isArray(o.items) && o.items.length
+          ? o.items.map(i => `${i.name || 'Custom Product'} (x${i.quantity || 1})`).join(', ')
+          : 'Photo Frame';
+
+        enrichedInquiries.push({
+          id: o.orderId,
+          orderId: o.orderId,
+          name: (o.customer && o.customer.name) || 'Customer',
+          phone: (o.customer && o.customer.phone) || '',
+          email: (o.customer && o.customer.email) || '',
+          customerEmail: (o.customer && o.customer.email) || '',
+          product: `[ONLINE ORDER] ${itemSummary}`,
+          specs: `Deliver to: ${deliveryAddress || 'Studio Pickup'} • ${o.paymentMethod || 'Pick up from shop'}${o.upiUtr ? ' [UTR: ' + o.upiUtr + ']' : ''}`,
+          quantity: Array.isArray(o.items) ? o.items.reduce((s, i) => s + (Number(i.quantity) || 1), 0) : 1,
+          estimatedValue: Number(o.total) || 0,
+          notes: o.notes || '',
+          status: o.status || 'New',
+          hasUpload: Boolean(customerPhotoUrl),
+          uploadFileName: customerPhotoName,
+          uploadedFileUrl: customerPhotoUrl,
+          customerPhotoUrl: customerPhotoUrl,
+          customerPhotoName: customerPhotoName,
+          deliveryAddress: deliveryAddress || null,
+          items: Array.isArray(o.items) ? o.items : [],
+          paymentMethod: o.paymentMethod || 'Pick up from shop',
+          upiUtr: o.upiUtr || null,
+          subtotal: Number(o.subtotal) || Number(o.total) || 0,
+          shipping: Number(o.shipping) || 0,
+          total: Number(o.total) || 0,
+          confirmationDate: o.confirmationDate || o.confirmed_date || null,
+          confirmedAt: o.confirmedAt || o.confirmed_at || null,
+          pickupDate: o.pickupDate || o.pickup_date || null,
+          pickedUpAt: o.pickedUpAt || o.picked_up_at || null,
+          confirmedEmailSent: Boolean(o.confirmedEmailSent || o.confirmed_email_sent),
+          createdAt: o.createdAt || new Date().toISOString(),
+          updatedAt: o.updatedAt || o.createdAt || new Date().toISOString()
+        });
+      });
+    }
+
+    // Sort by createdAt descending so latest orders are always at the top
+    enrichedInquiries.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
     res.json({ success: true, inquiries: enrichedInquiries });
   } catch (err) {
@@ -2419,9 +2518,37 @@ app.post('/api/orders', async (req, res) => {
 
     const orderEmail = (customerEmail && customerEmail.trim().toLowerCase()) || (authenticatedEmail && authenticatedEmail.trim().toLowerCase());
 
-    const orders = await db.getOrders();
-    const orderNumber = String(orders.length + 1).padStart(3, '0');
-    const orderId = `RF-ORD-${new Date().getFullYear()}-${orderNumber}`;
+    const [orders, inquiries] = await Promise.all([
+      db.getOrders(),
+      db.getInquiries()
+    ]);
+    const currentYear = new Date().getFullYear();
+    const ordPrefixRegex = new RegExp(`^RF-ORD-${currentYear}-(\\d+)$`, 'i');
+    let maxNum = 0;
+    if (Array.isArray(orders)) {
+      orders.forEach(o => {
+        if (o && o.orderId) {
+          const m = o.orderId.match(ordPrefixRegex);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        }
+      });
+    }
+    if (Array.isArray(inquiries)) {
+      inquiries.forEach(i => {
+        if (i && i.id) {
+          const m = i.id.match(ordPrefixRegex);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        }
+      });
+    }
+    const orderNumber = String(maxNum + 1).padStart(3, '0');
+    const orderId = `RF-ORD-${currentYear}-${orderNumber}`;
 
     const newOrder = {
       orderId,
@@ -2452,7 +2579,7 @@ app.post('/api/orders', async (req, res) => {
       orderPhoto: orderPhoto || null,
       paymentMethod: req.body.paymentMethod || 'Pick up from shop',
       upiUtr: req.body.upiUtr || null,
-      status: 'New',
+      status: 'pending',
       createdAt: new Date().toISOString()
     };
 
@@ -2484,7 +2611,7 @@ app.post('/api/orders', async (req, res) => {
         quantity: newOrder.items.reduce((sum, i) => sum + i.quantity, 0),
         estimatedValue: newOrder.total,
         notes: `Order Notes: ${newOrder.notes || 'None'}. Full address: ${newOrder.customer.address}`,
-        status: 'New',
+        status: 'pending',
         hasUpload: Boolean(photoUrl),
         uploadFileName: photoName,
         uploadedFileUrl: photoUrl,
@@ -2507,11 +2634,11 @@ app.post('/api/orders', async (req, res) => {
     // Dispatch Order Placed confirmation email to customer & studio alert via Brevo
     let emailResult = { sent: false };
     try {
-      emailResult = await emailService.notifyOrderConfirmation({ order: newOrder, req });
+      emailResult = await emailService.notifyOrderPlaced({ order: newOrder, req });
       if (emailResult && (emailResult.sent || emailResult.success)) {
-        console.log(`✅ [ORDER CONFIRMATION EMAIL DELIVERED] Successfully sent order receipt to customer: ${newOrder.customer.email}`);
+        console.log(`✅ [ORDER PLACED EMAIL DELIVERED] Successfully sent order placed receipt to customer: ${newOrder.customer.email}`);
       } else {
-        console.warn(`⚠️ [Order Confirmation Notice] Delivery to customer ${newOrder.customer.email}:`, emailResult ? (emailResult.error || emailResult.reason) : 'No result');
+        console.warn(`⚠️ [Order Placed Notice] Delivery to customer ${newOrder.customer.email}:`, emailResult ? (emailResult.error || emailResult.reason) : 'No result');
       }
     } catch (mailErr) {
       console.error(`❌ [Order Email Exception]:`, mailErr.message);
@@ -2826,7 +2953,7 @@ async function handleUpdateOrderStatus(req, res) {
   try {
     const rawId = (req.params.id || '').trim();
     const cleanId = rawId.replace(/^#/, '');
-    const { status, notes, notifyCustomer = true } = req.body;
+    const { status, notes, notifyCustomer = true, confirmationDate, pickupDate } = req.body;
 
     const inquiries = await db.getInquiries();
     const inq = inquiries.find(i => i.id && (i.id.toLowerCase() === rawId.toLowerCase() || i.id.toLowerCase() === cleanId.toLowerCase()));
@@ -2838,49 +2965,230 @@ async function handleUpdateOrderStatus(req, res) {
       return res.status(404).json({ success: false, message: `Order or Inquiry #${rawId} not found.` });
     }
 
+    const rawStatus = (status || '').trim();
+    const isConfirming = Boolean(rawStatus && (rawStatus.toLowerCase() === 'confirmed' || rawStatus.toLowerCase() === 'accepted'));
+    const isReadyForPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'ready_for_pickup' || rawStatus.toLowerCase() === 'ready for pickup' || rawStatus.toLowerCase() === 'pickup ready'));
+    const isCancelling = Boolean(rawStatus && (rawStatus.toLowerCase() === 'cancelled' || rawStatus.toLowerCase() === 'canceled'));
+    const isPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'picked_up' || rawStatus.toLowerCase() === 'picked up'));
+
+    let normalizedStatus = rawStatus;
+    if (isConfirming) normalizedStatus = 'confirmed';
+    else if (isReadyForPickup) normalizedStatus = 'ready_for_pickup';
+    else if (isCancelling) normalizedStatus = 'cancelled';
+    else if (isPickup) normalizedStatus = 'picked_up';
+
+    const isAlreadyConfirmed = Boolean(
+      (order && (order.confirmedEmailSent || order.confirmed_email_sent)) ||
+      (inq && (inq.confirmedEmailSent || inq.confirmed_email_sent))
+    );
+    const isAlreadyReadySent = Boolean(
+      (order && (order.readyEmailSent || order.ready_email_sent)) ||
+      (inq && (inq.readyEmailSent || inq.ready_email_sent))
+    );
+    const isAlreadyCancelledSent = Boolean(
+      (order && (order.cancelledEmailSent || order.cancelled_email_sent)) ||
+      (inq && (inq.cancelledEmailSent || inq.cancelled_email_sent))
+    );
+
     const timestamp = new Date().toISOString();
+    const todayStr = timestamp.split('T')[0];
+
+    // Determine final confirmation date
+    let finalConfirmationDate = (confirmationDate && String(confirmationDate).trim()) || (order && (order.confirmationDate || order.confirmed_date)) || (inq && (inq.confirmationDate || inq.confirmed_date)) || (isConfirming ? todayStr : null);
+
+    // Determine final pickup date (mandatory on Accept Order, and retained for ready_for_pickup)
+    let finalPickupDate = (pickupDate && String(pickupDate).trim()) || (order && (order.pickupDate || order.pickup_date)) || (inq && (inq.pickupDate || inq.pickup_date)) || null;
+    if (isConfirming && !finalPickupDate) {
+      finalPickupDate = todayStr;
+    }
+
     let updatedInquiry = null;
     let updatedOrder = null;
 
     if (inq) {
-      if (status) inq.status = status;
+      if (normalizedStatus) inq.status = normalizedStatus;
       if (notes !== undefined) inq.notes = notes;
+      if (finalConfirmationDate) {
+        inq.confirmationDate = finalConfirmationDate;
+        if (!inq.confirmedAt) inq.confirmedAt = timestamp;
+      }
+      if (finalPickupDate) {
+        inq.pickupDate = finalPickupDate;
+      }
+      if (isPickup && !inq.pickedUpAt) inq.pickedUpAt = timestamp;
       inq.updatedAt = timestamp;
       await db.saveInquiry(inq);
       updatedInquiry = inq;
     }
 
     if (order) {
-      if (status) order.status = status;
+      if (normalizedStatus) order.status = normalizedStatus;
       if (notes !== undefined) order.notes = notes;
+      if (finalConfirmationDate) {
+        order.confirmationDate = finalConfirmationDate;
+        if (!order.confirmedAt) order.confirmedAt = timestamp;
+      }
+      if (finalPickupDate) {
+        order.pickupDate = finalPickupDate;
+      }
+      if (isPickup && !order.pickedUpAt) order.pickedUpAt = timestamp;
       order.updatedAt = timestamp;
       await db.saveOrder(order);
       updatedOrder = order;
+
+      // If inquiry entry was missing, mirror it now so both tables remain synchronized
+      if (!inq) {
+        const itemSummary = Array.isArray(order.items) && order.items.length
+          ? order.items.map(i => `${i.name || 'Custom Product'} (x${i.quantity || 1})`).join(', ')
+          : 'Photo Frame';
+        const addr = (order.customer && [order.customer.address, order.customer.city, order.customer.state, order.customer.pincode].filter(Boolean).join(', ')) || '';
+        try {
+          await db.saveInquiry({
+            id: order.orderId,
+            name: (order.customer && order.customer.name) || 'Customer',
+            phone: (order.customer && order.customer.phone) || '',
+            email: (order.customer && order.customer.email) || '',
+            product: `[ONLINE ORDER] ${itemSummary}`,
+            specs: `Deliver to: ${addr || 'Studio Pickup'} • ${order.paymentMethod || 'Pick up from shop'}`,
+            quantity: Array.isArray(order.items) ? order.items.reduce((s, i) => s + (Number(i.quantity) || 1), 0) : 1,
+            estimatedValue: Number(order.total) || 0,
+            notes: notes !== undefined ? notes : (order.notes || ''),
+            status: normalizedStatus || order.status || 'pending',
+            hasUpload: Boolean(order.orderPhoto),
+            uploadFileName: order.orderPhoto ? (order.orderPhoto.fileName || 'Customer Photo') : null,
+            uploadedFileUrl: order.orderPhoto ? (order.orderPhoto.fileUrl || order.orderPhoto) : null,
+            deliveryAddress: addr || null,
+            confirmationDate: order.confirmationDate || null,
+            confirmedAt: order.confirmedAt || null,
+            pickupDate: order.pickupDate || null,
+            pickedUpAt: order.pickedUpAt || null,
+            confirmedEmailSent: Boolean(order.confirmedEmailSent),
+            readyEmailSent: Boolean(order.readyEmailSent),
+            cancelledEmailSent: Boolean(order.cancelledEmailSent),
+            createdAt: order.createdAt || timestamp,
+            updatedAt: timestamp
+          });
+        } catch (_) {}
+      }
     }
 
     // Determine target object for email notification (prefer orders for rich data)
     const targetObj = updatedOrder || updatedInquiry;
+    if (updatedOrder && updatedInquiry) {
+      if ((!targetObj.customer || !targetObj.customer.email) && updatedInquiry.email) {
+        targetObj.customer = targetObj.customer || {};
+        targetObj.customer.email = updatedInquiry.email;
+      }
+      if (!targetObj.customer.name && updatedInquiry.name) {
+        targetObj.customer.name = updatedInquiry.name;
+      }
+      if (!targetObj.customer.phone && updatedInquiry.phone) {
+        targetObj.customer.phone = updatedInquiry.phone;
+      }
+    }
 
-    // Trigger customer & shop notification email
+    // Trigger customer notification email strictly based on the status change
     let emailResult = { sent: false };
-    const isPickupReady = (status === 'Shipped' || status === 'Pickup Ready' || status === 'Ready for Pickup' || (notes && notes.toLowerCase().includes('pick up')));
-    const isAcceptedStatus = (status === 'Confirmed' || status === 'Accepted' || status === 'In Progress');
 
-    if (isPickupReady) {
-      console.log(`🛍️ [PICKUP READY TRIGGERED] Sending pick up email for order #${cleanId} via Brevo...`);
-      emailResult = await emailService.notifyOrderPickupReady({ order: targetObj, notes, req });
-    } else if (isAcceptedStatus) {
-      console.log(`🎨 [ORDER ACCEPTED TRIGGERED] Sending order accepted email for order #${cleanId} via order@rajendrastudioandgifts.in...`);
-      emailResult = await emailService.notifyOrderAcceptedByAdmin({ order: targetObj, notes, req });
+    if (isConfirming) {
+      if (isAlreadyConfirmed) {
+        console.log(`ℹ️ [ACCEPTANCE SKIPPED] Order #${cleanId} was already accepted/confirmed. Skipping duplicate email.`);
+        emailResult = {
+          sent: false,
+          skipped: true,
+          reason: `Order #${cleanId} was already accepted. Duplicate email prevented.`
+        };
+      } else {
+        console.log(`🎨 [ORDER ACCEPTED TRIGGERED] Sending order accepted email for order #${cleanId} (Pickup Date: ${finalPickupDate}) via Brevo...`);
+        emailResult = await emailService.notifyOrderAcceptedByAdmin({ order: targetObj, pickupDate: finalPickupDate, notes, req });
+        if (emailResult && (emailResult.sent || emailResult.success)) {
+          if (updatedOrder) {
+            updatedOrder.confirmedEmailSent = true;
+            updatedOrder.confirmedAt = updatedOrder.confirmedAt || timestamp;
+            await db.saveOrder(updatedOrder);
+          }
+          if (updatedInquiry) {
+            updatedInquiry.confirmedEmailSent = true;
+            updatedInquiry.confirmedAt = updatedInquiry.confirmedAt || timestamp;
+            await db.saveInquiry(updatedInquiry);
+          }
+        }
+      }
+    } else if (isReadyForPickup) {
+      if (isAlreadyReadySent) {
+        console.log(`ℹ️ [READY SKIPPED] Order #${cleanId} ready email already sent. Skipping duplicate email.`);
+        emailResult = {
+          sent: false,
+          skipped: true,
+          reason: `Order #${cleanId} ready email already sent. Duplicate email prevented.`
+        };
+      } else {
+        console.log(`🛍️ [READY FOR PICKUP TRIGGERED] Sending ready for pickup email for order #${cleanId} (Pickup Date: ${finalPickupDate}) via Brevo...`);
+        emailResult = await emailService.notifyOrderPickupReady({ order: targetObj, pickupDate: finalPickupDate, notes, req });
+        if (emailResult && (emailResult.sent || emailResult.success)) {
+          if (updatedOrder) {
+            updatedOrder.readyEmailSent = true;
+            await db.saveOrder(updatedOrder);
+          }
+          if (updatedInquiry) {
+            updatedInquiry.readyEmailSent = true;
+            await db.saveInquiry(updatedInquiry);
+          }
+        }
+      }
+    } else if (isCancelling) {
+      if (isAlreadyCancelledSent) {
+        console.log(`ℹ️ [CANCELLATION SKIPPED] Order #${cleanId} cancellation email already sent. Skipping duplicate email.`);
+        emailResult = {
+          sent: false,
+          skipped: true,
+          reason: `Order #${cleanId} cancellation email already sent. Duplicate email prevented.`
+        };
+      } else {
+        console.log(`✕ [ORDER CANCELLED TRIGGERED] Sending cancellation email for order #${cleanId} via Brevo...`);
+        emailResult = await emailService.notifyOrderCancelledByAdmin({ order: targetObj, notes, req });
+        if (emailResult && (emailResult.sent || emailResult.success)) {
+          if (updatedOrder) {
+            updatedOrder.cancelledEmailSent = true;
+            await db.saveOrder(updatedOrder);
+          }
+          if (updatedInquiry) {
+            updatedInquiry.cancelledEmailSent = true;
+            await db.saveInquiry(updatedInquiry);
+          }
+        }
+      }
+    } else if (isPickup) {
+      console.log(`📦 [ORDER PICKED UP] Order #${cleanId} marked as picked up on ${finalPickupDate}. Status saved in database.`);
+      emailResult = {
+        sent: false,
+        skipped: true,
+        reason: 'Order collected and marked as picked_up. No pickup email required.'
+      };
     } else if (notifyCustomer !== false) {
-      emailResult = await sendCustomerOrderNotification(targetObj, status, notes, req);
+      emailResult = await sendCustomerOrderNotification(targetObj, normalizedStatus, notes, req);
+    }
+
+    let statusMsg = `Order #${cleanId} status updated to "${normalizedStatus}".`;
+    if (isConfirming) {
+      statusMsg = `Order #${cleanId} accepted. Pickup scheduled for ${finalPickupDate}.` + (emailResult.sent ? ` Acceptance email sent to customer.` : (emailResult.skipped ? ` (Duplicate email skipped).` : ''));
+    } else if (isReadyForPickup) {
+      statusMsg = `Order #${cleanId} is now ready for pickup.` + (emailResult.sent ? ` Ready-for-pickup email sent to customer.` : (emailResult.skipped ? ` (Duplicate email skipped).` : ''));
+    } else if (isCancelling) {
+      statusMsg = `Order #${cleanId} has been cancelled.` + (emailResult.sent ? ` Cancellation email sent to customer.` : (emailResult.skipped ? ` (Duplicate email skipped).` : ''));
+    } else if (isPickup) {
+      statusMsg = `Order #${cleanId} marked as picked up on ${finalPickupDate}.`;
+    } else if (emailResult.sent) {
+      statusMsg += ` Email notification sent to customer.`;
     }
 
     return res.json({
       success: true,
-      message: `Order #${cleanId} status updated to "${status}".` + (emailResult.sent ? ` Email notification sent to customer.` : ''),
+      message: statusMsg,
       inquiry: updatedInquiry,
       order: updatedOrder,
+      confirmationDate: finalConfirmationDate,
+      pickupDate: finalPickupDate,
       emailResult
     });
   } catch (err) {
@@ -2906,6 +3214,8 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
       customerPhone,
       customerEmail,
       address,
+      confirmationDate,
+      pickupDate,
       notifyCustomer = true
     } = req.body;
 
@@ -2919,12 +3229,55 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: `Order #${rawId} not found.` });
     }
 
+    const rawStatus = (status || '').trim();
+    const isConfirming = Boolean(rawStatus && (rawStatus.toLowerCase() === 'confirmed' || rawStatus.toLowerCase() === 'accepted'));
+    const isReadyForPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'ready_for_pickup' || rawStatus.toLowerCase() === 'ready for pickup' || rawStatus.toLowerCase() === 'pickup ready'));
+    const isCancelling = Boolean(rawStatus && (rawStatus.toLowerCase() === 'cancelled' || rawStatus.toLowerCase() === 'canceled'));
+    const isPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'picked_up' || rawStatus.toLowerCase() === 'picked up'));
+
+    let normalizedStatus = rawStatus;
+    if (isConfirming) normalizedStatus = 'confirmed';
+    else if (isReadyForPickup) normalizedStatus = 'ready_for_pickup';
+    else if (isCancelling) normalizedStatus = 'cancelled';
+    else if (isPickup) normalizedStatus = 'picked_up';
+
+    const isAlreadyConfirmed = Boolean(
+      (order && (order.confirmedEmailSent || order.confirmed_email_sent)) ||
+      (inq && (inq.confirmedEmailSent || inq.confirmed_email_sent))
+    );
+    const isAlreadyReadySent = Boolean(
+      (order && (order.readyEmailSent || order.ready_email_sent)) ||
+      (inq && (inq.readyEmailSent || inq.ready_email_sent))
+    );
+    const isAlreadyCancelledSent = Boolean(
+      (order && (order.cancelledEmailSent || order.cancelled_email_sent)) ||
+      (inq && (inq.cancelledEmailSent || inq.cancelled_email_sent))
+    );
+
     const timestamp = new Date().toISOString();
+    const todayStr = timestamp.split('T')[0];
+
+    // Determine final confirmation date
+    let finalConfirmationDate = (confirmationDate && String(confirmationDate).trim()) || (order && (order.confirmationDate || order.confirmed_date)) || (inq && (inq.confirmationDate || inq.confirmed_date)) || (isConfirming ? todayStr : null);
+
+    // Determine final pickup date (mandatory on Accept Order, and retained for ready_for_pickup)
+    let finalPickupDate = (pickupDate && String(pickupDate).trim()) || (order && (order.pickupDate || order.pickup_date)) || (inq && (inq.pickupDate || inq.pickup_date)) || null;
+    if (isConfirming && !finalPickupDate) {
+      finalPickupDate = todayStr;
+    }
 
     // Update order
     if (order) {
-      if (status) order.status = status;
+      if (normalizedStatus) order.status = normalizedStatus;
       if (notes !== undefined) order.notes = notes;
+      if (finalConfirmationDate) {
+        order.confirmationDate = finalConfirmationDate;
+        if (!order.confirmedAt) order.confirmedAt = timestamp;
+      }
+      if (finalPickupDate) {
+        order.pickupDate = finalPickupDate;
+      }
+      if (isPickup && !order.pickedUpAt) order.pickedUpAt = timestamp;
       if (customerName) {
         order.customer = order.customer || {};
         order.customer.name = customerName;
@@ -2947,8 +3300,16 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
 
     // Update inquiry
     if (inq) {
-      if (status) inq.status = status;
+      if (normalizedStatus) inq.status = normalizedStatus;
       if (notes !== undefined) inq.notes = notes;
+      if (finalConfirmationDate) {
+        inq.confirmationDate = finalConfirmationDate;
+        if (!inq.confirmedAt) inq.confirmedAt = timestamp;
+      }
+      if (finalPickupDate) {
+        inq.pickupDate = finalPickupDate;
+      }
+      if (isPickup && !inq.pickedUpAt) inq.pickedUpAt = timestamp;
       if (customerName) inq.name = customerName;
       if (customerPhone) inq.phone = customerPhone;
       if (customerEmail) inq.email = customerEmail;
@@ -2957,9 +3318,75 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
     }
 
     const targetObj = order || inq;
+    if (order && inq) {
+      if ((!targetObj.customer || !targetObj.customer.email) && inq.email) {
+        targetObj.customer = targetObj.customer || {};
+        targetObj.customer.email = inq.email;
+      }
+      if (!targetObj.customer.name && inq.name) {
+        targetObj.customer.name = inq.name;
+      }
+      if (!targetObj.customer.phone && inq.phone) {
+        targetObj.customer.phone = inq.phone;
+      }
+    }
     let emailResult = { sent: false };
     if (notifyCustomer) {
-      emailResult = await sendCustomerOrderNotification(targetObj, status, notes, req);
+      if (isConfirming) {
+        if (isAlreadyConfirmed) {
+          emailResult = { sent: false, skipped: true, reason: 'Duplicate email prevented: order was already accepted.' };
+        } else {
+          emailResult = await emailService.notifyOrderAcceptedByAdmin({ order: targetObj, pickupDate: finalPickupDate, notes, req });
+          if (emailResult && (emailResult.sent || emailResult.success)) {
+            if (order) {
+              order.confirmedEmailSent = true;
+              order.confirmedAt = order.confirmedAt || timestamp;
+              await db.saveOrder(order);
+            }
+            if (inq) {
+              inq.confirmedEmailSent = true;
+              inq.confirmedAt = inq.confirmedAt || timestamp;
+              await db.saveInquiry(inq);
+            }
+          }
+        }
+      } else if (isReadyForPickup) {
+        if (isAlreadyReadySent) {
+          emailResult = { sent: false, skipped: true, reason: 'Duplicate email prevented: ready email already sent.' };
+        } else {
+          emailResult = await emailService.notifyOrderPickupReady({ order: targetObj, pickupDate: finalPickupDate, notes, req });
+          if (emailResult && (emailResult.sent || emailResult.success)) {
+            if (order) {
+              order.readyEmailSent = true;
+              await db.saveOrder(order);
+            }
+            if (inq) {
+              inq.readyEmailSent = true;
+              await db.saveInquiry(inq);
+            }
+          }
+        }
+      } else if (isCancelling) {
+        if (isAlreadyCancelledSent) {
+          emailResult = { sent: false, skipped: true, reason: 'Duplicate email prevented: cancellation email already sent.' };
+        } else {
+          emailResult = await emailService.notifyOrderCancelledByAdmin({ order: targetObj, notes, req });
+          if (emailResult && (emailResult.sent || emailResult.success)) {
+            if (order) {
+              order.cancelledEmailSent = true;
+              await db.saveOrder(order);
+            }
+            if (inq) {
+              inq.cancelledEmailSent = true;
+              await db.saveInquiry(inq);
+            }
+          }
+        }
+      } else if (isPickup) {
+        emailResult = { sent: false, skipped: true, reason: 'Pickup status updated without email as per policy' };
+      } else {
+        emailResult = await sendCustomerOrderNotification(targetObj, normalizedStatus, notes, req);
+      }
     }
 
     res.json({
@@ -3025,15 +3452,19 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     return res.status(400).json({ success: false, message: 'Product name and valid price are required.' });
   }
 
+  // Fast unique slug check without loading entire database
   const rawSlug = (id || name).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-|-$/g, '') || `product-${Date.now()}`;
-  const existingProducts = await db.getProducts();
   let uniqueSlug = rawSlug;
   let slugCounter = 1;
-  while (existingProducts.some(p => p.id === uniqueSlug)) {
+  while (await db.hasProduct(uniqueSlug)) {
+    if (slugCounter > 10) {
+      uniqueSlug = `${rawSlug}-${Date.now()}`;
+      break;
+    }
     uniqueSlug = `${rawSlug}-${slugCounter++}`;
   }
 
-  // Handle uploaded images (up to 5 photos)
+  // Handle uploaded images in parallel (up to 5 photos)
   let rawImages = [];
   if (Array.isArray(images) && images.length > 0) {
     rawImages = images.slice(0, 5);
@@ -3043,11 +3474,12 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
 
   const uploadDir = path.join(__dirname, 'assets', 'images', 'uploads');
   const pubUploadDir = path.join(__dirname, 'public', 'assets', 'images', 'uploads');
-  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-  if (!fs.existsSync(pubUploadDir)) fs.mkdirSync(pubUploadDir, { recursive: true });
+  try {
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fs.existsSync(pubUploadDir)) fs.mkdirSync(pubUploadDir, { recursive: true });
+  } catch (_) {}
 
-  const resolvedImages = [];
-  for (const imgItem of rawImages) {
+  const resolvedImages = await Promise.all(rawImages.map(async (imgItem) => {
     if (typeof imgItem === 'string' && imgItem.startsWith('data:image/')) {
       try {
         const matches = imgItem.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,([\s\S]+)$/);
@@ -3056,27 +3488,54 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
           const ext = rawMime.includes('png') ? '.png' : (rawMime.includes('webp') ? '.webp' : '.jpg');
           const buffer = Buffer.from(matches[2].trim(), 'base64');
           const cleanName = `prod_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${ext}`;
-          fs.writeFileSync(path.join(uploadDir, cleanName), buffer);
-          fs.writeFileSync(path.join(pubUploadDir, cleanName), buffer);
-          resolvedImages.push(`assets/images/uploads/${cleanName}`);
+
+          // If Supabase is connected, upload to Supabase Storage photos bucket with 5s timeout
+          if (db.supabase) {
+            try {
+              const uploadPromise = db.supabase.storage.from('photos').upload(cleanName, buffer, {
+                contentType: `image/${ext.replace('.', '')}`,
+                upsert: true
+              });
+              const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase Storage upload timed out after 5s')), 5000));
+              const { data: stData, error: stErr } = await Promise.race([uploadPromise, timeoutPromise]);
+              if (!stErr && stData) {
+                const { data: pubData } = db.supabase.storage.from('photos').getPublicUrl(cleanName);
+                if (pubData && pubData.publicUrl) {
+                  return pubData.publicUrl;
+                }
+              } else if (stErr) {
+                console.warn('⚠️ Supabase storage upload warning:', stErr.message);
+              }
+            } catch (stErr) {
+              console.warn('⚠️ Supabase storage upload error/timeout:', stErr.message);
+            }
+          }
+
+          // Asynchronous local disk write
+          await Promise.all([
+            fs.promises.writeFile(path.join(uploadDir, cleanName), buffer).catch(() => {}),
+            fs.promises.writeFile(path.join(pubUploadDir, cleanName), buffer).catch(() => {})
+          ]);
+          return `assets/images/uploads/${cleanName}`;
         }
       } catch (e) {
-        console.warn('Error saving uploaded image to disk:', e.message);
+        console.warn('Error saving uploaded image:', e.message);
       }
     } else if (typeof imgItem === 'string' && imgItem.trim()) {
-      resolvedImages.push(imgItem.trim());
+      return imgItem.trim();
     }
+    return null;
+  }));
+
+  const validImages = resolvedImages.filter(Boolean);
+  if (validImages.length === 0) {
+    if (category === 'frames') validImages.push('assets/images/glass_frame.jpg');
+    else if (category === 'personalized') validImages.push('assets/images/printed_bottle.jpg');
+    else if (category === 'office') validImages.push('assets/images/printed_file.jpg');
+    else validImages.push('assets/images/custom_canvas.jpg');
   }
 
-  // Default fallback image by category if none provided
-  if (resolvedImages.length === 0) {
-    if (category === 'frames') resolvedImages.push('assets/images/glass_frame.jpg');
-    else if (category === 'personalized') resolvedImages.push('assets/images/printed_bottle.jpg');
-    else if (category === 'office') resolvedImages.push('assets/images/printed_file.jpg');
-    else resolvedImages.push('assets/images/custom_canvas.jpg');
-  }
-
-  const resolvedImage = resolvedImages[0];
+  const resolvedImage = validImages[0];
 
   // Resolve sizes: guarantee array of objects with { name, price }
   let resolvedSizes = [];
@@ -3148,6 +3607,12 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     }
   }
 
+  // Ensure finishes never carry base64 image strings
+  resolvedFinishes = resolvedFinishes.map(f => ({
+    ...f,
+    image: (f.image && typeof f.image === 'string' && !f.image.startsWith('data:image/')) ? f.image.trim() : resolvedImage
+  }));
+
   const newProduct = {
     id: uniqueSlug,
     name: name.trim(),
@@ -3161,7 +3626,7 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     reviewsCount: 1,
     badge: badge || '',
     image: resolvedImage,
-    images: resolvedImages,
+    images: validImages,
     shortDescription: shortDescription || `${name.trim()} customized by Rajesh Framing Studio.`,
     description: description || shortDescription || `${name.trim()} handcrafted with premium materials and archival printing standards.`,
     material: material || 'Premium Archival Grade',
@@ -3175,8 +3640,13 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  await db.saveProduct(newProduct);
-  res.json({ success: true, message: 'Product added to catalog successfully.', product: newProduct });
+  try {
+    const saved = await db.saveProduct(newProduct);
+    res.json({ success: true, message: 'Product added to catalog successfully.', product: saved });
+  } catch (err) {
+    console.error('Failed to save product:', err);
+    res.status(500).json({ success: false, message: 'Database save failed: ' + err.message });
+  }
 });
 
 /**
@@ -3186,24 +3656,28 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
 
-  const products = await db.getProducts();
-  const index = products.findIndex(p => p.id === id);
-
-  if (index === -1) {
+  const target = await db.getProductById(id);
+  if (!target) {
     return res.status(404).json({ success: false, message: 'Product not found.' });
   }
 
-  const target = { ...products[index] };
-
   // Handle uploaded images (up to 5 photos) if updated
-  if (Array.isArray(updates.images)) {
+  let rawImagesToProcess = [];
+  if (Array.isArray(updates.images) && updates.images.length > 0) {
+    rawImagesToProcess = updates.images.slice(0, 5);
+  } else if (updates.image) {
+    rawImagesToProcess = [updates.image];
+  }
+
+  if (rawImagesToProcess.length > 0) {
     const uploadDir = path.join(__dirname, 'assets', 'images', 'uploads');
     const pubUploadDir = path.join(__dirname, 'public', 'assets', 'images', 'uploads');
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-    if (!fs.existsSync(pubUploadDir)) fs.mkdirSync(pubUploadDir, { recursive: true });
+    try {
+      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+      if (!fs.existsSync(pubUploadDir)) fs.mkdirSync(pubUploadDir, { recursive: true });
+    } catch (_) {}
 
-    const updatedImages = [];
-    for (const imgItem of updates.images.slice(0, 5)) {
+    const resolvedUpdatedImages = await Promise.all(rawImagesToProcess.map(async (imgItem) => {
       if (typeof imgItem === 'string' && imgItem.startsWith('data:image/')) {
         try {
           const matches = imgItem.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,([\s\S]+)$/);
@@ -3212,51 +3686,49 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
             const ext = rawMime.includes('png') ? '.png' : (rawMime.includes('webp') ? '.webp' : '.jpg');
             const buffer = Buffer.from(matches[2].trim(), 'base64');
             const cleanName = `prod_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${ext}`;
-            fs.writeFileSync(path.join(uploadDir, cleanName), buffer);
-            fs.writeFileSync(path.join(pubUploadDir, cleanName), buffer);
-            updatedImages.push(`assets/images/uploads/${cleanName}`);
+
+            // If Supabase is connected, upload to Supabase Storage photos bucket with 5s timeout
+            if (db.supabase) {
+              try {
+                const uploadPromise = db.supabase.storage.from('photos').upload(cleanName, buffer, {
+                  contentType: `image/${ext.replace('.', '')}`,
+                  upsert: true
+                });
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase Storage upload timed out after 5s')), 5000));
+                const { data: stData, error: stErr } = await Promise.race([uploadPromise, timeoutPromise]);
+                if (!stErr && stData) {
+                  const { data: pubData } = db.supabase.storage.from('photos').getPublicUrl(cleanName);
+                  if (pubData && pubData.publicUrl) {
+                    return pubData.publicUrl;
+                  }
+                } else if (stErr) {
+                  console.warn('⚠️ Supabase storage upload warning:', stErr.message);
+                }
+              } catch (stErr) {
+                console.warn('⚠️ Supabase storage upload error/timeout:', stErr.message);
+              }
+            }
+
+            // Asynchronous local disk write
+            await Promise.all([
+              fs.promises.writeFile(path.join(uploadDir, cleanName), buffer).catch(() => {}),
+              fs.promises.writeFile(path.join(pubUploadDir, cleanName), buffer).catch(() => {})
+            ]);
+            return `assets/images/uploads/${cleanName}`;
           }
         } catch (e) {
-          console.warn('Error saving updated product image to disk:', e.message);
+          console.warn('Error saving updated product image:', e.message);
         }
       } else if (typeof imgItem === 'string' && imgItem.trim()) {
-        updatedImages.push(imgItem.trim());
+        return imgItem.trim();
       }
-    }
-    if (updatedImages.length > 0) {
-      target.images = updatedImages;
-      target.image = updatedImages[0];
-    }
-  } else if (updates.image && typeof updates.image === 'string' && updates.image.startsWith('data:image/')) {
-    try {
-      const matches = updates.image.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,([\s\S]+)$/);
-      if (matches) {
-        const rawMime = matches[1].toLowerCase();
-        const ext = rawMime.includes('png') ? '.png' : (rawMime.includes('webp') ? '.webp' : '.jpg');
-        const buffer = Buffer.from(matches[2].trim(), 'base64');
-        const uploadDir = path.join(__dirname, 'assets', 'images', 'uploads');
-        const pubUploadDir = path.join(__dirname, 'public', 'assets', 'images', 'uploads');
-        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-        if (!fs.existsSync(pubUploadDir)) fs.mkdirSync(pubUploadDir, { recursive: true });
-        const cleanName = `prod_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${ext}`;
-        fs.writeFileSync(path.join(uploadDir, cleanName), buffer);
-        fs.writeFileSync(path.join(pubUploadDir, cleanName), buffer);
-        target.image = `assets/images/uploads/${cleanName}`;
-        if (!Array.isArray(target.images) || target.images.length <= 1) {
-          target.images = [target.image];
-        } else {
-          target.images[0] = target.image;
-        }
-      }
-    } catch (e) {
-      console.warn('Error saving updated product image to disk:', e.message);
-    }
-  } else if (updates.image && typeof updates.image === 'string' && updates.image.trim()) {
-    target.image = updates.image.trim();
-    if (!Array.isArray(target.images) || target.images.length <= 1) {
-      target.images = [target.image];
-    } else {
-      target.images[0] = target.image;
+      return null;
+    }));
+
+    const validImages = resolvedUpdatedImages.filter(Boolean);
+    if (validImages.length > 0) {
+      target.images = validImages;
+      target.image = validImages[0];
     }
   }
 
@@ -3351,13 +3823,14 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
     }
   }
   if (updates.finishes !== undefined) {
+    let resolvedFinishes = [];
     if (Array.isArray(updates.finishes)) {
-      target.finishes = updates.finishes;
+      resolvedFinishes = updates.finishes;
     } else if (typeof updates.finishes === 'string') {
       try {
-        target.finishes = JSON.parse(updates.finishes);
+        resolvedFinishes = JSON.parse(updates.finishes);
       } catch (_) {
-        target.finishes = updates.finishes.split(',').map(v => v.trim()).filter(Boolean).map((v, idx) => ({
+        resolvedFinishes = updates.finishes.split(',').map(v => v.trim()).filter(Boolean).map((v, idx) => ({
           id: `finish-${idx + 1}`,
           name: v,
           color: '#C99A3D',
@@ -3366,6 +3839,13 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
         }));
       }
     }
+    target.finishes = resolvedFinishes.map(f => {
+      const copy = { ...f };
+      if (copy.image && copy.image.startsWith('data:image/')) {
+        copy.image = target.image;
+      }
+      return copy;
+    });
   }
 
   if (updates.variants !== undefined) {

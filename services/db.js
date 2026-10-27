@@ -213,119 +213,261 @@ if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
   console.log('ℹ️ [DATABASE] Supabase credentials not set in environment. Running in Local JSON mode.');
 }
 
+function withTimeout(promise, ms, operationName = 'Database operation') {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`${operationName} timed out after ${ms}ms. Check Supabase connection status.`));
+    }, ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timer);
+  });
+}
+
 module.exports = {
   isCloud: () => Boolean(supabase),
   supabase,
   syncProductsDataFiles,
   syncCategoriesDataFiles,
+  withTimeout,
 
   // --- PRODUCTS ---
-  _productsSynced: false,
+  async hasProduct(slug) {
+    if (!slug) return false;
+    const cleanId = String(slug).trim().toLowerCase();
+    if (supabase) {
+      try {
+        const queryPromise = supabase.from('products').select('id').eq('id', cleanId).maybeSingle();
+        const { data } = await withTimeout(queryPromise, 3000, 'Supabase hasProduct query');
+        if (data && data.id) return true;
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase hasProduct check timed out or failed, using local check:', err.message);
+      }
+    }
+    const local = readJson(PRODUCTS_FILE, []);
+    return local.some(p => p.id && p.id.toLowerCase() === cleanId);
+  },
+
+  async getProductById(id) {
+    if (!id) return null;
+    const cleanId = String(id).trim();
+    if (supabase) {
+      try {
+        const queryPromise = supabase.from('products').select('*').eq('id', cleanId).maybeSingle();
+        const { data, error } = await withTimeout(queryPromise, 4000, 'Supabase getProductById query');
+        if (!error && data) {
+          return {
+            id: data.id,
+            name: data.name,
+            title: data.name,
+            category: data.category,
+            categoryLabel: data.category_label || data.category,
+            price: Number(data.price),
+            originalPrice: data.original_price ? Number(data.original_price) : null,
+            priceDisplay: data.price_display || `Starting from ₹${data.price}`,
+            rating: Number(data.rating) || 5.0,
+            reviewsCount: Number(data.reviews_count) || 1,
+            badge: data.badge || '',
+            image: data.image,
+            images: (Array.isArray(data.images) && data.images.length > 0) ? data.images : (data.image ? [data.image] : []),
+            shortDescription: data.short_description || '',
+            description: data.description || data.short_description || '',
+            material: data.material || '',
+            printingType: data.printing_type || '',
+            status: data.status || 'In Stock',
+            inStock: data.in_stock !== undefined ? Boolean(data.in_stock) : (data.status === 'In Stock'),
+            stockQty: data.stock_qty !== undefined ? Number(data.stock_qty) : 100,
+            leadTime: data.lead_time || '24 - 48 Hours',
+            sizes: Array.isArray(data.sizes) ? data.sizes : [],
+            finishes: Array.isArray(data.finishes) ? data.finishes : [],
+            variants: Array.isArray(data.variants) ? data.variants : [],
+            features: Array.isArray(data.features) ? data.features : [],
+            createdAt: data.created_at,
+            updatedAt: data.updated_at
+          };
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase getProductById error:', err.message);
+      }
+    }
+    const products = readJson(PRODUCTS_FILE, []);
+    return products.find(p => p.id === cleanId) || null;
+  },
 
   async getProducts() {
     const localProducts = readJson(PRODUCTS_FILE, []);
     if (supabase) {
-      if (!this._productsSynced) {
-        try {
-          for (const p of localProducts) {
-            await supabase.from('products').upsert({
-              id: p.id,
-              name: p.name,
-              category: p.category,
-              category_label: p.categoryLabel || p.category_label,
-              price: p.price,
-              price_display: p.priceDisplay || p.price_display,
-              rating: p.rating,
-              reviews_count: p.reviewsCount || p.reviews_count,
-              badge: p.badge,
-              image: p.image,
-              short_description: p.shortDescription || p.short_description,
-              description: p.description,
-              material: p.material,
-              printing_type: p.printingType || p.printing_type,
-              status: p.status,
-              lead_time: p.leadTime || p.lead_time,
-              sizes: p.sizes || [],
-              finishes: p.finishes || [],
-              features: p.features || []
-            }, { onConflict: 'id' });
-          }
-          this._productsSynced = true;
-          console.log('✅ [DATABASE] Synced latest catalog products & prices to Supabase');
-        } catch (syncErr) {
-          console.warn('⚠️ [DATABASE] Error syncing catalog to Supabase:', syncErr.message);
+      try {
+        const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) {
+          return data.map(remote => ({
+            id: remote.id,
+            name: remote.name,
+            title: remote.name,
+            category: remote.category,
+            categoryLabel: remote.category_label || remote.categoryLabel || remote.category,
+            price: Number(remote.price) || 0,
+            originalPrice: remote.original_price ? Number(remote.original_price) : null,
+            priceDisplay: remote.price_display || `Starting from ₹${remote.price}`,
+            rating: Number(remote.rating) || 5.0,
+            reviewsCount: Number(remote.reviews_count) || 1,
+            badge: remote.badge || '',
+            image: remote.image,
+            images: (Array.isArray(remote.images) && remote.images.length > 0) ? remote.images : (remote.image ? [remote.image] : []),
+            shortDescription: remote.short_description || '',
+            description: remote.description || remote.short_description || '',
+            material: remote.material || '',
+            printingType: remote.printing_type || '',
+            status: remote.status || 'In Stock',
+            inStock: remote.in_stock !== undefined ? Boolean(remote.in_stock) : (remote.status === 'In Stock'),
+            stockQty: remote.stock_qty !== undefined ? Number(remote.stock_qty) : 100,
+            leadTime: remote.lead_time || '24 - 48 Hours',
+            sizes: Array.isArray(remote.sizes) ? remote.sizes : [],
+            finishes: Array.isArray(remote.finishes) ? remote.finishes : [],
+            variants: Array.isArray(remote.variants) ? remote.variants : [],
+            features: Array.isArray(remote.features) ? remote.features : [],
+            createdAt: remote.created_at,
+            updatedAt: remote.updated_at
+          }));
         }
-      }
 
-      const { data, error } = await supabase.from('products').select('*').order('name');
-      if (!error && data && data.length > 0) {
-        return data.map(remote => {
-          const local = localProducts.find(l => l.id === remote.id) || {};
-          return {
-            ...local,
-            ...remote,
-            price: Number(remote.price) || local.price,
-            priceDisplay: remote.price_display || remote.priceDisplay || local.priceDisplay,
-            categoryLabel: remote.category_label || remote.categoryLabel || local.categoryLabel,
-            shortDescription: remote.short_description || remote.shortDescription || local.shortDescription,
-            printingType: remote.printing_type || remote.printingType || local.printingType,
-            leadTime: remote.lead_time || remote.leadTime || local.leadTime,
-            reviewsCount: remote.reviews_count || remote.reviewsCount || local.reviewsCount,
-            sizes: (remote.sizes && Array.isArray(remote.sizes) && remote.sizes.length > 0) ? remote.sizes : local.sizes,
-            finishes: (remote.finishes && Array.isArray(remote.finishes) && remote.finishes.length > 0) ? remote.finishes : local.finishes
-          };
-        });
+        // If Supabase has 0 products and local products exist, seed in a single batch upsert
+        if (!error && (!data || data.length === 0) && localProducts.length > 0) {
+          const seedRows = localProducts.map(p => ({
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            category_label: p.categoryLabel || p.category,
+            price: Number(p.price) || 0,
+            original_price: p.originalPrice ? Number(p.originalPrice) : null,
+            price_display: p.priceDisplay || `Starting from ₹${p.price}`,
+            rating: Number(p.rating) || 5.0,
+            reviews_count: Number(p.reviewsCount) || 1,
+            badge: p.badge || '',
+            image: p.image,
+            images: Array.isArray(p.images) ? p.images : (p.image ? [p.image] : []),
+            short_description: p.shortDescription || '',
+            description: p.description || '',
+            material: p.material || '',
+            printing_type: p.printingType || '',
+            status: p.status || 'In Stock',
+            in_stock: p.inStock !== undefined ? Boolean(p.inStock) : true,
+            stock_qty: p.stockQty !== undefined ? Number(p.stockQty) : 100,
+            lead_time: p.leadTime || '24 - 48 Hours',
+            sizes: p.sizes || [],
+            finishes: p.finishes || []
+          }));
+          await supabase.from('products').upsert(seedRows, { onConflict: 'id' });
+          return localProducts;
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase getProducts error, using fallback:', err.message);
       }
-      console.warn('Supabase getProducts error, falling back to local:', error?.message);
     }
     return localProducts;
   },
 
   async saveProduct(product) {
+    const cleanImage = (product.image && typeof product.image === 'string' && !product.image.startsWith('data:image/'))
+      ? product.image.trim()
+      : (Array.isArray(product.images) && product.images[0] && !product.images[0].startsWith('data:image/')
+        ? product.images[0].trim()
+        : 'assets/images/custom_canvas.jpg');
+
+    const cleanImages = (Array.isArray(product.images) && product.images.length > 0)
+      ? product.images.filter(img => typeof img === 'string' && !img.startsWith('data:image/')).map(s => s.trim())
+      : [cleanImage];
+
+    const cleanFinishes = Array.isArray(product.finishes)
+      ? product.finishes.map(f => ({
+          ...f,
+          image: (f.image && typeof f.image === 'string' && !f.image.startsWith('data:image/')) ? f.image.trim() : cleanImage
+        }))
+      : [];
+
+    const sanitizedProduct = {
+      ...product,
+      image: cleanImage,
+      images: cleanImages,
+      finishes: cleanFinishes,
+      categoryLabel: product.categoryLabel || product.category_label || product.category,
+      price: Number(product.price) || 0,
+      originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
+      priceDisplay: product.priceDisplay || `Starting from ₹${Number(product.price) || 0}`,
+      rating: product.rating !== undefined ? Number(product.rating) : 5.0,
+      reviewsCount: product.reviewsCount ? Number(product.reviewsCount) : 1,
+      badge: (product.badge || '').trim(),
+      shortDescription: (product.shortDescription || product.short_description || '').trim(),
+      description: (product.description || product.shortDescription || '').trim(),
+      material: (product.material || '').trim(),
+      printingType: (product.printingType || product.printing_type || '').trim(),
+      status: product.status || 'In Stock',
+      inStock: product.inStock !== undefined ? Boolean(product.inStock) : (product.status === 'In Stock'),
+      stockQty: product.stockQty !== undefined ? Number(product.stockQty) : 100,
+      leadTime: product.leadTime || product.lead_time || '24 - 48 Hours',
+      sizes: Array.isArray(product.sizes) ? product.sizes : [],
+      variants: Array.isArray(product.variants) ? product.variants : [],
+      features: Array.isArray(product.features) ? product.features : [],
+      updatedAt: new Date().toISOString()
+    };
+
     if (supabase) {
       try {
         const supabaseRow = {
-          id: product.id,
-          name: product.name,
-          category: product.category,
-          category_label: product.categoryLabel || product.category_label || product.category,
-          price: product.price,
-          price_display: product.priceDisplay || product.price_display || `Starting from ₹${product.price}`,
-          rating: product.rating !== undefined ? product.rating : 5.0,
-          reviews_count: product.reviewsCount || product.reviews_count || 1,
-          badge: product.badge || '',
-          image: product.image,
-          short_description: product.shortDescription || product.short_description || '',
-          description: product.description || product.shortDescription || '',
-          material: product.material || '',
-          printing_type: product.printingType || product.printing_type || '',
-          status: product.status || 'In Stock',
-          lead_time: product.leadTime || product.lead_time || '24 - 48 Hours',
-          sizes: product.sizes || [],
-          finishes: product.finishes || []
+          id: sanitizedProduct.id,
+          name: sanitizedProduct.name,
+          category: sanitizedProduct.category,
+          category_label: sanitizedProduct.categoryLabel,
+          price: sanitizedProduct.price,
+          original_price: sanitizedProduct.originalPrice,
+          price_display: sanitizedProduct.priceDisplay,
+          rating: sanitizedProduct.rating,
+          reviews_count: sanitizedProduct.reviewsCount,
+          badge: sanitizedProduct.badge,
+          image: sanitizedProduct.image,
+          images: sanitizedProduct.images,
+          short_description: sanitizedProduct.shortDescription,
+          description: sanitizedProduct.description,
+          material: sanitizedProduct.material,
+          printing_type: sanitizedProduct.printingType,
+          status: sanitizedProduct.status,
+          in_stock: sanitizedProduct.inStock,
+          stock_qty: sanitizedProduct.stockQty,
+          lead_time: sanitizedProduct.leadTime,
+          sizes: sanitizedProduct.sizes,
+          finishes: sanitizedProduct.finishes,
+          variants: sanitizedProduct.variants,
+          features: sanitizedProduct.features,
+          created_at: sanitizedProduct.createdAt || new Date().toISOString(),
+          updated_at: sanitizedProduct.updatedAt || new Date().toISOString()
         };
-        const { error } = await supabase.from('products').upsert(supabaseRow, { onConflict: 'id' });
+        const upsertPromise = supabase.from('products').upsert(supabaseRow, { onConflict: 'id' });
+        const { error } = await withTimeout(upsertPromise, 8000, 'Supabase products table upsert');
         if (error) {
-          console.warn('⚠️ [DATABASE] Supabase saveProduct warning:', error.message);
+          console.error('❌ [DATABASE] Supabase saveProduct error:', error.message);
+          const detailStr = error.details ? ` (${error.details})` : '';
+          const hintStr = error.hint ? ` [Hint: ${error.hint}]` : '';
+          throw new Error(`Supabase save failed: ${error.message}${detailStr}${hintStr}`);
         }
       } catch (err) {
-        console.warn('⚠️ [DATABASE] Supabase saveProduct exception:', err.message);
+        console.error('❌ [DATABASE] Supabase saveProduct exception:', err.message);
+        throw err;
       }
     }
 
     const products = readJson(PRODUCTS_FILE, []);
-    const idx = products.findIndex(p => p.id === product.id);
-    let updated;
+    const idx = products.findIndex(p => p.id === sanitizedProduct.id);
     if (idx !== -1) {
-      updated = { ...products[idx], ...product };
-      products[idx] = updated;
+      products[idx] = { ...products[idx], ...sanitizedProduct };
     } else {
-      updated = { ...product };
-      products.push(updated);
+      products.unshift(sanitizedProduct);
     }
     writeJson(PRODUCTS_FILE, products);
-    syncProductsDataFiles(products);
-    return updated;
+    setImmediate(() => {
+      try { syncProductsDataFiles(products); } catch (_) {}
+    });
+    return sanitizedProduct;
   },
 
   async deleteProduct(id) {
@@ -340,7 +482,9 @@ module.exports = {
     let products = readJson(PRODUCTS_FILE, []);
     products = products.filter(p => p.id !== id);
     writeJson(PRODUCTS_FILE, products);
-    syncProductsDataFiles(products);
+    setImmediate(() => {
+      try { syncProductsDataFiles(products); } catch (_) {}
+    });
     return true;
   },
 
@@ -358,8 +502,36 @@ module.exports = {
       try {
         const { data, error } = await supabase.from('categories').select('*').order('created_at', { ascending: true });
         if (!error && data && data.length > 0) {
-          syncCategoriesDataFiles(data);
-          return data;
+          const mapped = data.map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            icon: cat.icon || '🏷️',
+            desc: cat.desc || cat.description || '',
+            badge: cat.badge || cat.name,
+            color: cat.color || '#C99A3D',
+            bg: cat.bg || 'rgba(201, 154, 61, 0.15)',
+            isDefault: cat.is_default !== undefined ? Boolean(cat.is_default) : Boolean(cat.isDefault),
+            createdAt: cat.created_at || cat.createdAt
+          }));
+          setImmediate(() => { try { syncCategoriesDataFiles(mapped); } catch (_) {} });
+          return mapped;
+        }
+
+        // If Supabase has 0 categories, seed default categories in a single batch
+        if (!error && (!data || data.length === 0)) {
+          const seedCategories = defaultCategories.map(c => ({
+            id: c.id,
+            name: c.name,
+            icon: c.icon,
+            desc: c.desc,
+            badge: c.badge,
+            color: c.color,
+            bg: c.bg,
+            is_default: c.isDefault,
+            created_at: new Date().toISOString()
+          }));
+          await supabase.from('categories').upsert(seedCategories, { onConflict: 'id' });
+          return defaultCategories;
         }
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase getCategories exception:', err.message);
@@ -371,7 +543,7 @@ module.exports = {
       categories = defaultCategories;
       writeJson(CATEGORIES_FILE, categories);
     }
-    syncCategoriesDataFiles(categories);
+    setImmediate(() => { try { syncCategoriesDataFiles(categories); } catch (_) {} });
     return categories;
   },
 
@@ -449,54 +621,81 @@ module.exports = {
   // --- ORDERS ---
   async getOrders() {
     if (supabase) {
-      const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-      if (!error && data) {
-        // Map database columns to app schema
-        return data.map(o => ({
-          orderId: o.order_id,
-          customer: o.customer,
-          items: o.items,
-          subtotal: o.subtotal,
-          shipping: o.shipping,
-          total: o.total,
-          notes: o.notes,
-          paymentMethod: o.payment_method,
-          paymentStatus: o.payment_status,
-          upiUtr: o.upi_utr,
-          status: o.status,
-          createdAt: o.created_at,
-          updatedAt: o.updated_at
-        }));
+      try {
+        const queryPromise = supabase.from('orders').select('*').order('created_at', { ascending: false });
+        const { data, error } = await withTimeout(queryPromise, 5000, 'Supabase getOrders');
+        if (!error && Array.isArray(data)) {
+          // Map database columns to app schema
+          return data.map(o => ({
+            orderId: o.order_id,
+            customer: o.customer,
+            items: Array.isArray(o.items) ? o.items : [],
+            subtotal: Number(o.subtotal) || 0,
+            shipping: Number(o.shipping) || 0,
+            total: Number(o.total) || 0,
+            notes: o.notes || '',
+            orderPhoto: o.order_photo || null,
+            paymentMethod: o.payment_method || 'Pick up from shop',
+            paymentStatus: o.payment_status || 'Pending',
+            upiUtr: o.upi_utr || null,
+            status: o.status || 'pending',
+            confirmedAt: o.confirmed_at || o.confirmedAt || null,
+            confirmationDate: o.confirmation_date || o.confirmationDate || null,
+            pickedUpAt: o.picked_up_at || o.pickedUpAt || null,
+            pickupDate: o.pickup_date || o.pickupDate || null,
+            confirmedEmailSent: Boolean(o.confirmed_email_sent || o.confirmedEmailSent),
+            readyEmailSent: Boolean(o.ready_email_sent || o.readyEmailSent),
+            cancelledEmailSent: Boolean(o.cancelled_email_sent || o.cancelledEmailSent),
+            createdAt: o.created_at,
+            updatedAt: o.updated_at
+          }));
+        }
+        if (error) console.warn('⚠️ [DATABASE] Supabase getOrders error, falling back to local:', error.message);
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase getOrders exception, using local:', err.message);
       }
-      console.warn('Supabase getOrders error, falling back to local:', error?.message);
     }
     return readJson(ORDERS_FILE, []);
   },
 
   async getOrderById(orderId) {
     const cleanId = (orderId || '').trim().replace(/^#/, '');
+    if (!cleanId) return null;
     if (supabase) {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .ilike('order_id', cleanId)
-        .maybeSingle();
-      if (!error && data) {
-        return {
-          orderId: data.order_id,
-          customer: data.customer,
-          items: data.items,
-          subtotal: data.subtotal,
-          shipping: data.shipping,
-          total: data.total,
-          notes: data.notes,
-          paymentMethod: data.payment_method,
-          paymentStatus: data.payment_status,
-          upiUtr: data.upi_utr,
-          status: data.status,
-          createdAt: data.created_at,
-          updatedAt: data.updated_at
-        };
+      try {
+        const queryPromise = supabase
+          .from('orders')
+          .select('*')
+          .ilike('order_id', cleanId)
+          .maybeSingle();
+        const { data, error } = await withTimeout(queryPromise, 4000, 'Supabase getOrderById');
+        if (!error && data) {
+          return {
+            orderId: data.order_id,
+            customer: data.customer,
+            items: Array.isArray(data.items) ? data.items : [],
+            subtotal: Number(data.subtotal) || 0,
+            shipping: Number(data.shipping) || 0,
+            total: Number(data.total) || 0,
+            notes: data.notes || '',
+            orderPhoto: data.order_photo || null,
+            paymentMethod: data.payment_method || 'Pick up from shop',
+            paymentStatus: data.payment_status || 'Pending',
+            upiUtr: data.upi_utr || null,
+            status: data.status || 'pending',
+            confirmedAt: data.confirmed_at || data.confirmedAt || null,
+            confirmationDate: data.confirmation_date || data.confirmationDate || null,
+            pickedUpAt: data.picked_up_at || data.pickedUpAt || null,
+            pickupDate: data.pickup_date || data.pickupDate || null,
+            confirmedEmailSent: Boolean(data.confirmed_email_sent || data.confirmedEmailSent),
+            readyEmailSent: Boolean(data.ready_email_sent || data.readyEmailSent),
+            cancelledEmailSent: Boolean(data.cancelled_email_sent || data.cancelledEmailSent),
+            createdAt: data.created_at,
+            updatedAt: data.updated_at
+          };
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase getOrderById exception:', err.message);
       }
     }
     const orders = readJson(ORDERS_FILE, []);
@@ -504,28 +703,46 @@ module.exports = {
   },
 
   async saveOrder(order) {
+    if (!order) return null;
+    order.status = order.status || 'pending';
+    const dbRow = {
+      order_id: order.orderId,
+      customer: order.customer || {},
+      items: Array.isArray(order.items) ? order.items : [],
+      subtotal: Number(order.subtotal) || 0,
+      shipping: Number(order.shipping) || 0,
+      total: Number(order.total) || 0,
+      notes: order.notes || '',
+      order_photo: order.orderPhoto || null,
+      payment_method: order.paymentMethod || 'Pick up from shop',
+      payment_status: order.paymentStatus || 'Pending',
+      upi_utr: order.upiUtr || null,
+      status: order.status || 'pending',
+      confirmed_at: order.confirmedAt || (order.confirmationDate ? new Date(`${order.confirmationDate}T00:00:00Z`).toISOString() : null),
+      confirmation_date: order.confirmationDate || null,
+      picked_up_at: order.pickedUpAt || (order.pickupDate ? new Date(`${order.pickupDate}T00:00:00Z`).toISOString() : null),
+      pickup_date: order.pickupDate || null,
+      confirmed_email_sent: Boolean(order.confirmedEmailSent || order.confirmed_email_sent),
+      ready_email_sent: Boolean(order.readyEmailSent || order.ready_email_sent),
+      cancelled_email_sent: Boolean(order.cancelledEmailSent || order.cancelled_email_sent),
+      created_at: order.createdAt || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
     if (supabase) {
-      const dbRow = {
-        order_id: order.orderId,
-        customer: order.customer,
-        items: order.items,
-        subtotal: order.subtotal,
-        shipping: order.shipping,
-        total: order.total,
-        notes: order.notes,
-        payment_method: order.paymentMethod,
-        payment_status: order.paymentStatus || 'Pending',
-        upi_utr: order.upiUtr,
-        status: order.status || 'Confirmed',
-        created_at: order.createdAt || new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      const { data, error } = await supabase.from('orders').upsert(dbRow).select().single();
-      if (!error) return order;
-      console.warn('Supabase saveOrder error, writing local:', error?.message);
+      try {
+        const upsertPromise = supabase.from('orders').upsert(dbRow, { onConflict: 'order_id' });
+        const { error } = await withTimeout(upsertPromise, 6000, 'Supabase saveOrder');
+        if (error) {
+          console.warn('⚠️ [DATABASE] Supabase saveOrder warning:', error.message);
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase saveOrder exception, syncing locally:', err.message);
+      }
     }
+
     const orders = readJson(ORDERS_FILE, []);
-    const idx = orders.findIndex(o => o.orderId === order.orderId);
+    const idx = orders.findIndex(o => o.orderId && o.orderId.toLowerCase() === order.orderId.toLowerCase());
     if (idx !== -1) {
       orders[idx] = { ...orders[idx], ...order, updatedAt: new Date().toISOString() };
     } else {
@@ -538,7 +755,11 @@ module.exports = {
   async deleteOrder(orderId) {
     const cleanId = (orderId || '').trim().replace(/^#/, '');
     if (supabase) {
-      await supabase.from('orders').delete().ilike('order_id', cleanId);
+      try {
+        await supabase.from('orders').delete().ilike('order_id', cleanId);
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase deleteOrder exception:', err.message);
+      }
     }
     let orders = readJson(ORDERS_FILE, []);
     orders = orders.filter(o => o.orderId && o.orderId.toLowerCase() !== cleanId.toLowerCase());
@@ -548,7 +769,11 @@ module.exports = {
 
   async clearAllOrders() {
     if (supabase) {
-      await supabase.from('orders').delete().neq('order_id', '');
+      try {
+        await supabase.from('orders').delete().neq('order_id', '');
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase clearAllOrders exception:', err.message);
+      }
     }
     writeJson(ORDERS_FILE, []);
     return true;
@@ -557,52 +782,88 @@ module.exports = {
   // --- INQUIRIES ---
   async getInquiries() {
     if (supabase) {
-      const { data, error } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false });
-      if (!error && data) {
-        return data.map(i => ({
-          id: i.id,
-          name: i.name,
-          phone: i.phone,
-          email: i.email,
-          product: i.product,
-          specs: i.specs,
-          quantity: i.quantity,
-          estimatedValue: i.estimated_value,
-          notes: i.notes,
-          status: i.status,
-          hasUpload: i.has_upload,
-          uploadFileName: i.upload_file_name,
-          createdAt: i.created_at,
-          updatedAt: i.updated_at
-        }));
+      try {
+        const queryPromise = supabase.from('inquiries').select('*').order('created_at', { ascending: false });
+        const { data, error } = await withTimeout(queryPromise, 5000, 'Supabase getInquiries');
+        if (!error && Array.isArray(data)) {
+          return data.map(i => ({
+            id: i.id,
+            name: i.name,
+            phone: i.phone,
+            email: i.email,
+            product: i.product,
+            specs: i.specs,
+            quantity: Number(i.quantity) || 1,
+            estimatedValue: Number(i.estimated_value) || 0,
+            status: i.status || 'pending',
+            hasUpload: Boolean(i.has_upload),
+            uploadFileName: i.upload_file_name || null,
+            uploadedFileUrl: i.uploaded_file_url || null,
+            deliveryAddress: i.delivery_address || null,
+            customerPhotoUrl: i.uploaded_file_url || null,
+            customerPhotoName: i.upload_file_name || null,
+            confirmedAt: i.confirmed_at || i.confirmedAt || null,
+            confirmationDate: i.confirmation_date || i.confirmationDate || null,
+            pickedUpAt: i.picked_up_at || i.pickedUpAt || null,
+            pickupDate: i.pickup_date || i.pickupDate || null,
+            confirmedEmailSent: Boolean(i.confirmed_email_sent || i.confirmedEmailSent),
+            readyEmailSent: Boolean(i.ready_email_sent || i.readyEmailSent),
+            cancelledEmailSent: Boolean(i.cancelled_email_sent || i.cancelledEmailSent),
+            createdAt: i.created_at,
+            updatedAt: i.updated_at
+          }));
+        }
+        if (error) console.warn('⚠️ [DATABASE] Supabase getInquiries error:', error.message);
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase getInquiries exception:', err.message);
       }
     }
     return readJson(INQUIRIES_FILE, []);
   },
 
   async saveInquiry(inquiry) {
+    const photoUrl = inquiry.uploadedFileUrl || inquiry.customerPhotoUrl || null;
+    const photoName = inquiry.uploadFileName || inquiry.customerPhotoName || null;
+    const dbRow = {
+      id: inquiry.id,
+      name: inquiry.name,
+      phone: inquiry.phone,
+      email: inquiry.email || null,
+      product: inquiry.product || 'Photo Frame',
+      specs: inquiry.specs || '',
+      quantity: Number(inquiry.quantity) || 1,
+      estimated_value: Number(inquiry.estimatedValue) || 0,
+      notes: inquiry.notes || '',
+      status: inquiry.status || 'pending',
+      has_upload: Boolean(inquiry.hasUpload || photoUrl),
+      upload_file_name: photoName,
+      uploaded_file_url: photoUrl,
+      delivery_address: inquiry.deliveryAddress || null,
+      confirmed_at: inquiry.confirmedAt || (inquiry.confirmationDate ? new Date(`${inquiry.confirmationDate}T00:00:00Z`).toISOString() : null),
+      confirmation_date: inquiry.confirmationDate || null,
+      picked_up_at: inquiry.pickedUpAt || (inquiry.pickupDate ? new Date(`${inquiry.pickupDate}T00:00:00Z`).toISOString() : null),
+      pickup_date: inquiry.pickupDate || null,
+      confirmed_email_sent: Boolean(inquiry.confirmedEmailSent || inquiry.confirmed_email_sent),
+      ready_email_sent: Boolean(inquiry.readyEmailSent || inquiry.ready_email_sent),
+      cancelled_email_sent: Boolean(inquiry.cancelledEmailSent || inquiry.cancelled_email_sent),
+      created_at: inquiry.createdAt || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
     if (supabase) {
-      const dbRow = {
-        id: inquiry.id,
-        name: inquiry.name,
-        phone: inquiry.phone,
-        email: inquiry.email,
-        product: inquiry.product,
-        specs: inquiry.specs,
-        quantity: inquiry.quantity || 1,
-        estimated_value: inquiry.estimatedValue || 0,
-        notes: inquiry.notes || '',
-        status: inquiry.status || 'New',
-        has_upload: inquiry.hasUpload || false,
-        upload_file_name: inquiry.uploadFileName || null,
-        created_at: inquiry.createdAt || new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      const { error } = await supabase.from('inquiries').upsert(dbRow);
-      if (!error) return inquiry;
+      try {
+        const upsertPromise = supabase.from('inquiries').upsert(dbRow, { onConflict: 'id' });
+        const { error } = await withTimeout(upsertPromise, 6000, 'Supabase saveInquiry');
+        if (error) {
+          console.warn('⚠️ [DATABASE] Supabase saveInquiry warning:', error.message);
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase saveInquiry exception, syncing locally:', err.message);
+      }
     }
+
     const inquiries = readJson(INQUIRIES_FILE, []);
-    const idx = inquiries.findIndex(i => i.id === inquiry.id);
+    const idx = inquiries.findIndex(i => i.id && i.id.toLowerCase() === inquiry.id.toLowerCase());
     if (idx !== -1) {
       inquiries[idx] = { ...inquiries[idx], ...inquiry, updatedAt: new Date().toISOString() };
     } else {
@@ -615,7 +876,11 @@ module.exports = {
   async deleteInquiry(id) {
     const cleanId = (id || '').trim().replace(/^#/, '');
     if (supabase) {
-      await supabase.from('inquiries').delete().ilike('id', cleanId);
+      try {
+        await supabase.from('inquiries').delete().ilike('id', cleanId);
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase deleteInquiry exception:', err.message);
+      }
     }
     let inquiries = readJson(INQUIRIES_FILE, []);
     inquiries = inquiries.filter(i => i.id && i.id.toLowerCase() !== cleanId.toLowerCase());

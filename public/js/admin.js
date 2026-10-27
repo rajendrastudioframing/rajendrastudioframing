@@ -241,6 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initNewOrderModal();
   initEditOrderModal();
   initCancelOrderModal();
+  initConfirmAndPickupModals();
   initSettingsForms();
   initModalScrollLock();
 
@@ -294,11 +295,15 @@ async function apiFetch(urlOrEndpoint, options = {}) {
   const opts = Object.assign({}, options, { headers });
 
   const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const isMutating = opts.method && opts.method.toUpperCase() !== 'GET';
 
   try {
     return await fetch(fullUrl, opts);
   } catch (err) {
-    if (!isLocalDev && API_BASE !== CLOUD_API_FALLBACK) {
+    if (err.name === 'AbortError') {
+      throw err;
+    }
+    if (!isLocalDev && !isMutating && API_BASE !== CLOUD_API_FALLBACK) {
       console.warn(`API request failed (${fullUrl}). Auto-switching to cloud fallback: ${CLOUD_API_FALLBACK}`);
       API_BASE = CLOUD_API_FALLBACK;
       const retryUrl = `${API_BASE}${urlOrEndpoint}`;
@@ -633,20 +638,71 @@ async function loadDashboardStats() {
    ========================================================================== */
 async function loadInquiries() {
   try {
-    const res = await fetch(`${API_BASE}/api/admin/inquiries`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
+    const [inqRes, ordRes] = await Promise.all([
+      fetch(`${API_BASE}/api/admin/inquiries`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      fetch(`${API_BASE}/api/admin/orders`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+    ]);
+    const data = await inqRes.json();
     if (!data.success) return;
 
     allInquiries = data.inquiries || [];
 
+    // Dual-channel safety merge: if an order exists in /api/admin/orders, ensure it is in allInquiries
+    if (ordRes && ordRes.ok) {
+      try {
+        const ordData = await ordRes.json();
+        if (ordData.success && Array.isArray(ordData.orders)) {
+          const existingIds = new Set(allInquiries.map(i => (i.id || '').toLowerCase().trim()));
+          ordData.orders.forEach(o => {
+            if (o && o.orderId && !existingIds.has(o.orderId.toLowerCase().trim())) {
+              const itemSummary = Array.isArray(o.items) && o.items.length
+                ? o.items.map(i => `${i.name || 'Custom Product'} (x${i.quantity || 1})`).join(', ')
+                : 'Photo Frame';
+              const addrParts = o.customer ? [o.customer.address, o.customer.city, o.customer.state, o.customer.pincode].filter(Boolean) : [];
+              const deliveryAddress = addrParts.join(', ');
+              allInquiries.push({
+                id: o.orderId,
+                orderId: o.orderId,
+                name: (o.customer && o.customer.name) || 'Customer',
+                phone: (o.customer && o.customer.phone) || '',
+                email: (o.customer && o.customer.email) || '',
+                customerEmail: (o.customer && o.customer.email) || '',
+                product: `[ONLINE ORDER] ${itemSummary}`,
+                specs: `Deliver to: ${deliveryAddress || 'Studio Pickup'} • ${o.paymentMethod || 'Pick up from shop'}${o.upiUtr ? ' [UTR: ' + o.upiUtr + ']' : ''}`,
+                quantity: Array.isArray(o.items) ? o.items.reduce((s, i) => s + (Number(i.quantity) || 1), 0) : 1,
+                estimatedValue: Number(o.total) || 0,
+                notes: o.notes || '',
+                status: o.status || 'New',
+                hasUpload: Boolean(o.orderPhoto),
+                deliveryAddress: deliveryAddress || null,
+                items: Array.isArray(o.items) ? o.items : [],
+                paymentMethod: o.paymentMethod || 'Pick up from shop',
+                upiUtr: o.upiUtr || null,
+                total: Number(o.total) || 0,
+                createdAt: o.createdAt || new Date().toISOString()
+              });
+              existingIds.add(o.orderId.toLowerCase().trim());
+            }
+          });
+        }
+      } catch (_) {}
+    }
+
+    // Sort by createdAt descending
+    allInquiries.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
     // Separate Orders and Leads
     const orders = allInquiries.filter(i => 
-      i.id.startsWith('RF-ORD') || (i.product && i.product.includes('[ONLINE ORDER]'))
+      (i.id && i.id.startsWith('RF-ORD')) || 
+      (i.product && i.product.includes('[ONLINE ORDER]')) ||
+      (Array.isArray(i.items) && i.items.length > 0) ||
+      i.orderId
     );
     const leads = allInquiries.filter(i => 
-      !i.id.startsWith('RF-ORD') && (!i.product || !i.product.includes('[ONLINE ORDER]'))
+      !((i.id && i.id.startsWith('RF-ORD')) || 
+      (i.product && i.product.includes('[ONLINE ORDER]')) ||
+      (Array.isArray(i.items) && i.items.length > 0) ||
+      i.orderId)
     );
 
     // Update KPI Counters
@@ -837,6 +893,20 @@ window.closeCustomerPhotoModal = () => {
   if (modal) modal.classList.remove('open');
 };
 
+function formatLocalReadableDate(dateInput) {
+  if (!dateInput) return '';
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput.trim())) {
+    const [y, m, d] = dateInput.trim().split('-').map(Number);
+    const dObj = new Date(Date.UTC(y, m - 1, d));
+    return dObj.toLocaleDateString('en-IN', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  const parsed = new Date(dateInput);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  return String(dateInput);
+}
+
 function createOrderCardRowHTML(order) {
   const thumb = getProductThumbnail(order.product);
   const cleanPhone = (order.phone || '').replace(/\D/g, '');
@@ -858,25 +928,27 @@ function createOrderCardRowHTML(order) {
   const paymentStatus = isOnlinePayment ? 'Paid' : (order.status === 'Completed' ? 'Paid' : 'Pending');
   const paymentClass = paymentStatus.toLowerCase();
   const paymentMethod = isOnlinePayment ? 'Online UPI' : 'Pay on Delivery';
-  const isCancelled = order.status === 'Cancelled';
-  const isCompleted = order.status === 'Completed' || order.status === 'Delivered';
-  const isPickupReady = order.status === 'Shipped' || order.status === 'Dispatched' || order.status === 'Pickup Ready';
-  const isAccepted = order.status === 'Confirmed' || order.status === 'Accepted' || order.status === 'In Progress';
+  const ordSt = (order.status || '').toLowerCase().trim();
+  const isCancelled = ordSt === 'cancelled';
+  const isPickedUp = ordSt === 'picked_up' || ordSt === 'picked up';
+  const isReadyForPickup = ordSt === 'ready_for_pickup' || ordSt === 'ready for pickup' || ordSt === 'shipped' || ordSt === 'dispatched' || ordSt === 'pickup ready';
+  const isConfirmed = ordSt === 'confirmed' || ordSt === 'accepted';
+  const isPending = ordSt === 'pending' || ordSt === 'new' || !ordSt;
 
-  let displayStatus = order.status || 'New';
+  let displayStatus = 'Pending';
   if (isCancelled) {
     displayStatus = 'Cancelled';
-  } else if (isCompleted) {
-    displayStatus = 'Completed';
-  } else if (isPickupReady) {
-    displayStatus = 'Pick Up Ready';
-  } else if (isAccepted) {
-    displayStatus = 'In Production';
-  } else if (order.status === 'New' || order.status === 'Pending') {
-    displayStatus = 'New Order';
+  } else if (isPickedUp) {
+    displayStatus = 'Picked Up';
+  } else if (isReadyForPickup) {
+    displayStatus = 'Ready for Pickup';
+  } else if (isConfirmed) {
+    displayStatus = 'Confirmed';
+  } else {
+    displayStatus = 'Pending';
   }
 
-  const deliveryClass = order.status.toLowerCase().replace(/\s+/g, '-');
+  const deliveryClass = isCancelled ? 'cancelled' : isPickedUp ? 'completed' : isReadyForPickup ? 'ready' : isConfirmed ? 'confirmed' : 'pending';
   const trackingText = order.specs && order.specs.includes('Deliver to:') 
     ? 'Doorstep Delivery' 
     : 'Studio Pickup';
@@ -919,10 +991,20 @@ function createOrderCardRowHTML(order) {
           <img src="${thumb}" alt="${escapeHtml(cleanTitle)}" class="order-thumb-img" onerror="this.src='assets/images/glass_frame.jpg'" />
         </div>
 
-        <!-- 2. Order ID & Date -->
+        <!-- 2. Order ID & Dates -->
         <div class="order-col-info order-col-id">
           <span class="order-id-num" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="Click to view complete order sheet">#${escapeHtml(order.id)}</span>
           <span class="order-timestamp">${dateFormatted}</span>
+          ${order.confirmationDate ? `
+            <span class="order-status-date-chip confirmed" title="Order Confirmation Date" style="font-size: 0.72rem; color: #047857; font-weight: 700; display: inline-block; margin-top: 3px; background: #ECFDF5; padding: 2px 6px; border-radius: 4px; border: 1px solid #A7F3D0;">
+              ✓ Confirmed: ${escapeHtml(formatLocalReadableDate(order.confirmationDate))}
+            </span>
+          ` : ''}
+          ${order.pickupDate ? `
+            <span class="order-status-date-chip picked-up" title="Actual Customer Pickup Date" style="font-size: 0.72rem; color: #1D4ED8; font-weight: 700; display: inline-block; margin-top: 3px; background: #EFF6FF; padding: 2px 6px; border-radius: 4px; border: 1px solid #BFDBFE;">
+              📦 Picked Up: ${escapeHtml(formatLocalReadableDate(order.pickupDate))}
+            </span>
+          ` : ''}
         </div>
 
         <!-- 3. Customer -->
@@ -1002,36 +1084,29 @@ function createOrderCardRowHTML(order) {
           <span class="order-note-content">${escapeHtml(noteText)}</span>
         </div>
         <div class="order-action-buttons">
-          ${isCancelled ? `
-            <span class="order-status-chip cancelled">✕ Cancelled</span>
-          ` : isPickupReady ? `
-            <button type="button" 
-                    class="btn-card-action pickup-ready active-state" 
-                    style="cursor: default;" 
-                    title="Order is ready for pick up">
-              🛍️ Pick Up Order ✓
-            </button>
-          ` : isAccepted ? `
-            <button type="button" 
-                    class="btn-card-action pickup-ready" 
-                    onclick="markPickupReadyQuick('${escapeHtml(order.id)}')" 
-                    title="Mark order ready for collection and notify customer">
-              🛍️ Pick Up Order
-            </button>
-          ` : `
-            <button type="button" 
-                    class="btn-card-action accept" 
-                    onclick="acceptOrderQuick('${escapeHtml(order.id)}')" 
-                    title="Accept order and move to production">
-              ✓ Accept Order
-            </button>
-            <button type="button" 
-                    class="btn-card-action pickup-ready" 
-                    onclick="markPickupReadyQuick('${escapeHtml(order.id)}')" 
-                    title="Mark order ready for collection and notify customer">
-              🛍️ Pick Up Order
-            </button>
-          `}
+          <!-- 1. Accept Order -->
+          <button type="button" 
+                  class="btn-card-action accept ${isConfirmed || isReadyForPickup ? 'active-state' : ''}" 
+                  ${isCancelled ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openAcceptOrderModal('${escapeHtml(order.id)}')"`} 
+                  title="${isCancelled ? 'Order is cancelled' : isConfirmed ? 'Order accepted for ' + escapeHtml(formatLocalReadableDate(order.pickupDate)) + '. Click to adjust pickup date.' : 'Accept order and select mandatory pickup date'}">
+            ✓ Accept Order
+          </button>
+
+          <!-- 2. Pickup Order -->
+          <button type="button" 
+                  class="btn-card-action pickup-ready ${isReadyForPickup ? 'active-state' : ''}" 
+                  ${isCancelled ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openPickupOrderModal('${escapeHtml(order.id)}')"`} 
+                  title="${isCancelled ? 'Order is cancelled' : isReadyForPickup ? 'Order marked ready for pickup. Click to manage.' : 'Mark order ready for collection and notify customer'}">
+            📦 Pickup Order
+          </button>
+
+          <!-- 3. Cancel Order -->
+          <button type="button" 
+                  class="btn-card-action cancel ${isCancelled ? 'active-state' : ''}" 
+                  ${isCancelled ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openCancelOrderModal('${escapeHtml(order.id)}')"`} 
+                  title="${isCancelled ? 'Order is cancelled' : 'Cancel order and send cancellation email'}">
+            ✕ Cancel Order
+          </button>
         </div>
       </div>
     </div>
@@ -1152,6 +1227,11 @@ window.openOrderDetailsModal = (orderId) => {
   const subtotalVal = Number(order.subtotal || order.estimatedValue || 0).toLocaleString('en-IN');
   const totalVal = Number(order.total || order.estimatedValue || 0).toLocaleString('en-IN');
 
+  const ordSt = (order.status || '').toLowerCase();
+  const isConfirmed = ordSt === 'confirmed';
+  const isPickedUp = ordSt === 'picked_up' || ordSt === 'picked up';
+  const isAccepted = isConfirmed || ordSt === 'accepted' || ordSt === 'in progress';
+
   bodyEl.innerHTML = `
     <!-- Top 3 Info Cards -->
     <div class="order-detail-cards-grid">
@@ -1170,6 +1250,14 @@ window.openOrderDetailsModal = (orderId) => {
         </div>
         <div class="order-detail-card-row" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
           <span>🕒 Ordered:</span> <span>${dateFormatted}</span>
+        </div>
+        <div class="order-detail-card-row" style="font-size: 0.74rem; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border-subtle);">
+          <span>📅 Confirmation Date:</span>
+          <strong style="color: #047857;">${order.confirmationDate ? escapeHtml(formatLocalReadableDate(order.confirmationDate)) : '<span style="color: var(--text-muted); font-weight: normal;">Not confirmed yet</span>'}</strong>
+        </div>
+        <div class="order-detail-card-row" style="font-size: 0.74rem; margin-top: 4px;">
+          <span>📦 Actual Pickup Date:</span>
+          <strong style="color: #1D4ED8;">${order.pickupDate ? escapeHtml(formatLocalReadableDate(order.pickupDate)) : '<span style="color: var(--text-muted); font-weight: normal;">Not picked up yet</span>'}</strong>
         </div>
       </div>
 
@@ -1205,6 +1293,25 @@ window.openOrderDetailsModal = (orderId) => {
           <span>Total Value:</span>
           <strong style="color: var(--primary); font-size: 1.1rem;">₹${totalVal}</strong>
         </div>
+      </div>
+    </div>
+
+    <!-- Order Workflow Action Bar -->
+    <div style="background: var(--bg-hover); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px 16px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <div style="font-size: 0.84rem; color: var(--text-secondary);">
+        <strong>Status:</strong> <span style="font-weight: 700; color: var(--text-main); text-transform: uppercase;">${escapeHtml(displayStatus)}</span>
+        ${order.pickupDate ? ` &bull; <strong>Scheduled Pickup:</strong> ${escapeHtml(formatLocalReadableDate(order.pickupDate))}` : ''}
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn-sub-action primary" ${isCancelled ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openAcceptOrderModal('${escapeHtml(order.id)}')"`} style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
+          ✓ Accept Order
+        </button>
+        <button type="button" class="btn-sub-action primary" ${isCancelled ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openPickupOrderModal('${escapeHtml(order.id)}')"`} style="background: #2563EB; border-color: #2563EB; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
+          📦 Pickup Order
+        </button>
+        <button type="button" class="btn-sub-action" ${isCancelled ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openCancelOrderModal('${escapeHtml(order.id)}')"`} style="background: #DC2626; border-color: #DC2626; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
+          ✕ Cancel Order
+        </button>
       </div>
     </div>
 
@@ -1541,10 +1648,13 @@ function initOrderFiltering() {
     );
 
     let filtered = orders.filter(order => {
+      const ordSt = (order.status || '').toLowerCase();
       const matchesFilter = activeFilter === 'all' || 
         order.status === activeFilter ||
-        (activeFilter === 'In Progress' && (order.status === 'In Progress' || order.status === 'Confirmed')) ||
-        (activeFilter === 'New' && (order.status === 'New' || order.status === 'Pending'));
+        ordSt === activeFilter.toLowerCase() ||
+        (activeFilter === 'In Progress' && (ordSt === 'in progress' || ordSt === 'confirmed' || ordSt === 'accepted')) ||
+        (activeFilter === 'Completed' && (ordSt === 'completed' || ordSt === 'delivered' || ordSt === 'picked_up' || ordSt === 'picked up')) ||
+        (activeFilter === 'New' && (ordSt === 'new' || ordSt === 'pending'));
       const matchesQuery = !query || 
         order.id.toLowerCase().includes(query) ||
         (order.name && order.name.toLowerCase().includes(query)) ||
@@ -2165,41 +2275,255 @@ function initNewOrderModal() {
 }
 
 /* ==========================================================================
-   ACCEPT ORDER (QUICK ACTION WITH EMAIL NOTIFICATION)
+   ACCEPT ORDER & PICKUP TRACKING MODAL CONTROLLERS
    ========================================================================== */
-window.acceptOrderQuick = async (id) => {
+window.openAcceptOrderModal = window.openConfirmDateModal = (id) => {
   const cleanId = (id || '').replace(/^#/, '');
   const item = allInquiries.find(i => i.id === cleanId || i.id === id);
-  if (!item) return;
+  const modal = document.getElementById('confirmOrderModal');
+  const titleIdEl = document.getElementById('confirmModalOrderId');
+  const idInput = document.getElementById('confirmOrderIdInput');
+  const dateInput = document.getElementById('confirmOrderDateInput');
+  const notesInput = document.getElementById('confirmOrderNotesInput');
+  const detailsEl = document.getElementById('confirmOrderDetailsPreview');
+  const submitBtn = document.getElementById('confirmOrderSubmitBtn');
+  if (!modal) return;
 
-  try {
-    showToast('Confirming Order', `Confirming Order #${cleanId} and moving to framing production...`, 'info');
-    const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        status: 'Confirmed',
-        notes: 'Order confirmed by studio. Custom framing and crafting underway.',
-        notifyCustomer: true
-      })
-    });
+  if (titleIdEl) titleIdEl.textContent = `#${cleanId}`;
+  if (idInput) idInput.value = cleanId;
 
-    const data = await res.json();
-    if (data.success) {
-      if (item) item.status = 'Confirmed';
-      await loadInquiries();
-      await loadDashboardStats();
-      const emailNotice = data.emailResult && data.emailResult.sent ? ` Confirmation email sent to ${data.emailResult.recipient}!` : '';
-      showToast('Order Accepted! ✓', `Order #${cleanId} is now In Production.${emailNotice}`, 'success');
+  if (detailsEl) {
+    if (item) {
+      const custName = item.name || 'Customer';
+      const custPhone = item.phone || 'N/A';
+      const custEmail = item.email || item.customerEmail || 'No email provided';
+      const prodName = (item.product || 'Photo Frame').replace('[ONLINE ORDER]', '').trim();
+      const amount = Number(item.estimatedValue || item.total || 0).toLocaleString('en-IN');
+      detailsEl.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+          <strong style="font-size: 0.9rem; color: var(--text-main);">👤 ${escapeHtml(custName)}</strong>
+          <span style="font-weight: 800; color: var(--primary); font-size: 0.95rem;">₹${amount}</span>
+        </div>
+        <div style="color: var(--text-muted); font-size: 0.78rem;">
+          📞 ${escapeHtml(custPhone)} &bull; ✉️ ${escapeHtml(custEmail)}
+        </div>
+        <div style="margin-top: 5px; font-weight: 600; color: var(--text-main); font-size: 0.8rem;">
+          🖼️ ${escapeHtml(prodName)}
+        </div>
+      `;
     } else {
-      showToast('Action Failed', data.message || 'Could not confirm order.', 'danger');
+      detailsEl.innerHTML = `<span style="color: var(--text-muted);">Order #${escapeHtml(cleanId)}</span>`;
     }
-  } catch (err) {
-    console.error('Error confirming order:', err);
-    showToast('Network Error', 'Failed to connect to server.', 'danger');
   }
+
+  // Pre-populate scheduled pickup date: default to previously saved pickup date, or tomorrow
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  let defaultDate = tomorrowStr;
+  if (item && item.pickupDate && /^\d{4}-\d{2}-\d{2}$/.test(item.pickupDate)) {
+    defaultDate = item.pickupDate;
+  } else if (item && item.confirmationDate && /^\d{4}-\d{2}-\d{2}$/.test(item.confirmationDate)) {
+    defaultDate = item.confirmationDate;
+  }
+  if (dateInput) dateInput.value = defaultDate;
+  if (notesInput) notesInput.value = (item && item.notes && !item.notes.includes('None')) ? item.notes : '';
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Confirm';
+  }
+
+  modal.classList.add('open');
+};
+
+window.closeConfirmOrderModal = () => {
+  const modal = document.getElementById('confirmOrderModal');
+  if (modal) modal.classList.remove('open');
+};
+
+window.openPickupOrderModal = window.openPickupDateModal = (id) => {
+  const cleanId = (id || '').replace(/^#/, '');
+  const item = allInquiries.find(i => i.id === cleanId || i.id === id);
+  const modal = document.getElementById('pickupOrderModal');
+  const titleIdEl = document.getElementById('pickupModalOrderId');
+  const idInput = document.getElementById('pickupOrderIdInput');
+  const dateInput = document.getElementById('pickupOrderDateInput');
+  const notesInput = document.getElementById('pickupOrderNotesInput');
+  const detailsEl = document.getElementById('pickupOrderDetailsPreview');
+  const submitBtn = document.getElementById('pickupOrderSubmitBtn');
+  if (!modal) return;
+
+  if (titleIdEl) titleIdEl.textContent = `#${cleanId}`;
+  if (idInput) idInput.value = cleanId;
+
+  if (detailsEl) {
+    if (item) {
+      const custName = item.name || 'Customer';
+      const custPhone = item.phone || 'N/A';
+      const custEmail = item.email || item.customerEmail || 'No email provided';
+      const prodName = (item.product || 'Photo Frame').replace('[ONLINE ORDER]', '').trim();
+      const amount = Number(item.estimatedValue || item.total || 0).toLocaleString('en-IN');
+      const savedDate = item.pickupDate ? formatLocalReadableDate(item.pickupDate) : 'Not specified';
+      detailsEl.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+          <strong style="font-size: 0.9rem; color: var(--text-main);">👤 ${escapeHtml(custName)}</strong>
+          <span style="font-weight: 800; color: var(--primary); font-size: 0.95rem;">₹${amount}</span>
+        </div>
+        <div style="color: var(--text-muted); font-size: 0.78rem;">
+          📞 ${escapeHtml(custPhone)} &bull; ✉️ ${escapeHtml(custEmail)}
+        </div>
+        <div style="margin-top: 5px; font-weight: 600; color: var(--text-main); font-size: 0.8rem;">
+          🖼️ ${escapeHtml(prodName)}
+        </div>
+        <div style="margin-top: 6px; padding: 4px 8px; background: rgba(37, 99, 235, 0.08); border-radius: 4px; font-size: 0.76rem; color: #1E40AF; font-weight: 600;">
+          📅 Scheduled Pickup Date: ${escapeHtml(savedDate)}
+        </div>
+      `;
+    } else {
+      detailsEl.innerHTML = `<span style="color: var(--text-muted);">Order #${escapeHtml(cleanId)}</span>`;
+    }
+  }
+
+  // Pre-populate scheduled pickup date
+  const todayStr = new Date().toISOString().split('T')[0];
+  let defaultDate = todayStr;
+  if (item && item.pickupDate && /^\d{4}-\d{2}-\d{2}$/.test(item.pickupDate)) {
+    defaultDate = item.pickupDate;
+  } else if (item && item.confirmationDate && /^\d{4}-\d{2}-\d{2}$/.test(item.confirmationDate)) {
+    defaultDate = item.confirmationDate;
+  }
+  if (dateInput) dateInput.value = defaultDate;
+  if (notesInput) notesInput.value = '';
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = '📦 Pickup Order (Ready for Collection)';
+  }
+
+  modal.classList.add('open');
+};
+
+window.closePickupOrderModal = () => {
+  const modal = document.getElementById('pickupOrderModal');
+  if (modal) modal.classList.remove('open');
+};
+
+function initConfirmAndPickupModals() {
+  const confirmForm = document.getElementById('confirmOrderForm');
+  if (confirmForm) {
+    confirmForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = (document.getElementById('confirmOrderIdInput').value || '').trim();
+      const pickupDate = document.getElementById('confirmOrderDateInput').value;
+      const notes = (document.getElementById('confirmOrderNotesInput').value || '').trim();
+      const submitBtn = document.getElementById('confirmOrderSubmitBtn');
+
+      if (!pickupDate) {
+        showToast('Date Required', 'Please select the customer pickup date.', 'warning');
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+      }
+
+      try {
+        const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(id)}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'confirmed',
+            pickupDate,
+            confirmationDate: pickupDate,
+            notes: notes || 'Order accepted by studio. Custom framing and crafting underway.',
+            notifyCustomer: true
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          closeConfirmOrderModal();
+          await loadInquiries();
+          await loadDashboardStats();
+          const emailNotice = data.emailResult && data.emailResult.sent ? ` Confirmation email sent to customer!` : '';
+          showToast('Order Confirmed! ✓', `Order #${id} confirmed. Customer pickup date: ${formatLocalReadableDate(pickupDate)}.${emailNotice}`, 'success');
+        } else {
+          showToast('Save Failed', data.message || 'Could not save order status and pickup date. Please try again.', 'danger');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Confirm';
+          }
+        }
+      } catch (err) {
+        console.error('Error confirming order:', err);
+        showToast('Save Failed', 'Failed to reach server: ' + err.message + '. Please try again.', 'danger');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Confirm';
+        }
+      }
+    });
+  }
+
+  const pickupForm = document.getElementById('pickupOrderForm');
+  if (pickupForm) {
+    pickupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = (document.getElementById('pickupOrderIdInput').value || '').trim();
+      const pickupDate = document.getElementById('pickupOrderDateInput').value;
+      const notes = (document.getElementById('pickupOrderNotesInput').value || '').trim();
+      const submitBtn = document.getElementById('pickupOrderSubmitBtn');
+
+      if (!pickupDate) {
+        showToast('Date Required', 'Please select or confirm the scheduled pickup date.', 'warning');
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Updating & Notifying Customer...';
+      }
+
+      try {
+        const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(id)}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'ready_for_pickup',
+            pickupDate,
+            notes: notes || 'Your order is ready for pickup! Please visit us to collect your custom frame.',
+            notifyCustomer: true
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          closePickupOrderModal();
+          await loadInquiries();
+          await loadDashboardStats();
+          const emailNotice = data.emailResult && data.emailResult.sent ? ` Ready for pickup email sent to customer!` : '';
+          showToast('Ready for Pickup! 📦', `Order #${id} is now ready for pickup.${emailNotice}`, 'success');
+        } else {
+          showToast('Update Failed', data.message || 'Could not update status in database.', 'danger');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '📦 Pickup Order (Ready for Collection)';
+          }
+        }
+      } catch (err) {
+        console.error('Error marking order ready for pickup:', err);
+        showToast('Network Error', 'Failed to reach server: ' + err.message, 'danger');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '📦 Pickup Order (Ready for Collection)';
+        }
+      }
+    });
+  }
+}
+
+window.acceptOrderQuick = (id) => {
+  openConfirmDateModal(id);
 };
 
 /* ==========================================================================
@@ -2297,11 +2621,31 @@ window.openEditOrderModal = (id) => {
   const notesText = document.getElementById('editOrderNotes');
   const notifyCheck = document.getElementById('editOrderNotifyCheckbox');
 
+  const confirmDateInput = document.getElementById('editOrderConfirmDate');
+  const pickupDateInput = document.getElementById('editOrderPickupDate');
+
   if (!modal) return;
 
   idInput.value = item.id;
   if (orderNumSpan) orderNumSpan.textContent = `#${item.id}`;
   if (statusSelect) statusSelect.value = item.status || 'In Progress';
+
+  if (confirmDateInput) {
+    let cVal = item.confirmationDate || '';
+    if (cVal && !/^\d{4}-\d{2}-\d{2}$/.test(cVal)) {
+      const p = new Date(cVal);
+      if (!isNaN(p)) cVal = p.toISOString().split('T')[0];
+    }
+    confirmDateInput.value = cVal;
+  }
+  if (pickupDateInput) {
+    let pVal = item.pickupDate || '';
+    if (pVal && !/^\d{4}-\d{2}-\d{2}$/.test(pVal)) {
+      const p = new Date(pVal);
+      if (!isNaN(p)) pVal = p.toISOString().split('T')[0];
+    }
+    pickupDateInput.value = pVal;
+  }
 
   const isOnlinePayment = (item.specs && item.specs.toLowerCase().includes('instant upi'));
   if (payRefInput) {
@@ -2345,6 +2689,8 @@ function initEditOrderModal() {
     const email = document.getElementById('editOrderCustEmail').value.trim();
     const address = document.getElementById('editOrderAddress').value.trim();
     const notes = document.getElementById('editOrderNotes').value.trim();
+    const confirmationDate = document.getElementById('editOrderConfirmDate') ? document.getElementById('editOrderConfirmDate').value : '';
+    const pickupDate = document.getElementById('editOrderPickupDate') ? document.getElementById('editOrderPickupDate').value : '';
     const notifyCustomer = document.getElementById('editOrderNotifyCheckbox').checked;
 
     const saveBtn = document.getElementById('saveEditOrderBtn');
@@ -2367,6 +2713,8 @@ function initEditOrderModal() {
           customerEmail: email,
           address,
           notes,
+          confirmationDate,
+          pickupDate,
           notifyCustomer
         })
       });
@@ -2479,7 +2827,7 @@ function initCancelOrderModal() {
     } finally {
       if (confirmBtn) {
         confirmBtn.disabled = false;
-        confirmBtn.textContent = 'Confirm Cancellation';
+        confirmBtn.textContent = '✕ Cancel Order';
       }
     }
   });
@@ -3112,7 +3460,7 @@ function renderAdminProducts(products) {
   }).join('');
 }
 
-function compressAdminImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.85) {
+function compressAdminImage(file, maxWidth = 1000, maxHeight = 1000, quality = 0.80) {
   return new Promise((resolve) => {
     if (!file || !file.type.startsWith('image/')) {
       return resolve(null);
@@ -3564,6 +3912,10 @@ function initProductModals() {
   if (addForm) {
     addForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      const submitBtn = document.getElementById('btnSubmitAddProduct') || addForm.querySelector('button[type="submit"]');
+      if (submitBtn && submitBtn.disabled) return; // Prevent duplicate concurrent submissions
+
       const name = document.getElementById('newProductName') ? document.getElementById('newProductName').value.trim() : '';
       const category = document.getElementById('newProductCategory') ? document.getElementById('newProductCategory').value : 'frames';
       const mainPriceVal = document.getElementById('newProductPrice') ? document.getElementById('newProductPrice').value.trim() : '';
@@ -3607,6 +3959,7 @@ function initProductModals() {
 
       const resolvedSizes = [{ name: selectedSize, price: priceNum }];
       const resolvedColors = [{ name: selectedColorName, color: selectedColorHex }];
+      // Do not duplicate base64 image in finishes payload; server points to resolved image
       const resolvedFinishes = [{ id: 'finish-1', name: selectedColorName, color: selectedColorHex, image: '', priceDelta: 0 }];
       const resolvedVariants = [ selectedVariant ];
 
@@ -3622,9 +3975,7 @@ function initProductModals() {
         else productPhotos.push('assets/images/custom_canvas.jpg');
       }
       const finalImage = productPhotos[0];
-      resolvedFinishes[0].image = finalImage;
 
-      const submitBtn = document.getElementById('btnSubmitAddProduct') || addForm.querySelector('button[type="submit"]');
       const origBtnContent = submitBtn ? submitBtn.innerHTML : '<span>Add Product &amp; Stock</span>';
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -3639,13 +3990,19 @@ function initProductModals() {
             <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
             <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
           </svg>
-          <span>Adding Product...</span>
+          <span>Saving to Database...</span>
         `;
       }
+
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => {
+        abortController.abort();
+      }, 15000);
 
       try {
         const res = await apiFetch('/api/admin/products', {
           method: 'POST',
+          signal: abortController.signal,
           headers: {
             'Content-Type': 'application/json'
           },
@@ -3672,21 +4029,66 @@ function initProductModals() {
           })
         });
 
-        const data = await res.json();
-        if (res.ok && data && data.success) {
+        clearTimeout(timeoutId);
+
+        let data = null;
+        const responseText = await res.text();
+        try {
+          data = JSON.parse(responseText);
+        } catch (_) {
+          data = { success: false, message: responseText || `Server returned status ${res.status}` };
+        }
+
+        if (res.ok && data && data.success && data.product) {
+          const savedProduct = data.product;
+
+          // 1. Immediately close modal - no waiting
           window.closeAddProductModal();
-          await loadProducts();
+
+          // 2. Immediately update in-memory catalog
+          const existingIdx = allProducts.findIndex(p => p.id === savedProduct.id);
+          if (existingIdx !== -1) {
+            allProducts[existingIdx] = savedProduct;
+          } else {
+            allProducts.unshift(savedProduct);
+          }
+
+          // 3. Immediately refresh counters and grid
+          updateAdminCategoryCounters(allProducts);
           if (typeof window.selectAdminCategory === 'function') {
             window.selectAdminCategory(category);
+          } else {
+            window.filterAdminProducts();
           }
-          showToast('Product Added Successfully', `"${name}" has been added to catalog and is now live!`, 'success');
+
+          // 4. Show success message immediately
+          showToast('Product Added Successfully', `"${name}" has been added and saved permanently to Supabase!`, 'success');
+
+          // 5. Clean up modal form & photo store
+          addForm.reset();
+          uploadedProductImages = [];
+          uploadedProductImageBase64 = null;
+          if (typeof renderAdminPhotosGrid === 'function') renderAdminPhotosGrid();
+
+          // 6. Silent background refresh to guarantee complete state consistency
+          setTimeout(() => {
+            loadProducts().catch(() => {});
+          }, 800);
         } else {
-          showToast('Add Failed', (data && data.message) || `Failed to add product (${res.status}).`, 'danger');
+          const errorMsg = (data && data.message) || `Failed to add product (${res.status}).`;
+          console.error('Server returned failure for add product:', errorMsg);
+          showToast('Add Failed', errorMsg, 'danger');
         }
       } catch (err) {
+        clearTimeout(timeoutId);
         console.error('Error adding product:', err);
-        showToast('Error', 'Network error adding product: ' + err.message, 'danger');
+        if (err.name === 'AbortError') {
+          showToast('Request Timed Out', 'The operation timed out after 15 seconds. Please check your Supabase connection and server status.', 'danger');
+        } else {
+          showToast('Error', 'Network error adding product: ' + err.message, 'danger');
+        }
       } finally {
+        clearTimeout(timeoutId);
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.innerHTML = origBtnContent;
@@ -3980,19 +4382,25 @@ function initProductModals() {
       const priceNum = Number(price);
       const resolvedSizes = [{ name: selectedSize, price: priceNum }];
       const resolvedColors = [{ name: selectedColorName, color: selectedColorHex }];
-      const resolvedFinishes = [{ id: 'finish-1', name: selectedColorName, color: selectedColorHex, image: finalImage, priceDelta: 0 }];
+      const resolvedFinishes = [{ id: 'finish-1', name: selectedColorName, color: selectedColorHex, image: '', priceDelta: 0 }];
       const resolvedVariants = [ selectedVariant ];
 
       const saveBtn = document.getElementById('btnSaveEditProduct');
       const originalBtnHtml = saveBtn ? saveBtn.innerHTML : 'Save Changes';
       if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.innerHTML = '<span>Saving...</span>';
+        saveBtn.innerHTML = '<span>Saving to Database...</span>';
       }
+
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => {
+        abortController.abort();
+      }, 15000);
 
       try {
         const res = await apiFetch(`/api/admin/products/${encodeURIComponent(id)}`, {
           method: 'PUT',
+          signal: abortController.signal,
           headers: {
             'Content-Type': 'application/json'
           },
@@ -4019,18 +4427,41 @@ function initProductModals() {
           })
         });
 
-        const data = await res.json();
-        if (data.success) {
+        clearTimeout(timeoutId);
+
+        let data = null;
+        const responseText = await res.text();
+        try {
+          data = JSON.parse(responseText);
+        } catch (_) {
+          data = { success: false, message: responseText || `Server returned ${res.status}` };
+        }
+
+        if (res.ok && data && data.success && data.product) {
+          const updatedProduct = data.product;
           closeEditProductModal();
-          await loadProducts();
-          showToast('Product Updated', `"${name}" updated successfully. Changes are now live on website!`, 'success');
+
+          const pIdx = allProducts.findIndex(p => p.id === updatedProduct.id);
+          if (pIdx !== -1) {
+            allProducts[pIdx] = updatedProduct;
+          }
+          updateAdminCategoryCounters(allProducts);
+          window.filterAdminProducts();
+          showToast('Product Updated', `"${name}" updated successfully. Changes are live on website!`, 'success');
+          setTimeout(() => { loadProducts().catch(() => {}); }, 800);
         } else {
-          showToast('Update Failed', data.message || 'Update failed.', 'danger');
+          showToast('Update Failed', (data && data.message) || 'Update failed.', 'danger');
         }
       } catch (err) {
+        clearTimeout(timeoutId);
         console.error('Error updating product:', err);
-        showToast('Error', 'Network error updating product.', 'danger');
+        if (err.name === 'AbortError') {
+          showToast('Request Timed Out', 'The update timed out after 15 seconds. Please check your Supabase connection.', 'danger');
+        } else {
+          showToast('Error', 'Network error updating product: ' + err.message, 'danger');
+        }
       } finally {
+        clearTimeout(timeoutId);
         if (saveBtn) {
           saveBtn.disabled = false;
           saveBtn.innerHTML = originalBtnHtml;

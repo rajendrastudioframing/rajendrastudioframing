@@ -632,7 +632,7 @@
 
     .order-action-buttons {
       display: grid !important;
-      grid-template-columns: repeat(2, 1fr) !important;
+      grid-template-columns: repeat(auto-fit, minmax(95px, 1fr)) !important;
       gap: 6px !important;
       width: 100% !important;
       margin: 0 !important;
@@ -2066,7 +2066,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/admin.css?v=no_calc_v6" />
+  <link rel="stylesheet" href="css/admin.css?v=pickup_date_20261027_v2" />
   <style id="rf-active-badge-guard">
     /* Remove sidebar notification number badges completely */
     .sidebar-badge {
@@ -4123,8 +4123,10 @@
               <label class="setting-label">Order Fulfillment Status *</label>
               <select class="setting-select" id="editOrderStatus" required>
                 <option value="New">New Order</option>
+                <option value="confirmed">Confirmed (Order Confirmed)</option>
                 <option value="In Progress">In Progress (Accepted &amp; Framing)</option>
                 <option value="Shipped">Shipped (Dispatched / Ready for Pickup)</option>
+                <option value="picked_up">Picked Up (Customer Collected)</option>
                 <option value="Completed">Completed (Delivered)</option>
                 <option value="Cancelled">Cancelled</option>
               </select>
@@ -4132,6 +4134,18 @@
             <div class="setting-row">
               <label class="setting-label">Payment Status Reference</label>
               <input type="text" class="setting-input" id="editOrderPaymentRef" readonly style="background: var(--bg-hover); opacity: 0.85;" />
+            </div>
+          </div>
+
+          <!-- Order Confirmation & Actual Pickup Dates -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="setting-row">
+              <label class="setting-label">Order Confirmation Date</label>
+              <input type="date" class="setting-input" id="editOrderConfirmDate" />
+            </div>
+            <div class="setting-row">
+              <label class="setting-label">Actual Customer Pickup Date</label>
+              <input type="date" class="setting-input" id="editOrderPickupDate" />
             </div>
           </div>
 
@@ -4181,7 +4195,88 @@
   </div>
 
   <!-- ==========================================================================
-       MODAL: CANCEL ORDER WITH REASON & NOTIFICATION
+       MODAL: ACCEPT & CONFIRM ORDER (SELECT CONFIRMATION DATE & NOTIFY CUSTOMER)
+       ========================================================================== -->
+  <!-- ==========================================================================
+       MODAL 1: ACCEPT ORDER (MANDATORY PICKUP DATE PICKER & NOTIFY CUSTOMER)
+       ========================================================================== -->
+  <div class="admin-modal-overlay" id="confirmOrderModal">
+    <div class="admin-modal" style="max-width: 520px; width: 95%;">
+      <div class="admin-modal-header">
+        <div>
+          <h4 class="admin-modal-title">Accept Order &bull; <span id="confirmModalOrderId" style="color: var(--primary);">#ORD</span></h4>
+          <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">Review details and select the customer pickup date.</div>
+        </div>
+        <button type="button" class="admin-modal-close" onclick="closeConfirmOrderModal()">&times;</button>
+      </div>
+      <form id="confirmOrderForm">
+        <input type="hidden" id="confirmOrderIdInput" />
+        <div class="admin-modal-body">
+          <div id="confirmOrderDetailsPreview" style="margin-bottom: 14px; padding: 12px 14px; background: var(--bg-hover); border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 0.82rem; line-height: 1.5;"></div>
+          <div class="setting-row">
+            <label class="setting-label">Customer Pickup Date *</label>
+            <input type="date" class="setting-input" id="confirmOrderDateInput" required style="font-weight: 600; font-size: 0.95rem; padding: 10px;" />
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">Select the date on which the customer should visit the shop to collect the order.</div>
+          </div>
+          <div class="setting-row">
+            <label class="setting-label">Studio Notes / Instructions (Optional)</label>
+            <textarea class="setting-input" id="confirmOrderNotesInput" rows="2" placeholder="e.g. Frame verified. Framing production underway."></textarea>
+          </div>
+          <div style="background: #ECFDF5; border: 1px solid #A7F3D0; padding: 12px 14px; border-radius: 8px; font-size: 0.8rem; color: #065F46; line-height: 1.5; margin-top: 8px;">
+            ✉️ <strong>Accept Order:</strong> Once confirmed, the order status updates to <code>confirmed</code>, the pickup date is saved in Supabase, and a confirmation email is sent to the customer.
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-sub-action outline" onclick="closeConfirmOrderModal()">Cancel</button>
+          <button type="submit" class="btn-sub-action primary" id="confirmOrderSubmitBtn" style="background: #059669; border-color: #059669; color: #fff;">
+            Confirm
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: PICKUP ORDER (MARK READY FOR COLLECTION & NOTIFY CUSTOMER)
+       ========================================================================== -->
+  <div class="admin-modal-overlay" id="pickupOrderModal">
+    <div class="admin-modal" style="max-width: 520px; width: 95%;">
+      <div class="admin-modal-header">
+        <div>
+          <h4 class="admin-modal-title">Pickup Order &bull; <span id="pickupModalOrderId" style="color: var(--primary);">#ORD</span></h4>
+          <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">Notify customer that order is ready for collection.</div>
+        </div>
+        <button type="button" class="admin-modal-close" onclick="closePickupOrderModal()">&times;</button>
+      </div>
+      <form id="pickupOrderForm">
+        <input type="hidden" id="pickupOrderIdInput" />
+        <div class="admin-modal-body">
+          <div id="pickupOrderDetailsPreview" style="margin-bottom: 14px; padding: 12px 14px; background: var(--bg-hover); border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 0.82rem; line-height: 1.5;"></div>
+          <div class="setting-row">
+            <label class="setting-label">Scheduled Pickup Date *</label>
+            <input type="date" class="setting-input" id="pickupOrderDateInput" required style="font-weight: 600; font-size: 0.95rem; padding: 10px;" />
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">Scheduled pickup date confirmed during order acceptance.</div>
+          </div>
+          <div class="setting-row">
+            <label class="setting-label">Collection / Studio Notes (Optional)</label>
+            <textarea class="setting-input" id="pickupOrderNotesInput" rows="2" placeholder="e.g. Frame packaged and ready at reception desk for collection."></textarea>
+          </div>
+          <div style="background: #EFF6FF; border: 1px solid #BFDBFE; padding: 12px 14px; border-radius: 8px; font-size: 0.8rem; color: #1E40AF; line-height: 1.5; margin-top: 8px;">
+            📦 <strong>Ready for Collection:</strong> This updates the status to <code>ready_for_pickup</code> and sends an email to the customer letting them know their order is ready to collect.
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-sub-action outline" onclick="closePickupOrderModal()">Cancel</button>
+          <button type="submit" class="btn-sub-action primary" id="pickupOrderSubmitBtn">
+            📦 Pickup Order (Ready for Collection)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: CANCEL ORDER WITH CONFIRMATION & NOTIFICATION
        ========================================================================== -->
   <div class="admin-modal-overlay" id="cancelOrderModal">
     <div class="admin-modal" style="max-width: 520px;">
@@ -4189,7 +4284,7 @@
         <div style="display: flex; align-items: center; gap: 10px;">
           <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--badge-red-bg); color: var(--badge-red-text); display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</div>
           <div>
-            <h4 class="admin-modal-title" style="color: var(--badge-red-text);">Cancel Customer Order</h4>
+            <h4 class="admin-modal-title" style="color: var(--badge-red-text);">Cancel Order</h4>
             <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;" id="cancelModalOrderSubtitle">Order #RF-ORD-000</div>
           </div>
         </div>
@@ -4199,7 +4294,7 @@
         <input type="hidden" id="cancelOrderId" />
         <div class="admin-modal-body">
           <p style="font-size: 0.86rem; color: var(--text-secondary); margin: 0 0 16px; line-height: 1.45;">
-            Are you sure you want to cancel this order? This will mark the order as Cancelled and can notify the customer with refund and assistance details.
+            Are you sure you want to cancel this order? This will update the order status to <strong>cancelled</strong> in the database and send a cancellation email to the customer.
           </p>
 
           <div class="setting-row">
@@ -4215,14 +4310,14 @@
           </div>
 
           <div class="setting-row">
-            <label class="setting-label">Studio Notes / Explanation (Included in customer email)</label>
-            <textarea class="setting-input" id="cancelOrderRemarks" rows="3" placeholder="Additional explanation or refund reference..."></textarea>
+            <label class="setting-label">Studio Notes / Explanation (Optional)</label>
+            <textarea class="setting-input" id="cancelOrderRemarks" rows="3" placeholder="Additional explanation or notes..."></textarea>
           </div>
 
           <div style="background: var(--badge-red-bg); border: 1px solid var(--badge-red-border); padding: 12px 14px; border-radius: 8px; display: flex; align-items: center; gap: 10px; margin-top: 10px;">
             <input type="checkbox" id="cancelNotifyCheckbox" checked style="width: 18px; height: 18px; accent-color: #B42318; cursor: pointer;" />
             <label for="cancelNotifyCheckbox" style="font-size: 0.82rem; font-weight: 700; color: var(--badge-red-text); cursor: pointer;">
-              Send official cancellation email to customer with refund info
+              Send cancellation email to customer
             </label>
           </div>
         </div>
@@ -4231,7 +4326,7 @@
             Keep Order Active
           </button>
           <button type="submit" class="btn-sub-action" id="confirmCancelBtn" style="background: #B42318; color: #FFFFFF; border: 1px solid #B42318;">
-            Confirm Cancellation
+            ✕ Cancel Order
           </button>
         </div>
       </form>
@@ -4243,7 +4338,7 @@
 
   <!-- Master Categories Data -->
   <script src="js/categories-data.js?v=20261026"></script>
-  <script src="js/admin.js?v=no_cust_status_v8"></script>
+  <script src="js/admin.js?v=pickup_date_20261027_v2"></script>
   <script>
     // Direct click safeguard: Instantly hide badge when clicking any sidebar link
     document.addEventListener('DOMContentLoaded', function () {
