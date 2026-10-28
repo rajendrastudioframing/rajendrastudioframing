@@ -12,8 +12,10 @@ node_modules/
 # Runtime Uploads & Logs
 uploads/*
 !uploads/.gitkeep
+!uploads/README.md
 data/customer-sessions.json
 data/*.backup.json
+data/backups/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
