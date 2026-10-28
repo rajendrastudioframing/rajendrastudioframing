@@ -794,7 +794,11 @@ function setupOptionInteractions() {
   const buyNowBtn = document.getElementById('detailBuyNowBtn');
   if (buyNowBtn) {
     buyNowBtn.addEventListener('click', () => {
-      if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
+      const loggedIn = typeof isCustomerLoggedIn === 'function' 
+        ? isCustomerLoggedIn() 
+        : (window.CustomerAuth ? window.CustomerAuth.isCustomerLoggedIn() : !!localStorage.getItem('rf_customer_token'));
+
+      if (!loggedIn) {
         if (typeof openCustomerAuthModal === 'function') {
           openCustomerAuthModal(() => {
             if (buyNowBtn) buyNowBtn.click();

@@ -16,8 +16,11 @@ const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
+                    process.env.SUPABASE_KEY || 
+                    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 
+                    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 function readJsonFile(filename, defaultValue = []) {
   const filePath = path.join(DATA_DIR, filename);

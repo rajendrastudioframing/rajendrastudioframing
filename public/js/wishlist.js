@@ -44,8 +44,12 @@ function toggleWishlist(productId, event) {
 
   if (!productId) return;
 
-  // Customer Login Requirement: Must be logged in to save to wishlist
-  if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) {
+  // Mandatory Sign-In Requirement: Customer must be logged in to save to wishlist
+  const loggedIn = typeof isCustomerLoggedIn === 'function' 
+    ? isCustomerLoggedIn() 
+    : (window.CustomerAuth ? window.CustomerAuth.isCustomerLoggedIn() : !!localStorage.getItem('rf_customer_token'));
+
+  if (!loggedIn) {
     if (typeof openCustomerAuthModal === 'function') {
       openCustomerAuthModal(() => {
         toggleWishlist(productId, null);

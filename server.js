@@ -3887,15 +3887,42 @@ app.delete('/api/admin/categories/:id', requireAuth, async (req, res) => {
 /**
  * Database & Supabase Status Diagnostic (GET)
  */
-app.get('/api/db-status', (req, res) => {
+app.get('/api/db-status', async (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || 
+              process.env.SUPABASE_KEY || 
+              process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+              '';
+
+  let ping = null;
+  if (db.supabase) {
+    try {
+      const pingQuery = db.supabase.from('categories').select('id').limit(1);
+      const pingRes = await db.withTimeout(pingQuery, 3500, 'Supabase ping');
+      if (pingRes && !pingRes.error) {
+        ping = { ok: true, message: 'Database online & reachable' };
+      } else {
+        ping = { ok: false, error: (pingRes && pingRes.error) ? pingRes.error.message : 'Unknown error' };
+      }
+    } catch (e) {
+      ping = { 
+        ok: false, 
+        error: e.message, 
+        isPausedLikely: e.message.includes('timed out') || e.message.includes('fetch failed') 
+      };
+    }
+  }
+
   res.json({
     success: true,
     isCloud: db.isCloud(),
-    supabaseConfigured: Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY)),
-    hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
-    hasSupabaseKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY),
-    supabaseHost: process.env.SUPABASE_URL ? (new URL(process.env.SUPABASE_URL)).host : null
+    supabaseConfigured: Boolean(url && key),
+    hasSupabaseUrl: Boolean(url),
+    hasSupabaseKey: Boolean(key),
+    supabaseHost: url ? (() => { try { return new URL(url).host; } catch (_) { return null; } })() : null,
+    ping
   });
 });
 

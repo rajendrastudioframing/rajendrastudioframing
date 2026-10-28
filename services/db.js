@@ -201,8 +201,13 @@ if (typeof module !== 'undefined' && module.exports) {
 }
 
 // Initialize Supabase Client if env variables are present
-const rawSupabaseUrl = process.env.SUPABASE_URL || '';
-const rawSupabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || '';
+// Supports both standard names and Vercel Next.js integration names
+const rawSupabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const rawSupabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
+                       process.env.SUPABASE_KEY || 
+                       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 
+                       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+                       '';
 const supabaseUrl = rawSupabaseUrl.trim().replace(/^["']|["']$/g, '');
 const supabaseKey = rawSupabaseKey.trim().replace(/^["']|["']$/g, '');
 let supabase = null;
@@ -305,7 +310,8 @@ module.exports = {
     const localProducts = readJson(PRODUCTS_FILE, []);
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+        const queryPromise = supabase.from('products').select('*').order('created_at', { ascending: false });
+        const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getProducts');
         if (!error && data && data.length > 0) {
           return data.map(remote => ({
             id: remote.id,
@@ -364,7 +370,7 @@ module.exports = {
             sizes: p.sizes || [],
             finishes: p.finishes || []
           }));
-          await supabase.from('products').upsert(seedRows, { onConflict: 'id' });
+          await withTimeout(supabase.from('products').upsert(seedRows, { onConflict: 'id' }), 5000, 'Supabase seedProducts');
           return localProducts;
         }
       } catch (err) {
@@ -477,7 +483,8 @@ module.exports = {
   async deleteProduct(id) {
     if (supabase) {
       try {
-        const { error } = await supabase.from('products').delete().eq('id', id);
+        const delPromise = supabase.from('products').delete().eq('id', id);
+        const { error } = await withTimeout(delPromise, 5000, 'Supabase deleteProduct');
         if (error) {
           console.error('❌ [DATABASE] Supabase deleteProduct error:', error.message);
           throw new Error('Supabase database error: ' + error.message);
@@ -510,7 +517,8 @@ module.exports = {
 
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('categories').select('*').order('created_at', { ascending: true });
+        const queryPromise = supabase.from('categories').select('*').order('created_at', { ascending: true });
+        const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getCategories');
         if (!error && data && data.length > 0) {
           const mapped = data.map(cat => ({
             id: cat.id,
@@ -540,7 +548,7 @@ module.exports = {
             is_default: c.isDefault,
             created_at: new Date().toISOString()
           }));
-          await supabase.from('categories').upsert(seedCategories, { onConflict: 'id' });
+          await withTimeout(supabase.from('categories').upsert(seedCategories, { onConflict: 'id' }), 5000, 'Supabase seedCategories');
           return defaultCategories;
         }
       } catch (err) {
@@ -581,7 +589,7 @@ module.exports = {
 
     if (supabase) {
       try {
-        const { error } = await supabase.from('categories').upsert({
+        const upsertPromise = supabase.from('categories').upsert({
           id: newCategory.id,
           name: newCategory.name,
           icon: newCategory.icon,
@@ -592,6 +600,7 @@ module.exports = {
           is_default: newCategory.isDefault,
           created_at: newCategory.createdAt
         }, { onConflict: 'id' });
+        const { error } = await withTimeout(upsertPromise, 5000, 'Supabase saveCategory');
         if (error) {
           console.error('❌ [DATABASE] Supabase saveCategory error:', error.message);
           throw new Error('Supabase database error: ' + error.message);
@@ -618,7 +627,8 @@ module.exports = {
     const cleanId = (id || '').trim().toLowerCase();
     if (supabase) {
       try {
-        const { error } = await supabase.from('categories').delete().eq('id', cleanId);
+        const delPromise = supabase.from('categories').delete().eq('id', cleanId);
+        const { error } = await withTimeout(delPromise, 5000, 'Supabase deleteCategory');
         if (error) {
           console.error('❌ [DATABASE] Supabase deleteCategory error:', error.message);
           throw new Error('Supabase database error: ' + error.message);
