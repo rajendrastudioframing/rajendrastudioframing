@@ -506,9 +506,7 @@ function reorderItems(orderId) {
   }
 
   try {
-    let cart = [];
-    const saved = localStorage.getItem('rf_cart');
-    if (saved) cart = JSON.parse(saved);
+    let cart = typeof getCart === 'function' ? getCart() : [];
 
     order.items.forEach(item => {
       const cartItem = {
@@ -523,7 +521,11 @@ function reorderItems(orderId) {
       cart.push(cartItem);
     });
 
-    localStorage.setItem('rf_cart', JSON.stringify(cart));
+    if (typeof saveCart === 'function') {
+      saveCart(cart);
+    } else {
+      localStorage.setItem('rf_cart', JSON.stringify(cart));
+    }
 
     // Update cart badges
     if (typeof updateCartBadge === 'function') updateCartBadge();

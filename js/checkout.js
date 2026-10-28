@@ -538,6 +538,7 @@ window.renderCheckoutOrderSummary = renderCheckoutOrderSummary;
 
 window.addEventListener('customerAuthStateChanged', () => {
   updateCheckoutAuthUI();
+  renderCheckoutOrderSummary();
 });
 
 window.addEventListener('cartUpdated', () => {
@@ -547,8 +548,9 @@ window.addEventListener('cartUpdated', () => {
 window.addEventListener('storage', (e) => {
   if (e.key === 'rf_customer_token' || e.key === 'rf_customer_user') {
     updateCheckoutAuthUI();
+    renderCheckoutOrderSummary();
   }
-  if (e.key === 'rf_cart') {
+  if (e.key && e.key.startsWith('rf_cart')) {
     renderCheckoutOrderSummary();
   }
 });

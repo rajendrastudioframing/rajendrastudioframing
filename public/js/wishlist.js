@@ -6,9 +6,34 @@
 
 const WISHLIST_STORAGE_KEY = 'rajesh_framing_wishlist';
 
-function getWishlist() {
+function getActiveCustomerEmail() {
   try {
-    const raw = localStorage.getItem(WISHLIST_STORAGE_KEY);
+    if (typeof getCustomerUser === 'function') {
+      const u = getCustomerUser();
+      if (u && u.email) return u.email.toLowerCase().trim();
+    }
+    const raw = localStorage.getItem('rf_customer_user');
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u && u.email) return u.email.toLowerCase().trim();
+    }
+  } catch (_) {}
+  return null;
+}
+
+function getWishlistStorageKey() {
+  const email = getActiveCustomerEmail();
+  return email ? `rf_wishlist_${email}` : 'rf_wishlist_guest';
+}
+
+function getWishlist() {
+  const email = getActiveCustomerEmail();
+  // Strictly isolate per customer: If not logged in, return empty wishlist so no data leaks!
+  if (!email) {
+    return [];
+  }
+  try {
+    const raw = localStorage.getItem(getWishlistStorageKey());
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.error('Error reading wishlist from localStorage:', e);
@@ -16,15 +41,76 @@ function getWishlist() {
   }
 }
 
+let syncWishlistTimer = null;
+function syncWishlistToServer(wishlist) {
+  const email = getActiveCustomerEmail();
+  const token = typeof getCustomerToken === 'function' ? getCustomerToken() : localStorage.getItem('rf_customer_token');
+  if (!email || !token) return;
+
+  clearTimeout(syncWishlistTimer);
+  syncWishlistTimer = setTimeout(() => {
+    const apiBase = window.location.origin.includes(':5500') ? 'http://localhost:5000' : window.location.origin;
+    fetch(`${apiBase}/api/customer/wishlist`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ wishlist })
+    }).catch(err => console.warn('Background wishlist sync warning:', err.message));
+  }, 400);
+}
+
 function saveWishlist(wishlist) {
+  const email = getActiveCustomerEmail();
+  if (!email) return;
+
   try {
-    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlist));
+    localStorage.setItem(getWishlistStorageKey(), JSON.stringify(wishlist));
     updateWishlistUI();
     window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: { wishlist } }));
+    syncWishlistToServer(wishlist);
   } catch (e) {
     console.error('Error saving wishlist to localStorage:', e);
   }
 }
+
+async function loadCustomerWishlistFromServer() {
+  const email = getActiveCustomerEmail();
+  const token = typeof getCustomerToken === 'function' ? getCustomerToken() : localStorage.getItem('rf_customer_token');
+  if (!email || !token) {
+    updateWishlistUI();
+    return;
+  }
+
+  try {
+    const apiBase = window.location.origin.includes(':5500') ? 'http://localhost:5000' : window.location.origin;
+    const res = await fetch(`${apiBase}/api/customer/sync`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.wishlist)) {
+        localStorage.setItem(getWishlistStorageKey(), JSON.stringify(data.wishlist));
+        updateWishlistUI();
+        window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: { wishlist: data.wishlist } }));
+      }
+    }
+  } catch (e) {
+    console.warn('Customer wishlist server sync note:', e.message);
+  }
+}
+
+window.addEventListener('customerAuthStateChanged', (e) => {
+  const detail = e && e.detail;
+  if (detail && detail.isLoggedIn) {
+    loadCustomerWishlistFromServer();
+  } else {
+    // Logged out: immediately clear wishlist UI and deactivate heart buttons
+    updateWishlistUI();
+    window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: { wishlist: [] } }));
+  }
+});
 
 function getWishlistCount() {
   return getWishlist().length;
@@ -517,6 +603,7 @@ function escapeWishlistHtml(str) {
 document.addEventListener('DOMContentLoaded', () => {
   injectWishlistDrawerMarkup();
   updateWishlistUI();
+  loadCustomerWishlistFromServer();
 
   document.addEventListener('click', (e) => {
     // Open wishlist drawer trigger

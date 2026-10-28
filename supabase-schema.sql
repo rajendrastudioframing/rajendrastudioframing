@@ -178,10 +178,15 @@ CREATE TABLE IF NOT EXISTS public.customers (
   login_count INTEGER DEFAULT 1,
   total_orders INTEGER DEFAULT 0,
   total_spent NUMERIC DEFAULT 0,
+  cart JSONB DEFAULT '[]'::jsonb,
+  wishlist JSONB DEFAULT '[]'::jsonb,
   status TEXT DEFAULT 'Active',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.customers ADD COLUMN IF NOT EXISTS cart JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.customers ADD COLUMN IF NOT EXISTS wishlist JSONB DEFAULT '[]'::jsonb;
 
 CREATE INDEX IF NOT EXISTS idx_customers_email ON public.customers(email);
 

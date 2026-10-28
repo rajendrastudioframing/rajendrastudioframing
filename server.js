@@ -1953,6 +1953,56 @@ app.get('/api/customer/orders', requireCustomerAuth, async (req, res) => {
 });
 
 /**
+ * Customer Account Data Sync (GET): Fetch this customer's private cart & wishlist
+ * Strictly scoped to authenticated customer only
+ */
+app.get('/api/customer/sync', requireCustomerAuth, async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  try {
+    const customer = await db.getCustomerByEmail(req.customerEmail);
+    res.json({
+      success: true,
+      email: req.customerEmail,
+      cart: (customer && Array.isArray(customer.cart)) ? customer.cart : [],
+      wishlist: (customer && Array.isArray(customer.wishlist)) ? customer.wishlist : []
+    });
+  } catch (err) {
+    console.error('Error syncing customer cart & wishlist:', err);
+    res.status(500).json({ success: false, message: 'Failed to sync customer account data.' });
+  }
+});
+
+/**
+ * Update Customer Cart (POST): Persist cart to customer account
+ */
+app.post('/api/customer/cart', requireCustomerAuth, async (req, res) => {
+  try {
+    const { cart } = req.body;
+    const sanitized = Array.isArray(cart) ? cart : [];
+    await db.saveCustomerCart(req.customerEmail, sanitized);
+    res.json({ success: true, count: sanitized.length });
+  } catch (err) {
+    console.error('Error saving customer cart:', err);
+    res.status(500).json({ success: false, message: 'Failed to save customer cart.' });
+  }
+});
+
+/**
+ * Update Customer Wishlist (POST): Persist wishlist to customer account
+ */
+app.post('/api/customer/wishlist', requireCustomerAuth, async (req, res) => {
+  try {
+    const { wishlist } = req.body;
+    const sanitized = Array.isArray(wishlist) ? wishlist : [];
+    await db.saveCustomerWishlist(req.customerEmail, sanitized);
+    res.json({ success: true, count: sanitized.length });
+  } catch (err) {
+    console.error('Error saving customer wishlist:', err);
+    res.status(500).json({ success: false, message: 'Failed to save customer wishlist.' });
+  }
+});
+
+/**
  * Customer Logout
  */
 app.post('/api/customer/auth/logout', (req, res) => {

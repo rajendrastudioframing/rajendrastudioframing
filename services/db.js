@@ -1131,6 +1131,92 @@ module.exports = {
     }
   },
 
+  async getCustomerByEmail(email) {
+    if (!email) return null;
+    const cleanEmail = email.trim().toLowerCase();
+    if (supabase) {
+      try {
+        const queryPromise = supabase.from('customers').select('*').eq('email', cleanEmail).maybeSingle();
+        const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getCustomerByEmail');
+        if (!error && data) {
+          return {
+            ...data,
+            cart: Array.isArray(data.cart) ? data.cart : [],
+            wishlist: Array.isArray(data.wishlist) ? data.wishlist : []
+          };
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase getCustomerByEmail warning:', err.message);
+      }
+    }
+    const customers = readJson(CUSTOMERS_FILE, []);
+    const found = customers.find(c => c.email && c.email.toLowerCase() === cleanEmail);
+    if (found) {
+      return {
+        ...found,
+        cart: Array.isArray(found.cart) ? found.cart : [],
+        wishlist: Array.isArray(found.wishlist) ? found.wishlist : []
+      };
+    }
+    return null;
+  },
+
+  async saveCustomerCart(email, cart) {
+    if (!email) return [];
+    const cleanEmail = email.trim().toLowerCase();
+    const sanitizedCart = Array.isArray(cart) ? cart : [];
+
+    const customers = readJson(CUSTOMERS_FILE, []);
+    const idx = customers.findIndex(c => c.email && c.email.toLowerCase() === cleanEmail);
+    if (idx !== -1) {
+      customers[idx].cart = sanitizedCart;
+      customers[idx].updatedAt = new Date().toISOString();
+      writeJson(CUSTOMERS_FILE, customers);
+    }
+
+    if (supabase) {
+      try {
+        const updatePromise = supabase
+          .from('customers')
+          .update({ cart: sanitizedCart, updated_at: new Date().toISOString() })
+          .eq('email', cleanEmail);
+        await withTimeout(updatePromise, 4000, 'Supabase saveCustomerCart');
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase saveCustomerCart warning:', err.message);
+      }
+    }
+
+    return sanitizedCart;
+  },
+
+  async saveCustomerWishlist(email, wishlist) {
+    if (!email) return [];
+    const cleanEmail = email.trim().toLowerCase();
+    const sanitizedWishlist = Array.isArray(wishlist) ? wishlist : [];
+
+    const customers = readJson(CUSTOMERS_FILE, []);
+    const idx = customers.findIndex(c => c.email && c.email.toLowerCase() === cleanEmail);
+    if (idx !== -1) {
+      customers[idx].wishlist = sanitizedWishlist;
+      customers[idx].updatedAt = new Date().toISOString();
+      writeJson(CUSTOMERS_FILE, customers);
+    }
+
+    if (supabase) {
+      try {
+        const updatePromise = supabase
+          .from('customers')
+          .update({ wishlist: sanitizedWishlist, updated_at: new Date().toISOString() })
+          .eq('email', cleanEmail);
+        await withTimeout(updatePromise, 4000, 'Supabase saveCustomerWishlist');
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase saveCustomerWishlist warning:', err.message);
+      }
+    }
+
+    return sanitizedWishlist;
+  },
+
   // --- CUSTOMER REVIEWS ---
   async getReviews(productId = null) {
     if (supabase) {

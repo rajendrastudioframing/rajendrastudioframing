@@ -216,6 +216,8 @@
       }
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      localStorage.removeItem('rf_cart');
+      localStorage.removeItem('rajesh_framing_wishlist');
       this.notifyStateChange(false, null);
       if (redirect) {
         window.location.reload();

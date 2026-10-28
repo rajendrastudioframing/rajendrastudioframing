@@ -11,11 +11,36 @@ const CART_API_BASE = window.location.origin.includes(':5500')
   : window.location.origin;
 
 /* ==========================================================================
-   CART DATA OPERATIONS (LOCALSTORAGE)
+   CART DATA OPERATIONS (LOCALSTORAGE & PER-CUSTOMER ACCOUNT ISOLATION)
    ========================================================================== */
-function getCart() {
+function getActiveCustomerEmail() {
   try {
-    const raw = localStorage.getItem(CART_KEY);
+    if (typeof getCustomerUser === 'function') {
+      const u = getCustomerUser();
+      if (u && u.email) return u.email.toLowerCase().trim();
+    }
+    const raw = localStorage.getItem('rf_customer_user');
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u && u.email) return u.email.toLowerCase().trim();
+    }
+  } catch (_) {}
+  return null;
+}
+
+function getCartStorageKey() {
+  const email = getActiveCustomerEmail();
+  return email ? `rf_cart_${email}` : 'rf_cart_guest';
+}
+
+function getCart() {
+  const email = getActiveCustomerEmail();
+  // Strictly isolate per customer: If not logged in, return empty cart so no data leaks!
+  if (!email) {
+    return [];
+  }
+  try {
+    const raw = localStorage.getItem(getCartStorageKey());
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.error('Error reading cart from localStorage:', e);
@@ -23,16 +48,78 @@ function getCart() {
   }
 }
 
+let syncCartTimer = null;
+function syncCartToServer(cart) {
+  const email = getActiveCustomerEmail();
+  const token = typeof getCustomerToken === 'function' ? getCustomerToken() : localStorage.getItem('rf_customer_token');
+  if (!email || !token) return;
+
+  clearTimeout(syncCartTimer);
+  syncCartTimer = setTimeout(() => {
+    fetch(`${CART_API_BASE}/api/customer/cart`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ cart })
+    }).catch(err => console.warn('Background cart sync warning:', err.message));
+  }, 400);
+}
+
 function saveCart(cart) {
+  const email = getActiveCustomerEmail();
+  if (!email) return;
+
   try {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    localStorage.setItem(getCartStorageKey(), JSON.stringify(cart));
     updateCartBadges();
     renderCartDrawer();
     window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { cart } }));
+    syncCartToServer(cart);
   } catch (e) {
     console.error('Error saving cart to localStorage:', e);
   }
 }
+
+async function loadCustomerCartFromServer() {
+  const email = getActiveCustomerEmail();
+  const token = typeof getCustomerToken === 'function' ? getCustomerToken() : localStorage.getItem('rf_customer_token');
+  if (!email || !token) {
+    updateCartBadges();
+    renderCartDrawer();
+    return;
+  }
+
+  try {
+    const res = await fetch(`${CART_API_BASE}/api/customer/sync`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.cart)) {
+        localStorage.setItem(getCartStorageKey(), JSON.stringify(data.cart));
+        updateCartBadges();
+        renderCartDrawer();
+        window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { cart: data.cart } }));
+      }
+    }
+  } catch (e) {
+    console.warn('Customer cart server sync note:', e.message);
+  }
+}
+
+window.addEventListener('customerAuthStateChanged', (e) => {
+  const detail = e && e.detail;
+  if (detail && detail.isLoggedIn) {
+    loadCustomerCartFromServer();
+  } else {
+    // Logged out: reset cart view to empty for security & privacy
+    updateCartBadges();
+    renderCartDrawer();
+    window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { cart: [] } }));
+  }
+});
 
 function getCartCount() {
   const cart = getCart();
@@ -527,6 +614,7 @@ function bindDrawerEvents() {
 function initCart() {
   injectCartDrawerMarkup();
   updateCartBadges();
+  loadCustomerCartFromServer();
 
   const isCheckoutPage = window.location.pathname.includes('checkout') || 
                          window.location.href.includes('checkout');
