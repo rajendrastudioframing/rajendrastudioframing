@@ -1741,7 +1741,7 @@ ul, ol {
   /* Bottom safe padding for catalog and products so cards are never obscured */
   .catalog-main-content,
   .catalog-layout-container {
-    padding-bottom: 72px !important;
+    padding-bottom: 0 !important;
   }
   .product-page-active #mainContent {
     padding-bottom: 16px !important;

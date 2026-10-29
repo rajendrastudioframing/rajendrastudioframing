@@ -4724,7 +4724,7 @@ body:has(.modal-overlay.open) {
   .catalog-main-content,
   .catalog-layout-container,
   #catalogProductsGrid {
-    padding-bottom: 32px !important;
+    padding-bottom: 0 !important;
   }
 
   .back-to-top-btn {
