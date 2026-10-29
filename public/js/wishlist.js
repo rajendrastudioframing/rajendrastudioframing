@@ -528,7 +528,17 @@ function unhighlightWishlistNav() {
   }
 }
 
-function openWishlistDrawer() {
+function openWishlistDrawer(forceOpen = false) {
+  const existingOverlay = document.getElementById('wishlistDrawerOverlay');
+  if (!forceOpen && existingOverlay && existingOverlay.classList.contains('open')) {
+    closeWishlistDrawer();
+    return;
+  }
+
+  if (typeof closeCartDrawer === 'function') {
+    closeCartDrawer();
+  }
+
   highlightWishlistNav();
   let overlay = document.getElementById('wishlistDrawerOverlay');
   if (!overlay) {

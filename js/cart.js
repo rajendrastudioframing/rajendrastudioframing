@@ -543,7 +543,17 @@ function unhighlightCartNav() {
   }
 }
 
-function openCartDrawer() {
+function openCartDrawer(forceOpen = false) {
+  const existingOverlay = document.getElementById('cartDrawerOverlay');
+  if (!forceOpen && existingOverlay && existingOverlay.classList.contains('open')) {
+    closeCartDrawer();
+    return;
+  }
+
+  if (typeof closeWishlistDrawer === 'function') {
+    closeWishlistDrawer();
+  }
+
   highlightCartNav();
   let overlay = document.getElementById('cartDrawerOverlay');
   if (!overlay) {

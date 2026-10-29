@@ -140,7 +140,7 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 99999;
+    z-index: 100010 !important;
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
     justify-content: space-around;
     align-items: center;
@@ -2691,3 +2691,29 @@
     padding-bottom: 36px !important;
   }
 }
+
+
+/* Sticky Bottom Toolbar over Drawers & Drawer Height Adjustment */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    z-index: 100010 !important;
+  }
+
+  .cart-drawer,
+  .wishlist-drawer {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+    height: auto !important;
+    max-height: calc(100vh - 64px - env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .cart-drawer-overlay,
+  .wishlist-drawer-overlay {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .cart-drawer-footer,
+  .wishlist-drawer-footer {
+    padding-bottom: 16px !important;
+  }
+}
+

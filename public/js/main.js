@@ -116,11 +116,19 @@ function highlightActiveNavLink() {
   });
 }
 
-/* --- Prevent unnecessary page reload when tapping active navigation item --- */
+/* --- Prevent unnecessary page reload when tapping active navigation item & handle drawer closing --- */
 function initPreventActiveNavReload() {
   const allNavItems = document.querySelectorAll('.mobile-bottom-nav .mobile-nav-item, .nav-menu .nav-link, .drawer-nav .nav-link');
   allNavItems.forEach(item => {
     item.addEventListener('click', (e) => {
+      // If clicking a main navigation destination while Cart or Wishlist drawer is open, close the drawer
+      const isDrawerTrigger = item.id === 'mobileNavCart' || item.id === 'mobileNavWishlist' || item.id === 'mobileNavProfile' ||
+                              item.id === 'navbarCartBtn' || item.id === 'navbarWishlistBtn' || item.id === 'navbarProfileBtn';
+      if (!isDrawerTrigger) {
+        if (typeof closeCartDrawer === 'function') closeCartDrawer();
+        if (typeof closeWishlistDrawer === 'function') closeWishlistDrawer();
+      }
+
       // If clicking an already active item with a real href, prevent re-loading same page
       if (item.classList.contains('active')) {
         const href = item.getAttribute('href');
