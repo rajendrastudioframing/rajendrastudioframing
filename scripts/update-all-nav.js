@@ -141,7 +141,6 @@ function getMobileBottomNav(activeItem) {
 function getDrawerNav(activeItem) {
   return `
     <ul class="drawer-nav">
-      <li><a href="/" class="nav-link ${activeItem === 'home' ? 'active' : ''}">Home</a></li>
       <li><a href="categories" class="nav-link ${activeItem === 'categories' ? 'active' : ''}">Categories</a></li>
       <li><a href="products" class="nav-link ${activeItem === 'products' ? 'active' : ''}">Products</a></li>
       <li><a href="orders" class="nav-link ${activeItem === 'orders' ? 'active' : ''}">My Orders</a></li>
@@ -153,7 +152,7 @@ function getDrawerNav(activeItem) {
 }
 
 const pages = [
-  { file: 'index.html', active: 'home' },
+  { file: 'index.html', active: 'categories' },
   { file: 'categories.html', active: 'categories' },
   { file: 'products.html', active: 'products' },
   { file: 'product-detail.html', active: 'products' },

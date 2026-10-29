@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileDrawer();
   initBackToTop();
   highlightActiveNavLink();
+  initPreventActiveNavReload();
   initCategoryJumpBar();
   initProductSlider();
   initHomeContactForm();
@@ -74,27 +75,73 @@ function initMobileDrawer() {
   });
 }
 
-/* --- Highlight Active Nav Link based on URL --- */
+/* --- Highlight Active Nav Link based on URL & Sync Bottom Nav --- */
 function highlightActiveNavLink() {
   const rawPath = window.location.pathname.split('/').pop().replace(/\.html$/, '');
-  const currentPath = (!rawPath || rawPath === 'index') ? 'index' : rawPath;
-  const navLinks = document.querySelectorAll('.nav-menu .nav-link, .drawer-nav .nav-link');
+  // Treat root, index, and categories as 'categories' because categories is the landing page
+  const currentPath = (!rawPath || rawPath === 'index' || rawPath === 'categories') ? 'categories' : rawPath;
 
+  // 1. Desktop & Mobile Drawer Nav Links
+  const navLinks = document.querySelectorAll('.nav-menu .nav-link, .drawer-nav .nav-link');
   navLinks.forEach(link => {
     const href = link.getAttribute('href');
     if (!href) return;
     const rawLink = href.split('/').pop().replace(/\.html$/, '');
-    const linkPath = (!rawLink || rawLink === 'index' || href === '/') ? 'index' : rawLink;
+    const linkPath = (!rawLink || rawLink === 'index' || rawLink === 'categories' || href === '/') ? 'categories' : rawLink;
 
     if (linkPath === currentPath) {
       link.classList.add('active');
+      link.setAttribute('aria-current', 'page');
     } else {
       link.classList.remove('active');
+      link.removeAttribute('aria-current');
+    }
+  });
+
+  // 2. Mobile Bottom Navigation Items
+  const mobileNavItems = document.querySelectorAll('.mobile-bottom-nav .mobile-nav-item');
+  mobileNavItems.forEach(item => {
+    const href = item.getAttribute('href');
+    if (!href) return; // Buttons like Cart/Wishlist/Profile don't have href
+    const rawLink = href.split('/').pop().replace(/\.html$/, '');
+    const linkPath = (!rawLink || rawLink === 'index' || rawLink === 'categories' || href === '/') ? 'categories' : rawLink;
+
+    if (linkPath === currentPath) {
+      item.classList.add('active');
+      item.setAttribute('aria-current', 'page');
+    } else {
+      item.classList.remove('active');
+      item.removeAttribute('aria-current');
     }
   });
 }
 
-/* --- Back to Top Button --- */
+/* --- Prevent unnecessary page reload when tapping active navigation item --- */
+function initPreventActiveNavReload() {
+  const allNavItems = document.querySelectorAll('.mobile-bottom-nav .mobile-nav-item, .nav-menu .nav-link, .drawer-nav .nav-link');
+  allNavItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      // If clicking an already active item with a real href, prevent re-loading same page
+      if (item.classList.contains('active')) {
+        const href = item.getAttribute('href');
+        if (href && !href.startsWith('javascript:')) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+
+          // If mobile drawer was open, close it cleanly
+          const drawer = document.querySelector('.mobile-drawer');
+          const backdrop = document.querySelector('.drawer-backdrop');
+          if (drawer && drawer.classList.contains('open')) {
+            drawer.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('active');
+            document.body.style.overflow = '';
+          }
+        }
+      }
+    });
+  });
+}
+
 function initBackToTop() {
   const backToTopBtn = document.querySelector('.back-to-top-btn');
   if (!backToTopBtn) return;
@@ -117,7 +164,6 @@ function initBackToTop() {
       behavior: 'smooth'
     });
   });
-});
 }
 
 /* ==========================================================================

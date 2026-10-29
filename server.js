@@ -40,17 +40,13 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'], maxAge: 0, etag: false }));
-app.use(express.static(path.join(__dirname), { extensions: ['html'], maxAge: 0, etag: false }));
-
-// Root Route handler
+// Root Route handler - Redirect to /categories so initial landing is directly the real Categories page
 app.get('/', (req, res) => {
-  const publicIndex = path.join(__dirname, 'public', 'index.html');
-  if (fs.existsSync(publicIndex)) {
-    return res.sendFile(publicIndex);
-  }
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.redirect(302, '/categories');
 });
+
+app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'], index: false, maxAge: 0, etag: false }));
+app.use(express.static(path.join(__dirname), { extensions: ['html'], index: false, maxAge: 0, etag: false }));
 
 // Categories Route handler
 app.get('/categories', (req, res) => {
