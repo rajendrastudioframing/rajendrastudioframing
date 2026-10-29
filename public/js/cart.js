@@ -553,6 +553,9 @@ function openCartDrawer(forceOpen = false) {
   if (typeof closeWishlistDrawer === 'function') {
     closeWishlistDrawer();
   }
+  if (typeof closeCustomerAuthModal === 'function') {
+    closeCustomerAuthModal();
+  }
 
   highlightCartNav();
   let overlay = document.getElementById('cartDrawerOverlay');

@@ -538,6 +538,9 @@ function openWishlistDrawer(forceOpen = false) {
   if (typeof closeCartDrawer === 'function') {
     closeCartDrawer();
   }
+  if (typeof closeCustomerAuthModal === 'function') {
+    closeCustomerAuthModal();
+  }
 
   highlightWishlistNav();
   let overlay = document.getElementById('wishlistDrawerOverlay');

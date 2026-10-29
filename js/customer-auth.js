@@ -256,6 +256,7 @@
         }
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
+        highlightProfileNav();
         setTimeout(() => {
           const emailInput = document.getElementById('custAuthEmail');
           if (emailInput) emailInput.focus();
@@ -268,6 +269,7 @@
       if (modal) {
         modal.classList.remove('open');
         document.body.style.overflow = '';
+        unhighlightProfileNav();
       }
     },
 
@@ -288,6 +290,31 @@
   window.openCustomerAuthModal = (cb, context) => window.CustomerAuth.openAuthModal(cb, context);
   window.closeCustomerAuthModal = () => window.CustomerAuth.closeAuthModal();
   window.logoutCustomer = (redirect) => window.CustomerAuth.logoutCustomer(redirect);
+
+  let previousActiveMobileElement = null;
+
+  function highlightProfileNav() {
+    const activeMobileNav = document.querySelector('.mobile-bottom-nav .mobile-nav-item.active');
+    const profileMobileBtn = document.getElementById('mobileNavProfile');
+    if (profileMobileBtn && !profileMobileBtn.classList.contains('active')) {
+      if (activeMobileNav && activeMobileNav !== profileMobileBtn) {
+        previousActiveMobileElement = activeMobileNav;
+        activeMobileNav.classList.remove('active');
+      }
+      profileMobileBtn.classList.add('active');
+    }
+  }
+
+  function unhighlightProfileNav() {
+    const profileMobileBtn = document.getElementById('mobileNavProfile');
+    if (profileMobileBtn) {
+      profileMobileBtn.classList.remove('active');
+    }
+    if (previousActiveMobileElement) {
+      previousActiveMobileElement.classList.add('active');
+      previousActiveMobileElement = null;
+    }
+  }
 
   /* --- DOM Setup & Event Listeners --- */
   function initCustomerAuthUI() {
@@ -526,6 +553,30 @@
             </div>
           </form>
 
+          <!-- Phase 3: Already Logged In Profile Card -->
+          <div id="custAuthLoggedInView" class="cust-auth-form" style="display: none; text-align: center;">
+            <div style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, #C99A3D 0%, #A87A24 100%); color: #ffffff; font-size: 1.4rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto 12px; box-shadow: 0 4px 14px rgba(201, 154, 61, 0.3);" id="custAuthUserAvatar">
+              A
+            </div>
+            <h4 id="custAuthUserName" style="font-size: 1.2rem; font-weight: 700; margin: 0 0 4px; color: #111827;">Customer</h4>
+            <p id="custAuthUserEmail" style="font-size: 0.85rem; color: #6B7280; margin: 0 0 16px;">email@example.com</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 18px;">
+              <a href="orders" class="btn btn-gold shimmer-effect" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700; text-decoration: none; border-radius: 10px; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span>My Orders &amp; Invoices</span>
+              </a>
+              <a href="track-order" class="btn btn-outline" style="width: 100%; justify-content: center; padding: 12px; font-weight: 600; text-decoration: none; border-radius: 10px; gap: 8px; color: #111827; border-color: #D1D5DB;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span>Track Active Order</span>
+              </a>
+              <button type="button" onclick="logoutCustomer(true)" class="btn btn-outline" style="width: 100%; justify-content: center; padding: 11px; font-weight: 600; color: #DC2626; border-color: #FECACA; border-radius: 10px; gap: 8px; margin-top: 4px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
     `;
@@ -543,7 +594,7 @@
       .cust-auth-modal-overlay {
         position: fixed;
         inset: 0;
-        z-index: 99999;
+        z-index: 100050 !important;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -551,6 +602,19 @@
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+      @media (max-width: 768px) {
+        .cust-auth-modal-overlay {
+          bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+          height: calc(100vh - 64px - env(safe-area-inset-bottom, 0px)) !important;
+          height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px)) !important;
+        }
+        .cust-auth-modal-dialog {
+          max-height: calc(100vh - 84px - env(safe-area-inset-bottom, 0px)) !important;
+          max-height: calc(100dvh - 84px - env(safe-area-inset-bottom, 0px)) !important;
+          overflow-y: auto !important;
+          padding: 24px 20px !important;
+        }
       }
       .cust-auth-modal-overlay.open {
         opacity: 1;
@@ -727,11 +791,37 @@
   function resetModalState() {
     const emailForm = document.getElementById('custAuthEmailForm');
     const otpForm = document.getElementById('custAuthOtpForm');
+    const loggedInView = document.getElementById('custAuthLoggedInView');
     const alertBox = document.getElementById('custAuthAlert');
 
+    if (alertBox) alertBox.style.display = 'none';
+
+    const isLoggedIn = window.CustomerAuth.isCustomerLoggedIn();
+    const user = window.CustomerAuth.getCustomerUser();
+
+    if (isLoggedIn && user && !window.CustomerAuth._activeContext) {
+      if (emailForm) emailForm.style.display = 'none';
+      if (otpForm) otpForm.style.display = 'none';
+      if (loggedInView) {
+        loggedInView.style.display = 'block';
+        const nameEl = document.getElementById('custAuthUserName');
+        const emailEl = document.getElementById('custAuthUserEmail');
+        const avatarEl = document.getElementById('custAuthUserAvatar');
+        const titleEl = document.getElementById('custAuthModalTitle');
+        const subEl = document.getElementById('custAuthModalSubtitle');
+        if (titleEl) titleEl.textContent = 'My Account';
+        if (subEl) subEl.textContent = 'Welcome back! View your orders or track delivery status.';
+        if (nameEl) nameEl.textContent = user.name || 'Valued Customer';
+        if (emailEl) emailEl.textContent = user.email || '';
+        const initial = ((user.name && user.name.trim() !== 'Valued Customer') ? user.name : (user.email || 'A')).charAt(0).toUpperCase();
+        if (avatarEl) avatarEl.textContent = initial || 'A';
+      }
+      return;
+    }
+
+    if (loggedInView) loggedInView.style.display = 'none';
     if (emailForm) emailForm.style.display = 'block';
     if (otpForm) otpForm.style.display = 'none';
-    if (alertBox) alertBox.style.display = 'none';
 
     const ctx = (window.CustomerAuth && window.CustomerAuth._activeContext) ? window.CustomerAuth._activeContext : null;
     const titleEl = document.getElementById('custAuthModalTitle');

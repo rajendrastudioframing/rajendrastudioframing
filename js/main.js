@@ -127,6 +127,7 @@ function initPreventActiveNavReload() {
       if (!isDrawerTrigger) {
         if (typeof closeCartDrawer === 'function') closeCartDrawer();
         if (typeof closeWishlistDrawer === 'function') closeWishlistDrawer();
+        if (typeof closeCustomerAuthModal === 'function') closeCustomerAuthModal();
       }
 
       // If clicking an already active item with a real href, prevent re-loading same page
