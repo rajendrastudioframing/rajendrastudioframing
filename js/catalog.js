@@ -585,8 +585,30 @@ window.setCatalogView = function(view) {
 
 // Restore saved view preference
 document.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('rf_catalog_view');
-  if (saved === 'single') {
-    window.setCatalogView('single');
+  // Single column preference only activates on mobile screens (<= 767px)
+  if (window.innerWidth <= 767) {
+    const saved = localStorage.getItem('rf_catalog_view');
+    if (saved === 'single') {
+      window.setCatalogView('single');
+    }
+  } else {
+    // Laptop / big screens always stay in multi-column grid
+    const grid = document.getElementById('catalogProductsGrid');
+    if (grid) grid.classList.remove('single-col-view');
   }
 });
+
+// Window resize handler: ensure laptop / big screens immediately revert to grid layout
+window.addEventListener('resize', () => {
+  const grid = document.getElementById('catalogProductsGrid');
+  if (window.innerWidth > 767) {
+    if (grid && grid.classList.contains('single-col-view')) {
+      grid.classList.remove('single-col-view');
+    }
+  } else {
+    const saved = localStorage.getItem('rf_catalog_view');
+    if (saved === 'single') {
+      window.setCatalogView('single');
+    }
+  }
+}, { passive: true });

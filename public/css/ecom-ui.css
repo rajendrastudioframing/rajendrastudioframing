@@ -390,7 +390,12 @@
   }
 }
 
-/* Mobile phones (<= 767px): 2 product cards per row */
+/* View toggle buttons: strictly hidden on laptops, tablets, and large screens */
+.catalog-view-toggle {
+  display: none !important;
+}
+
+/* Mobile phones (<= 767px): 2 product cards per row default, with single/grid toggle visible */
 @media (max-width: 767px) {
   .products-grid,
   .catalog-main-content .products-grid,
@@ -398,13 +403,50 @@
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 8px !important;
   }
-}
 
-/* Single column toggle on mobile */
-.products-grid.single-col-view,
-#catalogProductsGrid.single-col-view {
-  grid-template-columns: 1fr !important;
-  gap: 12px !important;
+  /* Show view switcher on mobile/phone */
+  .catalog-view-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    background: #F3F4F6 !important;
+    padding: 3px !important;
+    border-radius: 8px !important;
+    border: 1px solid #E5E7EB !important;
+  }
+
+  .catalog-view-toggle .view-btn {
+    width: 28px !important;
+    height: 28px !important;
+    border: none !important;
+    background: transparent !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #6B7280 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .catalog-view-toggle .view-btn svg {
+    display: block;
+    pointer-events: none;
+  }
+
+  .catalog-view-toggle .view-btn.active {
+    background: #FFFFFF !important;
+    color: #C99A3D !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Single column view toggle - ONLY active on mobile phones */
+  .products-grid.single-col-view,
+  #catalogProductsGrid.single-col-view {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
 }
 
 /* --- COMPACT SMALL PRODUCT CARD DESIGN (5 CARDS PER ROW) --- */
