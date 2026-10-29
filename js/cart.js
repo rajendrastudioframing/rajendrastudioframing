@@ -19,10 +19,23 @@ function getActiveCustomerEmail() {
       const u = getCustomerUser();
       if (u && u.email) return u.email.toLowerCase().trim();
     }
+    if (window.CustomerAuth && typeof window.CustomerAuth.getCustomerUser === 'function') {
+      const u = window.CustomerAuth.getCustomerUser();
+      if (u && u.email) return u.email.toLowerCase().trim();
+    }
     const raw = localStorage.getItem('rf_customer_user');
     if (raw) {
       const u = JSON.parse(raw);
       if (u && u.email) return u.email.toLowerCase().trim();
+    }
+    // Fallback: decode directly from stateless HMAC token payload
+    const token = localStorage.getItem('rf_customer_token');
+    if (token && token.startsWith('rf_cust_')) {
+      const rawPayload = token.slice('rf_cust_'.length).split('.')[0];
+      if (rawPayload) {
+        const decoded = JSON.parse(atob(rawPayload.replace(/-/g, '+').replace(/_/g, '/')));
+        if (decoded && decoded.email) return decoded.email.toLowerCase().trim();
+      }
     }
   } catch (_) {}
   return null;
@@ -48,23 +61,45 @@ function getCart() {
   }
 }
 
+function mergeCartLists(serverCart, localCart) {
+  const result = Array.isArray(serverCart) ? [...serverCart] : [];
+  (Array.isArray(localCart) ? localCart : []).forEach(localItem => {
+    if (!localItem || !localItem.id) return;
+    const existing = result.find(s => 
+      s.id === localItem.id && 
+      (s.size || 'Standard') === (localItem.size || 'Standard') &&
+      (s.finish || 'Standard') === (localItem.finish || 'Standard')
+    );
+    if (!existing) {
+      result.push(localItem);
+    }
+  });
+  return result;
+}
+
 let syncCartTimer = null;
-function syncCartToServer(cart) {
+function syncCartToServer(cart, immediate = false) {
   const email = getActiveCustomerEmail();
   const token = typeof getCustomerToken === 'function' ? getCustomerToken() : localStorage.getItem('rf_customer_token');
   if (!email || !token) return;
 
   clearTimeout(syncCartTimer);
-  syncCartTimer = setTimeout(() => {
+  const doFetch = () => {
     fetch(`${CART_API_BASE}/api/customer/cart`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ cart })
+      body: JSON.stringify({ cart: Array.isArray(cart) ? cart : [] })
     }).catch(err => console.warn('Background cart sync warning:', err.message));
-  }, 400);
+  };
+
+  if (immediate) {
+    doFetch();
+  } else {
+    syncCartTimer = setTimeout(doFetch, 200);
+  }
 }
 
 function saveCart(cart) {
@@ -76,7 +111,7 @@ function saveCart(cart) {
     updateCartBadges();
     renderCartDrawer();
     window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { cart } }));
-    syncCartToServer(cart);
+    syncCartToServer(cart, false);
   } catch (e) {
     console.error('Error saving cart to localStorage:', e);
   }
@@ -91,17 +126,37 @@ async function loadCustomerCartFromServer() {
     return;
   }
 
+  const localCart = getCart(); // Preserves active local cart
+
   try {
     const res = await fetch(`${CART_API_BASE}/api/customer/sync`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && data.success && Array.isArray(data.cart)) {
-        localStorage.setItem(getCartStorageKey(), JSON.stringify(data.cart));
+      const serverCart = (data && data.success && Array.isArray(data.cart)) ? data.cart : [];
+
+      if (serverCart.length > 0) {
+        // Server has stored items: merge with localCart without losing items
+        const merged = mergeCartLists(serverCart, localCart);
+        localStorage.setItem(getCartStorageKey(), JSON.stringify(merged));
         updateCartBadges();
         renderCartDrawer();
-        window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { cart: data.cart } }));
+        window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { cart: merged } }));
+        // If local had extra items not on server, sync merged back
+        if (merged.length !== serverCart.length) {
+          syncCartToServer(merged, true);
+        }
+      } else if (localCart.length > 0) {
+        // Server returned empty, but user HAS items locally:
+        // NEVER WIPE LOCAL CART! Persist local items to server!
+        syncCartToServer(localCart, true);
+        updateCartBadges();
+        renderCartDrawer();
+      } else {
+        // Both empty
+        updateCartBadges();
+        renderCartDrawer();
       }
     }
   } catch (e) {

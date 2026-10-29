@@ -12,10 +12,23 @@ function getActiveCustomerEmail() {
       const u = getCustomerUser();
       if (u && u.email) return u.email.toLowerCase().trim();
     }
+    if (window.CustomerAuth && typeof window.CustomerAuth.getCustomerUser === 'function') {
+      const u = window.CustomerAuth.getCustomerUser();
+      if (u && u.email) return u.email.toLowerCase().trim();
+    }
     const raw = localStorage.getItem('rf_customer_user');
     if (raw) {
       const u = JSON.parse(raw);
       if (u && u.email) return u.email.toLowerCase().trim();
+    }
+    // Fallback: decode directly from stateless HMAC token payload
+    const token = localStorage.getItem('rf_customer_token');
+    if (token && token.startsWith('rf_cust_')) {
+      const rawPayload = token.slice('rf_cust_'.length).split('.')[0];
+      if (rawPayload) {
+        const decoded = JSON.parse(atob(rawPayload.replace(/-/g, '+').replace(/_/g, '/')));
+        if (decoded && decoded.email) return decoded.email.toLowerCase().trim();
+      }
     }
   } catch (_) {}
   return null;
@@ -41,14 +54,26 @@ function getWishlist() {
   }
 }
 
+function mergeWishlistLists(serverWishlist, localWishlist) {
+  const result = Array.isArray(serverWishlist) ? [...serverWishlist] : [];
+  (Array.isArray(localWishlist) ? localWishlist : []).forEach(localItem => {
+    if (!localItem || !localItem.id) return;
+    const existing = result.find(s => s.id === localItem.id);
+    if (!existing) {
+      result.push(localItem);
+    }
+  });
+  return result;
+}
+
 let syncWishlistTimer = null;
-function syncWishlistToServer(wishlist) {
+function syncWishlistToServer(wishlist, immediate = false) {
   const email = getActiveCustomerEmail();
   const token = typeof getCustomerToken === 'function' ? getCustomerToken() : localStorage.getItem('rf_customer_token');
   if (!email || !token) return;
 
   clearTimeout(syncWishlistTimer);
-  syncWishlistTimer = setTimeout(() => {
+  const doFetch = () => {
     const apiBase = window.location.origin.includes(':5500') ? 'http://localhost:5000' : window.location.origin;
     fetch(`${apiBase}/api/customer/wishlist`, {
       method: 'POST',
@@ -56,9 +81,15 @@ function syncWishlistToServer(wishlist) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ wishlist })
+      body: JSON.stringify({ wishlist: Array.isArray(wishlist) ? wishlist : [] })
     }).catch(err => console.warn('Background wishlist sync warning:', err.message));
-  }, 400);
+  };
+
+  if (immediate) {
+    doFetch();
+  } else {
+    syncWishlistTimer = setTimeout(doFetch, 200);
+  }
 }
 
 function saveWishlist(wishlist) {
@@ -69,7 +100,7 @@ function saveWishlist(wishlist) {
     localStorage.setItem(getWishlistStorageKey(), JSON.stringify(wishlist));
     updateWishlistUI();
     window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: { wishlist } }));
-    syncWishlistToServer(wishlist);
+    syncWishlistToServer(wishlist, false);
   } catch (e) {
     console.error('Error saving wishlist to localStorage:', e);
   }
@@ -83,6 +114,8 @@ async function loadCustomerWishlistFromServer() {
     return;
   }
 
+  const localWishlist = getWishlist(); // Preserves active local wishlist
+
   try {
     const apiBase = window.location.origin.includes(':5500') ? 'http://localhost:5000' : window.location.origin;
     const res = await fetch(`${apiBase}/api/customer/sync`, {
@@ -90,10 +123,23 @@ async function loadCustomerWishlistFromServer() {
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && data.success && Array.isArray(data.wishlist)) {
-        localStorage.setItem(getWishlistStorageKey(), JSON.stringify(data.wishlist));
+      const serverWishlist = (data && data.success && Array.isArray(data.wishlist)) ? data.wishlist : [];
+
+      if (serverWishlist.length > 0) {
+        const merged = mergeWishlistLists(serverWishlist, localWishlist);
+        localStorage.setItem(getWishlistStorageKey(), JSON.stringify(merged));
         updateWishlistUI();
-        window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: { wishlist: data.wishlist } }));
+        window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: { wishlist: merged } }));
+        if (merged.length !== serverWishlist.length) {
+          syncWishlistToServer(merged, true);
+        }
+      } else if (localWishlist.length > 0) {
+        // Server returned empty, but user HAS items locally:
+        // NEVER WIPE LOCAL WISHLIST! Persist local items to server!
+        syncWishlistToServer(localWishlist, true);
+        updateWishlistUI();
+      } else {
+        updateWishlistUI();
       }
     }
   } catch (e) {

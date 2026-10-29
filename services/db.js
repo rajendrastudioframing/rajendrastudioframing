@@ -1134,30 +1134,72 @@ module.exports = {
   async getCustomerByEmail(email) {
     if (!email) return null;
     const cleanEmail = email.trim().toLowerCase();
+
+    // In-memory cache fallback to avoid cold-start wipes
+    global._rfCustomerCarts = global._rfCustomerCarts || {};
+    global._rfCustomerWishlists = global._rfCustomerWishlists || {};
+    const memCart = global._rfCustomerCarts[cleanEmail];
+    const memWishlist = global._rfCustomerWishlists[cleanEmail];
+
+    const customers = readJson(CUSTOMERS_FILE, []);
+    const foundLocal = customers.find(c => c.email && c.email.toLowerCase() === cleanEmail);
+
     if (supabase) {
       try {
         const queryPromise = supabase.from('customers').select('*').eq('email', cleanEmail).maybeSingle();
         const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getCustomerByEmail');
         if (!error && data) {
+          let cart = [];
+          if (Array.isArray(data.cart) && data.cart.length > 0) {
+            cart = data.cart;
+          } else if (foundLocal && Array.isArray(foundLocal.cart) && foundLocal.cart.length > 0) {
+            cart = foundLocal.cart;
+          } else if (Array.isArray(memCart) && memCart.length > 0) {
+            cart = memCart;
+          }
+
+          let wishlist = [];
+          if (Array.isArray(data.wishlist) && data.wishlist.length > 0) {
+            wishlist = data.wishlist;
+          } else if (foundLocal && Array.isArray(foundLocal.wishlist) && foundLocal.wishlist.length > 0) {
+            wishlist = foundLocal.wishlist;
+          } else if (Array.isArray(memWishlist) && memWishlist.length > 0) {
+            wishlist = memWishlist;
+          }
+
           return {
             ...data,
-            cart: Array.isArray(data.cart) ? data.cart : [],
-            wishlist: Array.isArray(data.wishlist) ? data.wishlist : []
+            cart,
+            wishlist
           };
         }
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase getCustomerByEmail warning:', err.message);
       }
     }
-    const customers = readJson(CUSTOMERS_FILE, []);
-    const found = customers.find(c => c.email && c.email.toLowerCase() === cleanEmail);
-    if (found) {
+
+    if (foundLocal) {
+      const cart = (Array.isArray(foundLocal.cart) && foundLocal.cart.length > 0)
+        ? foundLocal.cart
+        : (Array.isArray(memCart) ? memCart : []);
+      const wishlist = (Array.isArray(foundLocal.wishlist) && foundLocal.wishlist.length > 0)
+        ? foundLocal.wishlist
+        : (Array.isArray(memWishlist) ? memWishlist : []);
       return {
-        ...found,
-        cart: Array.isArray(found.cart) ? found.cart : [],
-        wishlist: Array.isArray(found.wishlist) ? found.wishlist : []
+        ...foundLocal,
+        cart,
+        wishlist
       };
     }
+
+    if (memCart || memWishlist) {
+      return {
+        email: cleanEmail,
+        cart: Array.isArray(memCart) ? memCart : [],
+        wishlist: Array.isArray(memWishlist) ? memWishlist : []
+      };
+    }
+
     return null;
   },
 
@@ -1166,13 +1208,27 @@ module.exports = {
     const cleanEmail = email.trim().toLowerCase();
     const sanitizedCart = Array.isArray(cart) ? cart : [];
 
+    global._rfCustomerCarts = global._rfCustomerCarts || {};
+    global._rfCustomerCarts[cleanEmail] = sanitizedCart;
+
     const customers = readJson(CUSTOMERS_FILE, []);
     const idx = customers.findIndex(c => c.email && c.email.toLowerCase() === cleanEmail);
     if (idx !== -1) {
       customers[idx].cart = sanitizedCart;
       customers[idx].updatedAt = new Date().toISOString();
-      writeJson(CUSTOMERS_FILE, customers);
+    } else {
+      customers.unshift({
+        id: 'CUST-' + String(customers.length + 1).padStart(4, '0'),
+        name: cleanEmail.split('@')[0],
+        email: cleanEmail,
+        cart: sanitizedCart,
+        wishlist: [],
+        registeredAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'Active'
+      });
     }
+    writeJson(CUSTOMERS_FILE, customers);
 
     if (supabase) {
       try {
@@ -1180,7 +1236,10 @@ module.exports = {
           .from('customers')
           .update({ cart: sanitizedCart, updated_at: new Date().toISOString() })
           .eq('email', cleanEmail);
-        await withTimeout(updatePromise, 4000, 'Supabase saveCustomerCart');
+        const { error } = await withTimeout(updatePromise, 4000, 'Supabase saveCustomerCart');
+        if (error) {
+          console.warn('⚠️ [DATABASE] Supabase saveCustomerCart note:', error.message);
+        }
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase saveCustomerCart warning:', err.message);
       }
@@ -1194,13 +1253,27 @@ module.exports = {
     const cleanEmail = email.trim().toLowerCase();
     const sanitizedWishlist = Array.isArray(wishlist) ? wishlist : [];
 
+    global._rfCustomerWishlists = global._rfCustomerWishlists || {};
+    global._rfCustomerWishlists[cleanEmail] = sanitizedWishlist;
+
     const customers = readJson(CUSTOMERS_FILE, []);
     const idx = customers.findIndex(c => c.email && c.email.toLowerCase() === cleanEmail);
     if (idx !== -1) {
       customers[idx].wishlist = sanitizedWishlist;
       customers[idx].updatedAt = new Date().toISOString();
-      writeJson(CUSTOMERS_FILE, customers);
+    } else {
+      customers.unshift({
+        id: 'CUST-' + String(customers.length + 1).padStart(4, '0'),
+        name: cleanEmail.split('@')[0],
+        email: cleanEmail,
+        cart: [],
+        wishlist: sanitizedWishlist,
+        registeredAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'Active'
+      });
     }
+    writeJson(CUSTOMERS_FILE, customers);
 
     if (supabase) {
       try {
@@ -1208,7 +1281,10 @@ module.exports = {
           .from('customers')
           .update({ wishlist: sanitizedWishlist, updated_at: new Date().toISOString() })
           .eq('email', cleanEmail);
-        await withTimeout(updatePromise, 4000, 'Supabase saveCustomerWishlist');
+        const { error } = await withTimeout(updatePromise, 4000, 'Supabase saveCustomerWishlist');
+        if (error) {
+          console.warn('⚠️ [DATABASE] Supabase saveCustomerWishlist note:', error.message);
+        }
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase saveCustomerWishlist warning:', err.message);
       }

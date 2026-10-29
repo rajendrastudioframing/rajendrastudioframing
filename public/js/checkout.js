@@ -80,7 +80,8 @@ function renderCheckoutOrderSummary() {
     cart = getCart();
   } else {
     try {
-      const raw = localStorage.getItem('rf_cart');
+      const key = (typeof getCartStorageKey === 'function') ? getCartStorageKey() : 'rf_cart';
+      const raw = localStorage.getItem(key) || localStorage.getItem('rf_cart');
       cart = raw ? JSON.parse(raw) : [];
     } catch (e) {
       cart = [];
