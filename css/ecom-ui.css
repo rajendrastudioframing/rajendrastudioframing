@@ -2455,33 +2455,40 @@
     padding: 0 4px !important;
   }
 
-  /* WhatsApp Pill - Sleek Studio Concierge Style */
+  /* WhatsApp Pill - Solid Official Green Filled (Matches Desktop Style) */
   .btn-catalog-whatsapp {
-    height: 29px !important;
-    background: #F0FDF4 !important;
-    border: 1px solid #BBF7D0 !important;
-    color: #15803D !important;
-    font-size: 0.68rem !important;
+    width: 100% !important;
+    height: 30px !important;
+    background: linear-gradient(135deg, #25D366 0%, #20BA5A 50%, #128C7E 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    color: #FFFFFF !important;
+    font-size: 0.72rem !important;
     font-weight: 700 !important;
-    border-radius: 7px !important;
-    padding: 0 4px !important;
+    border-radius: 8px !important;
+    padding: 0 6px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 4px !important;
+    gap: 5px !important;
+    letter-spacing: 0.2px !important;
+    box-shadow: 0 2px 7px rgba(37, 211, 102, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.16) !important;
     transition: all 0.2s ease !important;
   }
 
   .btn-catalog-whatsapp:active {
-    background: #DCFCE7 !important;
-    border-color: #86EFAC !important;
-    color: #166534 !important;
+    background: linear-gradient(135deg, #20BA5A 0%, #169b52 100%) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    color: #FFFFFF !important;
+    transform: scale(0.97) translateY(0) !important;
+    box-shadow: 0 2px 5px rgba(37, 211, 102, 0.2) !important;
   }
 
   .btn-catalog-whatsapp svg {
-    width: 12px !important;
-    height: 12px !important;
-    fill: #16A34A !important;
+    width: 13px !important;
+    height: 13px !important;
+    fill: #FFFFFF !important;
+    color: #FFFFFF !important;
     flex-shrink: 0 !important;
   }
 
