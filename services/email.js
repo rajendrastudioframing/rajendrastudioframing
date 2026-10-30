@@ -36,8 +36,8 @@ const STUDIO_INFO = {
 /**
  * Core Brevo API Dispatcher
  */
-function sendBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, replyTo = null, sender = null, apiKey = null }) {
-  return new Promise((resolve, reject) => {
+function dispatchBrevoSingle({ to, subject, htmlContent, textContent, bcc = null, replyTo = null, sender = null, apiKey = null }) {
+  return new Promise((resolve) => {
     try {
       const recipients = Array.isArray(to) ? to : [{ email: to }];
       const validRecipients = recipients
@@ -73,11 +73,10 @@ function sendBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, rep
         }
       }
 
-      if (replyTo) {
-        const cleanReply = typeof replyTo === 'string' ? replyTo.trim().toLowerCase() : (replyTo.email || '').trim().toLowerCase();
-        if (cleanReply && cleanReply.includes('@')) {
-          payload.replyTo = { email: cleanReply };
-        }
+      const defaultReplyTo = SENDER_EMAIL;
+      const cleanReply = typeof replyTo === 'string' ? replyTo.trim().toLowerCase() : ((replyTo && replyTo.email) ? replyTo.email.trim().toLowerCase() : defaultReplyTo);
+      if (cleanReply && cleanReply.includes('@')) {
+        payload.replyTo = { email: cleanReply };
       }
 
       const postData = JSON.stringify(payload);
@@ -93,7 +92,7 @@ function sendBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, rep
           'content-type': 'application/json',
           'content-length': Buffer.byteLength(postData)
         },
-        timeout: 10000
+        timeout: 9000
       }, (res) => {
         let responseBody = '';
         res.on('data', chunk => { responseBody += chunk; });
@@ -117,17 +116,43 @@ function sendBrevoEmail({ to, subject, htmlContent, textContent, bcc = null, rep
 
       req.on('timeout', () => {
         req.destroy();
-        console.warn('⚠️ [Brevo Email Timeout] Request timed out after 10s');
+        console.warn('⚠️ [Brevo Email Timeout] Request timed out after 9s');
         resolve({ success: false, error: 'Request timeout' });
       });
 
       req.write(postData);
       req.end();
     } catch (err) {
-      console.error('❌ [sendBrevoEmail Exception]:', err.message);
+      console.error('❌ [dispatchBrevoSingle Exception]:', err.message);
       resolve({ success: false, error: err.message });
     }
   });
+}
+
+/**
+ * Robust Dual-Channel Brevo Dispatcher with automatic failover
+ */
+async function sendBrevoEmail(options) {
+  const primaryResult = await dispatchBrevoSingle(options);
+  if (primaryResult.success) {
+    return primaryResult;
+  }
+
+  // Automatic Failover: Try Brevo Secondary Order API Key if primary fails
+  if (BREVO_ORDER_API_KEY && options.apiKey !== BREVO_ORDER_API_KEY) {
+    console.log('🔄 [Brevo Failover] Retrying email via secondary Brevo channel (order@rajendrastudioandgifts.in)...');
+    const secondaryOptions = {
+      ...options,
+      apiKey: BREVO_ORDER_API_KEY,
+      sender: { name: ORDER_SENDER_NAME, email: ORDER_SENDER_EMAIL }
+    };
+    const secondaryResult = await dispatchBrevoSingle(secondaryOptions);
+    if (secondaryResult.success) {
+      return secondaryResult;
+    }
+  }
+
+  return primaryResult;
 }
 
 /**
@@ -760,7 +785,7 @@ async function sendCustomerOtpEmail({ email, otp, name = '' }) {
 
   const cleanEmail = email.trim().toLowerCase();
   const cleanName = (name && name.trim()) || 'Valued Customer';
-  const subject = `🔐 Your Passcode to Sign In: ${otp} - Rajendra Studio`;
+  const subject = `Your Rajendra Studio Verification Code: ${otp}`;
 
   const html = `
     <!DOCTYPE html>
@@ -811,7 +836,7 @@ async function sendAdminOtpEmail({ email, otp }) {
   if (!email || !email.includes('@')) return { success: false, reason: 'Invalid email' };
 
   const cleanEmail = email.trim().toLowerCase();
-  const subject = `🔐 [Admin OTP] Rajendra Studio Admin Passcode: ${otp}`;
+  const subject = `Your Rajendra Studio Admin Passcode: ${otp}`;
 
   const html = `
     <!DOCTYPE html>
