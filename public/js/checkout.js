@@ -32,6 +32,8 @@ function updateCheckoutAuthUI() {
     ? getCustomerUser()
     : (window.CustomerAuth ? window.CustomerAuth.getCustomerUser() : null);
 
+  const savedPhone = (user && user.phone) ? user.phone : (localStorage.getItem('rf_customer_phone') || '');
+
   if (loggedIn) {
     if (noticeEl) noticeEl.style.setProperty('display', 'none', 'important');
     if (verifiedEl) verifiedEl.style.setProperty('display', 'flex', 'important');
@@ -47,21 +49,71 @@ function updateCheckoutAuthUI() {
       }
     }
 
-    // Auto-fill customer details if fields are empty
+    // Auto-fill customer details compulsory from logged in account
     if (user) {
-      if (custNameInput && !custNameInput.value.trim() && user.name && user.name !== 'Valued Customer') {
+      if (custNameInput && (!custNameInput.value.trim() || custNameInput.value.trim() === 'Valued Customer') && user.name && user.name !== 'Valued Customer') {
         custNameInput.value = user.name;
       }
       if (custEmailInput && !custEmailInput.value.trim() && user.email) {
         custEmailInput.value = user.email;
       }
-      if (custPhoneInput && !custPhoneInput.value.trim() && user.phone) {
-        custPhoneInput.value = user.phone;
-      }
+    }
+    if (custPhoneInput && !custPhoneInput.value.trim() && savedPhone) {
+      custPhoneInput.value = savedPhone;
     }
   } else {
     if (noticeEl) noticeEl.style.setProperty('display', 'flex', 'important');
     if (verifiedEl) verifiedEl.style.setProperty('display', 'none', 'important');
+  }
+}
+
+/**
+ * Proactively fetch latest profile from server on checkout load (ensures mobile has phone pre-filled)
+ */
+async function refreshCustomerDetailsOnCheckout() {
+  const token = typeof getCustomerToken === 'function' ? getCustomerToken() : localStorage.getItem('rf_customer_token');
+  if (!token) return;
+
+  const custPhoneInput = document.getElementById('custPhone');
+  const custNameInput = document.getElementById('custName');
+  const custEmailInput = document.getElementById('custEmail');
+
+  try {
+    const apiBase = window.location.origin.includes(':5500') ? 'http://localhost:5000' : window.location.origin;
+    const res = await fetch(`${apiBase}/api/customer/auth/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && data.customer) {
+        const cust = data.customer;
+        const current = (typeof getCustomerUser === 'function' ? getCustomerUser() : null) || {};
+        const updated = {
+          ...current,
+          ...cust,
+          email: cust.email || current.email || '',
+          name: (cust.name && cust.name !== 'Valued Customer') ? cust.name : (current.name || ''),
+          phone: (cust.phone && cust.phone.trim()) ? cust.phone.trim() : (current.phone || '')
+        };
+        localStorage.setItem('rf_customer_user', JSON.stringify(updated));
+        if (updated.phone) {
+          localStorage.setItem('rf_customer_phone', updated.phone);
+        }
+
+        if (custNameInput && (!custNameInput.value.trim() || custNameInput.value.trim() === 'Valued Customer') && updated.name && updated.name !== 'Valued Customer') {
+          custNameInput.value = updated.name;
+        }
+        if (custEmailInput && !custEmailInput.value.trim() && updated.email) {
+          custEmailInput.value = updated.email;
+        }
+        if (custPhoneInput && !custPhoneInput.value.trim() && updated.phone) {
+          custPhoneInput.value = updated.phone;
+        }
+        updateCheckoutAuthUI();
+      }
+    }
+  } catch (e) {
+    console.warn('Customer checkout details refresh note:', e.message);
   }
 }
 
@@ -263,18 +315,30 @@ async function submitCheckoutOrder(e) {
     ? getCustomerUser()
     : (window.CustomerAuth ? window.CustomerAuth.getCustomerUser() : null);
 
+  const fallbackPhone = (activeUser && activeUser.phone) ? activeUser.phone : (localStorage.getItem('rf_customer_phone') || '');
+
   if (activeUser) {
     if (!name && activeUser.name && activeUser.name !== 'Valued Customer') {
       name = activeUser.name.trim();
       if (nameInput) nameInput.value = name;
     }
-    if (!phone && activeUser.phone) {
-      phone = activeUser.phone.trim();
+    if (!phone && fallbackPhone) {
+      phone = fallbackPhone.trim();
       if (phoneInput) phoneInput.value = phone;
     }
     if (!email && activeUser.email) {
       email = activeUser.email.trim();
       if (emailInput) emailInput.value = email;
+    }
+  }
+
+  // Persist phone immediately so it is permanently filled for future checkouts
+  if (phone) {
+    localStorage.setItem('rf_customer_phone', phone);
+    if (activeUser) {
+      activeUser.phone = phone;
+      if (name && name !== 'Valued Customer') activeUser.name = name;
+      localStorage.setItem('rf_customer_user', JSON.stringify(activeUser));
     }
   }
 
@@ -524,6 +588,32 @@ function initCheckoutPage() {
   renderCheckoutOrderSummary();
   bindCheckoutForm();
   setupUpiPayment();
+  refreshCustomerDetailsOnCheckout();
+
+  // Attach auto-save listeners on customer inputs
+  const cPhone = document.getElementById('custPhone');
+  const cName = document.getElementById('custName');
+  if (cPhone) {
+    cPhone.addEventListener('input', () => {
+      const val = cPhone.value.trim();
+      if (val) {
+        localStorage.setItem('rf_customer_phone', val);
+        const u = (typeof getCustomerUser === 'function' ? getCustomerUser() : null) || {};
+        u.phone = val;
+        localStorage.setItem('rf_customer_user', JSON.stringify(u));
+      }
+    });
+  }
+  if (cName) {
+    cName.addEventListener('input', () => {
+      const val = cName.value.trim();
+      if (val && val !== 'Valued Customer') {
+        const u = (typeof getCustomerUser === 'function' ? getCustomerUser() : null) || {};
+        u.name = val;
+        localStorage.setItem('rf_customer_user', JSON.stringify(u));
+      }
+    });
+  }
 }
 
 // Auto-run on page load

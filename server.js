@@ -1905,25 +1905,82 @@ app.post('/api/customer/auth/resend-otp', async (req, res) => {
  */
 app.get('/api/customer/auth/me', requireCustomerAuth, async (req, res) => {
   try {
-    const customers = await db.getCustomers();
-    const profile = customers.find(c => c.email && c.email.toLowerCase() === req.customerEmail.toLowerCase());
+    const cleanEmail = (req.customerEmail || '').trim().toLowerCase();
+    let customer = await db.getCustomerByEmail(cleanEmail);
+
+    if (!customer) {
+      const customers = await db.getCustomers();
+      customer = customers.find(c => c.email && c.email.toLowerCase() === cleanEmail);
+    }
+
+    let phone = (customer && customer.phone && customer.phone.trim()) 
+      ? customer.phone.trim() 
+      : (req.customerPhone && req.customerPhone.trim() ? req.customerPhone.trim() : '');
+
+    let name = (customer && customer.name && customer.name.trim() !== 'Valued Customer') 
+      ? customer.name.trim() 
+      : (req.customerName && req.customerName.trim() ? req.customerName.trim() : '');
+
+    // Fallback: Check past orders if phone or name is still empty
+    if (!phone || !name) {
+      try {
+        const orders = await db.getOrders();
+        const pastOrder = orders.find(o => {
+          const ordEmail = (o.customer && o.customer.email) || o.email || '';
+          return ordEmail.trim().toLowerCase() === cleanEmail;
+        });
+        if (pastOrder) {
+          const ordPhone = (pastOrder.customer && pastOrder.customer.phone) || pastOrder.phone || '';
+          const ordName = (pastOrder.customer && pastOrder.customer.name) || pastOrder.name || '';
+          if (!phone && ordPhone && ordPhone.trim()) phone = ordPhone.trim();
+          if (!name && ordName && ordName.trim() && ordName.trim() !== 'Valued Customer') name = ordName.trim();
+        }
+      } catch (orderLookupErr) {
+        console.warn('Past order lookup warning in /api/customer/auth/me:', orderLookupErr.message);
+      }
+    }
+
+    if (!name) name = cleanEmail.split('@')[0];
+
+    const finalProfile = {
+      ...(customer || {}),
+      email: cleanEmail,
+      name,
+      phone
+    };
+
+    // If we recovered a phone number that was missing from record, update db
+    if (phone && (!customer || !customer.phone || !customer.phone.trim())) {
+      db.recordCustomerLogin(cleanEmail, name, phone, true).catch(() => {});
+    }
+
     res.json({
       success: true,
-      customer: profile || {
-        email: req.customerEmail,
-        name: req.customerName || '',
-        phone: req.customerPhone || ''
-      }
+      customer: finalProfile
     });
   } catch (err) {
     res.json({
       success: true,
       customer: {
         email: req.customerEmail,
-        name: req.customerName || '',
+        name: req.customerName || (req.customerEmail ? req.customerEmail.split('@')[0] : 'Customer'),
         phone: req.customerPhone || ''
       }
     });
+  }
+});
+
+/**
+ * Update Customer Profile (Name & Phone)
+ */
+app.post('/api/customer/profile', requireCustomerAuth, async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    const cleanEmail = (req.customerEmail || '').trim().toLowerCase();
+    const updated = await db.recordCustomerLogin(cleanEmail, name || '', phone || '', true);
+    res.json({ success: true, customer: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to update profile.' });
   }
 });
 
@@ -1955,10 +2012,13 @@ app.get('/api/customer/orders', requireCustomerAuth, async (req, res) => {
 app.get('/api/customer/sync', requireCustomerAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   try {
-    const customer = await db.getCustomerByEmail(req.customerEmail);
+    const cleanEmail = (req.customerEmail || '').trim().toLowerCase();
+    const customer = await db.getCustomerByEmail(cleanEmail);
     res.json({
       success: true,
-      email: req.customerEmail,
+      email: cleanEmail,
+      name: customer?.name || req.customerName || cleanEmail.split('@')[0],
+      phone: customer?.phone || req.customerPhone || '',
       cart: (customer && Array.isArray(customer.cart)) ? customer.cart : [],
       wishlist: (customer && Array.isArray(customer.wishlist)) ? customer.wishlist : []
     });

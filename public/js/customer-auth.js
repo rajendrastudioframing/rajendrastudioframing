@@ -91,26 +91,38 @@
     getCustomerUser() {
       try {
         const raw = localStorage.getItem(USER_KEY);
-        if (raw) return JSON.parse(raw);
+        let user = raw ? JSON.parse(raw) : null;
 
-        // Fallback: decode directly from stateless HMAC token payload
+        // 1. Recover phone from standalone key if missing in user object
+        const storedPhone = localStorage.getItem('rf_customer_phone');
+        if (user && !user.phone && storedPhone) {
+          user.phone = storedPhone;
+        }
+
+        // 2. Fallback: decode directly from stateless HMAC token payload
         const token = this.getCustomerToken();
         if (token && token.startsWith('rf_cust_')) {
           const rawPayload = token.slice('rf_cust_'.length).split('.')[0];
           if (rawPayload) {
-            const decoded = JSON.parse(atob(rawPayload.replace(/-/g, '+').replace(/_/g, '/')));
-            if (decoded && decoded.email) {
-              const recovered = {
-                email: decoded.email,
-                name: decoded.name || '',
-                phone: decoded.phone || ''
-              };
-              localStorage.setItem(USER_KEY, JSON.stringify(recovered));
-              return recovered;
-            }
+            try {
+              const decoded = JSON.parse(atob(rawPayload.replace(/-/g, '+').replace(/_/g, '/')));
+              if (decoded && decoded.email) {
+                if (!user) user = { email: decoded.email };
+                if (!user.email) user.email = decoded.email;
+                if (!user.name && decoded.name && decoded.name !== 'Valued Customer') user.name = decoded.name;
+                if (!user.phone && decoded.phone) user.phone = decoded.phone;
+              }
+            } catch (_) {}
           }
         }
-        return null;
+
+        if (user) {
+          if (user.phone && !localStorage.getItem('rf_customer_phone')) {
+            localStorage.setItem('rf_customer_phone', user.phone);
+          }
+          localStorage.setItem(USER_KEY, JSON.stringify(user));
+        }
+        return user;
       } catch (e) {
         return null;
       }
@@ -142,8 +154,19 @@
         }
         const data = await parseResponseJson(res);
         if (data && data.success && data.customer) {
-          localStorage.setItem(USER_KEY, JSON.stringify(data.customer));
-          this.notifyStateChange(true, data.customer);
+          const current = this.getCustomerUser() || {};
+          const merged = {
+            ...current,
+            ...data.customer,
+            email: data.customer.email || current.email || '',
+            name: (data.customer.name && data.customer.name !== 'Valued Customer') ? data.customer.name : (current.name || ''),
+            phone: (data.customer.phone && data.customer.phone.trim()) ? data.customer.phone.trim() : (current.phone || '')
+          };
+          localStorage.setItem(USER_KEY, JSON.stringify(merged));
+          if (merged.phone) {
+            localStorage.setItem('rf_customer_phone', merged.phone);
+          }
+          this.notifyStateChange(true, merged);
           return true;
         } else if (res.status === 401 && data && (data.revoked || data.code === 'REVOKED')) {
           // Explicit token revocation from logout only
@@ -176,8 +199,17 @@
       const data = await parseResponseJson(res);
       if (res && res.ok && data && data.success && data.token) {
         localStorage.setItem(TOKEN_KEY, data.token);
-        localStorage.setItem(USER_KEY, JSON.stringify(data.customer || { email }));
-        this.notifyStateChange(true, data.customer || { email });
+        const customerObj = {
+          ...(data.customer || {}),
+          email,
+          name: (data.customer?.name && data.customer.name !== 'Valued Customer') ? data.customer.name : (name || email.split('@')[0]),
+          phone: (data.customer?.phone && data.customer.phone.trim()) ? data.customer.phone.trim() : (phone || '')
+        };
+        localStorage.setItem(USER_KEY, JSON.stringify(customerObj));
+        if (customerObj.phone) {
+          localStorage.setItem('rf_customer_phone', customerObj.phone);
+        }
+        this.notifyStateChange(true, customerObj);
       }
       return data;
     },
@@ -191,8 +223,17 @@
       const data = await parseResponseJson(res);
       if (res && res.ok && data && data.success && data.token) {
         localStorage.setItem(TOKEN_KEY, data.token);
-        localStorage.setItem(USER_KEY, JSON.stringify(data.customer || { email }));
-        this.notifyStateChange(true, data.customer || { email });
+        const customerObj = {
+          ...(data.customer || {}),
+          email,
+          name: (data.customer?.name && data.customer.name !== 'Valued Customer') ? data.customer.name : (name || email.split('@')[0]),
+          phone: (data.customer?.phone && data.customer.phone.trim()) ? data.customer.phone.trim() : (phone || '')
+        };
+        localStorage.setItem(USER_KEY, JSON.stringify(customerObj));
+        if (customerObj.phone) {
+          localStorage.setItem('rf_customer_phone', customerObj.phone);
+        }
+        this.notifyStateChange(true, customerObj);
       }
       return data;
     },
