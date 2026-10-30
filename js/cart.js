@@ -106,12 +106,18 @@ function saveCart(cart) {
   const email = getActiveCustomerEmail();
   if (!email) return;
 
+  if (Array.isArray(cart) && cart.length === 0) {
+    try {
+      sessionStorage.setItem('rf_cart_just_cleared', 'true');
+    } catch (_) {}
+  }
+
   try {
     localStorage.setItem(getCartStorageKey(), JSON.stringify(cart));
     updateCartBadges();
     renderCartDrawer();
     window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { cart } }));
-    syncCartToServer(cart, false);
+    syncCartToServer(cart, Array.isArray(cart) && cart.length === 0);
   } catch (e) {
     console.error('Error saving cart to localStorage:', e);
   }
@@ -137,6 +143,18 @@ async function loadCustomerCartFromServer() {
       const serverCart = (data && data.success && Array.isArray(data.cart)) ? data.cart : [];
 
       if (serverCart.length > 0) {
+        let justCleared = false;
+        try {
+          justCleared = (sessionStorage.getItem('rf_cart_just_cleared') === 'true');
+        } catch (_) {}
+
+        if (justCleared) {
+          try { sessionStorage.removeItem('rf_cart_just_cleared'); } catch (_) {}
+          saveCart([]);
+          syncCartToServer([], true);
+          return;
+        }
+
         // Server has stored items: merge with localCart without losing items
         const merged = mergeCartLists(serverCart, localCart);
         localStorage.setItem(getCartStorageKey(), JSON.stringify(merged));
@@ -598,12 +616,21 @@ function unhighlightCartNav() {
   }
 }
 
+let lastCartToggleTime = 0;
 function openCartDrawer(forceOpen = false) {
+  const now = Date.now();
   const existingOverlay = document.getElementById('cartDrawerOverlay');
-  if (!forceOpen && existingOverlay && existingOverlay.classList.contains('open')) {
+  const isOpen = existingOverlay && existingOverlay.classList.contains('open');
+
+  if (!forceOpen && isOpen) {
+    if (now - lastCartToggleTime < 400) {
+      return; // Ignore rapid duplicate trigger
+    }
+    lastCartToggleTime = now;
     closeCartDrawer();
     return;
   }
+  lastCartToggleTime = now;
 
   if (typeof closeWishlistDrawer === 'function') {
     closeWishlistDrawer();
@@ -704,8 +731,10 @@ function initCart() {
     // 2. Navbar cart buttons
     const cartTrigger = e.target.closest('#navbarCartBtn, .navbar-cart-btn, [data-open-cart]');
     if (cartTrigger) {
-      e.preventDefault();
-      openCartDrawer();
+      if (!cartTrigger.getAttribute('onclick')) {
+        e.preventDefault();
+        openCartDrawer();
+      }
       return;
     }
 

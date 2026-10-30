@@ -96,11 +96,17 @@ function saveWishlist(wishlist) {
   const email = getActiveCustomerEmail();
   if (!email) return;
 
+  if (Array.isArray(wishlist) && wishlist.length === 0) {
+    try {
+      sessionStorage.setItem('rf_wishlist_just_cleared', 'true');
+    } catch (_) {}
+  }
+
   try {
     localStorage.setItem(getWishlistStorageKey(), JSON.stringify(wishlist));
     updateWishlistUI();
     window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: { wishlist } }));
-    syncWishlistToServer(wishlist, false);
+    syncWishlistToServer(wishlist, Array.isArray(wishlist) && wishlist.length === 0);
   } catch (e) {
     console.error('Error saving wishlist to localStorage:', e);
   }
@@ -126,6 +132,19 @@ async function loadCustomerWishlistFromServer() {
       const serverWishlist = (data && data.success && Array.isArray(data.wishlist)) ? data.wishlist : [];
 
       if (serverWishlist.length > 0) {
+        // If user recently moved all to cart or cleared wishlist, discard stale server items
+        let justCleared = false;
+        try {
+          justCleared = (sessionStorage.getItem('rf_wishlist_just_cleared') === 'true');
+        } catch (_) {}
+
+        if (justCleared) {
+          try { sessionStorage.removeItem('rf_wishlist_just_cleared'); } catch (_) {}
+          saveWishlist([]);
+          syncWishlistToServer([], true);
+          return;
+        }
+
         const merged = mergeWishlistLists(serverWishlist, localWishlist);
         localStorage.setItem(getWishlistStorageKey(), JSON.stringify(merged));
         updateWishlistUI();
@@ -318,6 +337,7 @@ function moveAllWishlistToCart() {
     return;
   }
 
+  // 1. Move all items into cart
   list.forEach(item => {
     if (window.addToCart) {
       window.addToCart({
@@ -333,12 +353,26 @@ function moveAllWishlistToCart() {
     }
   });
 
-  saveWishlist([]);
+  // 2. Mark explicit clear flag so in-flight sync does not resurrect items
+  try {
+    sessionStorage.setItem('rf_wishlist_just_cleared', 'true');
+  } catch (_) {}
+
+  // 3. Empty wishlist locally & sync immediately to server
+  const emptyList = [];
+  saveWishlist(emptyList);
+  syncWishlistToServer(emptyList, true);
+
+  // 4. Update UI & re-render empty drawer
+  updateWishlistUI();
   renderWishlistDrawer();
   closeWishlistDrawer();
 
+  // 5. Open cart drawer so user sees their moved items
   if (window.openCartDrawer) {
-    setTimeout(window.openCartDrawer, 300);
+    setTimeout(() => {
+      window.openCartDrawer(true);
+    }, 350);
   }
 }
 
@@ -574,12 +608,21 @@ function unhighlightWishlistNav() {
   }
 }
 
+let lastWishlistToggleTime = 0;
 function openWishlistDrawer(forceOpen = false) {
+  const now = Date.now();
   const existingOverlay = document.getElementById('wishlistDrawerOverlay');
-  if (!forceOpen && existingOverlay && existingOverlay.classList.contains('open')) {
+  const isOpen = existingOverlay && existingOverlay.classList.contains('open');
+
+  if (!forceOpen && isOpen) {
+    if (now - lastWishlistToggleTime < 400) {
+      return; // Ignore rapid duplicate trigger
+    }
+    lastWishlistToggleTime = now;
     closeWishlistDrawer();
     return;
   }
+  lastWishlistToggleTime = now;
 
   if (typeof closeCartDrawer === 'function') {
     closeCartDrawer();
@@ -668,8 +711,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Open wishlist drawer trigger
     const trigger = e.target.closest('#navbarWishlistBtn, .navbar-wishlist-btn, [data-open-wishlist]');
     if (trigger) {
-      e.preventDefault();
-      openWishlistDrawer();
+      if (!trigger.getAttribute('onclick')) {
+        e.preventDefault();
+        openWishlistDrawer();
+      }
       return;
     }
 

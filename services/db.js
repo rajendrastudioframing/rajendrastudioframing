@@ -1149,23 +1149,14 @@ module.exports = {
         const queryPromise = supabase.from('customers').select('*').eq('email', cleanEmail).maybeSingle();
         const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getCustomerByEmail');
         if (!error && data) {
-          let cart = [];
-          if (Array.isArray(data.cart) && data.cart.length > 0) {
-            cart = data.cart;
-          } else if (foundLocal && Array.isArray(foundLocal.cart) && foundLocal.cart.length > 0) {
-            cart = foundLocal.cart;
-          } else if (Array.isArray(memCart) && memCart.length > 0) {
-            cart = memCart;
-          }
+          // If in-memory store was explicitly updated (even to []), respect it as authoritative
+          const cart = (memCart !== undefined && Array.isArray(memCart))
+            ? memCart
+            : (Array.isArray(data.cart) ? data.cart : ((foundLocal && Array.isArray(foundLocal.cart)) ? foundLocal.cart : []));
 
-          let wishlist = [];
-          if (Array.isArray(data.wishlist) && data.wishlist.length > 0) {
-            wishlist = data.wishlist;
-          } else if (foundLocal && Array.isArray(foundLocal.wishlist) && foundLocal.wishlist.length > 0) {
-            wishlist = foundLocal.wishlist;
-          } else if (Array.isArray(memWishlist) && memWishlist.length > 0) {
-            wishlist = memWishlist;
-          }
+          const wishlist = (memWishlist !== undefined && Array.isArray(memWishlist))
+            ? memWishlist
+            : (Array.isArray(data.wishlist) ? data.wishlist : ((foundLocal && Array.isArray(foundLocal.wishlist)) ? foundLocal.wishlist : []));
 
           return {
             ...data,
@@ -1179,12 +1170,12 @@ module.exports = {
     }
 
     if (foundLocal) {
-      const cart = (Array.isArray(foundLocal.cart) && foundLocal.cart.length > 0)
-        ? foundLocal.cart
-        : (Array.isArray(memCart) ? memCart : []);
-      const wishlist = (Array.isArray(foundLocal.wishlist) && foundLocal.wishlist.length > 0)
-        ? foundLocal.wishlist
-        : (Array.isArray(memWishlist) ? memWishlist : []);
+      const cart = (memCart !== undefined && Array.isArray(memCart))
+        ? memCart
+        : (Array.isArray(foundLocal.cart) ? foundLocal.cart : []);
+      const wishlist = (memWishlist !== undefined && Array.isArray(memWishlist))
+        ? memWishlist
+        : (Array.isArray(foundLocal.wishlist) ? foundLocal.wishlist : []);
       return {
         ...foundLocal,
         cart,
