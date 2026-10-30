@@ -260,18 +260,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const res = await apiFetch(`${API_BASE}/api/admin/inquiries`);
       const data = await res.json();
-      if (data && data.success && Array.isArray(data.inquiries)) {
-        allInquiries = data.inquiries;
-        const orders = allInquiries.filter(i => 
-          i.id.startsWith('RF-ORD') || (i.product && i.product.includes('[ONLINE ORDER]'))
-        );
-        const leads = allInquiries.filter(i => 
-          !i.id.startsWith('RF-ORD') && (!i.product || !i.product.includes('[ONLINE ORDER]'))
-        );
-        updateOrdersKPIs(orders);
-        updateLeadsKPIs(leads);
-        updateNotificationBadges();
-      }
+      await loadInquiries();
+      updateNotificationBadges();
       // Also background sync live customer accounts & metrics
       loadCustomers();
       loadDashboardStats();
@@ -652,15 +642,41 @@ async function loadInquiries() {
       try {
         const ordData = await ordRes.json();
         if (ordData.success && Array.isArray(ordData.orders)) {
-          const existingIds = new Set(allInquiries.map(i => (i.id || '').toLowerCase().trim()));
+          const existingMap = new Map(allInquiries.map(i => [(i.id || '').toLowerCase().trim(), i]));
           ordData.orders.forEach(o => {
-            if (o && o.orderId && !existingIds.has(o.orderId.toLowerCase().trim())) {
-              const itemSummary = Array.isArray(o.items) && o.items.length
-                ? o.items.map(i => `${i.name || 'Custom Product'} (x${i.quantity || 1})`).join(', ')
+            if (!o || !o.orderId) return;
+            const cleanOrderId = o.orderId.toLowerCase().trim();
+            const existing = existingMap.get(cleanOrderId);
+
+            const addrParts = o.customer ? [o.customer.address, o.customer.city, o.customer.state, o.customer.pincode].filter(Boolean) : [];
+            const deliveryAddress = addrParts.join(', ');
+            const itemsList = Array.isArray(o.items) ? o.items : [];
+
+            if (existing) {
+              // Enrich existing inquiry with full order structure
+              if (itemsList.length > 0 && (!existing.items || !existing.items.length)) {
+                existing.items = itemsList;
+              }
+              if (o.customer) {
+                existing.customer = o.customer;
+                if (!existing.name && o.customer.name) existing.name = o.customer.name;
+                if (!existing.phone && o.customer.phone) existing.phone = o.customer.phone;
+                if (!existing.email && o.customer.email) existing.email = o.customer.email;
+                if (deliveryAddress && !existing.deliveryAddress) existing.deliveryAddress = deliveryAddress;
+              }
+              if (o.paymentMethod) existing.paymentMethod = o.paymentMethod;
+              if (o.upiUtr) existing.upiUtr = o.upiUtr;
+              if (o.orderPhoto && !existing.customerPhotoUrl) {
+                existing.customerPhotoUrl = o.orderPhoto.fileUrl || o.orderPhoto;
+                existing.customerPhotoName = o.orderPhoto.fileName || 'Customer Photo';
+              }
+              if (o.total && !existing.estimatedValue) existing.estimatedValue = Number(o.total);
+            } else {
+              const itemSummary = itemsList.length
+                ? itemsList.map(i => `${i.name || 'Custom Product'} (x${i.quantity || 1})`).join(', ')
                 : 'Photo Frame';
-              const addrParts = o.customer ? [o.customer.address, o.customer.city, o.customer.state, o.customer.pincode].filter(Boolean) : [];
-              const deliveryAddress = addrParts.join(', ');
-              allInquiries.push({
+
+              const newInq = {
                 id: o.orderId,
                 orderId: o.orderId,
                 name: (o.customer && o.customer.name) || 'Customer',
@@ -669,19 +685,21 @@ async function loadInquiries() {
                 customerEmail: (o.customer && o.customer.email) || '',
                 product: `[ONLINE ORDER] ${itemSummary}`,
                 specs: `Deliver to: ${deliveryAddress || 'Studio Pickup'} • ${o.paymentMethod || 'Pick up from shop'}${o.upiUtr ? ' [UTR: ' + o.upiUtr + ']' : ''}`,
-                quantity: Array.isArray(o.items) ? o.items.reduce((s, i) => s + (Number(i.quantity) || 1), 0) : 1,
+                quantity: itemsList.reduce((s, i) => s + (Number(i.quantity) || 1), 0) || 1,
                 estimatedValue: Number(o.total) || 0,
                 notes: o.notes || '',
                 status: o.status || 'New',
                 hasUpload: Boolean(o.orderPhoto),
                 deliveryAddress: deliveryAddress || null,
-                items: Array.isArray(o.items) ? o.items : [],
+                items: itemsList,
                 paymentMethod: o.paymentMethod || 'Pick up from shop',
                 upiUtr: o.upiUtr || null,
+                subtotal: Number(o.subtotal) || Number(o.total) || 0,
                 total: Number(o.total) || 0,
                 createdAt: o.createdAt || new Date().toISOString()
-              });
-              existingIds.add(o.orderId.toLowerCase().trim());
+              };
+              allInquiries.push(newInq);
+              existingMap.set(cleanOrderId, newInq);
             }
           });
         }
@@ -1084,6 +1102,14 @@ function createOrderCardRowHTML(order) {
           <span class="order-note-content">${escapeHtml(noteText)}</span>
         </div>
         <div class="order-action-buttons">
+          <!-- 0. View Order (Complete details & specifications) -->
+          <button type="button" 
+                  class="btn-card-action details view-order" 
+                  onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" 
+                  title="View full order specifications, all items, customer notes, and address">
+            👁️ View Order
+          </button>
+
           <!-- 1. Accept Order -->
           <button type="button" 
                   class="btn-card-action accept ${isConfirmed || isReadyForPickup ? 'active-state' : ''}" 
@@ -1159,8 +1185,15 @@ window.openOrderDetailsModal = (orderId) => {
   const waText = encodeURIComponent(`Hello ${order.name}, Dahej Support here regarding your Order #${order.id} for ${order.product}. Status: ${order.status}. Total: ₹${order.estimatedValue}.`);
   if (waBtn) waBtn.href = `https://wa.me/${cleanPhone}?text=${waText}`;
 
-  // Structured items list
-  let items = Array.isArray(order.items) && order.items.length ? order.items : [];
+  // Structured items list with robust JSON string parsing & fallback splitting
+  let items = [];
+  if (Array.isArray(order.items) && order.items.length) {
+    items = order.items;
+  } else if (typeof order.items === 'string' && order.items.trim().startsWith('[')) {
+    try { items = JSON.parse(order.items); } catch (_) { items = []; }
+  }
+
+  // If items array is still empty, parse comma-separated products (e.g. "File Printing (x2), Mug Printing (x1)")
   if (!items.length) {
     let size = 'Standard';
     let finish = 'Standard';
@@ -1170,16 +1203,38 @@ window.openOrderDetailsModal = (orderId) => {
       const fm = order.specs.match(/(?:in|with|finish|color|standoffs|black|gold|wood|white|silver)[\s:]*([^,•\n\r]+)/i);
       if (fm) finish = fm[1].trim();
     }
-    items = [{
-      name: (order.product || 'Photo Frame').replace('[ONLINE ORDER]', '').trim(),
-      quantity: order.quantity || 1,
-      size: order.size || size,
-      finish: order.finish || finish,
-      price: order.estimatedValue || 0,
-      lineTotal: order.estimatedValue || 0,
-      image: getProductThumbnail(order.product),
-      uploadedPhoto: custPhoto ? { fileUrl: custPhoto.url, fileName: custPhoto.name } : null
-    }];
+
+    const rawProductStr = (order.product || 'Photo Frame').replace('[ONLINE ORDER]', '').trim();
+    const parts = rawProductStr.split(',').map(s => s.trim()).filter(Boolean);
+
+    if (parts.length > 1) {
+      items = parts.map(part => {
+        const qtyMatch = part.match(/\(x(\d+)\)/i);
+        const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
+        const cleanName = part.replace(/\(x\d+\)/i, '').trim();
+        return {
+          name: cleanName,
+          quantity: qty,
+          size: order.size || size,
+          finish: order.finish || finish,
+          price: Math.round((Number(order.estimatedValue) || 500) / parts.length),
+          lineTotal: Math.round((Number(order.estimatedValue) || 500) / parts.length),
+          image: getProductThumbnail(cleanName),
+          uploadedPhoto: custPhoto ? { fileUrl: custPhoto.url, fileName: custPhoto.name } : null
+        };
+      });
+    } else {
+      items = [{
+        name: rawProductStr,
+        quantity: order.quantity || 1,
+        size: order.size || size,
+        finish: order.finish || finish,
+        price: order.estimatedValue || 0,
+        lineTotal: order.estimatedValue || 0,
+        image: getProductThumbnail(rawProductStr),
+        uploadedPhoto: custPhoto ? { fileUrl: custPhoto.url, fileName: custPhoto.name } : null
+      }];
+    }
   }
 
   const itemsRowsHTML = items.map(it => {
@@ -1644,7 +1699,10 @@ function initOrderFiltering() {
     const sortVal = sortSelect ? sortSelect.value : 'newest';
 
     const orders = allInquiries.filter(i => 
-      i.id.startsWith('RF-ORD') || (i.product && i.product.includes('[ONLINE ORDER]'))
+      (i.id && i.id.startsWith('RF-ORD')) || 
+      (i.product && i.product.includes('[ONLINE ORDER]')) ||
+      (Array.isArray(i.items) && i.items.length > 0) ||
+      i.orderId
     );
 
     let filtered = orders.filter(order => {

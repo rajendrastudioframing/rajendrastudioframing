@@ -5578,3 +5578,33 @@ body.admin-login-body {
   }
 }
 
+
+
+/* View Order Button - Prominent, High-Visibility Royal Blue */
+[data-theme="light"] .btn-card-action.view-order {
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  border: 1.5px solid #BFDBFE !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(29, 78, 216, 0.08) !important;
+}
+[data-theme="light"] .btn-card-action.view-order:hover {
+  background: #DBEAFE !important;
+  border-color: #93C5FD !important;
+  color: #1E40AF !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 8px rgba(29, 78, 216, 0.18) !important;
+}
+[data-theme="dark"] .btn-card-action.view-order {
+  background: rgba(59, 130, 246, 0.16) !important;
+  color: #60A5FA !important;
+  border: 1.5px solid rgba(59, 130, 246, 0.38) !important;
+  font-weight: 700 !important;
+}
+[data-theme="dark"] .btn-card-action.view-order:hover {
+  background: rgba(59, 130, 246, 0.28) !important;
+  border-color: #60A5FA !important;
+  color: #93C5FD !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.3) !important;
+}

@@ -648,42 +648,78 @@ module.exports = {
 
   // --- ORDERS ---
   async getOrders() {
+    let supabaseOrders = [];
     if (supabase) {
       try {
         const queryPromise = supabase.from('orders').select('*').order('created_at', { ascending: false });
         const { data, error } = await withTimeout(queryPromise, 5000, 'Supabase getOrders');
         if (!error && Array.isArray(data)) {
-          // Map database columns to app schema
-          return data.map(o => ({
-            orderId: o.order_id,
-            customer: o.customer,
-            items: Array.isArray(o.items) ? o.items : [],
-            subtotal: Number(o.subtotal) || 0,
-            shipping: Number(o.shipping) || 0,
-            total: Number(o.total) || 0,
-            notes: o.notes || '',
-            orderPhoto: o.order_photo || null,
-            paymentMethod: o.payment_method || 'Pick up from shop',
-            paymentStatus: o.payment_status || 'Pending',
-            upiUtr: o.upi_utr || null,
-            status: o.status || 'pending',
-            confirmedAt: o.confirmed_at || o.confirmedAt || null,
-            confirmationDate: o.confirmation_date || o.confirmationDate || null,
-            pickedUpAt: o.picked_up_at || o.pickedUpAt || null,
-            pickupDate: o.pickup_date || o.pickupDate || null,
-            confirmedEmailSent: Boolean(o.confirmed_email_sent || o.confirmedEmailSent),
-            readyEmailSent: Boolean(o.ready_email_sent || o.readyEmailSent),
-            cancelledEmailSent: Boolean(o.cancelled_email_sent || o.cancelledEmailSent),
-            createdAt: o.created_at,
-            updatedAt: o.updated_at
-          }));
+          supabaseOrders = data.map(o => {
+            let parsedCustomer = o.customer || {};
+            if (typeof parsedCustomer === 'string' && parsedCustomer.trim().startsWith('{')) {
+              try { parsedCustomer = JSON.parse(parsedCustomer); } catch (_) {}
+            }
+            let parsedItems = Array.isArray(o.items) ? o.items : [];
+            if (!parsedItems.length && typeof o.items === 'string' && o.items.trim().startsWith('[')) {
+              try { parsedItems = JSON.parse(o.items); } catch (_) {}
+            }
+            return {
+              orderId: o.order_id,
+              customer: parsedCustomer,
+              items: parsedItems,
+              subtotal: Number(o.subtotal) || 0,
+              shipping: Number(o.shipping) || 0,
+              total: Number(o.total) || 0,
+              notes: o.notes || '',
+              orderPhoto: o.order_photo || null,
+              paymentMethod: o.payment_method || 'Pick up from shop',
+              paymentStatus: o.payment_status || 'Pending',
+              upiUtr: o.upi_utr || null,
+              status: o.status || 'pending',
+              confirmedAt: o.confirmed_at || o.confirmedAt || null,
+              confirmationDate: o.confirmation_date || o.confirmationDate || null,
+              pickedUpAt: o.picked_up_at || o.pickedUpAt || null,
+              pickupDate: o.pickup_date || o.pickupDate || null,
+              confirmedEmailSent: Boolean(o.confirmed_email_sent || o.confirmedEmailSent),
+              readyEmailSent: Boolean(o.ready_email_sent || o.readyEmailSent),
+              cancelledEmailSent: Boolean(o.cancelled_email_sent || o.cancelledEmailSent),
+              createdAt: o.created_at,
+              updatedAt: o.updated_at
+            };
+          });
         }
         if (error) console.warn('⚠️ [DATABASE] Supabase getOrders error, falling back to local:', error.message);
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase getOrders exception, using local:', err.message);
       }
     }
-    return readJson(ORDERS_FILE, []);
+
+    const localOrders = readJson(ORDERS_FILE, []);
+    const mergedMap = new Map();
+
+    // Add local orders first
+    localOrders.forEach(o => {
+      if (o && o.orderId) {
+        mergedMap.set(o.orderId.toLowerCase().trim(), o);
+      }
+    });
+
+    // Merge Supabase orders (ensuring no orders are omitted)
+    supabaseOrders.forEach(so => {
+      if (so && so.orderId) {
+        const key = so.orderId.toLowerCase().trim();
+        const existing = mergedMap.get(key);
+        if (existing) {
+          mergedMap.set(key, { ...existing, ...so });
+        } else {
+          mergedMap.set(key, so);
+        }
+      }
+    });
+
+    const combined = Array.from(mergedMap.values());
+    combined.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    return combined;
   },
 
   async getOrderById(orderId) {
@@ -809,44 +845,74 @@ module.exports = {
 
   // --- INQUIRIES ---
   async getInquiries() {
+    let supabaseInqs = [];
     if (supabase) {
       try {
         const queryPromise = supabase.from('inquiries').select('*').order('created_at', { ascending: false });
         const { data, error } = await withTimeout(queryPromise, 5000, 'Supabase getInquiries');
         if (!error && Array.isArray(data)) {
-          return data.map(i => ({
-            id: i.id,
-            name: i.name,
-            phone: i.phone,
-            email: i.email,
-            product: i.product,
-            specs: i.specs,
-            quantity: Number(i.quantity) || 1,
-            estimatedValue: Number(i.estimated_value) || 0,
-            status: i.status || 'pending',
-            hasUpload: Boolean(i.has_upload),
-            uploadFileName: i.upload_file_name || null,
-            uploadedFileUrl: i.uploaded_file_url || null,
-            deliveryAddress: i.delivery_address || null,
-            customerPhotoUrl: i.uploaded_file_url || null,
-            customerPhotoName: i.upload_file_name || null,
-            confirmedAt: i.confirmed_at || i.confirmedAt || null,
-            confirmationDate: i.confirmation_date || i.confirmationDate || null,
-            pickedUpAt: i.picked_up_at || i.pickedUpAt || null,
-            pickupDate: i.pickup_date || i.pickupDate || null,
-            confirmedEmailSent: Boolean(i.confirmed_email_sent || i.confirmedEmailSent),
-            readyEmailSent: Boolean(i.ready_email_sent || i.readyEmailSent),
-            cancelledEmailSent: Boolean(i.cancelled_email_sent || i.cancelledEmailSent),
-            createdAt: i.created_at,
-            updatedAt: i.updated_at
-          }));
+          supabaseInqs = data.map(i => {
+            let parsedItems = Array.isArray(i.items) ? i.items : [];
+            if (!parsedItems.length && typeof i.items === 'string' && i.items.trim().startsWith('[')) {
+              try { parsedItems = JSON.parse(i.items); } catch (_) {}
+            }
+            return {
+              id: i.id,
+              name: i.name,
+              phone: i.phone,
+              email: i.email,
+              product: i.product,
+              specs: i.specs,
+              quantity: Number(i.quantity) || 1,
+              estimatedValue: Number(i.estimated_value) || 0,
+              status: i.status || 'pending',
+              hasUpload: Boolean(i.has_upload),
+              uploadFileName: i.upload_file_name || null,
+              uploadedFileUrl: i.uploaded_file_url || null,
+              deliveryAddress: i.delivery_address || null,
+              customerPhotoUrl: i.uploaded_file_url || null,
+              customerPhotoName: i.upload_file_name || null,
+              items: parsedItems,
+              confirmedAt: i.confirmed_at || i.confirmedAt || null,
+              confirmationDate: i.confirmation_date || i.confirmationDate || null,
+              pickedUpAt: i.picked_up_at || i.pickedUpAt || null,
+              pickupDate: i.pickup_date || i.pickupDate || null,
+              confirmedEmailSent: Boolean(i.confirmed_email_sent || i.confirmedEmailSent),
+              readyEmailSent: Boolean(i.ready_email_sent || i.readyEmailSent),
+              cancelledEmailSent: Boolean(i.cancelled_email_sent || i.cancelledEmailSent),
+              createdAt: i.created_at,
+              updatedAt: i.updated_at
+            };
+          });
         }
         if (error) console.warn('⚠️ [DATABASE] Supabase getInquiries error:', error.message);
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase getInquiries exception:', err.message);
       }
     }
-    return readJson(INQUIRIES_FILE, []);
+
+    const localInqs = readJson(INQUIRIES_FILE, []);
+    const mergedMap = new Map();
+
+    localInqs.forEach(i => {
+      if (i && i.id) mergedMap.set(i.id.toLowerCase().trim(), i);
+    });
+
+    supabaseInqs.forEach(si => {
+      if (si && si.id) {
+        const key = si.id.toLowerCase().trim();
+        const existing = mergedMap.get(key);
+        if (existing) {
+          mergedMap.set(key, { ...existing, ...si });
+        } else {
+          mergedMap.set(key, si);
+        }
+      }
+    });
+
+    const combined = Array.from(mergedMap.values());
+    combined.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    return combined;
   },
 
   async saveInquiry(inquiry) {

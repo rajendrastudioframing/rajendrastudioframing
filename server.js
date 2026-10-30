@@ -2621,6 +2621,12 @@ app.post('/api/orders', async (req, res) => {
         customerPhotoUrl: photoUrl,
         customerPhotoName: photoName,
         deliveryAddress: `${newOrder.customer.address}, ${newOrder.customer.city} (${newOrder.customer.pincode})`,
+        items: newOrder.items,
+        subtotal: newOrder.subtotal,
+        shipping: newOrder.shipping,
+        total: newOrder.total,
+        paymentMethod: newOrder.paymentMethod,
+        upiUtr: newOrder.upiUtr,
         createdAt: newOrder.createdAt
       });
     } catch (inqErr) {
