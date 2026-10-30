@@ -4010,23 +4010,37 @@ app.get('/api/db-status', async (req, res) => {
               process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
               '';
 
-  let ping = null;
+  const tablesCheck = {};
   if (db.supabase) {
-    try {
-      const pingQuery = db.supabase.from('categories').select('id').limit(1);
-      const pingRes = await db.withTimeout(pingQuery, 3500, 'Supabase ping');
-      if (pingRes && !pingRes.error) {
-        ping = { ok: true, message: 'Database online & reachable' };
-      } else {
-        ping = { ok: false, error: (pingRes && pingRes.error) ? pingRes.error.message : 'Unknown error' };
+    const tablesToTest = ['orders', 'inquiries', 'customers', 'products', 'categories', 'messages', 'reviews'];
+    for (const tbl of tablesToTest) {
+      try {
+        const q = db.supabase.from(tbl).select('*', { count: 'exact', head: true });
+        const result = await db.withTimeout(q, 3000, "Supabase test " + tbl);
+        if (result.error) {
+          tablesCheck[tbl] = { ok: false, error: result.error.message, code: result.error.code };
+        } else {
+          tablesCheck[tbl] = { ok: true, count: result.count !== null ? result.count : 'accessible' };
+        }
+      } catch (e) {
+        tablesCheck[tbl] = { ok: false, error: e.message };
       }
-    } catch (e) {
-      ping = { 
-        ok: false, 
-        error: e.message, 
-        isPausedLikely: e.message.includes('timed out') || e.message.includes('fetch failed') 
-      };
     }
+  }
+
+  let ordersFileExists = false;
+  let inquiriesFileExists = false;
+  let ordersCount = 0;
+  let inquiriesCount = 0;
+  try {
+    const ordersPath = path.join(__dirname, 'data', 'orders.json');
+    ordersFileExists = fs.existsSync(ordersPath);
+    const ords = await db.getOrders();
+    ordersCount = Array.isArray(ords) ? ords.length : 0;
+    const inqs = await db.getInquiries();
+    inquiriesCount = Array.isArray(inqs) ? inqs.length : 0;
+  } catch (err) {
+    // ignore
   }
 
   res.json({
@@ -4036,7 +4050,14 @@ app.get('/api/db-status', async (req, res) => {
     hasSupabaseUrl: Boolean(url),
     hasSupabaseKey: Boolean(key),
     supabaseHost: url ? (() => { try { return new URL(url).host; } catch (_) { return null; } })() : null,
-    ping
+    tables: tablesCheck,
+    ordersCount,
+    inquiriesCount,
+    ordersFileExists,
+    environment: {
+      isVercel: Boolean(process.env.VERCEL),
+      nodeEnv: process.env.NODE_ENV
+    }
   });
 });
 
