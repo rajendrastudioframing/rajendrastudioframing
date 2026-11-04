@@ -2166,6 +2166,7 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
  * Inquiries List (GET)
  */
 app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   try {
     const [inquiries, orders] = await Promise.all([
       db.getInquiries(),
@@ -3002,6 +3003,7 @@ app.put('/api/orders/:orderId/customer-update', async (req, res) => {
  * Admin: Get All Orders (GET)
  */
 app.get('/api/admin/orders', requireAuth, async (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   // Background check to guarantee zero order loss
   orderRecovery.syncBrevoOrders().catch(err => console.warn('Brevo auto-recovery notice:', err.message));
   const orders = await db.getOrders();
@@ -3031,6 +3033,7 @@ app.post('/api/admin/orders/recover-from-brevo', requireAuth, async (req, res) =
  * When an order is accepted, cancelled, shipped, or delivered, automatically emails the customer!
  */
 async function handleUpdateOrderStatus(req, res) {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   try {
     const rawId = (req.params.id || '').trim();
     const cleanId = rawId.replace(/^#/, '');
@@ -3243,16 +3246,21 @@ async function handleUpdateOrderStatus(req, res) {
         };
       } else {
         console.log(`🛍️ [READY FOR PICKUP TRIGGERED] Sending ready for pickup email for order #${cleanId} (Pickup Date: ${finalPickupDate}) via Brevo...`);
-        emailResult = await emailService.notifyOrderPickupReady({ order: targetObj, pickupDate: finalPickupDate, notes, req });
-        if (emailResult && (emailResult.sent || emailResult.success)) {
-          if (updatedOrder) {
-            updatedOrder.readyEmailSent = true;
-            await db.saveOrder(updatedOrder);
+        try {
+          emailResult = await emailService.notifyOrderPickupReady({ order: targetObj, pickupDate: finalPickupDate, notes, req });
+          if (emailResult && (emailResult.sent || emailResult.success)) {
+            if (updatedOrder) {
+              updatedOrder.readyEmailSent = true;
+              await db.saveOrder(updatedOrder);
+            }
+            if (updatedInquiry) {
+              updatedInquiry.readyEmailSent = true;
+              await db.saveInquiry(updatedInquiry);
+            }
           }
-          if (updatedInquiry) {
-            updatedInquiry.readyEmailSent = true;
-            await db.saveInquiry(updatedInquiry);
-          }
+        } catch (mailErr) {
+          console.warn('⚠️ [EMAIL NOTICE] Brevo pickup email dispatch warning:', mailErr.message);
+          emailResult = { sent: false, error: mailErr.message };
         }
       }
     } else if (isCancelling) {
@@ -3265,16 +3273,21 @@ async function handleUpdateOrderStatus(req, res) {
         };
       } else {
         console.log(`✕ [ORDER CANCELLED TRIGGERED] Sending cancellation email for order #${cleanId} via Brevo...`);
-        emailResult = await emailService.notifyOrderCancelledByAdmin({ order: targetObj, notes, req });
-        if (emailResult && (emailResult.sent || emailResult.success)) {
-          if (updatedOrder) {
-            updatedOrder.cancelledEmailSent = true;
-            await db.saveOrder(updatedOrder);
+        try {
+          emailResult = await emailService.notifyOrderCancelledByAdmin({ order: targetObj, notes, req });
+          if (emailResult && (emailResult.sent || emailResult.success)) {
+            if (updatedOrder) {
+              updatedOrder.cancelledEmailSent = true;
+              await db.saveOrder(updatedOrder);
+            }
+            if (updatedInquiry) {
+              updatedInquiry.cancelledEmailSent = true;
+              await db.saveInquiry(updatedInquiry);
+            }
           }
-          if (updatedInquiry) {
-            updatedInquiry.cancelledEmailSent = true;
-            await db.saveInquiry(updatedInquiry);
-          }
+        } catch (mailErr) {
+          console.warn('⚠️ [EMAIL NOTICE] Brevo cancel email dispatch warning:', mailErr.message);
+          emailResult = { sent: false, error: mailErr.message };
         }
       }
     } else if (isPickup) {

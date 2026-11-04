@@ -688,9 +688,10 @@ function resolveBestStatus(statusA, statusB) {
    ========================================================================== */
 async function loadInquiries() {
   try {
+    const ts = Date.now();
     const [inqRes, ordRes] = await Promise.all([
-      fetch(`${API_BASE}/api/admin/inquiries`, { headers: { 'Authorization': `Bearer ${token}` } }),
-      fetch(`${API_BASE}/api/admin/orders`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+      apiFetch(`/api/admin/inquiries?_t=${ts}`, { cache: 'no-store' }),
+      apiFetch(`/api/admin/orders?_t=${ts}`, { cache: 'no-store' }).catch(() => null)
     ]);
     const data = await inqRes.json();
     if (!data.success) return;
@@ -2219,11 +2220,10 @@ window.updateInquiryStatus = async (id, newStatus, customNotes = null) => {
       payload.notes = 'Order delivered successfully. Thank you for choosing Rajesh Framing!';
     }
 
-    const res = await fetch(`${API_BASE}/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
+    const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     });
@@ -2258,11 +2258,10 @@ window.restoreCancelledOrder = async (id, targetStatus = 'In Progress') => {
   const cleanId = (id || '').replace(/^#/, '');
   try {
     showToast('Restoring Order', `Restoring Order #${cleanId} to "${targetStatus}"...`, 'info');
-    const res = await fetch(`${API_BASE}/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
+    const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         status: targetStatus,
@@ -3253,12 +3252,27 @@ function initCancelOrderModal() {
       confirmBtn.textContent = 'Cancelling & Notifying...';
     }
 
+    // 1. Instant optimistic UI update
+    const existingInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanId || (i.orderId || '').replace(/^#/, '') === cleanId);
+    if (existingInq) {
+      existingInq.status = 'cancelled';
+      existingInq.notes = cancelNotes;
+      const orders = allInquiries.filter(i => 
+        (i.id && i.id.startsWith('RF-ORD')) || 
+        (i.product && i.product.includes('[ONLINE ORDER]')) ||
+        (Array.isArray(i.items) && i.items.length > 0) ||
+        i.orderId
+      );
+      updateOrdersKPIs(orders);
+      renderOverviewOrders(orders.slice(0, 5));
+      renderAllOrders(orders);
+    }
+
     try {
-      const res = await fetch(`${API_BASE}/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
+      const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           status: 'Cancelled',
