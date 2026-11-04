@@ -606,13 +606,46 @@ async function loadDashboardStats() {
     const kpiProcessing = document.getElementById('kpiProcessingOrders');
     const kpiCompleted = document.getElementById('kpiCompletedOrders');
     const kpiPipeline = document.getElementById('kpiPipelineValue');
-
-    if (kpiNew) kpiNew.textContent = stats.newInquiries || 0;
-    if (kpiPipeline) kpiPipeline.textContent = `₹${(stats.totalPipelineValue || 0).toLocaleString('en-IN')}`;
-
     const kpiCustomers = document.getElementById('kpiTotalCustomers');
+
+    const newCount = stats.newOrders !== undefined ? stats.newOrders : (stats.newInquiries || 0);
+    const procCount = stats.processingOrders !== undefined ? stats.processingOrders : 0;
+    const compCount = stats.completedOrders !== undefined ? stats.completedOrders : 0;
+    const pipeVal = stats.totalPipelineValue || 0;
+
+    if (kpiNew) kpiNew.textContent = newCount;
+    if (kpiProcessing) kpiProcessing.textContent = procCount;
+    if (kpiCompleted) kpiCompleted.textContent = compCount;
+    if (kpiPipeline) kpiPipeline.textContent = `₹${pipeVal.toLocaleString('en-IN')}`;
+
     if (kpiCustomers && stats.totalCustomers !== undefined) {
       kpiCustomers.textContent = stats.totalCustomers;
+    }
+
+    // Dynamic Overview Sub-tags with REAL metrics
+    const kpiNewTag = document.getElementById('kpiNewInquiriesTag');
+    const kpiProcessingTag = document.getElementById('kpiProcessingOrdersTag');
+    const kpiCompletedTag = document.getElementById('kpiCompletedOrdersTag');
+    const kpiPipelineTag = document.getElementById('kpiPipelineValueTag');
+    const kpiCustomersTag = document.getElementById('kpiTotalCustomersTag');
+
+    const newToday = stats.newToday !== undefined ? stats.newToday : 0;
+    const completedWeek = stats.completedThisWeek !== undefined ? stats.completedThisWeek : 0;
+
+    if (kpiNewTag) {
+      kpiNewTag.innerHTML = newToday > 0 ? `<span style="font-size:0.85em;">●</span> ${newToday} today` : `<span style="font-size:0.85em;">●</span> ${newCount} pending`;
+    }
+    if (kpiProcessingTag) {
+      kpiProcessingTag.innerHTML = `<span style="font-size:0.85em;">●</span> ${procCount} in progress`;
+    }
+    if (kpiCompletedTag) {
+      kpiCompletedTag.innerHTML = completedWeek > 0 ? `<span style="font-size:0.85em;">✓</span> ${completedWeek} this week` : `<span style="font-size:0.85em;">✓</span> ${compCount} completed`;
+    }
+    if (kpiPipelineTag) {
+      kpiPipelineTag.textContent = `${stats.totalOrders || 0} total orders`;
+    }
+    if (kpiCustomersTag) {
+      kpiCustomersTag.innerHTML = `<span style="font-size:0.85em;">●</span> Registered`;
     }
 
     // Refresh smart notification badges (hides for active/seen sections)
@@ -738,36 +771,129 @@ async function loadInquiries() {
 }
 
 function updateOrdersKPIs(orders) {
-  const newCount = orders.filter(o => o.status === 'New').length;
-  const processingCount = orders.filter(o => o.status === 'In Progress').length;
-  const completedCount = orders.filter(o => o.status === 'Completed').length;
-  const cancelledCount = orders.filter(o => o.status === 'Cancelled').length;
+  const norm = (s) => (s || '').toLowerCase().trim();
 
+  // Robust status classification across real store data
+  const newOrders = orders.filter(o => {
+    const s = norm(o.status);
+    return s === 'new' || s === 'pending';
+  });
+
+  const processingOrders = orders.filter(o => {
+    const s = norm(o.status);
+    return s === 'in progress' || s === 'processing' || s === 'in production' || s === 'confirmed' || s === 'accepted' || s === 'shipped';
+  });
+
+  const completedOrders = orders.filter(o => {
+    const s = norm(o.status);
+    return s === 'completed' || s === 'picked_up' || s === 'picked up' || s === 'delivered';
+  });
+
+  const cancelledOrders = orders.filter(o => {
+    const s = norm(o.status);
+    return s === 'cancelled' || s === 'canceled';
+  });
+
+  const newCount = newOrders.length;
+  const processingCount = processingOrders.length;
+  const completedCount = completedOrders.length;
+  const cancelledCount = cancelledOrders.length;
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const newToday = newOrders.filter(o => new Date(o.createdAt || o.created_at || 0) >= todayStart).length;
+  const completedThisWeek = completedOrders.filter(o => new Date(o.createdAt || o.created_at || 0) >= weekStart).length;
+
+  const totalPipelineVal = orders.reduce((sum, item) => sum + (Number(item.total || item.estimatedValue) || 0), 0);
+
+  // 1. Orders View KPI Elements
   const elNew = document.getElementById('ordersKpiNew');
   const elProc = document.getElementById('ordersKpiProcessing');
   const elComp = document.getElementById('ordersKpiCompleted');
   const elCanc = document.getElementById('ordersKpiCancelled');
-
-  const elOverProc = document.getElementById('kpiProcessingOrders');
-  const elOverComp = document.getElementById('kpiCompletedOrders');
 
   if (elNew) elNew.textContent = newCount;
   if (elProc) elProc.textContent = processingCount;
   if (elComp) elComp.textContent = completedCount;
   if (elCanc) elCanc.textContent = cancelledCount;
 
+  // Orders View Dynamic Sub-tags
+  const elNewTag = document.getElementById('ordersKpiNewTag');
+  const elProcTag = document.getElementById('ordersKpiProcessingTag');
+  const elCompTag = document.getElementById('ordersKpiCompletedTag');
+  const elCancTag = document.getElementById('ordersKpiCancelledTag');
+
+  if (elNewTag) {
+    elNewTag.innerHTML = newToday > 0 ? `<span style="font-size:0.85em;">●</span> ${newToday} today` : `<span style="font-size:0.85em;">●</span> ${newCount} pending`;
+  }
+  if (elProcTag) {
+    elProcTag.innerHTML = `<span style="font-size:0.85em;">●</span> ${processingCount} in progress`;
+  }
+  if (elCompTag) {
+    elCompTag.innerHTML = completedThisWeek > 0 ? `<span style="font-size:0.85em;">✓</span> ${completedThisWeek} this week` : `<span style="font-size:0.85em;">✓</span> ${completedCount} completed`;
+  }
+  if (elCancTag) {
+    elCancTag.textContent = `${cancelledCount} cancelled`;
+  }
+
+  // 2. Dashboard Overview KPI Elements
+  const elOverNew = document.getElementById('kpiNewInquiries');
+  const elOverProc = document.getElementById('kpiProcessingOrders');
+  const elOverComp = document.getElementById('kpiCompletedOrders');
+  const elOverPipe = document.getElementById('kpiPipelineValue');
+
+  if (elOverNew) elOverNew.textContent = newCount;
   if (elOverProc) elOverProc.textContent = processingCount;
   if (elOverComp) elOverComp.textContent = completedCount;
+  if (elOverPipe) elOverPipe.textContent = `₹${totalPipelineVal.toLocaleString('en-IN')}`;
+
+  const elOverNewTag = document.getElementById('kpiNewInquiriesTag');
+  const elOverProcTag = document.getElementById('kpiProcessingOrdersTag');
+  const elOverCompTag = document.getElementById('kpiCompletedOrdersTag');
+  const elOverPipeTag = document.getElementById('kpiPipelineValueTag');
+
+  if (elOverNewTag) {
+    elOverNewTag.innerHTML = newToday > 0 ? `<span style="font-size:0.85em;">●</span> ${newToday} today` : `<span style="font-size:0.85em;">●</span> ${newCount} pending`;
+  }
+  if (elOverProcTag) {
+    elOverProcTag.innerHTML = `<span style="font-size:0.85em;">●</span> ${processingCount} in progress`;
+  }
+  if (elOverCompTag) {
+    elOverCompTag.innerHTML = completedThisWeek > 0 ? `<span style="font-size:0.85em;">✓</span> ${completedThisWeek} this week` : `<span style="font-size:0.85em;">✓</span> ${completedCount} completed`;
+  }
+  if (elOverPipeTag) {
+    elOverPipeTag.textContent = `${orders.length} total orders`;
+  }
 
   // Refresh smart notification badges
   updateNotificationBadges();
 }
 
 function updateLeadsKPIs(leads) {
+  const norm = (s) => (s || '').toLowerCase().trim();
+
   const total = leads.length;
-  const active = leads.filter(l => l.status === 'In Progress' || l.status === 'Contacted').length;
-  const closed = leads.filter(l => l.status === 'Completed').length;
-  const newInq = leads.filter(l => l.status === 'New').length;
+  const activeLeads = leads.filter(l => {
+    const s = norm(l.status);
+    return s === 'in progress' || s === 'contacted' || s === 'processing';
+  });
+  const closedLeads = leads.filter(l => {
+    const s = norm(l.status);
+    return s === 'completed' || s === 'closed';
+  });
+  const newLeads = leads.filter(l => {
+    const s = norm(l.status);
+    return s === 'new' || s === 'pending';
+  });
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const leadsThisMonth = leads.filter(l => new Date(l.createdAt || l.created_at || 0) >= monthStart).length;
+  const newToday = newLeads.filter(l => new Date(l.createdAt || l.created_at || 0) >= todayStart).length;
 
   const elTot = document.getElementById('leadsKpiTotal');
   const elAct = document.getElementById('leadsKpiActive');
@@ -775,9 +901,19 @@ function updateLeadsKPIs(leads) {
   const elNew = document.getElementById('leadsKpiNew');
 
   if (elTot) elTot.textContent = total;
-  if (elAct) elAct.textContent = active;
-  if (elClo) elClo.textContent = closed;
-  if (elNew) elNew.textContent = newInq;
+  if (elAct) elAct.textContent = activeLeads.length;
+  if (elClo) elClo.textContent = closedLeads.length;
+  if (elNew) elNew.textContent = newLeads.length;
+
+  const elTotTag = document.getElementById('leadsKpiTotalTag');
+  const elActTag = document.getElementById('leadsKpiActiveTag');
+  const elCloTag = document.getElementById('leadsKpiClosedTag');
+  const elNewTag = document.getElementById('leadsKpiNewTag');
+
+  if (elTotTag) elTotTag.innerHTML = `<span style="font-size:0.85em;">●</span> ${leadsThisMonth > 0 ? `${leadsThisMonth} this month` : `${total} total`}`;
+  if (elActTag) elActTag.innerHTML = `<span style="font-size:0.85em;">●</span> ${activeLeads.length} in progress`;
+  if (elCloTag) elCloTag.innerHTML = `<span style="font-size:0.85em;">✓</span> ${closedLeads.length} completed`;
+  if (elNewTag) elNewTag.innerHTML = `<span style="font-size:0.85em;">●</span> ${newToday > 0 ? `${newToday} today` : `${newLeads.length} new`}`;
 
   // Refresh smart notification badges
   updateNotificationBadges();
@@ -1669,11 +1805,42 @@ function initOrderFiltering() {
 
   let activeFilter = 'all';
 
+  window.executeOrderFilter = function(filterVal) {
+    activeFilter = filterVal || 'all';
+    applyOrderFilters();
+  };
+
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      activeFilter = tab.getAttribute('data-filter');
+      activeFilter = tab.getAttribute('data-filter') || 'all';
+      
+      // Sync active-kpi-filter styling with card
+      const normF = activeFilter.toLowerCase();
+      const cards = [
+        { id: 'ordersCardNew', filter: 'new' },
+        { id: 'ordersCardProc', filter: 'in progress' },
+        { id: 'ordersCardComp', filter: 'completed' },
+        { id: 'ordersCardCanc', filter: 'cancelled' }
+      ];
+      cards.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (el) {
+          if (c.filter === normF) el.classList.add('active-kpi-filter');
+          else el.classList.remove('active-kpi-filter');
+        }
+      });
+
+      const titleEl = document.getElementById('ordersSectionTitle');
+      if (titleEl) {
+        if (activeFilter === 'all') titleEl.textContent = 'All Orders';
+        else if (normF === 'new') titleEl.textContent = 'New & Pending Orders';
+        else if (normF === 'in progress') titleEl.textContent = 'Processing & Framing Orders';
+        else if (normF === 'completed') titleEl.textContent = 'Completed & Delivered Orders';
+        else if (normF === 'cancelled') titleEl.textContent = 'Cancelled Orders';
+      }
+
       applyOrderFilters();
     });
   });
@@ -1706,13 +1873,16 @@ function initOrderFiltering() {
     );
 
     let filtered = orders.filter(order => {
-      const ordSt = (order.status || '').toLowerCase();
-      const matchesFilter = activeFilter === 'all' || 
-        order.status === activeFilter ||
-        ordSt === activeFilter.toLowerCase() ||
-        (activeFilter === 'In Progress' && (ordSt === 'in progress' || ordSt === 'confirmed' || ordSt === 'accepted')) ||
-        (activeFilter === 'Completed' && (ordSt === 'completed' || ordSt === 'delivered' || ordSt === 'picked_up' || ordSt === 'picked up')) ||
-        (activeFilter === 'New' && (ordSt === 'new' || ordSt === 'pending'));
+      const ordSt = (order.status || '').toLowerCase().trim();
+      const normF = (activeFilter || 'all').toLowerCase().trim();
+
+      const matchesFilter = normF === 'all' || 
+        ordSt === normF ||
+        (normF === 'in progress' && (ordSt === 'in progress' || ordSt === 'processing' || ordSt === 'in production' || ordSt === 'confirmed' || ordSt === 'accepted' || ordSt === 'shipped')) ||
+        (normF === 'completed' && (ordSt === 'completed' || ordSt === 'delivered' || ordSt === 'picked_up' || ordSt === 'picked up')) ||
+        (normF === 'new' && (ordSt === 'new' || ordSt === 'pending')) ||
+        (normF === 'cancelled' && (ordSt === 'cancelled' || ordSt === 'canceled'));
+
       const matchesQuery = !query || 
         order.id.toLowerCase().includes(query) ||
         (order.name && order.name.toLowerCase().includes(query)) ||
@@ -1723,39 +1893,164 @@ function initOrderFiltering() {
     });
 
     if (sortVal === 'newest') {
-      filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     } else if (sortVal === 'oldest') {
-      filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      filtered.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
     } else if (sortVal === 'amount-high') {
-      filtered.sort((a, b) => (b.estimatedValue || 0) - (a.estimatedValue || 0));
+      filtered.sort((a, b) => (Number(b.total || b.estimatedValue) || 0) - (Number(a.total || a.estimatedValue) || 0));
     } else if (sortVal === 'amount-low') {
-      filtered.sort((a, b) => (a.estimatedValue || 0) - (b.estimatedValue || 0));
+      filtered.sort((a, b) => (Number(a.total || a.estimatedValue) || 0) - (Number(b.total || b.estimatedValue) || 0));
     }
 
     renderAllOrders(filtered);
   }
 }
 
+// Global Order Filter Switcher triggered from KPI cards or Dashboard
+window.filterOrdersByStatus = function(statusFilter) {
+  const normFilter = (statusFilter || 'all').toLowerCase();
+
+  const tabs = document.querySelectorAll('#orderFilterTabs .pill-tab-btn');
+  tabs.forEach(t => {
+    const f = (t.getAttribute('data-filter') || '').toLowerCase();
+    if (f === normFilter || (normFilter === 'new' && f === 'new') || (normFilter === 'in progress' && f === 'in progress')) {
+      t.classList.add('active');
+    } else {
+      t.classList.remove('active');
+    }
+  });
+
+  const cards = [
+    { id: 'ordersCardNew', filter: 'new' },
+    { id: 'ordersCardProc', filter: 'in progress' },
+    { id: 'ordersCardComp', filter: 'completed' },
+    { id: 'ordersCardCanc', filter: 'cancelled' }
+  ];
+  cards.forEach(c => {
+    const el = document.getElementById(c.id);
+    if (el) {
+      if (c.filter === normFilter) el.classList.add('active-kpi-filter');
+      else el.classList.remove('active-kpi-filter');
+    }
+  });
+
+  const titleEl = document.getElementById('ordersSectionTitle');
+  if (titleEl) {
+    if (!statusFilter || statusFilter === 'all') titleEl.textContent = 'All Orders';
+    else if (normFilter === 'new') titleEl.textContent = 'New & Pending Orders';
+    else if (normFilter === 'in progress') titleEl.textContent = 'Processing & Framing Orders';
+    else if (normFilter === 'completed') titleEl.textContent = 'Completed & Delivered Orders';
+    else if (normFilter === 'cancelled') titleEl.textContent = 'Cancelled Orders';
+  }
+
+  if (typeof window.executeOrderFilter === 'function') {
+    window.executeOrderFilter(statusFilter);
+  }
+};
+
+window.viewOrdersFiltered = function(filterName) {
+  if (typeof window.switchTab === 'function') {
+    window.switchTab('viewOrders');
+  }
+  setTimeout(() => {
+    if (typeof window.filterOrdersByStatus === 'function') {
+      window.filterOrdersByStatus(filterName);
+    }
+  }, 60);
+};
+
+// Global Lead Filtering Controller
+let activeLeadFilter = 'all';
+
+window.filterLeadsByStatus = function(statusFilter) {
+  activeLeadFilter = (statusFilter || 'all').toLowerCase();
+
+  const tabs = document.querySelectorAll('#leadFilterTabs .pill-tab-btn');
+  tabs.forEach(t => {
+    const f = (t.getAttribute('data-lead-filter') || '').toLowerCase();
+    if (f === activeLeadFilter) t.classList.add('active');
+    else t.classList.remove('active');
+  });
+
+  const cards = [
+    { id: 'leadsCardTotal', filter: 'all' },
+    { id: 'leadsCardActive', filter: 'active' },
+    { id: 'leadsCardClosed', filter: 'closed' },
+    { id: 'leadsCardNew', filter: 'new' }
+  ];
+  cards.forEach(c => {
+    const el = document.getElementById(c.id);
+    if (el) {
+      if (c.filter === activeLeadFilter) el.classList.add('active-kpi-filter');
+      else el.classList.remove('active-kpi-filter');
+    }
+  });
+
+  const titleEl = document.getElementById('leadsSectionTitle');
+  if (titleEl) {
+    if (activeLeadFilter === 'all') titleEl.textContent = 'All Leads';
+    else if (activeLeadFilter === 'new') titleEl.textContent = 'New Inquiries';
+    else if (activeLeadFilter === 'active') titleEl.textContent = 'Active Leads (In Discussion)';
+    else if (activeLeadFilter === 'closed') titleEl.textContent = 'Closed Leads';
+  }
+
+  if (typeof window.executeLeadFilter === 'function') {
+    window.executeLeadFilter();
+  }
+};
+
 function initLeadFiltering() {
   const searchInput = document.getElementById('leadSearchInput');
-  if (!searchInput) return;
+  const sortSelect = document.querySelector('#viewLeads .graphura-sort-select');
 
-  searchInput.addEventListener('input', () => {
-    const query = searchInput.value.toLowerCase().trim();
+  window.executeLeadFilter = function() {
+    applyLeadFilters();
+  };
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => applyLeadFilters());
+  }
+
+  if (sortSelect) {
+    sortSelect.addEventListener('change', () => applyLeadFilters());
+  }
+
+  function applyLeadFilters() {
+    const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+    const sortVal = sortSelect ? sortSelect.value : 'newest';
+
     const leads = allInquiries.filter(i => 
-      !i.id.startsWith('RF-ORD') && (!i.product || !i.product.includes('[ONLINE ORDER]'))
+      !((i.id && i.id.startsWith('RF-ORD')) || 
+      (i.product && i.product.includes('[ONLINE ORDER]')) ||
+      (Array.isArray(i.items) && i.items.length > 0) ||
+      i.orderId)
     );
 
-    const filtered = leads.filter(l => 
-      !query || 
-      l.id.toLowerCase().includes(query) ||
-      (l.name && l.name.toLowerCase().includes(query)) ||
-      (l.phone && l.phone.includes(query)) ||
-      (l.email && l.email.toLowerCase().includes(query))
-    );
+    let filtered = leads.filter(l => {
+      const s = (l.status || '').toLowerCase().trim();
+      const matchesFilter = activeLeadFilter === 'all' ||
+        (activeLeadFilter === 'new' && (s === 'new' || s === 'pending')) ||
+        (activeLeadFilter === 'active' && (s === 'in progress' || s === 'contacted' || s === 'processing')) ||
+        (activeLeadFilter === 'closed' && (s === 'completed' || s === 'closed'));
+
+      const matchesQuery = !query || 
+        (l.id && l.id.toLowerCase().includes(query)) ||
+        (l.name && l.name.toLowerCase().includes(query)) ||
+        (l.phone && l.phone.includes(query)) ||
+        (l.email && l.email.toLowerCase().includes(query)) ||
+        (l.product && l.product.toLowerCase().includes(query));
+
+      return matchesFilter && matchesQuery;
+    });
+
+    if (sortVal.includes('Oldest')) {
+      filtered.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+    } else {
+      filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
 
     renderAllLeads(filtered);
-  });
+  }
 }
 
 /* ==========================================================================
@@ -3253,6 +3548,11 @@ window.filterAdminProducts = function() {
     filtered = filtered.filter(p => p.inStock === false || p.stockStatus === 'Out of Stock' || p.status === 'Out of Stock');
   }
 
+  // 3b. Filter by marketing badge
+  if (window.adminProductBadgeOnly) {
+    filtered = filtered.filter(p => Boolean(p.badge && p.badge.trim()));
+  }
+
   // 4. Sort
   if (adminProductSort === 'price_asc') {
     filtered.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
@@ -3287,7 +3587,7 @@ function updateAdminCategoryCounters(products) {
   products.forEach(p => {
     const isAvail = p.inStock !== false && p.stockStatus !== 'Out of Stock' && p.status !== 'Out of Stock';
     if (isAvail) inStockCount++;
-    if (p.badge) badgeCount++;
+    if (p.badge && p.badge.trim()) badgeCount++;
     const priceNum = Number(p.price);
     if (!isNaN(priceNum) && priceNum > 0 && priceNum < minPrice) minPrice = priceNum;
     if (p.rating) {
@@ -3309,9 +3609,48 @@ function updateAdminCategoryCounters(products) {
   if (kpiActive) kpiActive.textContent = products.length;
   if (kpiInStock) kpiInStock.textContent = inStockCount;
   if (kpiBadges) kpiBadges.textContent = badgeCount;
-  if (kpiStartPrice && minPrice !== Infinity) kpiStartPrice.textContent = `₹${minPrice}`;
-  if (kpiAvgRating && ratingCount > 0) kpiAvgRating.textContent = `${(totalRating / ratingCount).toFixed(2)} ★`;
+  if (kpiStartPrice) kpiStartPrice.textContent = minPrice !== Infinity ? `₹${minPrice}` : '₹0';
+  if (kpiAvgRating) {
+    const avg = ratingCount > 0 ? (totalRating / ratingCount).toFixed(1) : '5.0';
+    kpiAvgRating.textContent = `${avg} ★`;
+  }
+
+  const kpiActiveTag = document.getElementById('kpiActiveProductsTag');
+  const kpiInStockTag = document.getElementById('kpiInStockProductsTag');
+  const kpiBadgesTag = document.getElementById('kpiBadgeProductsTag');
+
+  if (kpiActiveTag) {
+    const numCats = allAdminCategories && allAdminCategories.length > 0 ? allAdminCategories.length : 5;
+    kpiActiveTag.innerHTML = `<span style="font-size:0.85em;">●</span> ${numCats} Categories`;
+  }
+  if (kpiInStockTag) {
+    kpiInStockTag.innerHTML = `<span style="font-size:0.85em;">✓</span> Ready to ship`;
+  }
+  if (kpiBadgesTag) {
+    kpiBadgesTag.innerHTML = `<span style="font-size:0.85em;">★</span> Bestsellers &amp; Hot`;
+  }
+
+  const countAll = document.getElementById('countAll');
+  if (countAll) countAll.textContent = products.length;
 }
+
+window.filterAdminProductsByStock = function(stockVal) {
+  adminProductStockFilter = stockVal || 'all';
+  window.adminProductBadgeOnly = false;
+  const stockSelect = document.getElementById('productStockFilterSelect');
+  if (stockSelect) stockSelect.value = stockVal;
+  window.filterAdminProducts();
+};
+
+window.filterAdminProductsByBadge = function() {
+  window.adminProductBadgeOnly = !window.adminProductBadgeOnly;
+  if (window.adminProductBadgeOnly) {
+    adminProductStockFilter = 'all';
+    const stockSelect = document.getElementById('productStockFilterSelect');
+    if (stockSelect) stockSelect.value = 'all';
+  }
+  window.filterAdminProducts();
+};
 
 function updateAdminCategoryBanner(catKey, currentProducts) {
   const meta = CATEGORY_META[catKey] || CATEGORY_META.all;
@@ -4750,11 +5089,47 @@ async function loadCustomers() {
     const totalLogins = allCustomers.reduce((sum, c) => sum + (Number(c.loginCount) || 1), 0);
     if (kpiTotalLogins) kpiTotalLogins.textContent = totalLogins;
 
+    const elCustTotTag = document.getElementById('custKpiTotalTag');
+    const elCustBuyersTag = document.getElementById('custKpiActiveBuyersTag');
+    const elCustRevTag = document.getElementById('custKpiTotalRevenueTag');
+    const elCustLogTag = document.getElementById('custKpiTotalLoginsTag');
+    const elOverCustTag = document.getElementById('kpiTotalCustomersTag');
+
+    if (elCustTotTag) elCustTotTag.innerHTML = `<span style="font-size:0.85em;">●</span> ${allCustomers.length} registered`;
+    if (elCustBuyersTag) elCustBuyersTag.innerHTML = `<span style="font-size:0.85em;">✓</span> ${activeBuyers} with orders`;
+    if (elCustRevTag) elCustRevTag.innerHTML = `<span style="font-size:0.85em;">★</span> Lifetime spent`;
+    if (elCustLogTag) elCustLogTag.innerHTML = `<span style="font-size:0.85em;">●</span> ${totalLogins} OTP sessions`;
+    if (elOverCustTag) elOverCustTag.innerHTML = `<span style="font-size:0.85em;">●</span> ${activeBuyers} active buyers`;
+
     renderCustomersTable(allCustomers);
   } catch (err) {
     console.error('Failed to load customers:', err);
   }
 }
+
+let currentCustomerFilter = 'all';
+
+window.filterCustomers = function(filterMode) {
+  currentCustomerFilter = filterMode || 'all';
+
+  const searchInput = document.getElementById('customerSearchInput');
+  const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+
+  let filtered = allCustomers;
+  if (currentCustomerFilter === 'buyers') {
+    filtered = allCustomers.filter(c => (Number(c.totalOrders) || 0) > 0);
+  }
+
+  if (query) {
+    filtered = filtered.filter(c => 
+      (c.name && c.name.toLowerCase().includes(query)) ||
+      (c.email && c.email.toLowerCase().includes(query)) ||
+      (c.phone && c.phone.includes(query))
+    );
+  }
+
+  renderCustomersTable(filtered);
+};
 
 function renderCustomersTable(customers) {
   const tbody = document.getElementById('customersTableBody');

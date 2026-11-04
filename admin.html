@@ -2525,55 +2525,55 @@
 
             <!-- Connected 5-Segment Metric Bar (Graphura Style) -->
             <div class="metric-segment-bar five-cols">
-              <div class="metric-segment">
+              <div class="metric-segment" id="dashKpiNewCard" style="cursor: pointer;" onclick="viewOrdersFiltered('New')" title="Click to view New / Pending Orders">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot blue"></span>
                     <span class="metric-segment-label">New Orders</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="View New Orders">•••</span>
                 </div>
                 <div class="metric-segment-val" id="kpiNewInquiries">0</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">↑</span> 12 today</div>
+                <div class="metric-segment-tag positive" id="kpiNewInquiriesTag"><span style="font-size:0.85em;">●</span> 0 today</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" id="dashKpiProcCard" style="cursor: pointer;" onclick="viewOrdersFiltered('In Progress')" title="Click to view Processing Orders">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot amber"></span>
                     <span class="metric-segment-label">Processing Orders</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="View Processing Orders">•••</span>
                 </div>
                 <div class="metric-segment-val" id="kpiProcessingOrders">0</div>
-                <div class="metric-segment-tag in-progress"><span style="font-size:0.85em;">●</span> 8 in progress</div>
+                <div class="metric-segment-tag in-progress" id="kpiProcessingOrdersTag"><span style="font-size:0.85em;">●</span> 0 in progress</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" id="dashKpiCompCard" style="cursor: pointer;" onclick="viewOrdersFiltered('Completed')" title="Click to view Completed Orders">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot green"></span>
                     <span class="metric-segment-label">Completed Orders</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="View Completed Orders">•••</span>
                 </div>
                 <div class="metric-segment-val" id="kpiCompletedOrders">0</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">↑</span> 15 this week</div>
+                <div class="metric-segment-tag positive" id="kpiCompletedOrdersTag"><span style="font-size:0.85em;">✓</span> 0 this week</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" id="dashKpiPipeCard" style="cursor: pointer;" onclick="viewOrdersFiltered('all')" title="Click to view All Orders">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot purple"></span>
                     <span class="metric-segment-label">Pipeline Value</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="View Total Value">•••</span>
                 </div>
                 <div class="metric-segment-val" id="kpiPipelineValue">₹0</div>
-                <div class="metric-segment-tag neutral">From online store</div>
+                <div class="metric-segment-tag neutral" id="kpiPipelineValueTag">From online store</div>
               </div>
 
-              <div class="metric-segment" style="cursor: pointer;" onclick="switchTab('viewCustomers')">
+              <div class="metric-segment" id="dashKpiCustCard" style="cursor: pointer;" onclick="switchTab('viewCustomers')" title="Click to view Registered Customers">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot cyan"></span>
@@ -2582,7 +2582,7 @@
                   <span class="metric-segment-dots" title="View Registered Customers">•••</span>
                 </div>
                 <div class="metric-segment-val" id="kpiTotalCustomers">0</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">●</span> Registered</div>
+                <div class="metric-segment-tag positive" id="kpiTotalCustomersTag"><span style="font-size:0.85em;">●</span> Registered</div>
               </div>
             </div>
 
@@ -2640,65 +2640,67 @@
 
             <!-- Connected 4-Segment Metric Bar -->
             <div class="metric-segment-bar">
-              <div class="metric-segment">
+              <div class="metric-segment" id="ordersCardNew" style="cursor: pointer;" onclick="filterOrdersByStatus('New')" title="Click to filter New / Pending Orders">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot blue"></span>
                     <span class="metric-segment-label">New Orders</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="Filter New Orders">•••</span>
                 </div>
                 <div class="metric-segment-val" id="ordersKpiNew">0</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">↑</span> 12 today</div>
+                <div class="metric-segment-tag positive" id="ordersKpiNewTag"><span style="font-size:0.85em;">●</span> 0 today</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" id="ordersCardProc" style="cursor: pointer;" onclick="filterOrdersByStatus('In Progress')" title="Click to filter Processing Orders">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot amber"></span>
                     <span class="metric-segment-label">Processing Orders</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="Filter Processing Orders">•••</span>
                 </div>
                 <div class="metric-segment-val" id="ordersKpiProcessing">0</div>
-                <div class="metric-segment-tag in-progress"><span style="font-size:0.85em;">●</span> 8 in progress</div>
+                <div class="metric-segment-tag in-progress" id="ordersKpiProcessingTag"><span style="font-size:0.85em;">●</span> 0 in progress</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" id="ordersCardComp" style="cursor: pointer;" onclick="filterOrdersByStatus('Completed')" title="Click to filter Completed Orders">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot green"></span>
                     <span class="metric-segment-label">Completed Orders</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="Filter Completed Orders">•••</span>
                 </div>
                 <div class="metric-segment-val" id="ordersKpiCompleted">0</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">↑</span> 15 this week</div>
+                <div class="metric-segment-tag positive" id="ordersKpiCompletedTag"><span style="font-size:0.85em;">✓</span> 0 this week</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" id="ordersCardCanc" style="cursor: pointer;" onclick="filterOrdersByStatus('Cancelled')" title="Click to filter Cancelled Orders">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot red" style="background:#EF4444;box-shadow:0 0 8px rgba(239,68,68,0.5);"></span>
                     <span class="metric-segment-label">Cancelled Orders</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="Filter Cancelled Orders">•••</span>
                 </div>
                 <div class="metric-segment-val" id="ordersKpiCancelled">0</div>
-                <div class="metric-segment-tag neutral">All time</div>
+                <div class="metric-segment-tag neutral" id="ordersKpiCancelledTag">0 cancelled</div>
               </div>
             </div>
 
             <!-- Filter Controls & Section Heading -->
             <div class="section-title-bar">
-              <h3 class="section-title-text">All Orders</h3>
+              <h3 class="section-title-text" id="ordersSectionTitle">All Orders</h3>
               
               <div class="section-filters-group">
                 <!-- Status Filter Pills -->
                 <div class="pill-tabs-group" id="orderFilterTabs">
                   <button type="button" class="pill-tab-btn active" data-filter="all">All</button>
+                  <button type="button" class="pill-tab-btn" data-filter="New">New / Pending</button>
                   <button type="button" class="pill-tab-btn" data-filter="In Progress">Processing</button>
                   <button type="button" class="pill-tab-btn" data-filter="Completed">Completed</button>
+                  <button type="button" class="pill-tab-btn" data-filter="Cancelled">Cancelled</button>
                 </div>
 
                 <!-- Search Input -->
@@ -2774,60 +2776,66 @@
 
             <!-- Connected 4-Segment Metric Bar for Leads -->
             <div class="metric-segment-bar">
-              <div class="metric-segment">
+              <div class="metric-segment" id="leadsCardTotal" style="cursor: pointer;" onclick="filterLeadsByStatus('all')" title="Click to view All Leads">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot blue"></span>
                     <span class="metric-segment-label">Total Leads</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="View All Leads">•••</span>
                 </div>
                 <div class="metric-segment-val" id="leadsKpiTotal">0</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">↑</span> 18 this month</div>
+                <div class="metric-segment-tag positive" id="leadsKpiTotalTag"><span style="font-size:0.85em;">●</span> All leads</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" id="leadsCardActive" style="cursor: pointer;" onclick="filterLeadsByStatus('active')" title="Click to view Active Leads">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot amber"></span>
                     <span class="metric-segment-label">Active Leads</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="View Active Leads">•••</span>
                 </div>
                 <div class="metric-segment-val" id="leadsKpiActive">0</div>
-                <div class="metric-segment-tag in-progress"><span style="font-size:0.85em;">●</span> 8 today</div>
+                <div class="metric-segment-tag in-progress" id="leadsKpiActiveTag"><span style="font-size:0.85em;">●</span> In progress</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" id="leadsCardClosed" style="cursor: pointer;" onclick="filterLeadsByStatus('closed')" title="Click to view Closed Leads">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot green"></span>
                     <span class="metric-segment-label">Closed Leads</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="View Closed Leads">•••</span>
                 </div>
                 <div class="metric-segment-val" id="leadsKpiClosed">0</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">↑</span> 12 this week</div>
+                <div class="metric-segment-tag positive" id="leadsKpiClosedTag"><span style="font-size:0.85em;">✓</span> Completed</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" id="leadsCardNew" style="cursor: pointer;" onclick="filterLeadsByStatus('new')" title="Click to view New Inquiries">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot purple"></span>
                     <span class="metric-segment-label">New Inquiries</span>
                   </div>
-                  <span class="metric-segment-dots" title="Metric Options">•••</span>
+                  <span class="metric-segment-dots" title="View New Inquiries">•••</span>
                 </div>
                 <div class="metric-segment-val" id="leadsKpiNew">0</div>
-                <div class="metric-segment-tag in-progress"><span style="font-size:0.85em;">●</span> 5 today</div>
+                <div class="metric-segment-tag in-progress" id="leadsKpiNewTag"><span style="font-size:0.85em;">●</span> New inquiries</div>
               </div>
             </div>
 
             <!-- Section Title & Search -->
             <div class="section-title-bar">
-              <h3 class="section-title-text">All Leads</h3>
+              <h3 class="section-title-text" id="leadsSectionTitle">All Leads</h3>
               
               <div class="section-filters-group">
+                <div class="pill-tabs-group" id="leadFilterTabs">
+                  <button type="button" class="pill-tab-btn active" data-lead-filter="all" onclick="filterLeadsByStatus('all')">All</button>
+                  <button type="button" class="pill-tab-btn" data-lead-filter="new" onclick="filterLeadsByStatus('new')">New</button>
+                  <button type="button" class="pill-tab-btn" data-lead-filter="active" onclick="filterLeadsByStatus('active')">Active</button>
+                  <button type="button" class="pill-tab-btn" data-lead-filter="closed" onclick="filterLeadsByStatus('closed')">Closed</button>
+                </div>
                 <div class="graphura-search-input">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
@@ -2920,7 +2928,7 @@
 
             <!-- Products KPI Bar -->
             <div class="metric-segment-bar five-cols">
-              <div class="metric-segment">
+              <div class="metric-segment" style="cursor: pointer;" onclick="filterAdminProductsByStock('all')" title="Click to view All Catalog Products">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot blue"></span>
@@ -2928,11 +2936,11 @@
                   </div>
                   <span class="metric-segment-dots">•••</span>
                 </div>
-                <div class="metric-segment-val" id="kpiActiveProducts">125</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">●</span> 5 Categories</div>
+                <div class="metric-segment-val" id="kpiActiveProducts">0</div>
+                <div class="metric-segment-tag positive" id="kpiActiveProductsTag"><span style="font-size:0.85em;">●</span> 0 Categories</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" style="cursor: pointer;" onclick="filterAdminProductsByStock('in_stock')" title="Click to view In-Stock Products">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot green"></span>
@@ -2940,11 +2948,11 @@
                   </div>
                   <span class="metric-segment-dots">•••</span>
                 </div>
-                <div class="metric-segment-val" id="kpiInStockProducts">125</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">✓</span> Ready to ship</div>
+                <div class="metric-segment-val" id="kpiInStockProducts">0</div>
+                <div class="metric-segment-tag positive" id="kpiInStockProductsTag"><span style="font-size:0.85em;">✓</span> Ready to ship</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" style="cursor: pointer;" onclick="filterAdminProductsByBadge('badge')" title="Click to view Bestseller & Badged Products">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot purple"></span>
@@ -2952,8 +2960,8 @@
                   </div>
                   <span class="metric-segment-dots">•••</span>
                 </div>
-                <div class="metric-segment-val" id="kpiBadgeProducts">48</div>
-                <div class="metric-segment-tag in-progress"><span style="font-size:0.85em;">★</span> Bestsellers &amp; Hot</div>
+                <div class="metric-segment-val" id="kpiBadgeProducts">0</div>
+                <div class="metric-segment-tag in-progress" id="kpiBadgeProductsTag"><span style="font-size:0.85em;">★</span> Bestsellers &amp; Hot</div>
               </div>
 
               <div class="metric-segment">
@@ -2964,8 +2972,8 @@
                   </div>
                   <span class="metric-segment-dots">•••</span>
                 </div>
-                <div class="metric-segment-val" id="kpiStartingPrice">₹120</div>
-                <div class="metric-segment-tag neutral">Pocket-friendly gifts</div>
+                <div class="metric-segment-val" id="kpiStartingPrice">₹0</div>
+                <div class="metric-segment-tag neutral" id="kpiStartingPriceTag">Pocket-friendly gifts</div>
               </div>
 
               <div class="metric-segment">
@@ -2976,8 +2984,8 @@
                   </div>
                   <span class="metric-segment-dots">•••</span>
                 </div>
-                <div class="metric-segment-val" id="kpiAvgRating">4.89 ★</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">↑</span> Verified customer reviews</div>
+                <div class="metric-segment-val" id="kpiAvgRating">5.0 ★</div>
+                <div class="metric-segment-tag positive" id="kpiAvgRatingTag"><span style="font-size:0.85em;">↑</span> Verified customer reviews</div>
               </div>
             </div>
 
@@ -2985,7 +2993,7 @@
             <div class="admin-category-tabs-bar" id="productCategoryTabs" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 18px 0 14px 0;">
               <button type="button" class="admin-tab-btn active" data-category="all" onclick="selectAdminCategory('all')">
                 <span>All Products</span>
-                <span class="category-badge-count" id="countAll">125</span>
+                <span class="category-badge-count" id="countAll">0</span>
               </button>
               <button type="button" class="admin-tab-btn" data-category="frames" onclick="selectAdminCategory('frames')">
                 <span>🖼️ Studio &amp; Framing</span>
@@ -3130,7 +3138,7 @@
 
             <!-- Customer KPI Metrics Bar -->
             <div class="metric-segment-bar">
-              <div class="metric-segment">
+              <div class="metric-segment" style="cursor: pointer;" onclick="filterCustomers('all')" title="Click to view All Registered Customers">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot blue"></span>
@@ -3139,10 +3147,10 @@
                   <span class="metric-segment-dots">•••</span>
                 </div>
                 <div class="metric-segment-val" id="custKpiTotal">0</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">●</span> OTP verified</div>
+                <div class="metric-segment-tag positive" id="custKpiTotalTag"><span style="font-size:0.85em;">●</span> OTP verified</div>
               </div>
 
-              <div class="metric-segment">
+              <div class="metric-segment" style="cursor: pointer;" onclick="filterCustomers('buyers')" title="Click to view Customers with Orders">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">
                     <span class="metric-icon-dot green"></span>
@@ -3151,7 +3159,7 @@
                   <span class="metric-segment-dots">•••</span>
                 </div>
                 <div class="metric-segment-val" id="custKpiActiveBuyers">0</div>
-                <div class="metric-segment-tag positive"><span style="font-size:0.85em;">✓</span> With orders</div>
+                <div class="metric-segment-tag positive" id="custKpiActiveBuyersTag"><span style="font-size:0.85em;">✓</span> With orders</div>
               </div>
 
               <div class="metric-segment">
@@ -3163,7 +3171,7 @@
                   <span class="metric-segment-dots">•••</span>
                 </div>
                 <div class="metric-segment-val" id="custKpiTotalRevenue">₹0</div>
-                <div class="metric-segment-tag in-progress"><span style="font-size:0.85em;">★</span> Lifetime spent</div>
+                <div class="metric-segment-tag in-progress" id="custKpiTotalRevenueTag"><span style="font-size:0.85em;">★</span> Lifetime spent</div>
               </div>
 
               <div class="metric-segment">
@@ -3175,7 +3183,7 @@
                   <span class="metric-segment-dots">•••</span>
                 </div>
                 <div class="metric-segment-val" id="custKpiTotalLogins">0</div>
-                <div class="metric-segment-tag neutral">OTP sessions</div>
+                <div class="metric-segment-tag neutral" id="custKpiTotalLoginsTag">OTP sessions</div>
               </div>
             </div>
 

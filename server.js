@@ -2090,25 +2090,71 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
     db.getCustomers()
   ]);
 
-  const totalInquiries = inquiries.length;
-  const newInquiries = inquiries.filter(i => i.status === 'New').length;
-  const inProgressInquiries = inquiries.filter(i => i.status === 'In Progress' || i.status === 'Contacted').length;
-  const completedInquiries = inquiries.filter(i => i.status === 'Completed').length;
+  const allOrdersList = Array.isArray(orders) ? orders : [];
+  const allInqsList = Array.isArray(inquiries) ? inquiries : [];
 
-  const totalPipelineValue = inquiries.reduce((sum, item) => sum + (Number(item.estimatedValue) || 0), 0);
-  const unreadMessages = messages.filter(m => m.status === 'Unread').length;
+  const norm = (s) => (s || '').toLowerCase().trim();
+
+  // Robust real status categorization across all variations
+  const newOrdersCount = allOrdersList.filter(o => {
+    const s = norm(o.status);
+    return s === 'new' || s === 'pending';
+  }).length;
+
+  const processingOrdersCount = allOrdersList.filter(o => {
+    const s = norm(o.status);
+    return s === 'in progress' || s === 'processing' || s === 'in production' || s === 'confirmed' || s === 'accepted' || s === 'shipped';
+  }).length;
+
+  const completedOrdersCount = allOrdersList.filter(o => {
+    const s = norm(o.status);
+    return s === 'completed' || s === 'picked_up' || s === 'picked up' || s === 'delivered';
+  }).length;
+
+  const cancelledOrdersCount = allOrdersList.filter(o => {
+    const s = norm(o.status);
+    return s === 'cancelled' || s === 'canceled';
+  }).length;
+
+  // Real pipeline value calculation (total monetary value of store orders)
+  const totalOrdersVal = allOrdersList.reduce((sum, item) => sum + (Number(item.total || item.estimatedValue) || 0), 0);
+  const totalInqsVal = allInqsList.reduce((sum, item) => sum + (Number(item.estimatedValue) || 0), 0);
+  const totalPipelineValue = Math.max(totalOrdersVal, totalInqsVal);
+
+  // Real timeframe metrics (today & this week)
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const newToday = allOrdersList.filter(o => {
+    const s = norm(o.status);
+    const orderDate = new Date(o.createdAt || o.created_at || 0);
+    return (s === 'new' || s === 'pending') && orderDate >= todayStart;
+  }).length;
+
+  const completedThisWeek = allOrdersList.filter(o => {
+    const s = norm(o.status);
+    const orderDate = new Date(o.createdAt || o.created_at || 0);
+    return (s === 'completed' || s === 'picked_up' || s === 'picked up' || s === 'delivered') && orderDate >= weekStart;
+  }).length;
+
+  const unreadMessages = (Array.isArray(messages) ? messages : []).filter(m => m.status === 'Unread').length;
 
   res.json({
     success: true,
     stats: {
-      totalInquiries,
-      newInquiries,
-      inProgressInquiries,
-      completedInquiries,
+      totalOrders: allOrdersList.length,
+      newOrders: newOrdersCount,
+      newInquiries: newOrdersCount,
+      processingOrders: processingOrdersCount,
+      completedOrders: completedOrdersCount,
+      cancelledOrders: cancelledOrdersCount,
+      newToday,
+      completedThisWeek,
       totalPipelineValue,
-      totalProducts: products.length,
+      totalProducts: (Array.isArray(products) ? products : []).length,
       unreadMessages,
-      totalCustomers: customers.length,
+      totalCustomers: (Array.isArray(customers) ? customers : []).length,
       recentInquiries: inquiries.slice(0, 5)
     }
   });

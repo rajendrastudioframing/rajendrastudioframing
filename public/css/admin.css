@@ -826,6 +826,24 @@ body.admin-dashboard-body[data-theme="dark"] {
   box-shadow: inset 0 3px 0 0 var(--primary);
 }
 
+.metric-segment[style*="cursor: pointer"],
+.metric-segment.clickable {
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.metric-segment[style*="cursor: pointer"]:hover,
+.metric-segment.clickable:hover {
+  background: rgba(201, 154, 61, 0.08) !important;
+  box-shadow: inset 0 3px 0 0 var(--primary) !important;
+  transform: translateY(-1px);
+}
+
+.metric-segment.active-kpi-filter {
+  background: rgba(201, 154, 61, 0.12) !important;
+  box-shadow: inset 0 3px 0 0 var(--primary) !important;
+}
+
 .metric-segment-top {
   display: flex;
   align-items: center;
