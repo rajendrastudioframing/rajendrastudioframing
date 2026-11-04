@@ -92,12 +92,15 @@
     "subtotal": 668,
     "shipping": 0,
     "total": 668,
-    "notes": "Standard Studio Packaging",
+    "notes": "Order accepted by studio. Custom framing and crafting underway.",
     "orderPhoto": null,
     "paymentMethod": "Pick up from shop",
     "paymentStatus": "Pending",
-    "status": "pending",
-    "createdAt": "2026-11-04T02:04:29.000Z"
+    "status": "confirmed",
+    "createdAt": "2026-11-04T02:04:29.000Z",
+    "confirmationDate": "2026-11-13",
+    "pickupDate": "2026-11-13",
+    "confirmedAt": "2026-11-04T04:57:04.243Z"
   },
   {
     "orderId": "RF-ORD-2026-008",
@@ -155,12 +158,15 @@
     "subtotal": 4422,
     "shipping": 0,
     "total": 4422,
-    "notes": "Standard Studio Packaging",
+    "notes": "Order accepted by studio. Custom framing and crafting underway.",
     "orderPhoto": null,
     "paymentMethod": "Pick up from shop",
     "paymentStatus": "Pending",
-    "status": "pending",
-    "createdAt": "2026-10-30T05:27:00.000Z"
+    "status": "confirmed",
+    "createdAt": "2026-10-30T05:27:00.000Z",
+    "confirmationDate": "2026-11-13",
+    "pickupDate": "2026-11-13",
+    "confirmedAt": "2026-11-04T04:57:04.243Z"
   },
   {
     "orderId": "RF-ORD-TEST-1793094628164",

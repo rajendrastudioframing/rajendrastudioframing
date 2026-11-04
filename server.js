@@ -2276,12 +2276,12 @@ app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
         subtotal: (matchedOrder && matchedOrder.subtotal) || inq.estimatedValue || 0,
         shipping: (matchedOrder && matchedOrder.shipping) || 0,
         total: (matchedOrder && matchedOrder.total) || inq.estimatedValue || 0,
-        status: (matchedOrder && matchedOrder.status) || inq.status || 'pending',
-        notes: (matchedOrder && matchedOrder.notes) || inq.notes || '',
-        confirmationDate: (matchedOrder && matchedOrder.confirmationDate) || inq.confirmationDate || inq.confirmed_date || null,
-        confirmedAt: (matchedOrder && matchedOrder.confirmedAt) || inq.confirmedAt || inq.confirmed_at || null,
-        pickupDate: (matchedOrder && matchedOrder.pickupDate) || inq.pickupDate || inq.pickup_date || null,
-        pickedUpAt: (matchedOrder && matchedOrder.pickedUpAt) || inq.pickedUpAt || inq.picked_up_at || null,
+        status: db.resolveBestStatus(matchedOrder && matchedOrder.status, inq.status),
+        notes: (matchedOrder && matchedOrder.notes && !matchedOrder.notes.includes('Standard Studio') && !matchedOrder.notes.includes('None')) ? matchedOrder.notes : (inq.notes || (matchedOrder && matchedOrder.notes) || ''),
+        confirmationDate: (matchedOrder && (matchedOrder.confirmationDate || matchedOrder.confirmation_date)) || inq.confirmationDate || inq.confirmed_date || null,
+        confirmedAt: (matchedOrder && (matchedOrder.confirmedAt || matchedOrder.confirmed_at)) || inq.confirmedAt || inq.confirmed_at || null,
+        pickupDate: (matchedOrder && (matchedOrder.pickupDate || matchedOrder.pickup_date)) || inq.pickupDate || inq.pickup_date || null,
+        pickedUpAt: (matchedOrder && (matchedOrder.pickedUpAt || matchedOrder.picked_up_at)) || inq.pickedUpAt || inq.picked_up_at || null,
         confirmedEmailSent: Boolean((matchedOrder && (matchedOrder.confirmedEmailSent || matchedOrder.confirmed_email_sent)) || inq.confirmedEmailSent || inq.confirmed_email_sent)
       };
     });
@@ -3100,6 +3100,39 @@ async function handleUpdateOrderStatus(req, res) {
       inq.updatedAt = timestamp;
       await db.saveInquiry(inq);
       updatedInquiry = inq;
+
+      // Ensure order table is also mirrored if missing
+      if (!order) {
+        try {
+          const itemSummary = inq.product ? inq.product.replace('[ONLINE ORDER]', '').trim() : 'Custom Studio Product';
+          await db.saveOrder({
+            orderId: inq.id,
+            customer: {
+              name: inq.name || 'Customer',
+              phone: inq.phone || '',
+              email: inq.email || '',
+              address: inq.deliveryAddress || 'Dahej Studio Pickup'
+            },
+            items: Array.isArray(inq.items) && inq.items.length ? inq.items : [{
+              name: itemSummary,
+              quantity: inq.quantity || 1,
+              price: inq.estimatedValue || 0,
+              lineTotal: inq.estimatedValue || 0
+            }],
+            subtotal: Number(inq.estimatedValue) || 0,
+            shipping: 0,
+            total: Number(inq.estimatedValue) || 0,
+            notes: notes !== undefined ? notes : (inq.notes || ''),
+            status: normalizedStatus || inq.status || 'confirmed',
+            confirmationDate: finalConfirmationDate,
+            confirmedAt: inq.confirmedAt || timestamp,
+            pickupDate: finalPickupDate,
+            pickedUpAt: inq.pickedUpAt || null,
+            createdAt: inq.createdAt || timestamp,
+            updatedAt: timestamp
+          });
+        } catch (_) {}
+      }
     }
 
     if (order) {
@@ -3181,18 +3214,23 @@ async function handleUpdateOrderStatus(req, res) {
         };
       } else {
         console.log(`🎨 [ORDER ACCEPTED TRIGGERED] Sending order accepted email for order #${cleanId} (Pickup Date: ${finalPickupDate}) via Brevo...`);
-        emailResult = await emailService.notifyOrderAcceptedByAdmin({ order: targetObj, pickupDate: finalPickupDate, notes, req });
-        if (emailResult && (emailResult.sent || emailResult.success)) {
-          if (updatedOrder) {
-            updatedOrder.confirmedEmailSent = true;
-            updatedOrder.confirmedAt = updatedOrder.confirmedAt || timestamp;
-            await db.saveOrder(updatedOrder);
+        try {
+          emailResult = await emailService.notifyOrderAcceptedByAdmin({ order: targetObj, pickupDate: finalPickupDate, notes, req });
+          if (emailResult && (emailResult.sent || emailResult.success)) {
+            if (updatedOrder) {
+              updatedOrder.confirmedEmailSent = true;
+              updatedOrder.confirmedAt = updatedOrder.confirmedAt || timestamp;
+              await db.saveOrder(updatedOrder);
+            }
+            if (updatedInquiry) {
+              updatedInquiry.confirmedEmailSent = true;
+              updatedInquiry.confirmedAt = updatedInquiry.confirmedAt || timestamp;
+              await db.saveInquiry(updatedInquiry);
+            }
           }
-          if (updatedInquiry) {
-            updatedInquiry.confirmedEmailSent = true;
-            updatedInquiry.confirmedAt = updatedInquiry.confirmedAt || timestamp;
-            await db.saveInquiry(updatedInquiry);
-          }
+        } catch (mailErr) {
+          console.warn('⚠️ [EMAIL NOTICE] Brevo accepted email dispatch warning:', mailErr.message);
+          emailResult = { sent: false, error: mailErr.message };
         }
       }
     } else if (isReadyForPickup) {

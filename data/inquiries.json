@@ -48,8 +48,8 @@
     "specs": "Deliver to: Studio Pickup - Dahej Shop, Dahej / Bharuch (392130) • Pick up from shop",
     "quantity": 4,
     "estimatedValue": 668,
-    "notes": "Order Notes: Standard Studio Packaging. Full address: Studio Pickup - Dahej Shop",
-    "status": "pending",
+    "notes": "Order accepted by studio. Custom framing and crafting underway.",
+    "status": "confirmed",
     "hasUpload": false,
     "uploadFileName": null,
     "uploadedFileUrl": null,
@@ -103,7 +103,10 @@
     "total": 668,
     "paymentMethod": "Pick up from shop",
     "upiUtr": null,
-    "createdAt": "2026-11-04T02:04:29.000Z"
+    "createdAt": "2026-11-04T02:04:29.000Z",
+    "confirmationDate": "2026-11-13",
+    "pickupDate": "2026-11-13",
+    "confirmedAt": "2026-11-04T04:57:04.243Z"
   },
   {
     "id": "RF-ORD-2026-008",
@@ -114,8 +117,8 @@
     "specs": "Deliver to: Studio Pickup - Dahej Shop, Dahej / Bharuch (392130) • Pick up from shop",
     "quantity": 10,
     "estimatedValue": 4422,
-    "notes": "Order Notes: Standard Studio Packaging. Full address: Studio Pickup - Dahej Shop",
-    "status": "pending",
+    "notes": "Order accepted by studio. Custom framing and crafting underway.",
+    "status": "confirmed",
     "hasUpload": false,
     "uploadFileName": null,
     "uploadedFileUrl": null,
@@ -169,7 +172,10 @@
     "total": 4422,
     "paymentMethod": "Pick up from shop",
     "upiUtr": null,
-    "createdAt": "2026-10-30T05:27:00.000Z"
+    "createdAt": "2026-10-30T05:27:00.000Z",
+    "confirmationDate": "2026-11-13",
+    "pickupDate": "2026-11-13",
+    "confirmedAt": "2026-11-04T04:57:04.243Z"
   },
   {
     "id": "RF-ORD-TEST-1793077857699",

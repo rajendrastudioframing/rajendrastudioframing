@@ -281,7 +281,42 @@ function withTimeout(promise, ms, operationName = 'Database operation') {
     });
 }
 
+function safeIsoDate(val) {
+  if (!val) return null;
+  const s = String(val).trim();
+  if (!s || s === 'null' || s === 'undefined') return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return s + 'T00:00:00.000Z';
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+function resolveBestStatus(statusA, statusB) {
+  const norm = (s) => String(s || '').toLowerCase().trim();
+  const a = norm(statusA);
+  const b = norm(statusB);
+
+  const getWeight = (s) => {
+    if (s === 'cancelled' || s === 'canceled') return 60;
+    if (s === 'picked_up' || s === 'picked up' || s === 'completed') return 50;
+    if (s === 'ready_for_pickup' || s === 'ready for pickup' || s === 'shipped' || s === 'dispatched' || s === 'pickup ready') return 40;
+    if (s === 'confirmed' || s === 'accepted') return 30;
+    if (s === 'in progress' || s === 'in production' || s === 'contacted') return 20;
+    if (s === 'pending' || s === 'new' || !s) return 10;
+    return 15;
+  };
+
+  const wA = getWeight(a);
+  const wB = getWeight(b);
+  if (wB > wA) return statusB;
+  if (wA > wB) return statusA;
+  return statusA || statusB || 'pending';
+}
+
 module.exports = {
+  resolveBestStatus,
+  safeIsoDate,
   isCloud: () => Boolean(supabase && isSupabaseOperational()),
   isSupabaseConfigured: () => Boolean(supabase),
   getSupabaseHealth: () => ({ ..._supabaseHealth, isCloud: Boolean(supabase && isSupabaseOperational()) }),
@@ -757,7 +792,25 @@ module.exports = {
         const key = so.orderId.toLowerCase().trim();
         const existing = mergedMap.get(key);
         if (existing) {
-          mergedMap.set(key, { ...existing, ...so });
+          const resolvedStatus = resolveBestStatus(existing.status, so.status);
+          const confirmationDate = so.confirmationDate || existing.confirmationDate || null;
+          const confirmedAt = so.confirmedAt || existing.confirmedAt || null;
+          const pickupDate = so.pickupDate || existing.pickupDate || null;
+          const pickedUpAt = so.pickedUpAt || existing.pickedUpAt || null;
+          const notes = (so.notes && !so.notes.includes('Standard Studio') && !so.notes.includes('None'))
+            ? so.notes
+            : (existing.notes || so.notes || '');
+
+          mergedMap.set(key, {
+            ...existing,
+            ...so,
+            status: resolvedStatus,
+            confirmationDate,
+            confirmedAt,
+            pickupDate,
+            pickedUpAt,
+            notes
+          });
         } else {
           mergedMap.set(key, so);
         }
@@ -852,10 +905,14 @@ module.exports = {
       payment_status: order.paymentStatus || 'Pending',
       upi_utr: order.upiUtr || null,
       status: order.status || 'pending',
-      confirmed_at: order.confirmedAt || (order.confirmationDate ? new Date(`${order.confirmationDate}T00:00:00Z`).toISOString() : null),
-      confirmation_date: order.confirmationDate || null,
-      picked_up_at: order.pickedUpAt || null,
-      pickup_date: order.pickupDate || null,
+      confirmed_at: safeIsoDate(order.confirmedAt) || (order.confirmationDate ? safeIsoDate(order.confirmationDate) : null),
+      confirmation_date: (order.confirmationDate && typeof order.confirmationDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(order.confirmationDate.trim())) 
+        ? order.confirmationDate.trim() 
+        : (order.confirmationDate ? String(order.confirmationDate).slice(0, 10) : null),
+      picked_up_at: safeIsoDate(order.pickedUpAt),
+      pickup_date: (order.pickupDate && typeof order.pickupDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(order.pickupDate.trim())) 
+        ? order.pickupDate.trim() 
+        : (order.pickupDate ? String(order.pickupDate).slice(0, 10) : null),
       confirmed_email_sent: Boolean(order.confirmedEmailSent || order.confirmed_email_sent),
       ready_email_sent: Boolean(order.readyEmailSent || order.ready_email_sent),
       cancelled_email_sent: Boolean(order.cancelledEmailSent || order.cancelled_email_sent),
@@ -973,7 +1030,25 @@ module.exports = {
         const key = si.id.toLowerCase().trim();
         const existing = mergedMap.get(key);
         if (existing) {
-          mergedMap.set(key, { ...existing, ...si });
+          const resolvedStatus = resolveBestStatus(existing.status, si.status);
+          const confirmationDate = si.confirmationDate || existing.confirmationDate || null;
+          const confirmedAt = si.confirmedAt || existing.confirmedAt || null;
+          const pickupDate = si.pickupDate || existing.pickupDate || null;
+          const pickedUpAt = si.pickedUpAt || existing.pickedUpAt || null;
+          const notes = (si.notes && !si.notes.includes('Standard Studio') && !si.notes.includes('None'))
+            ? si.notes
+            : (existing.notes || si.notes || '');
+
+          mergedMap.set(key, {
+            ...existing,
+            ...si,
+            status: resolvedStatus,
+            confirmationDate,
+            confirmedAt,
+            pickupDate,
+            pickedUpAt,
+            notes
+          });
         } else {
           mergedMap.set(key, si);
         }
@@ -1003,10 +1078,14 @@ module.exports = {
       upload_file_name: photoName,
       uploaded_file_url: photoUrl,
       delivery_address: inquiry.deliveryAddress || null,
-      confirmed_at: inquiry.confirmedAt || (inquiry.confirmationDate ? new Date(`${inquiry.confirmationDate}T00:00:00Z`).toISOString() : null),
-      confirmation_date: inquiry.confirmationDate || null,
-      picked_up_at: inquiry.pickedUpAt || null,
-      pickup_date: inquiry.pickupDate || null,
+      confirmed_at: safeIsoDate(inquiry.confirmedAt) || (inquiry.confirmationDate ? safeIsoDate(inquiry.confirmationDate) : null),
+      confirmation_date: (inquiry.confirmationDate && typeof inquiry.confirmationDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(inquiry.confirmationDate.trim())) 
+        ? inquiry.confirmationDate.trim() 
+        : (inquiry.confirmationDate ? String(inquiry.confirmationDate).slice(0, 10) : null),
+      picked_up_at: safeIsoDate(inquiry.pickedUpAt),
+      pickup_date: (inquiry.pickupDate && typeof inquiry.pickupDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(inquiry.pickupDate.trim())) 
+        ? inquiry.pickupDate.trim() 
+        : (inquiry.pickupDate ? String(inquiry.pickupDate).slice(0, 10) : null),
       confirmed_email_sent: Boolean(inquiry.confirmedEmailSent || inquiry.confirmed_email_sent),
       ready_email_sent: Boolean(inquiry.readyEmailSent || inquiry.ready_email_sent),
       cancelled_email_sent: Boolean(inquiry.cancelledEmailSent || inquiry.cancelled_email_sent),

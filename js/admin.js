@@ -656,6 +656,33 @@ async function loadDashboardStats() {
   }
 }
 
+
+/* ==========================================================================
+   STATUS PRECEDENCE & RESOLUTION HELPER
+   Prevents confirmed/ready/picked_up/cancelled orders from reverting to pending
+   ========================================================================== */
+function resolveBestStatus(statusA, statusB) {
+  const norm = (s) => String(s || '').toLowerCase().trim();
+  const a = norm(statusA);
+  const b = norm(statusB);
+
+  const getWeight = (s) => {
+    if (s === 'cancelled' || s === 'canceled') return 60;
+    if (s === 'picked_up' || s === 'picked up' || s === 'completed') return 50;
+    if (s === 'ready_for_pickup' || s === 'ready for pickup' || s === 'shipped' || s === 'dispatched' || s === 'pickup ready') return 40;
+    if (s === 'confirmed' || s === 'accepted') return 30;
+    if (s === 'in progress' || s === 'in production' || s === 'contacted') return 20;
+    if (s === 'pending' || s === 'new' || !s) return 10;
+    return 15;
+  };
+
+  const wA = getWeight(a);
+  const wB = getWeight(b);
+  if (wB > wA) return statusB;
+  if (wA > wB) return statusA;
+  return statusA || statusB || 'pending';
+}
+
 /* ==========================================================================
    ORDERS & INQUIRIES DATA CONTROLLER
    ========================================================================== */
@@ -686,8 +713,8 @@ async function loadInquiries() {
             const itemsList = Array.isArray(o.items) ? o.items : [];
 
             if (existing) {
-              if (o.status) existing.status = o.status;
-              if (o.notes) existing.notes = o.notes;
+              existing.status = resolveBestStatus(existing.status, o.status);
+              if (o.notes && !o.notes.includes('Standard Studio') && !o.notes.includes('None')) existing.notes = o.notes;
               if (o.confirmationDate) existing.confirmationDate = o.confirmationDate;
               if (o.confirmedAt) existing.confirmedAt = o.confirmedAt;
               if (o.pickupDate) existing.pickupDate = o.pickupDate;
@@ -2838,6 +2865,18 @@ function initConfirmAndPickupModals() {
         submitBtn.textContent = 'Saving...';
       }
 
+      // 1. Instant optimistic UI update
+      const cleanId = id.replace(/^#/, '');
+      const existingInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanId || (i.orderId || '').replace(/^#/, '') === cleanId);
+      if (existingInq) {
+        existingInq.status = 'confirmed';
+        existingInq.confirmationDate = pickupDate;
+        existingInq.pickupDate = pickupDate;
+        if (notes) existingInq.notes = notes;
+        renderOrders();
+        renderOrderStats();
+      }
+
       try {
         const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(id)}/status`, {
           method: 'PUT',
@@ -2893,6 +2932,17 @@ function initConfirmAndPickupModals() {
       if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Updating & Notifying Customer...';
+      }
+
+      // 1. Instant optimistic UI update
+      const cleanPickupId = id.replace(/^#/, '');
+      const existingPickupInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanPickupId || (i.orderId || '').replace(/^#/, '') === cleanPickupId);
+      if (existingPickupInq) {
+        existingPickupInq.status = 'ready_for_pickup';
+        existingPickupInq.pickupDate = pickupDate;
+        if (notes) existingPickupInq.notes = notes;
+        renderOrders();
+        renderOrderStats();
       }
 
       try {
