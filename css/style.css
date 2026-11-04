@@ -1570,9 +1570,43 @@ ul, ol {
   .trust-grid {
     grid-template-columns: 1fr;
   }
-  .footer-grid {
-    grid-template-columns: 1fr;
-    gap: 32px;
+  /* Mobile Phone Footer: Hide full footer section to save vertical space & reduce load; show only compact copyright bar */
+  .site-footer {
+    padding-top: 14px !important;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    margin-top: 20px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  .site-footer .footer-grid {
+    display: none !important;
+  }
+  .site-footer .footer-bottom {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-top: none !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 0 !important;
+  }
+  .site-footer .footer-bottom p {
+    font-size: 0.78rem !important;
+    color: #9CA3AF !important;
+    text-align: center !important;
+    margin: 0 !important;
+    width: 100% !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0.2px;
+  }
+  .site-footer .footer-bottom-links {
+    display: none !important;
+  }
+  .site-footer .back-to-top,
+  .site-footer #backToTopBtn {
+    display: none !important;
   }
   .floating-whatsapp-btn span {
     display: none;
