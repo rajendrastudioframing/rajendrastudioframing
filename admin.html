@@ -2440,9 +2440,9 @@
           </button>
 
           <!-- Server Status Chip -->
-          <div class="server-status-chip">
-            <span class="status-pulse-dot"></span>
-            <span>Server Online</span>
+          <div class="server-status-chip" id="serverStatusChip" style="cursor: pointer; transition: all 0.2s ease;" onclick="openDatabaseStatusModal()" title="Click to view Database & Supabase Status">
+            <span class="status-pulse-dot" id="serverStatusDot"></span>
+            <span id="serverStatusText">Server Online</span>
           </div>
 
           <!-- Notification Bell -->
@@ -2614,6 +2614,12 @@
                 Track, Manage and update customer orders efficiently.
               </div>
               <div class="subheader-actions">
+                <button type="button" class="btn-sub-action outline" onclick="triggerBrevoOrderRecovery(true)" title="Scan Brevo receipts to recover any missing orders" id="btnRecoverOrders">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                  </svg>
+                  <span>Sync Brevo Orders</span>
+                </button>
                 <button type="button" class="btn-sub-action outline" onclick="exportOrdersToCSV()" title="Export all customer orders">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -4358,5 +4364,76 @@
       });
     });
   </script>
+  <!-- ==========================================
+       DATABASE & SUPABASE STATUS MODAL
+       ========================================== -->
+  <div class="admin-modal-overlay" id="databaseStatusModal" style="display: none;">
+    <div class="admin-modal" style="max-width: 620px; width: 95%;">
+      <div class="admin-modal-header" style="justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 22px;">🗄️</span>
+          <div>
+            <h4 class="admin-modal-title" style="margin: 0;">Database &amp; Cloud Connection</h4>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Supabase PostgreSQL &amp; Automatic Brevo Zero-Loss Recovery</div>
+          </div>
+        </div>
+        <button type="button" class="admin-modal-close" onclick="closeDatabaseStatusModal()">&times;</button>
+      </div>
+
+      <div class="admin-modal-body" style="padding: 20px;">
+        <div id="dbStatusBanner" style="padding: 14px 16px; border-radius: 10px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px; background: #FEF3C7; border: 1px solid #FCD34D; color: #92400E;">
+          <span style="font-size: 20px;" id="dbStatusBannerIcon">⚠️</span>
+          <div>
+            <strong style="font-size: 13px; display: block; margin-bottom: 4px;" id="dbStatusBannerTitle">Supabase Cloud Database Status</strong>
+            <p id="dbStatusDetail" style="margin: 0; font-size: 12px; line-height: 1.5;">Checking connection...</p>
+          </div>
+        </div>
+
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 12px;">Active Configuration</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+            <div>
+              <span style="color: var(--text-muted); font-size: 11px; display: block;">Database Mode</span>
+              <strong id="dbModeText" style="color: var(--primary);">Checking...</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); font-size: 11px; display: block;">Supabase Host</span>
+              <strong id="dbHostText" style="font-family: monospace; font-size: 11px; word-break: break-all;">-</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); font-size: 11px; display: block;">Orders in System</span>
+              <strong id="dbOrdersCountText">0</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); font-size: 11px; display: block;">Zero Loss Protection</span>
+              <strong style="color: #059669;">🛡️ Brevo Active</strong>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: rgba(217, 119, 6, 0.06); border: 1px dashed rgba(217, 119, 6, 0.35); border-radius: 10px; padding: 14px 16px; font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
+          <strong style="color: var(--text-primary); display: block; margin-bottom: 6px;">💡 How to Unpause Supabase (if Paused):</strong>
+          <ol style="margin: 0; padding-left: 18px;">
+            <li>Open <a href="https://supabase.com/dashboard" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline;">supabase.com/dashboard</a> in your browser.</li>
+            <li>Click on your project (e.g. <code>hdvdnisjeopxzevyppmr</code>) and click <strong>"Restore Project" / "Unpause"</strong>.</li>
+            <li>Wait 1-2 minutes until status shows Active, then click <strong>"Refresh Status"</strong> below.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="admin-modal-footer" style="justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <button type="button" class="btn-sub-action outline" onclick="triggerBrevoOrderRecovery(true)" id="btnModalBrevoSync">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+          <span>🛡️ Scan Brevo Receipts</span>
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn-sub-action secondary" onclick="closeDatabaseStatusModal()">Close</button>
+          <button type="button" class="btn-sub-action primary" onclick="refreshDatabaseStatus(true)">Refresh Status</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

@@ -12,6 +12,7 @@ const path = require('path');
 const crypto = require('crypto');
 const db = require('./services/db');
 const emailService = require('./services/email');
+const orderRecovery = require('./services/orderRecovery');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -2155,7 +2156,8 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
       totalProducts: (Array.isArray(products) ? products : []).length,
       unreadMessages,
       totalCustomers: (Array.isArray(customers) ? customers : []).length,
-      recentInquiries: inquiries.slice(0, 5)
+      recentInquiries: inquiries.slice(0, 5),
+      supabaseHealth: db.getSupabaseHealth ? db.getSupabaseHealth() : null
     }
   });
 });
@@ -2998,8 +3000,28 @@ app.put('/api/orders/:orderId/customer-update', async (req, res) => {
  * Admin: Get All Orders (GET)
  */
 app.get('/api/admin/orders', requireAuth, async (req, res) => {
+  // Background check to guarantee zero order loss
+  orderRecovery.syncBrevoOrders().catch(err => console.warn('Brevo auto-recovery notice:', err.message));
   const orders = await db.getOrders();
   res.json({ success: true, orders });
+});
+
+/**
+ * Admin: Explicit Trigger to Recover Missing Orders from Brevo (POST)
+ */
+app.post('/api/admin/orders/recover-from-brevo', requireAuth, async (req, res) => {
+  try {
+    const recoveryResult = await orderRecovery.syncBrevoOrders(true);
+    const orders = await db.getOrders();
+    res.json({
+      success: true,
+      recoveryResult,
+      totalOrders: orders.length,
+      orders
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Order recovery failed: ' + err.message });
+  }
 });
 
 /**

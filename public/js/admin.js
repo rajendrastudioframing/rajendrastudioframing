@@ -5780,3 +5780,133 @@ window.deleteReview = async (id) => {
 };
 
 window.loadReviews = loadReviews;
+
+
+// =============================================================================
+// DATABASE & SUPABASE CONNECTION STATUS CONTROLLER
+// =============================================================================
+window.openDatabaseStatusModal = function() {
+  const modal = document.getElementById('databaseStatusModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+    refreshDatabaseStatus(false);
+  }
+};
+
+window.closeDatabaseStatusModal = function() {
+  const modal = document.getElementById('databaseStatusModal');
+  if (modal) {
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+  }
+};
+
+window.refreshDatabaseStatus = async function(showAlert = false) {
+  try {
+    const res = await fetch(`${API_BASE}/api/db-status`);
+    const data = await res.json();
+    if (!data.success) return;
+
+    const banner = document.getElementById('dbStatusBanner');
+    const bannerIcon = document.getElementById('dbStatusBannerIcon');
+    const bannerTitle = document.getElementById('dbStatusBannerTitle');
+    const detail = document.getElementById('dbStatusDetail');
+    const modeText = document.getElementById('dbModeText');
+    const hostText = document.getElementById('dbHostText');
+    const ordersText = document.getElementById('dbOrdersCountText');
+
+    const statusChip = document.getElementById('serverStatusChip');
+    const statusDot = document.getElementById('serverStatusDot');
+    const statusText = document.getElementById('serverStatusText');
+
+    if (modeText) modeText.textContent = data.isCloud ? 'Cloud (Supabase PostgreSQL)' : 'Local / Ephemeral';
+    if (hostText) hostText.textContent = data.supabaseHost || 'Not Set';
+    if (ordersText) ordersText.textContent = `${data.ordersCount || 0} orders`;
+
+    if (data.isCloud) {
+      if (banner) {
+        banner.style.background = '#ECFDF5';
+        banner.style.borderColor = '#A7F3D0';
+        banner.style.color = '#065F46';
+      }
+      if (bannerIcon) bannerIcon.textContent = '⚡';
+      if (bannerTitle) bannerTitle.textContent = 'Supabase Cloud Database Connected & Healthy';
+      if (detail) detail.textContent = 'All customer orders, inquiries, products and customer accounts are actively synced to PostgreSQL Cloud.';
+
+      if (statusChip) {
+        statusChip.style.background = 'rgba(16, 185, 129, 0.1)';
+        statusChip.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        statusChip.style.color = '#059669';
+      }
+      if (statusText) statusText.textContent = '⚡ Cloud Connected';
+    } else {
+      if (banner) {
+        banner.style.background = '#FEF3C7';
+        banner.style.borderColor = '#FCD34D';
+        banner.style.color = '#92400E';
+      }
+      if (bannerIcon) bannerIcon.textContent = '⚠️';
+      if (bannerTitle) bannerTitle.textContent = data.supabaseConfigured ? 'Supabase Project Paused or Inactive' : 'Local JSON Mode (Not Connected to Supabase)';
+      if (detail) {
+        detail.innerHTML = data.supabaseConfigured 
+          ? `Your Supabase project (<strong>${data.supabaseHost}</strong>) is paused or unreachable. Please unpause it at <a href="https://supabase.com/dashboard" target="_blank" style="text-decoration: underline; font-weight: 700;">supabase.com</a> so orders persist across Vercel deployments.`
+          : 'Running in Local Mode. Add SUPABASE_URL and SUPABASE_KEY to Vercel Environment Variables.';
+      }
+
+      if (statusChip) {
+        statusChip.style.background = '#FEF3C7';
+        statusChip.style.borderColor = '#FCD34D';
+        statusChip.style.color = '#92400E';
+      }
+      if (statusText) statusText.textContent = '⚠️ Cloud DB Paused';
+    }
+
+    if (showAlert) {
+      alert(data.isCloud ? '✅ Supabase Cloud Database is connected and active!' : '⚠️ Supabase is paused or disconnected. Please restore the project at supabase.com.');
+    }
+  } catch (err) {
+    console.warn('Failed to refresh database status:', err);
+  }
+};
+
+window.triggerBrevoOrderRecovery = async function(manual = true) {
+  const btn = document.getElementById('btnRecoverOrders') || document.getElementById('btnModalBrevoSync');
+  const originalText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>Scanning Brevo Receipts...</span>';
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/orders/recover-from-brevo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await res.json();
+    if (data.success) {
+      const rec = data.recoveryResult || {};
+      const count = rec.recoveredCount || 0;
+      if (count > 0) {
+        alert(`🛡️ Successfully recovered ${count} missing order(s) from Brevo email receipts! They are now saved in your admin panel.`);
+      } else if (manual) {
+        alert(`✅ All orders are 100% in sync! Checked ${rec.checkedCount || 0} Brevo receipts; no missing orders.`);
+      }
+      // Reload orders and stats
+      if (typeof loadOrders === 'function') loadOrders();
+      if (typeof loadDashboardStats === 'function') loadDashboardStats();
+    } else {
+      if (manual) alert('Notice: ' + (data.message || 'Could not sync from Brevo.'));
+    }
+  } catch (err) {
+    if (manual) alert('Sync error: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  }
+};

@@ -1,5 +1,29 @@
 [
   {
+    "id": "CUST-0016",
+    "name": "Het",
+    "email": "hetp82259@gmail.com",
+    "phone": "9662003947",
+    "registeredAt": "2026-11-04T03:20:10.788Z",
+    "lastLoginAt": "2026-11-04T03:20:10.788Z",
+    "loginCount": 5,
+    "totalOrders": 1,
+    "totalSpent": 668,
+    "status": "Active"
+  },
+  {
+    "id": "CUST-0015",
+    "name": "hetp82250",
+    "email": "hetp82250@gmail.com",
+    "phone": "9662003947",
+    "registeredAt": "2026-11-04T03:20:10.787Z",
+    "lastLoginAt": "2026-11-04T03:20:10.788Z",
+    "loginCount": 5,
+    "totalOrders": 2,
+    "totalSpent": 5077,
+    "status": "Active"
+  },
+  {
     "id": "CUST-0014",
     "name": "Rajendra Studio Customer",
     "email": "shop@rajendrastudioandgifts.in",

@@ -224,6 +224,42 @@ if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder') && supaba
   console.log('ℹ️ [DATABASE] Supabase credentials not set in environment. Running in Local JSON mode.');
 }
 
+// Circuit breaker state for Supabase
+const _supabaseHealth = {
+  isOperational: true,
+  lastChecked: 0,
+  failureCount: 0,
+  lastError: null
+};
+
+function isSupabaseOperational() {
+  if (!supabase) return false;
+  // If we've had consecutive failures (e.g. project paused or DNS failure), pause queries for 60s
+  if (_supabaseHealth.failureCount >= 2) {
+    if (Date.now() - _supabaseHealth.lastChecked < 60000) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function recordSupabaseSuccess() {
+  _supabaseHealth.isOperational = true;
+  _supabaseHealth.failureCount = 0;
+  _supabaseHealth.lastError = null;
+  _supabaseHealth.lastChecked = Date.now();
+}
+
+function recordSupabaseFailure(err) {
+  _supabaseHealth.failureCount++;
+  _supabaseHealth.lastError = err ? err.message : 'Unknown error';
+  _supabaseHealth.lastChecked = Date.now();
+  if (_supabaseHealth.failureCount >= 2) {
+    _supabaseHealth.isOperational = false;
+    console.warn(`⚠️ [DATABASE] Supabase circuit breaker OPEN (${_supabaseHealth.failureCount} failures). Falling back to JSON storage:`, _supabaseHealth.lastError);
+  }
+}
+
 function withTimeout(promise, ms, operationName = 'Database operation') {
   let timer;
   const timeoutPromise = new Promise((_, reject) => {
@@ -231,13 +267,24 @@ function withTimeout(promise, ms, operationName = 'Database operation') {
       reject(new Error(`${operationName} timed out after ${ms}ms. Check Supabase connection status.`));
     }, ms);
   });
-  return Promise.race([promise, timeoutPromise]).finally(() => {
-    clearTimeout(timer);
-  });
+  return Promise.race([promise, timeoutPromise])
+    .then(res => {
+      recordSupabaseSuccess();
+      return res;
+    })
+    .catch(err => {
+      recordSupabaseFailure(err);
+      throw err;
+    })
+    .finally(() => {
+      clearTimeout(timer);
+    });
 }
 
 module.exports = {
-  isCloud: () => Boolean(supabase),
+  isCloud: () => Boolean(supabase && isSupabaseOperational()),
+  isSupabaseConfigured: () => Boolean(supabase),
+  getSupabaseHealth: () => ({ ..._supabaseHealth, isCloud: Boolean(supabase && isSupabaseOperational()) }),
   supabase,
   syncProductsDataFiles,
   syncCategoriesDataFiles,
@@ -247,7 +294,7 @@ module.exports = {
   async hasProduct(slug) {
     if (!slug) return false;
     const cleanId = String(slug).trim().toLowerCase();
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('products').select('id').eq('id', cleanId).maybeSingle();
         const { data } = await withTimeout(queryPromise, 3000, 'Supabase hasProduct query');
@@ -263,7 +310,7 @@ module.exports = {
   async getProductById(id) {
     if (!id) return null;
     const cleanId = String(id).trim();
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('products').select('*').eq('id', cleanId).maybeSingle();
         const { data, error } = await withTimeout(queryPromise, 4000, 'Supabase getProductById query');
@@ -308,7 +355,7 @@ module.exports = {
 
   async getProducts() {
     const localProducts = readJson(PRODUCTS_FILE, []);
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('products').select('*').order('created_at', { ascending: false });
         const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getProducts');
@@ -424,7 +471,7 @@ module.exports = {
       updatedAt: new Date().toISOString()
     };
 
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const supabaseRow = {
           id: sanitizedProduct.id,
@@ -481,7 +528,7 @@ module.exports = {
   },
 
   async deleteProduct(id) {
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const delPromise = supabase.from('products').delete().eq('id', id);
         const { error } = await withTimeout(delPromise, 5000, 'Supabase deleteProduct');
@@ -515,7 +562,7 @@ module.exports = {
       { id: 'luxury-art', name: 'Luxury Art Collection', icon: '🎨', desc: 'Exclusive handcrafted museum gallery art frames and master prints.', badge: 'Luxury Art', color: '#d97706', bg: 'rgba(201, 154, 61, 0.15)', isDefault: false, createdAt: '2026-10-26T04:07:08.823Z' }
     ];
 
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('categories').select('*').order('created_at', { ascending: true });
         const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getCategories');
@@ -587,7 +634,7 @@ module.exports = {
       createdAt: category.createdAt || new Date().toISOString()
     };
 
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const upsertPromise = supabase.from('categories').upsert({
           id: newCategory.id,
@@ -625,7 +672,7 @@ module.exports = {
 
   async deleteCategory(id) {
     const cleanId = (id || '').trim().toLowerCase();
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const delPromise = supabase.from('categories').delete().eq('id', cleanId);
         const { error } = await withTimeout(delPromise, 5000, 'Supabase deleteCategory');
@@ -649,7 +696,7 @@ module.exports = {
   // --- ORDERS ---
   async getOrders() {
     let supabaseOrders = [];
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('orders').select('*').order('created_at', { ascending: false });
         const { data, error } = await withTimeout(queryPromise, 5000, 'Supabase getOrders');
@@ -725,7 +772,7 @@ module.exports = {
   async getOrderById(orderId) {
     const cleanId = (orderId || '').trim().replace(/^#/, '');
     if (!cleanId) return null;
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase
           .from('orders')
@@ -793,7 +840,7 @@ module.exports = {
       updated_at: new Date().toISOString()
     };
 
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const upsertPromise = supabase.from('orders').upsert(dbRow, { onConflict: 'order_id' });
         const { error } = await withTimeout(upsertPromise, 6000, 'Supabase saveOrder');
@@ -818,7 +865,7 @@ module.exports = {
 
   async deleteOrder(orderId) {
     const cleanId = (orderId || '').trim().replace(/^#/, '');
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         await supabase.from('orders').delete().ilike('order_id', cleanId);
       } catch (err) {
@@ -832,7 +879,7 @@ module.exports = {
   },
 
   async clearAllOrders() {
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         await supabase.from('orders').delete().neq('order_id', '');
       } catch (err) {
@@ -846,7 +893,7 @@ module.exports = {
   // --- INQUIRIES ---
   async getInquiries() {
     let supabaseInqs = [];
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('inquiries').select('*').order('created_at', { ascending: false });
         const { data, error } = await withTimeout(queryPromise, 5000, 'Supabase getInquiries');
@@ -944,7 +991,7 @@ module.exports = {
       updated_at: new Date().toISOString()
     };
 
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const upsertPromise = supabase.from('inquiries').upsert(dbRow, { onConflict: 'id' });
         const { error } = await withTimeout(upsertPromise, 6000, 'Supabase saveInquiry');
@@ -969,7 +1016,7 @@ module.exports = {
 
   async deleteInquiry(id) {
     const cleanId = (id || '').trim().replace(/^#/, '');
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         await supabase.from('inquiries').delete().ilike('id', cleanId);
       } catch (err) {
@@ -983,7 +1030,7 @@ module.exports = {
 
   // --- CONTACT MESSAGES ---
   async getMessages() {
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
       if (!error && data) return data;
     }
@@ -991,7 +1038,7 @@ module.exports = {
   },
 
   async saveMessage(msg) {
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       const { error } = await supabase.from('messages').upsert(msg);
       if (!error) return msg;
     }
@@ -1007,7 +1054,7 @@ module.exports = {
   },
 
   async deleteMessage(id) {
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       await supabase.from('messages').delete().eq('id', id);
     }
     let messages = readJson(MESSAGES_FILE, []);
@@ -1024,7 +1071,7 @@ module.exports = {
     const buffer = Buffer.from(base64Data, 'base64');
 
     // 1. If Supabase is connected, try uploading to 'photos' bucket
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const { data, error } = await supabase.storage.from('photos').upload(finalFileName, buffer, {
           contentType: mimeType,
@@ -1071,7 +1118,7 @@ module.exports = {
 
   // --- CONFIG & SESSIONS ---
   async getAdminConfig() {
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       const { data, error } = await supabase.from('admin_config').select('*').eq('id', 'default').maybeSingle();
       if (!error && data) {
         return {
@@ -1086,7 +1133,7 @@ module.exports = {
   },
 
   async saveAdminConfig(cfg) {
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       const dbRow = {
         id: 'default',
         admin_email: cfg.adminEmail,
@@ -1102,7 +1149,7 @@ module.exports = {
 
   // --- CUSTOMER ACCOUNTS ---
   async getCustomers() {
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       const { data, error } = await supabase.from('customers').select('*').order('registered_at', { ascending: false });
       if (!error && data) return data;
     }
@@ -1110,7 +1157,7 @@ module.exports = {
   },
 
   async saveCustomer(customer) {
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       const { error } = await supabase.from('customers').upsert(customer);
       if (!error) return customer;
     }
@@ -1161,7 +1208,7 @@ module.exports = {
     }
     writeJson(CUSTOMERS_FILE, customers);
 
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         await supabase.from('customers').upsert({
           id: cust.id,
@@ -1210,7 +1257,7 @@ module.exports = {
     const customers = readJson(CUSTOMERS_FILE, []);
     const foundLocal = customers.find(c => c.email && c.email.toLowerCase() === cleanEmail);
 
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('customers').select('*').eq('email', cleanEmail).maybeSingle();
         const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getCustomerByEmail');
@@ -1287,7 +1334,7 @@ module.exports = {
     }
     writeJson(CUSTOMERS_FILE, customers);
 
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const updatePromise = supabase
           .from('customers')
@@ -1332,7 +1379,7 @@ module.exports = {
     }
     writeJson(CUSTOMERS_FILE, customers);
 
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const updatePromise = supabase
           .from('customers')
@@ -1352,7 +1399,7 @@ module.exports = {
 
   // --- CUSTOMER REVIEWS ---
   async getReviews(productId = null) {
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         let query = supabase.from('reviews').select('*').order('created_at', { ascending: false });
         if (productId) {
@@ -1385,7 +1432,7 @@ module.exports = {
   },
 
   async saveReview(review) {
-    if (supabase) {
+    if (supabase && isSupabaseOperational()) {
       try {
         const dbRow = {
           id: review.id,
