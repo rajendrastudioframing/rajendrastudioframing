@@ -1291,298 +1291,346 @@ function createOrderCardRowHTML(order) {
 let currentViewingOrder = null;
 
 window.openOrderDetailsModal = (orderId) => {
-  const order = allInquiries.find(i => i.id === orderId);
-  if (!order) return;
-
-  const modal = document.getElementById('orderDetailsModal');
-  const idEl = document.getElementById('orderDetailModalId');
-  const badgeEl = document.getElementById('orderDetailModalStatusBadge');
-  const bodyEl = document.getElementById('orderDetailsModalBody');
-  const waBtn = document.getElementById('orderDetailModalWaBtn');
-  if (!modal || !bodyEl) return;
-
-  currentViewingOrder = order;
-
-  if (idEl) idEl.textContent = `#${order.id}`;
-
-  const statusClass = (order.status || 'New').toLowerCase().replace(/\s+/g, '-');
-  if (badgeEl) {
-    badgeEl.className = `status-pill ${statusClass}`;
-    badgeEl.innerHTML = `<span class="status-dot"></span> ${escapeHtml(order.status || 'New')}`;
-  }
-
-  const cleanPhone = (order.phone || '').replace(/\D/g, '');
-  const deliveryAddress = getOrderDeliveryAddress(order);
-  const custPhoto = getOrderCustomerPhoto(order);
-  const custEmail = order.customerEmail || (order.customer && order.customer.email) || (order.email && order.email.includes('@') ? order.email : 'Not provided');
-  const paymentMethod = order.paymentMethod || (order.specs && order.specs.includes('Instant UPI') ? 'Instant UPI Payment (QR Code)' : 'Pay on Delivery / COD');
-  const upiUtr = order.upiUtr || (order.specs && order.specs.match(/UTR:\s*([^\]]+)/) ? order.specs.match(/UTR:\s*([^\]]+)/)[1] : null);
-  const trackingMode = (order.specs && order.specs.includes('Deliver to:')) || deliveryAddress.length > 5 ? 'Doorstep Delivery' : 'Studio Pickup';
-
-  const dateObj = new Date(order.createdAt);
-  const dateFormatted = isNaN(dateObj) ? 'Recent' : dateObj.toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-
-  const waText = encodeURIComponent(`Hello ${order.name}, Dahej Support here regarding your Order #${order.id} for ${order.product}. Status: ${order.status}. Total: ₹${order.estimatedValue}.`);
-  if (waBtn) waBtn.href = `https://wa.me/${cleanPhone}?text=${waText}`;
-
-  // Structured items list with robust JSON string parsing & fallback splitting
-  let items = [];
-  if (Array.isArray(order.items) && order.items.length) {
-    items = order.items;
-  } else if (typeof order.items === 'string' && order.items.trim().startsWith('[')) {
-    try { items = JSON.parse(order.items); } catch (_) { items = []; }
-  }
-
-  // If items array is still empty, parse comma-separated products (e.g. "File Printing (x2), Mug Printing (x1)")
-  if (!items.length) {
-    let size = 'Standard';
-    let finish = 'Standard';
-    if (order.specs) {
-      const sm = order.specs.match(/(\d+[\s"x×]+[\d"'\s]+|[A-Za-z0-9]+\s*(?:Classic|Large|Small|Medium|Square|Mini|Portrait|Landscape))/i);
-      if (sm) size = sm[1].trim();
-      const fm = order.specs.match(/(?:in|with|finish|color|standoffs|black|gold|wood|white|silver)[\s:]*([^,•\n\r]+)/i);
-      if (fm) finish = fm[1].trim();
+  try {
+    if (!orderId) {
+      console.warn('openOrderDetailsModal called without orderId');
+      return;
     }
 
-    const rawProductStr = (order.product || 'Photo Frame').replace('[ONLINE ORDER]', '').trim();
-    const parts = rawProductStr.split(',').map(s => s.trim()).filter(Boolean);
+    const cleanTargetId = String(orderId).trim().toLowerCase().replace(/^#/, '');
+    const order = (allInquiries || []).find(i => {
+      if (!i) return false;
+      const iId = String(i.id || i.orderId || '').trim().toLowerCase().replace(/^#/, '');
+      return iId === cleanTargetId || String(i.id) === String(orderId) || String(i.orderId) === String(orderId);
+    });
 
-    if (parts.length > 1) {
-      items = parts.map(part => {
-        const qtyMatch = part.match(/\(x(\d+)\)/i);
-        const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
-        const cleanName = part.replace(/\(x\d+\)/i, '').trim();
-        return {
-          name: cleanName,
-          quantity: qty,
+    if (!order) {
+      console.warn('Order not found for modal:', orderId, 'in allInquiries count:', (allInquiries || []).length);
+      if (typeof showToast === 'function') {
+        showToast('Order Details', 'Order record not found. Please refresh the page.', 'warning');
+      }
+      return;
+    }
+
+    const modal = document.getElementById('orderDetailsModal');
+    const idEl = document.getElementById('orderDetailModalId');
+    const badgeEl = document.getElementById('orderDetailModalStatusBadge');
+    const bodyEl = document.getElementById('orderDetailsModalBody');
+    const waBtn = document.getElementById('orderDetailModalWaBtn');
+    if (!modal || !bodyEl) {
+      console.error('Modal elements missing (#orderDetailsModal or #orderDetailsModalBody)');
+      return;
+    }
+
+    currentViewingOrder = order;
+
+    const displayOrderId = order.id || order.orderId || cleanTargetId;
+    if (idEl) idEl.textContent = `#${displayOrderId}`;
+
+    const ordSt = (order.status || '').toLowerCase().trim();
+    const isCancelled = ordSt === 'cancelled';
+    const isPickedUp = ordSt === 'picked_up' || ordSt === 'picked up';
+    const isReadyForPickup = ordSt === 'ready_for_pickup' || ordSt === 'ready for pickup' || ordSt === 'shipped' || ordSt === 'dispatched' || ordSt === 'pickup ready';
+    const isConfirmed = ordSt === 'confirmed' || ordSt === 'accepted';
+    const isPending = ordSt === 'pending' || ordSt === 'new' || !ordSt;
+
+    let displayStatus = 'Pending';
+    if (isCancelled) {
+      displayStatus = 'Cancelled';
+    } else if (isPickedUp) {
+      displayStatus = 'Picked Up';
+    } else if (isReadyForPickup) {
+      displayStatus = 'Ready for Pickup';
+    } else if (isConfirmed) {
+      displayStatus = 'Confirmed';
+    } else {
+      displayStatus = 'Pending';
+    }
+
+    const statusClass = isCancelled ? 'cancelled' : isPickedUp ? 'completed' : isReadyForPickup ? 'ready' : isConfirmed ? 'confirmed' : 'new';
+    if (badgeEl) {
+      badgeEl.className = `status-pill ${statusClass}`;
+      badgeEl.innerHTML = `<span class="status-dot"></span> ${escapeHtml(displayStatus)}`;
+    }
+
+    const cleanPhone = (order.phone || '').replace(/\D/g, '');
+    const deliveryAddress = getOrderDeliveryAddress(order);
+    const custPhoto = getOrderCustomerPhoto(order);
+    const custEmail = order.customerEmail || (order.customer && order.customer.email) || (order.email && order.email.includes('@') ? order.email : 'Not provided');
+    const paymentMethod = order.paymentMethod || (order.specs && order.specs.includes('Instant UPI') ? 'Instant UPI Payment (QR Code)' : 'Pay on Delivery / COD');
+    const upiUtr = order.upiUtr || (order.specs && order.specs.match(/UTR:\s*([^\s\]]+)/) ? order.specs.match(/UTR:\s*([^\s\]]+)/)[1] : null);
+    const trackingMode = (order.specs && order.specs.includes('Deliver to:')) || deliveryAddress.length > 5 ? 'Doorstep Delivery' : 'Studio Pickup';
+
+    const dateObj = new Date(order.createdAt);
+    const dateFormatted = isNaN(dateObj) ? 'Recent' : dateObj.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const waText = encodeURIComponent(`Hello ${order.name || 'Customer'}, Dahej Support here regarding your Order #${displayOrderId} for ${order.product || 'Photo Frame'}. Status: ${displayStatus}. Total: ₹${order.estimatedValue || 0}.`);
+    if (waBtn) waBtn.href = `https://wa.me/${cleanPhone}?text=${waText}`;
+
+    // Structured items list with robust JSON string parsing & fallback splitting
+    let items = [];
+    if (Array.isArray(order.items) && order.items.length) {
+      items = order.items;
+    } else if (typeof order.items === 'string' && order.items.trim().startsWith('[')) {
+      try { items = JSON.parse(order.items); } catch (_) { items = []; }
+    }
+
+    // If items array is still empty, parse comma-separated products (e.g. "File Printing (x2), Mug Printing (x1)")
+    if (!items.length) {
+      let size = 'Standard';
+      let finish = 'Standard';
+      if (order.specs) {
+        const sm = order.specs.match(/(\d+[\s"x×]+[\d"'\s]+|[A-Za-z0-9]+\s*(?:Classic|Large|Small|Medium|Square|Mini|Portrait|Landscape))/i);
+        if (sm) size = sm[1].trim();
+        const fm = order.specs.match(/(?:in|with|finish|color|standoffs|black|gold|wood|white|silver)[\s:]*([^,•\n\r]+)/i);
+        if (fm) finish = fm[1].trim();
+      }
+
+      const rawProductStr = (order.product || 'Photo Frame').replace('[ONLINE ORDER]', '').trim();
+      const parts = rawProductStr.split(',').map(s => s.trim()).filter(Boolean);
+
+      if (parts.length > 1) {
+        items = parts.map(part => {
+          const qtyMatch = part.match(/\(x(\d+)\)/i);
+          const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
+          const cleanName = part.replace(/\(x\d+\)/i, '').trim();
+          return {
+            name: cleanName,
+            quantity: qty,
+            size: order.size || size,
+            finish: order.finish || finish,
+            price: Math.round((Number(order.estimatedValue) || 500) / parts.length),
+            lineTotal: Math.round((Number(order.estimatedValue) || 500) / parts.length),
+            image: getProductThumbnail(cleanName),
+            uploadedPhoto: custPhoto ? { fileUrl: custPhoto.url, fileName: custPhoto.name } : null
+          };
+        });
+      } else {
+        items = [{
+          name: rawProductStr,
+          quantity: order.quantity || 1,
           size: order.size || size,
           finish: order.finish || finish,
-          price: Math.round((Number(order.estimatedValue) || 500) / parts.length),
-          lineTotal: Math.round((Number(order.estimatedValue) || 500) / parts.length),
-          image: getProductThumbnail(cleanName),
+          price: order.estimatedValue || 0,
+          lineTotal: order.estimatedValue || 0,
+          image: getProductThumbnail(rawProductStr),
           uploadedPhoto: custPhoto ? { fileUrl: custPhoto.url, fileName: custPhoto.name } : null
-        };
-      });
-    } else {
-      items = [{
-        name: rawProductStr,
-        quantity: order.quantity || 1,
-        size: order.size || size,
-        finish: order.finish || finish,
-        price: order.estimatedValue || 0,
-        lineTotal: order.estimatedValue || 0,
-        image: getProductThumbnail(rawProductStr),
-        uploadedPhoto: custPhoto ? { fileUrl: custPhoto.url, fileName: custPhoto.name } : null
-      }];
+        }];
+      }
+    }
+
+    const itemsRowsHTML = items.map(it => {
+      const itemImg = it.image || getProductThumbnail(it.name);
+      const itemPhoto = it.uploadedPhoto ? (it.uploadedPhoto.fileUrl || it.uploadedPhoto) : (custPhoto ? custPhoto.url : null);
+      const itemPhotoName = it.uploadedPhoto ? (it.uploadedPhoto.fileName || it.uploadedPhoto.originalName || 'Customer Photo') : (custPhoto ? custPhoto.name : null);
+      const itemSize = it.size || 'Standard';
+      const itemFinish = it.finish || 'Standard';
+      const lineTotal = Number(it.lineTotal || (it.price * it.quantity) || 0).toLocaleString('en-IN');
+
+      return `
+        <tr class="order-detail-item-row">
+          <td>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <img src="${itemImg}" alt="${escapeHtml(it.name || 'Product')}" class="order-detail-item-thumb" onerror="this.src='assets/images/glass_frame.jpg'" />
+              <div>
+                <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">${escapeHtml(it.name || 'Custom Product')}</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Item ID: ${escapeHtml(it.id || 'std')}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="order-detail-spec-badge size">📏 ${escapeHtml(itemSize)}</span>
+          </td>
+          <td>
+            <span class="order-detail-spec-badge finish">🎨 ${escapeHtml(itemFinish)}</span>
+          </td>
+          <td>
+            ${itemPhoto ? `
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <img src="${escapeHtml(itemPhoto)}" alt="Photo" class="order-detail-photo-mini" onclick="openCustomerPhotoModal('${escapeHtml(itemPhoto)}', '${escapeHtml(displayOrderId)}', '${escapeHtml(order.name)}', '${escapeHtml(itemPhotoName)}')" title="Click to view full photo" />
+                <button type="button" class="btn-detail-view-photo" onclick="openCustomerPhotoModal('${escapeHtml(itemPhoto)}', '${escapeHtml(displayOrderId)}', '${escapeHtml(order.name)}', '${escapeHtml(itemPhotoName)}')">🔍 View</button>
+              </div>
+            ` : `
+              <span style="font-size: 0.72rem; color: var(--text-muted);">No Custom Photo</span>
+            `}
+          </td>
+          <td style="text-align: center; font-weight: 600;">${it.quantity || 1}</td>
+          <td style="text-align: right; font-weight: 600;">₹${Number(it.price || 0).toLocaleString('en-IN')}</td>
+          <td style="text-align: right; font-weight: 800; color: var(--primary);">₹${lineTotal}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const subtotalVal = Number(order.subtotal || order.estimatedValue || 0).toLocaleString('en-IN');
+    const totalVal = Number(order.total || order.estimatedValue || 0).toLocaleString('en-IN');
+
+    bodyEl.innerHTML = `
+      <!-- Top 3 Info Cards -->
+      <div class="order-detail-cards-grid">
+        <!-- 1. Customer & Contact -->
+        <div class="order-detail-card">
+          <div class="order-detail-card-title">👤 CUSTOMER &amp; CONTACT</div>
+          <div class="order-detail-card-name">${escapeHtml(order.name)}</div>
+          <div class="order-detail-card-row">
+            <span>📞 Phone:</span>
+            <a href="tel:${cleanPhone}" style="color: var(--primary); text-decoration: none; font-weight: 600;">${escapeHtml(order.phone)}</a>
+            <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" class="order-detail-wa-link" title="Open WhatsApp Chat">💬 Chat</a>
+          </div>
+          <div class="order-detail-card-row">
+            <span>✉️ Email:</span>
+            <a href="mailto:${escapeHtml(custEmail)}" style="color: var(--text-secondary); text-decoration: none;">${escapeHtml(custEmail)}</a>
+          </div>
+          <div class="order-detail-card-row" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+            <span>🕒 Ordered:</span> <span>${dateFormatted}</span>
+          </div>
+          <div class="order-detail-card-row" style="font-size: 0.74rem; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border-subtle);">
+            <span>📅 Confirmation Date:</span>
+            <strong style="color: #047857;">${order.confirmationDate ? escapeHtml(formatLocalReadableDate(order.confirmationDate)) : '<span style="color: var(--text-muted); font-weight: normal;">Not confirmed yet</span>'}</strong>
+          </div>
+          <div class="order-detail-card-row" style="font-size: 0.74rem; margin-top: 4px;">
+            <span>📦 Actual Pickup Date:</span>
+            <strong style="color: #1D4ED8;">${order.pickedUpAt ? escapeHtml(formatLocalReadableDate(order.pickedUpAt)) : (order.pickupDate ? escapeHtml(formatLocalReadableDate(order.pickupDate)) : '<span style="color: var(--text-muted); font-weight: normal;">Not picked up yet</span>')}</strong>
+          </div>
+        </div>
+
+        <!-- 2. Delivery & Destination -->
+        <div class="order-detail-card">
+          <div class="order-detail-card-title">📍 DELIVERY &amp; DESTINATION</div>
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <span class="order-detail-delivery-pill">${trackingMode === 'Doorstep Delivery' ? '🚚 Deliver to Doorstep' : '🏢 Studio Counter Pickup'}</span>
+          </div>
+          <div class="order-detail-card-address">${escapeHtml(deliveryAddress)}</div>
+        </div>
+
+        <!-- 3. Payment & Settlement -->
+        <div class="order-detail-card">
+          <div class="order-detail-card-title">💳 PAYMENT &amp; SETTLEMENT</div>
+          <div class="order-detail-card-row">
+            <span>Method:</span>
+            <strong>${escapeHtml(paymentMethod)}</strong>
+          </div>
+          <div class="order-detail-card-row">
+            <span>Status:</span>
+            <span class="status-pill ${order.status === 'Completed' || paymentMethod.includes('UPI') ? 'paid' : 'pending'}" style="font-size: 0.68rem; padding: 2px 7px;">
+              <span class="status-dot"></span> ${paymentMethod.includes('UPI') ? 'Paid Online' : 'Pending (Pay on Delivery)'}
+            </span>
+          </div>
+          ${upiUtr ? `
+            <div class="order-detail-card-row">
+              <span>UTR / Ref:</span>
+              <code style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">${escapeHtml(upiUtr)}</code>
+            </div>
+          ` : ''}
+          <div class="order-detail-card-row" style="margin-top: 4px; border-top: 1px dashed var(--border-subtle); padding-top: 4px;">
+            <span>Total Value:</span>
+            <strong style="color: var(--primary); font-size: 1.1rem;">₹${totalVal}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Workflow Action Bar -->
+      <div style="background: var(--bg-hover); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px 16px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="font-size: 0.84rem; color: var(--text-secondary);">
+          <strong>Status:</strong> <span style="font-weight: 700; color: var(--text-main); text-transform: uppercase;">${escapeHtml(displayStatus)}</span>
+          ${order.pickupDate ? ` &bull; <strong>Scheduled Pickup:</strong> ${escapeHtml(formatLocalReadableDate(order.pickupDate))}` : ''}
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn-sub-action primary" ${isCancelled || isPickedUp ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openAcceptOrderModal('${escapeHtml(displayOrderId)}')"`} style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
+            ${isConfirmed ? '✓ Accepted' : '✓ Accept Order'}
+          </button>
+          <button type="button" class="btn-sub-action primary" ${isCancelled ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openPickupOrderModal('${escapeHtml(displayOrderId)}')"`} style="background: #2563EB; border-color: #2563EB; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
+            ${isPickedUp ? '📦 Collected' : (isReadyForPickup ? '📦 Ready for Pickup' : '📦 Pickup Order')}
+          </button>
+          <button type="button" class="btn-sub-action" ${isCancelled ? 'disabled style="opacity: 0.85; background: #FEE2E2; border-color: #F87171; color: #991B1B;"' : (isPickedUp ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openCancelOrderModal('${escapeHtml(displayOrderId)}')"`)} style="background: #DC2626; border-color: #DC2626; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
+            ${isCancelled ? '✕ Cancelled' : '✕ Cancel Order'}
+          </button>
+        </div>
+      </div>
+
+      <!-- Items Table -->
+      <div style="margin-top: 20px;">
+        <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px;">
+          📦 ORDERED PRODUCTS &amp; CUSTOM SPECIFICATIONS (${items.length} item${items.length > 1 ? 's' : ''})
+        </div>
+        <div class="order-detail-table-wrap">
+          <table class="order-detail-table">
+            <thead>
+              <tr>
+                <th>Product Ordered</th>
+                <th>Selected Size</th>
+                <th>Frame Color / Finish</th>
+                <th>Customer Photo</th>
+                <th style="text-align: center;">Qty</th>
+                <th style="text-align: right;">Price</th>
+                <th style="text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsRowsHTML}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Order Notes Callout -->
+      ${order.notes && order.notes.trim() && !order.notes.toLowerCase().includes('none') ? `
+        <div class="order-detail-note-box">
+          <span style="font-size: 1.1rem; flex-shrink: 0;">📝</span>
+          <div>
+            <strong style="color: var(--primary); font-size: 0.75rem; text-transform: uppercase; display: block; margin-bottom: 2px;">Customer Special Instructions / Notes:</strong>
+            <span style="font-size: 0.84rem; color: var(--text-main);">${escapeHtml(order.notes)}</span>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Financial Breakdown -->
+      <div class="order-detail-summary-grid">
+        <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; color: var(--text-muted);">
+          <div>✓ Museum Archival Grade Quality Framing</div>
+          <div>✓ 12-Color HD Custom Printing Included</div>
+          <div>✓ GST &amp; Taxes Included</div>
+        </div>
+        <div class="order-detail-totals-box">
+          <div class="order-detail-total-line">
+            <span>Items Subtotal:</span>
+            <span>₹${subtotalVal}</span>
+          </div>
+          <div class="order-detail-total-line">
+            <span>Shipping &amp; Transit Packaging:</span>
+            <span style="color: #10B981; font-weight: 700;">FREE</span>
+          </div>
+          <div class="order-detail-total-line grand-total">
+            <span>Grand Total:</span>
+            <span>₹${totalVal}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    modal.classList.add('open');
+    modal.style.display = 'flex';
+  } catch (err) {
+    console.error('Error opening order details modal:', err);
+    if (typeof showToast === 'function') {
+      showToast('Error', 'Could not open order details: ' + (err.message || ''), 'danger');
     }
   }
-
-  const itemsRowsHTML = items.map(it => {
-    const itemImg = it.image || getProductThumbnail(it.name);
-    const itemPhoto = it.uploadedPhoto ? (it.uploadedPhoto.fileUrl || it.uploadedPhoto) : (custPhoto ? custPhoto.url : null);
-    const itemPhotoName = it.uploadedPhoto ? (it.uploadedPhoto.fileName || it.uploadedPhoto.originalName || 'Customer Photo') : (custPhoto ? custPhoto.name : null);
-    const itemSize = it.size || 'Standard';
-    const itemFinish = it.finish || 'Standard';
-    const lineTotal = Number(it.lineTotal || (it.price * it.quantity) || 0).toLocaleString('en-IN');
-
-    return `
-      <tr class="order-detail-item-row">
-        <td>
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <img src="${itemImg}" alt="${escapeHtml(it.name)}" class="order-detail-item-thumb" onerror="this.src='assets/images/glass_frame.jpg'" />
-            <div>
-              <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">${escapeHtml(it.name)}</div>
-              <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Item ID: ${escapeHtml(it.id || 'std')}</div>
-            </div>
-          </div>
-        </td>
-        <td>
-          <span class="order-detail-spec-badge size">📏 ${escapeHtml(itemSize)}</span>
-        </td>
-        <td>
-          <span class="order-detail-spec-badge finish">🎨 ${escapeHtml(itemFinish)}</span>
-        </td>
-        <td>
-          ${itemPhoto ? `
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <img src="${escapeHtml(itemPhoto)}" alt="Photo" class="order-detail-photo-mini" onclick="openCustomerPhotoModal('${escapeHtml(itemPhoto)}', '${escapeHtml(order.id)}', '${escapeHtml(order.name)}', '${escapeHtml(itemPhotoName)}')" title="Click to view full photo" />
-              <button type="button" class="btn-detail-view-photo" onclick="openCustomerPhotoModal('${escapeHtml(itemPhoto)}', '${escapeHtml(order.id)}', '${escapeHtml(order.name)}', '${escapeHtml(itemPhotoName)}')">🔍 View</button>
-            </div>
-          ` : `
-            <span style="font-size: 0.72rem; color: var(--text-muted);">No Custom Photo</span>
-          `}
-        </td>
-        <td style="text-align: center; font-weight: 600;">${it.quantity || 1}</td>
-        <td style="text-align: right; font-weight: 600;">₹${Number(it.price || 0).toLocaleString('en-IN')}</td>
-        <td style="text-align: right; font-weight: 800; color: var(--primary);">₹${lineTotal}</td>
-      </tr>
-    `;
-  }).join('');
-
-  const subtotalVal = Number(order.subtotal || order.estimatedValue || 0).toLocaleString('en-IN');
-  const totalVal = Number(order.total || order.estimatedValue || 0).toLocaleString('en-IN');
-
-  const ordSt = (order.status || '').toLowerCase();
-  const isConfirmed = ordSt === 'confirmed';
-  const isPickedUp = ordSt === 'picked_up' || ordSt === 'picked up';
-  const isAccepted = isConfirmed || ordSt === 'accepted' || ordSt === 'in progress';
-
-  bodyEl.innerHTML = `
-    <!-- Top 3 Info Cards -->
-    <div class="order-detail-cards-grid">
-      <!-- 1. Customer & Contact -->
-      <div class="order-detail-card">
-        <div class="order-detail-card-title">👤 CUSTOMER &amp; CONTACT</div>
-        <div class="order-detail-card-name">${escapeHtml(order.name)}</div>
-        <div class="order-detail-card-row">
-          <span>📞 Phone:</span>
-          <a href="tel:${cleanPhone}" style="color: var(--primary); text-decoration: none; font-weight: 600;">${escapeHtml(order.phone)}</a>
-          <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" class="order-detail-wa-link" title="Open WhatsApp Chat">💬 Chat</a>
-        </div>
-        <div class="order-detail-card-row">
-          <span>✉️ Email:</span>
-          <a href="mailto:${escapeHtml(custEmail)}" style="color: var(--text-secondary); text-decoration: none;">${escapeHtml(custEmail)}</a>
-        </div>
-        <div class="order-detail-card-row" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
-          <span>🕒 Ordered:</span> <span>${dateFormatted}</span>
-        </div>
-        <div class="order-detail-card-row" style="font-size: 0.74rem; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border-subtle);">
-          <span>📅 Confirmation Date:</span>
-          <strong style="color: #047857;">${order.confirmationDate ? escapeHtml(formatLocalReadableDate(order.confirmationDate)) : '<span style="color: var(--text-muted); font-weight: normal;">Not confirmed yet</span>'}</strong>
-        </div>
-        <div class="order-detail-card-row" style="font-size: 0.74rem; margin-top: 4px;">
-          <span>📦 Actual Pickup Date:</span>
-          <strong style="color: #1D4ED8;">${order.pickupDate ? escapeHtml(formatLocalReadableDate(order.pickupDate)) : '<span style="color: var(--text-muted); font-weight: normal;">Not picked up yet</span>'}</strong>
-        </div>
-      </div>
-
-      <!-- 2. Delivery & Destination -->
-      <div class="order-detail-card">
-        <div class="order-detail-card-title">📍 DELIVERY &amp; DESTINATION</div>
-        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-          <span class="order-detail-delivery-pill">${trackingMode === 'Doorstep Delivery' ? '🚚 Deliver to Doorstep' : '🏢 Studio Counter Pickup'}</span>
-        </div>
-        <div class="order-detail-card-address">${escapeHtml(deliveryAddress)}</div>
-      </div>
-
-      <!-- 3. Payment & Settlement -->
-      <div class="order-detail-card">
-        <div class="order-detail-card-title">💳 PAYMENT &amp; SETTLEMENT</div>
-        <div class="order-detail-card-row">
-          <span>Method:</span>
-          <strong>${escapeHtml(paymentMethod)}</strong>
-        </div>
-        <div class="order-detail-card-row">
-          <span>Status:</span>
-          <span class="status-pill ${order.status === 'Completed' || paymentMethod.includes('UPI') ? 'paid' : 'pending'}" style="font-size: 0.68rem; padding: 2px 7px;">
-            <span class="status-dot"></span> ${paymentMethod.includes('UPI') ? 'Paid Online' : 'Pending (Pay on Delivery)'}
-          </span>
-        </div>
-        ${upiUtr ? `
-          <div class="order-detail-card-row">
-            <span>UTR / Ref:</span>
-            <code style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">${escapeHtml(upiUtr)}</code>
-          </div>
-        ` : ''}
-        <div class="order-detail-card-row" style="margin-top: 4px; border-top: 1px dashed var(--border-subtle); padding-top: 4px;">
-          <span>Total Value:</span>
-          <strong style="color: var(--primary); font-size: 1.1rem;">₹${totalVal}</strong>
-        </div>
-      </div>
-    </div>
-
-    <!-- Order Workflow Action Bar -->
-    <div style="background: var(--bg-hover); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px 16px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-      <div style="font-size: 0.84rem; color: var(--text-secondary);">
-        <strong>Status:</strong> <span style="font-weight: 700; color: var(--text-main); text-transform: uppercase;">${escapeHtml(displayStatus)}</span>
-        ${order.pickupDate ? ` &bull; <strong>Scheduled Pickup:</strong> ${escapeHtml(formatLocalReadableDate(order.pickupDate))}` : ''}
-      </div>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button type="button" class="btn-sub-action primary" ${isCancelled || isPickedUp ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openAcceptOrderModal('${escapeHtml(order.id)}')"`} style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
-          ${isConfirmed ? '✓ Accepted' : '✓ Accept Order'}
-        </button>
-        <button type="button" class="btn-sub-action primary" ${isCancelled ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openPickupOrderModal('${escapeHtml(order.id)}')"`} style="background: #2563EB; border-color: #2563EB; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
-          ${isPickedUp ? '📦 Collected' : (isReadyForPickup ? '📦 Ready for Pickup' : '📦 Pickup Order')}
-        </button>
-        <button type="button" class="btn-sub-action" ${isCancelled ? 'disabled style="opacity: 0.85; background: #FEE2E2; border-color: #F87171; color: #991B1B;"' : (isPickedUp ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openCancelOrderModal('${escapeHtml(order.id)}')"`)} style="background: #DC2626; border-color: #DC2626; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
-          ${isCancelled ? '✕ Cancelled' : '✕ Cancel Order'}
-        </button>
-      </div>
-    </div>
-
-    <!-- Items Table -->
-    <div style="margin-top: 20px;">
-      <div style="font-size: 0.76rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px;">
-        📦 ORDERED PRODUCTS &amp; CUSTOM SPECIFICATIONS (${items.length} item${items.length > 1 ? 's' : ''})
-      </div>
-      <div class="order-detail-table-wrap">
-        <table class="order-detail-table">
-          <thead>
-            <tr>
-              <th>Product Ordered</th>
-              <th>Selected Size</th>
-              <th>Frame Color / Finish</th>
-              <th>Customer Photo</th>
-              <th style="text-align: center;">Qty</th>
-              <th style="text-align: right;">Price</th>
-              <th style="text-align: right;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsRowsHTML}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Order Notes Callout -->
-    ${order.notes && order.notes.trim() && !order.notes.toLowerCase().includes('none') ? `
-      <div class="order-detail-note-box">
-        <span style="font-size: 1.1rem; flex-shrink: 0;">📝</span>
-        <div>
-          <strong style="color: var(--primary); font-size: 0.75rem; text-transform: uppercase; display: block; margin-bottom: 2px;">Customer Special Instructions / Notes:</strong>
-          <span style="font-size: 0.84rem; color: var(--text-main);">${escapeHtml(order.notes)}</span>
-        </div>
-      </div>
-    ` : ''}
-
-    <!-- Financial Breakdown -->
-    <div class="order-detail-summary-grid">
-      <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; color: var(--text-muted);">
-        <div>✓ Museum Archival Grade Quality Framing</div>
-        <div>✓ 12-Color HD Custom Printing Included</div>
-        <div>✓ GST &amp; Taxes Included</div>
-      </div>
-      <div class="order-detail-totals-box">
-        <div class="order-detail-total-line">
-          <span>Items Subtotal:</span>
-          <span>₹${subtotalVal}</span>
-        </div>
-        <div class="order-detail-total-line">
-          <span>Shipping &amp; Transit Packaging:</span>
-          <span style="color: #10B981; font-weight: 700;">FREE</span>
-        </div>
-        <div class="order-detail-total-line grand-total">
-          <span>Grand Total:</span>
-          <span>₹${totalVal}</span>
-        </div>
-      </div>
-    </div>
-  `;
-
-  modal.classList.add('open');
 };
 
 window.closeOrderDetailsModal = () => {
   const modal = document.getElementById('orderDetailsModal');
-  if (modal) modal.classList.remove('open');
+  if (modal) {
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+  }
 };
+
 
 window.printCurrentOrderReceipt = () => {
   if (!currentViewingOrder) return;
