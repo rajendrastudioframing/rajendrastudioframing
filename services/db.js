@@ -764,6 +764,15 @@ module.exports = {
       }
     });
 
+    // Self-healing: if Supabase is connected, ensure all local/recovered orders are backed up to Supabase Cloud
+    if (supabase && isSupabaseOperational() && supabaseOrders.length > 0) {
+      const supaIds = new Set(supabaseOrders.map(so => (so.orderId || '').toLowerCase().trim()));
+      const unSynced = localOrders.filter(lo => lo && lo.orderId && !supaIds.has(lo.orderId.toLowerCase().trim()));
+      if (unSynced.length > 0) {
+        Promise.all(unSynced.map(o => this.saveOrder(o))).catch(e => console.warn('Background Supabase cloud sync notice:', e.message));
+      }
+    }
+
     const combined = Array.from(mergedMap.values());
     combined.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     return combined;
@@ -810,7 +819,21 @@ module.exports = {
       }
     }
     const orders = readJson(ORDERS_FILE, []);
-    return orders.find(o => o.orderId && o.orderId.toLowerCase() === cleanId.toLowerCase()) || null;
+    const found = orders.find(o => o.orderId && o.orderId.toLowerCase() === cleanId.toLowerCase());
+    if (found) return found;
+
+    // Zero-loss fallback: if order was placed across serverless instances, check Brevo receipts
+    try {
+      const orderRecovery = require('./orderRecovery');
+      const rec = await orderRecovery.syncBrevoOrders(true);
+      if (rec && rec.recoveredCount > 0) {
+        const freshOrders = readJson(ORDERS_FILE, []);
+        const recovered = freshOrders.find(o => o.orderId && o.orderId.toLowerCase() === cleanId.toLowerCase());
+        if (recovered) return recovered;
+      }
+    } catch (_) {}
+
+    return null;
   },
 
   async saveOrder(order) {
