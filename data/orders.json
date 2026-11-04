@@ -25,12 +25,16 @@
     "subtotal": 655,
     "shipping": 0,
     "total": 655,
-    "notes": "Standard Studio Packaging",
+    "notes": "Order accepted by studio. Custom framing and crafting underway.",
     "orderPhoto": null,
     "paymentMethod": "Pick up from shop",
     "paymentStatus": "Pending",
-    "status": "pending",
-    "createdAt": "2026-11-04T02:10:59.000Z"
+    "status": "confirmed",
+    "createdAt": "2026-11-04T02:10:59.000Z",
+    "confirmationDate": "2026-11-13",
+    "confirmedAt": "2026-11-04T04:57:04.243Z",
+    "pickupDate": "2026-11-13",
+    "pickedUpAt": null
   },
   {
     "orderId": "RF-ORD-2026-009",

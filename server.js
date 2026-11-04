@@ -2276,6 +2276,8 @@ app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
         subtotal: (matchedOrder && matchedOrder.subtotal) || inq.estimatedValue || 0,
         shipping: (matchedOrder && matchedOrder.shipping) || 0,
         total: (matchedOrder && matchedOrder.total) || inq.estimatedValue || 0,
+        status: (matchedOrder && matchedOrder.status) || inq.status || 'pending',
+        notes: (matchedOrder && matchedOrder.notes) || inq.notes || '',
         confirmationDate: (matchedOrder && matchedOrder.confirmationDate) || inq.confirmationDate || inq.confirmed_date || null,
         confirmedAt: (matchedOrder && matchedOrder.confirmedAt) || inq.confirmedAt || inq.confirmed_at || null,
         pickupDate: (matchedOrder && matchedOrder.pickupDate) || inq.pickupDate || inq.pickup_date || null,

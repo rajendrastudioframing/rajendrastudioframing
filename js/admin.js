@@ -686,6 +686,12 @@ async function loadInquiries() {
             const itemsList = Array.isArray(o.items) ? o.items : [];
 
             if (existing) {
+              if (o.status) existing.status = o.status;
+              if (o.notes) existing.notes = o.notes;
+              if (o.confirmationDate) existing.confirmationDate = o.confirmationDate;
+              if (o.confirmedAt) existing.confirmedAt = o.confirmedAt;
+              if (o.pickupDate) existing.pickupDate = o.pickupDate;
+              if (o.pickedUpAt) existing.pickedUpAt = o.pickedUpAt;
               // Enrich existing inquiry with full order structure
               if (itemsList.length > 0 && (!existing.items || !existing.items.length)) {
                 existing.items = itemsList;
@@ -1154,11 +1160,15 @@ function createOrderCardRowHTML(order) {
               ✓ Confirmed: ${escapeHtml(formatLocalReadableDate(order.confirmationDate))}
             </span>
           ` : ''}
-          ${order.pickupDate ? `
+          ${isPickedUp && order.pickedUpAt ? `
             <span class="order-status-date-chip picked-up" title="Actual Customer Pickup Date" style="font-size: 0.72rem; color: #1D4ED8; font-weight: 700; display: inline-block; margin-top: 3px; background: #EFF6FF; padding: 2px 6px; border-radius: 4px; border: 1px solid #BFDBFE;">
-              📦 Picked Up: ${escapeHtml(formatLocalReadableDate(order.pickupDate))}
+              📦 Picked Up: ${escapeHtml(formatLocalReadableDate(order.pickedUpAt))}
             </span>
-          ` : ''}
+          ` : (order.pickupDate && !isCancelled ? `
+            <span class="order-status-date-chip ready-by" title="Estimated Ready / Pickup Date" style="font-size: 0.72rem; color: #B45309; font-weight: 700; display: inline-block; margin-top: 3px; background: #FFFBEB; padding: 2px 6px; border-radius: 4px; border: 1px solid #FCD34D;">
+              🗓️ Ready by: ${escapeHtml(formatLocalReadableDate(order.pickupDate))}
+            </span>
+          ` : '')}
         </div>
 
         <!-- 3. Customer -->
@@ -1248,26 +1258,26 @@ function createOrderCardRowHTML(order) {
 
           <!-- 1. Accept Order -->
           <button type="button" 
-                  class="btn-card-action accept ${isConfirmed || isReadyForPickup ? 'active-state' : ''}" 
-                  ${isCancelled ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openAcceptOrderModal('${escapeHtml(order.id)}')"`} 
+                  class="btn-card-action accept ${isConfirmed ? 'active-state' : ''}" 
+                  ${isCancelled || isPickedUp ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openAcceptOrderModal('${escapeHtml(order.id)}')"`} 
                   title="${isCancelled ? 'Order is cancelled' : isConfirmed ? 'Order accepted for ' + escapeHtml(formatLocalReadableDate(order.pickupDate)) + '. Click to adjust pickup date.' : 'Accept order and select mandatory pickup date'}">
-            ✓ Accept Order
+            ${isConfirmed ? '✓ Accepted' : '✓ Accept Order'}
           </button>
 
           <!-- 2. Pickup Order -->
           <button type="button" 
-                  class="btn-card-action pickup-ready ${isReadyForPickup ? 'active-state' : ''}" 
+                  class="btn-card-action pickup-ready ${isReadyForPickup || isPickedUp ? 'active-state' : ''}" 
                   ${isCancelled ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openPickupOrderModal('${escapeHtml(order.id)}')"`} 
-                  title="${isCancelled ? 'Order is cancelled' : isReadyForPickup ? 'Order marked ready for pickup. Click to manage.' : 'Mark order ready for collection and notify customer'}">
-            📦 Pickup Order
+                  title="${isCancelled ? 'Order is cancelled' : isPickedUp ? 'Order marked collected.' : isReadyForPickup ? 'Order marked ready for pickup. Click to manage.' : 'Mark order ready for collection and notify customer'}">
+            ${isPickedUp ? '📦 Collected' : (isReadyForPickup ? '📦 Ready' : '📦 Pickup Order')}
           </button>
 
           <!-- 3. Cancel Order -->
           <button type="button" 
                   class="btn-card-action cancel ${isCancelled ? 'active-state' : ''}" 
-                  ${isCancelled ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openCancelOrderModal('${escapeHtml(order.id)}')"`} 
-                  title="${isCancelled ? 'Order is cancelled' : 'Cancel order and send cancellation email'}">
-            ✕ Cancel Order
+                  ${isCancelled ? 'disabled style="opacity: 0.85; cursor: default; background: #FEE2E2; border-color: #F87171; color: #991B1B;"' : (isPickedUp ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openCancelOrderModal('${escapeHtml(order.id)}')"`)} 
+                  title="${isCancelled ? 'Order has been cancelled' : 'Cancel order and send cancellation email'}">
+            ${isCancelled ? '✕ Cancelled' : '✕ Cancel Order'}
           </button>
         </div>
       </div>
@@ -1494,14 +1504,14 @@ window.openOrderDetailsModal = (orderId) => {
         ${order.pickupDate ? ` &bull; <strong>Scheduled Pickup:</strong> ${escapeHtml(formatLocalReadableDate(order.pickupDate))}` : ''}
       </div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button type="button" class="btn-sub-action primary" ${isCancelled ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openAcceptOrderModal('${escapeHtml(order.id)}')"`} style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
-          ✓ Accept Order
+        <button type="button" class="btn-sub-action primary" ${isCancelled || isPickedUp ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openAcceptOrderModal('${escapeHtml(order.id)}')"`} style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
+          ${isConfirmed ? '✓ Accepted' : '✓ Accept Order'}
         </button>
         <button type="button" class="btn-sub-action primary" ${isCancelled ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openPickupOrderModal('${escapeHtml(order.id)}')"`} style="background: #2563EB; border-color: #2563EB; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
-          📦 Pickup Order
+          ${isPickedUp ? '📦 Collected' : (isReadyForPickup ? '📦 Ready for Pickup' : '📦 Pickup Order')}
         </button>
-        <button type="button" class="btn-sub-action" ${isCancelled ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openCancelOrderModal('${escapeHtml(order.id)}')"`} style="background: #DC2626; border-color: #DC2626; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
-          ✕ Cancel Order
+        <button type="button" class="btn-sub-action" ${isCancelled ? 'disabled style="opacity: 0.85; background: #FEE2E2; border-color: #F87171; color: #991B1B;"' : (isPickedUp ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openCancelOrderModal('${escapeHtml(order.id)}')"`)} style="background: #DC2626; border-color: #DC2626; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
+          ${isCancelled ? '✕ Cancelled' : '✕ Cancel Order'}
         </button>
       </div>
     </div>
