@@ -790,14 +790,12 @@ async function loadInquiries() {
     const orders = allInquiries.filter(i => 
       (i.id && i.id.startsWith('RF-ORD')) || 
       (i.product && i.product.includes('[ONLINE ORDER]')) ||
-      (Array.isArray(i.items) && i.items.length > 0) ||
-      i.orderId
+      (i.orderId && String(i.orderId).startsWith('RF-ORD'))
     );
     const leads = allInquiries.filter(i => 
       !((i.id && i.id.startsWith('RF-ORD')) || 
       (i.product && i.product.includes('[ONLINE ORDER]')) ||
-      (Array.isArray(i.items) && i.items.length > 0) ||
-      i.orderId)
+      (i.orderId && String(i.orderId).startsWith('RF-ORD')))
     );
 
     // Update KPI Counters
@@ -1970,8 +1968,7 @@ function initOrderFiltering() {
     const orders = allInquiries.filter(i => 
       (i.id && i.id.startsWith('RF-ORD')) || 
       (i.product && i.product.includes('[ONLINE ORDER]')) ||
-      (Array.isArray(i.items) && i.items.length > 0) ||
-      i.orderId
+      (i.orderId && String(i.orderId).startsWith('RF-ORD'))
     );
 
     let filtered = orders.filter(order => {
@@ -3275,8 +3272,7 @@ function initCancelOrderModal() {
       const orders = allInquiries.filter(i => 
         (i.id && i.id.startsWith('RF-ORD')) || 
         (i.product && i.product.includes('[ONLINE ORDER]')) ||
-        (Array.isArray(i.items) && i.items.length > 0) ||
-        i.orderId
+        (i.orderId && String(i.orderId).startsWith('RF-ORD'))
       );
       updateOrdersKPIs(orders);
       renderOverviewOrders(orders.slice(0, 5));
