@@ -954,6 +954,7 @@ module.exports = {
     if (supabase && isSupabaseOperational()) {
       try {
         await supabase.from('orders').delete().ilike('order_id', cleanId);
+        await supabase.from('inquiries').delete().ilike('id', cleanId);
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase deleteOrder exception:', err.message);
       }
@@ -961,6 +962,9 @@ module.exports = {
     let orders = readJson(ORDERS_FILE, []);
     orders = orders.filter(o => o.orderId && o.orderId.toLowerCase() !== cleanId.toLowerCase());
     writeJson(ORDERS_FILE, orders);
+    let inqs = readJson(INQUIRIES_FILE, []);
+    inqs = inqs.filter(i => i.id && i.id.toLowerCase() !== cleanId.toLowerCase());
+    writeJson(INQUIRIES_FILE, inqs);
     return true;
   },
 
@@ -968,11 +972,16 @@ module.exports = {
     if (supabase && isSupabaseOperational()) {
       try {
         await supabase.from('orders').delete().neq('order_id', '');
+        await supabase.from('inquiries').delete().ilike('id', 'RF-ORD-%');
+        await supabase.from('inquiries').delete().ilike('product', '%[ONLINE ORDER]%');
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase clearAllOrders exception:', err.message);
       }
     }
     writeJson(ORDERS_FILE, []);
+    let inqs = readJson(INQUIRIES_FILE, []);
+    inqs = inqs.filter(i => !i.id || (!i.id.startsWith('RF-ORD') && (!i.product || !i.product.includes('[ONLINE ORDER]'))));
+    writeJson(INQUIRIES_FILE, inqs);
     return true;
   },
 
@@ -1192,13 +1201,22 @@ module.exports = {
     if (supabase && isSupabaseOperational()) {
       try {
         await supabase.from('inquiries').delete().ilike('id', cleanId);
+        if (cleanId.startsWith('RF-ORD')) {
+          await supabase.from('orders').delete().ilike('order_id', cleanId);
+        }
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase deleteInquiry exception:', err.message);
       }
     }
     let inquiries = readJson(INQUIRIES_FILE, []);
     inquiries = inquiries.filter(i => i.id && i.id.toLowerCase() !== cleanId.toLowerCase());
-    return writeJson(INQUIRIES_FILE, inquiries);
+    writeJson(INQUIRIES_FILE, inquiries);
+    if (cleanId.startsWith('RF-ORD')) {
+      let orders = readJson(ORDERS_FILE, []);
+      orders = orders.filter(o => o.orderId && o.orderId.toLowerCase() !== cleanId.toLowerCase());
+      writeJson(ORDERS_FILE, orders);
+    }
+    return true;
   },
 
   // --- CONTACT MESSAGES ---
