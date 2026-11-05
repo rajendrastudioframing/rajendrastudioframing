@@ -4349,6 +4349,39 @@ app.get('/api/admin/customers', requireAuth, async (req, res) => {
 });
 
 /**
+ * Delete Specific Customer (DELETE)
+ */
+app.delete('/api/admin/customers/:idOrEmail', requireAuth, async (req, res) => {
+  try {
+    const raw = (req.params.idOrEmail || '').trim().toLowerCase();
+    await db.deleteCustomer(raw);
+    for (const [token, session] of customerSessions.entries()) {
+      if (session && session.email && session.email.toLowerCase() === raw) {
+        customerSessions.delete(token);
+      }
+    }
+    saveCustomerSessions();
+    res.json({ success: true, message: `Customer ${raw} deleted successfully.` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to delete customer: ' + err.message });
+  }
+});
+
+/**
+ * Clear All Customers (DELETE)
+ */
+app.delete('/api/admin/customers', requireAuth, async (req, res) => {
+  try {
+    customerSessions.clear();
+    saveCustomerSessions();
+    await db.clearAllCustomers();
+    res.json({ success: true, message: 'All customer records cleared successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to clear customers: ' + err.message });
+  }
+});
+
+/**
  * Public Customer Endpoint: Submit Contact Message (POST)
  */
 app.post('/api/contact', async (req, res) => {

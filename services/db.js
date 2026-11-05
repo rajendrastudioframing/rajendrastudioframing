@@ -1353,6 +1353,40 @@ module.exports = {
     return readJson(CUSTOMERS_FILE, []);
   },
 
+  async deleteCustomer(emailOrId) {
+    const clean = (emailOrId || '').trim().toLowerCase();
+    if (supabase && isSupabaseOperational()) {
+      try {
+        await supabase.from('customers').delete().or(`email.ilike.${clean},id.ilike.${clean}`);
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase deleteCustomer exception:', err.message);
+      }
+    }
+    let customers = readJson(CUSTOMERS_FILE, []);
+    customers = customers.filter(c => (!c.email || c.email.toLowerCase() !== clean) && (!c.id || c.id.toLowerCase() !== clean));
+    writeJson(CUSTOMERS_FILE, customers);
+    return true;
+  },
+
+  async clearAllCustomers() {
+    if (supabase && isSupabaseOperational()) {
+      try {
+        const { data: supaCusts } = await supabase.from('customers').select('email, id');
+        if (Array.isArray(supaCusts) && supaCusts.length) {
+          for (const c of supaCusts) {
+            if (c.email) await supabase.from('customers').delete().eq('email', c.email);
+            if (c.id) await supabase.from('customers').delete().eq('id', c.id);
+          }
+        }
+        await supabase.from('customers').delete().neq('email', '');
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase clearAllCustomers exception:', err.message);
+      }
+    }
+    writeJson(CUSTOMERS_FILE, []);
+    return true;
+  },
+
   async saveCustomer(customer) {
     if (supabase && isSupabaseOperational()) {
       const { error } = await supabase.from('customers').upsert(customer);
