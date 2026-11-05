@@ -233,14 +233,7 @@ const _supabaseHealth = {
 };
 
 function isSupabaseOperational() {
-  if (!supabase) return false;
-  // If we've had consecutive failures (e.g. project paused or DNS failure), pause queries for 60s
-  if (_supabaseHealth.failureCount >= 2) {
-    if (Date.now() - _supabaseHealth.lastChecked < 60000) {
-      return false;
-    }
-  }
-  return true;
+  return Boolean(supabase);
 }
 
 function recordSupabaseSuccess() {
@@ -251,13 +244,8 @@ function recordSupabaseSuccess() {
 }
 
 function recordSupabaseFailure(err) {
-  _supabaseHealth.failureCount++;
   _supabaseHealth.lastError = err ? err.message : 'Unknown error';
   _supabaseHealth.lastChecked = Date.now();
-  if (_supabaseHealth.failureCount >= 2) {
-    _supabaseHealth.isOperational = false;
-    console.warn(`⚠️ [DATABASE] Supabase circuit breaker OPEN (${_supabaseHealth.failureCount} failures). Falling back to JSON storage:`, _supabaseHealth.lastError);
-  }
 }
 
 function withTimeout(promise, ms, operationName = 'Database operation') {
@@ -734,7 +722,7 @@ module.exports = {
     if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('orders').select('*').order('created_at', { ascending: false });
-        const { data, error } = await withTimeout(queryPromise, 5000, 'Supabase getOrders');
+        const { data, error } = await withTimeout(queryPromise, 6500, 'Supabase getOrders');
         if (!error && Array.isArray(data)) {
           supabaseOrders = data.map(o => {
             let parsedCustomer = o.customer || {};
@@ -989,12 +977,58 @@ module.exports = {
   },
 
   // --- INQUIRIES ---
+  async getInquiryById(id) {
+    const cleanId = (id || '').trim().replace(/^#/, '');
+    if (!cleanId) return null;
+    if (supabase) {
+      try {
+        const queryPromise = supabase
+          .from('inquiries')
+          .select('*')
+          .ilike('id', cleanId)
+          .maybeSingle();
+        const { data, error } = await withTimeout(queryPromise, 4000, 'Supabase getInquiryById');
+        if (!error && data) {
+          let parsedItems = Array.isArray(data.items) ? data.items : [];
+          if (!parsedItems.length && typeof data.items === 'string' && data.items.trim().startsWith('[')) {
+            try { parsedItems = JSON.parse(data.items); } catch (_) {}
+          }
+          return {
+            id: data.id,
+            name: data.name,
+            phone: data.phone,
+            email: data.email,
+            product: data.product,
+            specs: data.specs,
+            quantity: Number(data.quantity) || 1,
+            estimatedValue: Number(data.estimated_value) || 0,
+            status: data.status || 'pending',
+            notes: data.notes || '',
+            hasUpload: Boolean(data.has_upload),
+            uploadFileName: data.upload_file_name || null,
+            uploadedFileUrl: data.uploaded_file_url || null,
+            deliveryAddress: data.delivery_address || null,
+            items: parsedItems,
+            confirmedAt: data.confirmed_at || null,
+            confirmationDate: data.confirmation_date || null,
+            pickedUpAt: data.picked_up_at || null,
+            pickupDate: data.pickup_date || null,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at
+          };
+        }
+      } catch (_) {}
+    }
+    const inqs = readJson(INQUIRIES_FILE, []);
+    return inqs.find(i => i.id && (i.id.toLowerCase() === cleanId.toLowerCase() || i.id.replace(/^#/, '').toLowerCase() === cleanId.toLowerCase())) || null;
+  },
+
   async getInquiries() {
     let supabaseInqs = [];
     if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('inquiries').select('*').order('created_at', { ascending: false });
-        const { data, error } = await withTimeout(queryPromise, 5000, 'Supabase getInquiries');
+        const { data, error } = await withTimeout(queryPromise, 6500, 'Supabase getInquiries');
         if (!error && Array.isArray(data)) {
           supabaseInqs = data.map(i => {
             let parsedItems = Array.isArray(i.items) ? i.items : [];

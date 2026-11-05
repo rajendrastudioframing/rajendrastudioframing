@@ -3045,8 +3045,20 @@ async function handleUpdateOrderStatus(req, res) {
       db.getOrders()
     ]);
 
-    const inq = inquiries.find(i => i.id && (i.id.toLowerCase() === rawId.toLowerCase() || i.id.toLowerCase() === cleanId.toLowerCase()));
-    const order = orders.find(o => o.orderId && (o.orderId.toLowerCase() === rawId.toLowerCase() || o.orderId.toLowerCase() === cleanId.toLowerCase()));
+    let inq = inquiries.find(i => i.id && (i.id.toLowerCase() === rawId.toLowerCase() || i.id.toLowerCase() === cleanId.toLowerCase()));
+    let order = orders.find(o => o.orderId && (o.orderId.toLowerCase() === rawId.toLowerCase() || o.orderId.toLowerCase() === cleanId.toLowerCase()));
+
+    // Direct single-record fallback from Supabase if not present in the batch list
+    if (!order) {
+      try {
+        order = await db.getOrderById(cleanId);
+      } catch (_) {}
+    }
+    if (!inq) {
+      try {
+        inq = await db.getInquiryById(cleanId);
+      } catch (_) {}
+    }
 
     if (!inq && !order) {
       return res.status(404).json({ success: false, message: `Order or Inquiry #${rawId} not found.` });
