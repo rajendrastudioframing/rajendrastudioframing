@@ -2740,6 +2740,27 @@
               </div>
             </div>
 
+            <!-- Orders Bulk Action Bar -->
+            <div class="orders-bulk-bar" id="ordersBulkBar" style="display: none;">
+              <div class="bulk-bar-info">
+                <label class="bulk-select-all-label">
+                  <input type="checkbox" id="selectAllOrdersCb" onchange="toggleSelectAllOrders(this.checked)" />
+                  <span id="selectAllOrdersText">Select All Visible (<span id="bulkVisibleCount">0</span>)</span>
+                </label>
+                <span class="bulk-divider">|</span>
+                <span class="bulk-selected-badge" id="bulkSelectedBadge">0 selected</span>
+              </div>
+              <div class="bulk-bar-actions">
+                <button type="button" class="btn-bulk-delete" onclick="openBulkDeleteModal()">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                  <span>Delete Selected (<span id="bulkDeleteBtnCount">0</span>)</span>
+                </button>
+                <button type="button" class="btn-bulk-deselect" onclick="deselectAllOrders()">
+                  Clear Selection
+                </button>
+              </div>
+            </div>
+
             <!-- Orders Cards List -->
             <div class="order-cards-list" id="allOrdersContainer">
               <div class="order-empty-state">Loading customer orders...</div>
@@ -4356,6 +4377,55 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       DELETE ORDERS CONFIRMATION MODAL (PERMANENT PURGE)
+       ========================================== -->
+  <div class="admin-modal-overlay" id="deleteOrdersConfirmModal" style="display: none;">
+    <div class="admin-modal" style="max-width: 520px; width: 95%;">
+      <div class="admin-modal-header" style="border-bottom: 1px solid rgba(220, 38, 38, 0.25);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: #FEE2E2; color: #DC2626; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: bold; flex-shrink: 0;">🗑️</div>
+          <div>
+            <h4 class="admin-modal-title" id="deleteModalTitle" style="color: #DC2626; margin: 0; font-size: 1.1rem;">Delete Order Permanently</h4>
+            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;" id="deleteModalSubtitle">1 order selected</div>
+          </div>
+        </div>
+        <button type="button" class="admin-modal-close" onclick="closeDeleteOrdersModal()">&times;</button>
+      </div>
+
+      <div class="admin-modal-body" style="padding: 20px;">
+        <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <span style="font-size: 1.3rem; flex-shrink: 0; line-height: 1;">⚠️</span>
+            <div style="font-size: 0.82rem; color: #991B1B; line-height: 1.5;">
+              <strong style="display: block; margin-bottom: 2px;">This action is 100% PERMANENT and CANNOT be undone!</strong>
+              The selected order(s) will be completely purged from Supabase Cloud, server database files, and email sync cache. They will <strong>NEVER reappear</strong> after page reload.
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+          Orders to be permanently deleted:
+        </div>
+        <div id="deleteModalOrdersList" style="max-height: 130px; overflow-y: auto; background: var(--bg-hover); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
+          <!-- dynamic badges -->
+        </div>
+        <div style="font-size: 0.76rem; color: var(--text-muted); line-height: 1.4;">
+          💡 Tip: Deleting old or test orders helps keep your workspace fast, clutter-free, and frees up database storage.
+        </div>
+      </div>
+
+      <div class="admin-modal-footer" style="padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle);">
+        <button type="button" class="btn-sub-action outline" onclick="closeDeleteOrdersModal()">
+          Keep Orders (Cancel)
+        </button>
+        <button type="button" class="btn-sub-action" id="confirmDeleteOrdersBtn" onclick="executeDeleteOrders()" style="background: #DC2626; color: #FFFFFF; border: 1px solid #DC2626; font-weight: 700; padding: 8px 18px;">
+          🗑️ Permanently Delete
+        </button>
+      </div>
     </div>
   </div>
 

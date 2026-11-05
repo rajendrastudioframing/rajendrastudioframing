@@ -20,6 +20,7 @@ const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
 const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json');
 const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json');
+const DELETED_ORDERS_FILE = path.join(DATA_DIR, 'deleted-orders.json');
 
 // Ensure local data dir exists when running in local development
 if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
@@ -102,6 +103,34 @@ function writeJson(filePath, data) {
     console.error(`[writeJson Error] Could not write to ${filePath}:`, err.message);
     return false;
   }
+}
+
+/**
+ * Permanently Suppressed / Deleted Orders Store
+ * Guarantees deleted orders never resurrect on reload, restart, or Brevo email recovery
+ */
+function getDeletedOrderIdsSet() {
+  const arr = readJson(DELETED_ORDERS_FILE, []);
+  if (Array.isArray(arr)) {
+    return new Set(arr.map(x => String(x).toLowerCase().trim().replace(/^#/, '')));
+  }
+  return new Set();
+}
+
+function recordDeletedOrderIds(ids) {
+  if (!Array.isArray(ids) || !ids.length) return;
+  const currentSet = getDeletedOrderIdsSet();
+  ids.forEach(id => {
+    if (!id) return;
+    const clean = String(id).trim().replace(/^#/, '').toLowerCase();
+    if (clean) currentSet.add(clean);
+  });
+  const updatedList = Array.from(currentSet);
+  writeJson(DELETED_ORDERS_FILE, updatedList);
+  try {
+    const rawPath = path.join(DATA_DIR, 'deleted-orders.json');
+    fs.writeFileSync(rawPath, JSON.stringify(updatedList, null, 2), 'utf8');
+  } catch (_) {}
 }
 
 /**
@@ -764,20 +793,25 @@ module.exports = {
       }
     }
 
+    const deletedIds = getDeletedOrderIdsSet();
     const localOrders = readJson(ORDERS_FILE, []);
     const mergedMap = new Map();
 
-    // Add local orders first
+    // Add local orders first (strictly ignore permanently deleted orders)
     localOrders.forEach(o => {
       if (o && o.orderId) {
-        mergedMap.set(o.orderId.toLowerCase().trim(), o);
+        const key = o.orderId.toLowerCase().trim().replace(/^#/, '');
+        if (!deletedIds.has(key)) {
+          mergedMap.set(key, o);
+        }
       }
     });
 
-    // Merge Supabase orders (ensuring no orders are omitted)
+    // Merge Supabase orders (strictly ignore permanently deleted orders)
     supabaseOrders.forEach(so => {
       if (so && so.orderId) {
-        const key = so.orderId.toLowerCase().trim();
+        const key = so.orderId.toLowerCase().trim().replace(/^#/, '');
+        if (deletedIds.has(key)) return;
         const existing = mergedMap.get(key);
         if (existing) {
           const resolvedStatus = so.status ? so.status : (existing.status || "pending");
@@ -805,10 +839,14 @@ module.exports = {
       }
     });
 
-    // Self-healing: if Supabase is connected, ensure all local/recovered orders are backed up to Supabase Cloud
+    // Self-healing: if Supabase is connected, ensure all non-deleted local/recovered orders are backed up to Supabase Cloud
     if (supabase && isSupabaseOperational()) {
-      const supaIds = new Set(supabaseOrders.map(so => (so.orderId || '').toLowerCase().trim()));
-      const unSynced = localOrders.filter(lo => lo && lo.orderId && !supaIds.has(lo.orderId.toLowerCase().trim()));
+      const supaIds = new Set(supabaseOrders.map(so => (so.orderId || '').toLowerCase().trim().replace(/^#/, '')));
+      const unSynced = localOrders.filter(lo => {
+        if (!lo || !lo.orderId) return false;
+        const clean = lo.orderId.toLowerCase().trim().replace(/^#/, '');
+        return !deletedIds.has(clean) && !supaIds.has(clean);
+      });
       if (unSynced.length > 0) {
         Promise.all(unSynced.map(o => this.saveOrder(o))).catch(e => console.warn('Background Supabase cloud sync notice:', e.message));
       }
@@ -950,6 +988,9 @@ module.exports = {
 
   async deleteOrder(orderId) {
     const cleanId = (orderId || '').trim().replace(/^#/, '');
+    if (!cleanId) return false;
+    recordDeletedOrderIds([cleanId]);
+
     if (supabase && isSupabaseOperational()) {
       try {
         await supabase.from('orders').delete().ilike('order_id', cleanId);
@@ -959,21 +1000,66 @@ module.exports = {
       }
     }
     let orders = readJson(ORDERS_FILE, []);
-    orders = orders.filter(o => o.orderId && o.orderId.toLowerCase() !== cleanId.toLowerCase());
+    orders = orders.filter(o => o.orderId && o.orderId.toLowerCase().replace(/^#/, '') !== cleanId.toLowerCase());
     writeJson(ORDERS_FILE, orders);
     let inqs = readJson(INQUIRIES_FILE, []);
-    inqs = inqs.filter(i => i.id && i.id.toLowerCase() !== cleanId.toLowerCase());
+    inqs = inqs.filter(i => i.id && i.id.toLowerCase().replace(/^#/, '') !== cleanId.toLowerCase());
     writeJson(INQUIRIES_FILE, inqs);
     return true;
   },
 
+  async deleteOrdersBulk(orderIds) {
+    if (!Array.isArray(orderIds) || !orderIds.length) return { count: 0, ids: [] };
+    const cleanIds = orderIds.map(id => (id || '').toString().trim().replace(/^#/, '')).filter(Boolean);
+    if (!cleanIds.length) return { count: 0, ids: [] };
+    const cleanIdsLower = new Set(cleanIds.map(x => x.toLowerCase()));
+
+    // 1. Permanently record to deleted orders so Brevo scanner & auto-healer NEVER restore them
+    recordDeletedOrderIds(cleanIds);
+
+    // 2. Supabase deletion
+    if (supabase && isSupabaseOperational()) {
+      try {
+        await supabase.from('orders').delete().in('order_id', cleanIds);
+        await supabase.from('inquiries').delete().in('id', cleanIds);
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase deleteOrdersBulk exception:', err.message);
+      }
+    }
+
+    // 3. Local JSON files deletion
+    let orders = readJson(ORDERS_FILE, []);
+    orders = orders.filter(o => !o.orderId || !cleanIdsLower.has(o.orderId.toLowerCase().trim().replace(/^#/, '')));
+    writeJson(ORDERS_FILE, orders);
+
+    let inqs = readJson(INQUIRIES_FILE, []);
+    inqs = inqs.filter(i => !i.id || !cleanIdsLower.has(i.id.toLowerCase().trim().replace(/^#/, '')));
+    writeJson(INQUIRIES_FILE, inqs);
+
+    return { count: cleanIds.length, ids: cleanIds };
+  },
+
   async clearAllOrders() {
+    let orderIdsToRecord = [];
     try {
       const orders = await this.getOrders();
       if (Array.isArray(orders) && orders.length) {
-        await Promise.all(orders.map(o => this.deleteOrder(o.orderId)));
+        orderIdsToRecord = orders.map(o => o.orderId).filter(Boolean);
+      }
+      const inqs = await this.getInquiries();
+      if (Array.isArray(inqs) && inqs.length) {
+        inqs.forEach(i => {
+          if (i.id && (i.id.startsWith('RF-ORD') || (i.product && i.product.includes('[ONLINE ORDER]')))) {
+            orderIdsToRecord.push(i.id);
+          }
+        });
       }
     } catch (_) {}
+
+    if (orderIdsToRecord.length) {
+      recordDeletedOrderIds(orderIdsToRecord);
+    }
+
     if (supabase && isSupabaseOperational()) {
       try {
         await supabase.from('orders').delete().neq('order_id', '');
@@ -1084,16 +1170,23 @@ module.exports = {
       }
     }
 
+    const deletedIds = getDeletedOrderIdsSet();
     const localInqs = readJson(INQUIRIES_FILE, []);
     const mergedMap = new Map();
 
     localInqs.forEach(i => {
-      if (i && i.id) mergedMap.set(i.id.toLowerCase().trim(), i);
+      if (i && i.id) {
+        const key = i.id.toLowerCase().trim().replace(/^#/, '');
+        if (!deletedIds.has(key)) {
+          mergedMap.set(key, i);
+        }
+      }
     });
 
     supabaseInqs.forEach(si => {
       if (si && si.id) {
-        const key = si.id.toLowerCase().trim();
+        const key = si.id.toLowerCase().trim().replace(/^#/, '');
+        if (deletedIds.has(key)) return;
         const existing = mergedMap.get(key);
         if (existing) {
           const resolvedStatus = si.status ? si.status : (existing.status || "pending");
@@ -1121,10 +1214,14 @@ module.exports = {
       }
     });
 
-    // Self-healing: if Supabase is connected, ensure all local inquiries/orders are backed up to Supabase Cloud
+    // Self-healing: if Supabase is connected, ensure all non-deleted local inquiries/orders are backed up to Supabase Cloud
     if (supabase && isSupabaseOperational()) {
-      const supaIds = new Set(supabaseInqs.map(si => (si.id || '').toLowerCase().trim()));
-      const unSynced = localInqs.filter(li => li && li.id && !supaIds.has(li.id.toLowerCase().trim()));
+      const supaIds = new Set(supabaseInqs.map(si => (si.id || '').toLowerCase().trim().replace(/^#/, '')));
+      const unSynced = localInqs.filter(li => {
+        if (!li || !li.id) return false;
+        const clean = li.id.toLowerCase().trim().replace(/^#/, '');
+        return !deletedIds.has(clean) && !supaIds.has(clean);
+      });
       if (unSynced.length > 0) {
         Promise.all(unSynced.map(i => this.saveInquiry(i))).catch(e => console.warn('Background Supabase cloud inquiry sync notice:', e.message));
       }
@@ -1212,24 +1309,24 @@ module.exports = {
 
   async deleteInquiry(id) {
     const cleanId = (id || '').trim().replace(/^#/, '');
+    if (!cleanId) return false;
+    recordDeletedOrderIds([cleanId]);
+
     if (supabase && isSupabaseOperational()) {
       try {
         await supabase.from('inquiries').delete().ilike('id', cleanId);
-        if (cleanId.startsWith('RF-ORD')) {
-          await supabase.from('orders').delete().ilike('order_id', cleanId);
-        }
+        await supabase.from('orders').delete().ilike('order_id', cleanId);
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase deleteInquiry exception:', err.message);
       }
     }
     let inquiries = readJson(INQUIRIES_FILE, []);
-    inquiries = inquiries.filter(i => i.id && i.id.toLowerCase() !== cleanId.toLowerCase());
+    inquiries = inquiries.filter(i => i.id && i.id.toLowerCase().replace(/^#/, '') !== cleanId.toLowerCase());
     writeJson(INQUIRIES_FILE, inquiries);
-    if (cleanId.startsWith('RF-ORD')) {
-      let orders = readJson(ORDERS_FILE, []);
-      orders = orders.filter(o => o.orderId && o.orderId.toLowerCase() !== cleanId.toLowerCase());
-      writeJson(ORDERS_FILE, orders);
-    }
+
+    let orders = readJson(ORDERS_FILE, []);
+    orders = orders.filter(o => o.orderId && o.orderId.toLowerCase().replace(/^#/, '') !== cleanId.toLowerCase());
+    writeJson(ORDERS_FILE, orders);
     return true;
   },
 

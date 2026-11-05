@@ -988,10 +988,12 @@ function renderAllOrders(orders) {
 
   if (orders.length === 0) {
     container.innerHTML = `<div class="order-empty-state">No orders matching selected criteria.</div>`;
+    if (typeof updateBulkBarState === 'function') updateBulkBarState();
     return;
   }
 
   container.innerHTML = orders.map(order => createOrderCardRowHTML(order)).join('');
+  if (typeof updateBulkBarState === 'function') updateBulkBarState();
 }
 
 function getOrderDeliveryAddress(order) {
@@ -1188,6 +1190,13 @@ function createOrderCardRowHTML(order) {
   return `
     <div class="order-card-row" id="orderRow_${escapeHtml(order.id)}">
       <div class="order-card-body">
+        <!-- 0. Selection Checkbox -->
+        <div class="order-col-select" onclick="event.stopPropagation();">
+          <label class="order-cb-wrap" title="Select order #${escapeHtml(order.id)} for bulk deletion">
+            <input type="checkbox" class="order-select-cb" data-order-id="${escapeHtml(order.id)}" ${window.selectedOrderIds && window.selectedOrderIds.has(order.id) ? 'checked' : ''} onchange="handleOrderSelectionChange()" />
+          </label>
+        </div>
+
         <!-- 1. Thumbnail -->
         <div class="order-thumb-wrap" title="${escapeHtml(cleanTitle)}" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')">
           <img src="${thumb}" alt="${escapeHtml(cleanTitle)}" class="order-thumb-img" onerror="this.src='assets/images/glass_frame.jpg'" />
@@ -1320,6 +1329,14 @@ function createOrderCardRowHTML(order) {
                   ${isCancelled ? 'disabled style="opacity: 0.85; cursor: default; background: #FEE2E2; border-color: #F87171; color: #991B1B;"' : (isPickedUp ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openCancelOrderModal('${escapeHtml(order.id)}')"`)} 
                   title="${isCancelled ? 'Order has been cancelled' : 'Cancel order and send cancellation email'}">
             ${isCancelled ? '✕ Cancelled' : '✕ Cancel Order'}
+          </button>
+
+          <!-- 4. Delete Order Permanently -->
+          <button type="button" 
+                  class="btn-card-action delete" 
+                  onclick="confirmDeleteOrder('${escapeHtml(order.id)}')" 
+                  title="Permanently delete order #${escapeHtml(order.id)}">
+            🗑️ Delete
           </button>
         </div>
       </div>
@@ -1591,6 +1608,9 @@ window.openOrderDetailsModal = (orderId) => {
           </button>
           <button type="button" class="btn-sub-action" ${isCancelled ? 'disabled style="opacity: 0.85; background: #FEE2E2; border-color: #F87171; color: #991B1B;"' : (isPickedUp ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openCancelOrderModal('${escapeHtml(displayOrderId)}')"`)} style="background: #DC2626; border-color: #DC2626; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
             ${isCancelled ? '✕ Cancelled' : '✕ Cancel Order'}
+          </button>
+          <button type="button" class="btn-sub-action" onclick="closeOrderDetailsModal(); confirmDeleteOrder('${escapeHtml(displayOrderId)}')" style="background: #991B1B; border-color: #991B1B; color: #fff; font-size: 0.82rem; padding: 7px 14px;" title="Permanently delete order">
+            🗑️ Delete Order
           </button>
         </div>
       </div>
@@ -2297,27 +2317,206 @@ window.restoreCancelledOrder = async (id, targetStatus = 'In Progress') => {
   }
 };
 
-window.deleteInquiry = async (id) => {
-  if (!confirm(`Are you sure you want to remove ${id}?`)) return;
+/* ==========================================================================
+   ORDER SELECTION & PERMANENT DELETION SYSTEM (SINGLE & BULK)
+   ========================================================================== */
+window.selectedOrderIds = new Set();
+window.pendingDeleteOrderIds = [];
+
+window.handleOrderSelectionChange = () => {
+  const checkboxes = document.querySelectorAll('.order-select-cb');
+  window.selectedOrderIds.clear();
+  checkboxes.forEach(cb => {
+    if (cb.checked && cb.dataset.orderId) {
+      window.selectedOrderIds.add(cb.dataset.orderId);
+    }
+  });
+  updateBulkBarState();
+};
+
+window.toggleSelectAllOrders = (check) => {
+  const visibleCheckboxes = document.querySelectorAll('#allOrdersContainer .order-select-cb');
+  visibleCheckboxes.forEach(cb => {
+    cb.checked = Boolean(check);
+    if (cb.dataset.orderId) {
+      if (check) window.selectedOrderIds.add(cb.dataset.orderId);
+      else window.selectedOrderIds.delete(cb.dataset.orderId);
+    }
+  });
+  updateBulkBarState();
+};
+
+window.deselectAllOrders = () => {
+  window.selectedOrderIds.clear();
+  const checkboxes = document.querySelectorAll('.order-select-cb');
+  checkboxes.forEach(cb => { cb.checked = false; });
+  const selectAllCb = document.getElementById('selectAllOrdersCb');
+  if (selectAllCb) selectAllCb.checked = false;
+  updateBulkBarState();
+};
+
+function updateBulkBarState() {
+  const bulkBar = document.getElementById('ordersBulkBar');
+  const countBadge = document.getElementById('bulkSelectedBadge');
+  const btnCount = document.getElementById('bulkDeleteBtnCount');
+  const visibleCountEl = document.getElementById('bulkVisibleCount');
+  const selectAllCb = document.getElementById('selectAllOrdersCb');
+
+  const visibleCheckboxes = document.querySelectorAll('#allOrdersContainer .order-select-cb');
+  const totalVisible = visibleCheckboxes.length;
+  if (visibleCountEl) visibleCountEl.textContent = totalVisible;
+
+  const count = window.selectedOrderIds.size;
+  if (count > 0) {
+    if (bulkBar) bulkBar.style.display = 'flex';
+    if (countBadge) countBadge.textContent = `${count} selected`;
+    if (btnCount) btnCount.textContent = count;
+    if (selectAllCb) selectAllCb.checked = (totalVisible > 0 && count >= totalVisible);
+  } else {
+    if (bulkBar) bulkBar.style.display = 'none';
+    if (selectAllCb) selectAllCb.checked = false;
+  }
+}
+
+window.confirmDeleteOrder = (id) => {
+  if (!id) return;
+  window.pendingDeleteOrderIds = [id];
+  openDeleteModalWithIds(window.pendingDeleteOrderIds);
+};
+
+window.openBulkDeleteModal = () => {
+  if (!window.selectedOrderIds.size) return;
+  window.pendingDeleteOrderIds = Array.from(window.selectedOrderIds);
+  openDeleteModalWithIds(window.pendingDeleteOrderIds);
+};
+
+function openDeleteModalWithIds(ids) {
+  const modal = document.getElementById('deleteOrdersConfirmModal');
+  const title = document.getElementById('deleteModalTitle');
+  const subTitle = document.getElementById('deleteModalSubtitle');
+  const listEl = document.getElementById('deleteModalOrdersList');
+  if (!modal) return;
+
+  if (ids.length === 1) {
+    if (title) title.textContent = 'Delete Order Permanently';
+    if (subTitle) subTitle.textContent = `Order #${ids[0]}`;
+  } else {
+    if (title) title.textContent = 'Bulk Delete Orders Permanently';
+    if (subTitle) subTitle.textContent = `${ids.length} orders selected for permanent removal`;
+  }
+
+  if (listEl) {
+    listEl.innerHTML = ids.map(id => `
+      <span style="background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 3px 8px; border-radius: 5px; font-size: 0.78rem; font-weight: 700; color: #DC2626;">
+        #${escapeHtml(id)}
+      </span>
+    `).join('');
+  }
+
+  modal.classList.add('open');
+  modal.style.display = 'flex';
+}
+
+window.closeDeleteOrdersModal = () => {
+  const modal = document.getElementById('deleteOrdersConfirmModal');
+  if (modal) {
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+  }
+  window.pendingDeleteOrderIds = [];
+};
+
+window.executeDeleteOrders = async () => {
+  if (!window.pendingDeleteOrderIds || !window.pendingDeleteOrderIds.length) {
+    closeDeleteOrdersModal();
+    return;
+  }
+
+  const btn = document.getElementById('confirmDeleteOrdersBtn');
+  const originalText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '🗑️ Purging from System...';
+  }
+
+  const idsToDelete = [...window.pendingDeleteOrderIds];
+  const idsToDeleteSet = new Set(idsToDelete.map(x => (x || '').toString().toLowerCase().trim().replace(/^#/, '')));
 
   try {
-    const res = await fetch(`${API_BASE}/api/admin/inquiries/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    let res;
+    if (idsToDelete.length === 1) {
+      const cleanId = encodeURIComponent(idsToDelete[0].replace(/^#/, ''));
+      res = await fetch(`${API_BASE}/api/admin/orders/${cleanId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+    } else {
+      res = await fetch(`${API_BASE}/api/admin/orders/bulk-delete`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ids: idsToDelete })
+      });
+    }
+
     const data = await res.json();
     if (data.success) {
-      allInquiries = allInquiries.filter(i => i.id !== id);
+      // 1. Instantly filter out from in-memory state
+      allInquiries = allInquiries.filter(i => {
+        const idA = (i.id || '').toLowerCase().trim().replace(/^#/, '');
+        const idB = (i.orderId || '').toLowerCase().trim().replace(/^#/, '');
+        return !idsToDeleteSet.has(idA) && !idsToDeleteSet.has(idB);
+      });
+
+      // Clear from selectedOrderIds
+      idsToDelete.forEach(id => window.selectedOrderIds.delete(id));
+
+      closeDeleteOrdersModal();
+      showToast('Permanently Deleted ✓', `${idsToDelete.length} order(s) purged permanently.`, 'success');
+
+      // 2. Re-render order list & update KPIs immediately
+      const currentOrders = allInquiries.filter(i => 
+        (i.id && i.id.startsWith('RF-ORD')) || 
+        (i.product && i.product.includes('[ONLINE ORDER]')) ||
+        (i.orderId && String(i.orderId).startsWith('RF-ORD'))
+      );
+      if (typeof updateOrdersKPIs === 'function') {
+        updateOrdersKPIs(currentOrders);
+      }
+      if (typeof renderOverviewOrders === 'function') {
+        renderOverviewOrders(currentOrders.slice(0, 5));
+      }
+      if (typeof window.executeOrderFilter === 'function') {
+        window.executeOrderFilter();
+      } else {
+        renderAllOrders(currentOrders);
+      }
+      updateBulkBarState();
+
+      // 3. Background reload to ensure 100% server state synchronization
       await loadInquiries();
       await loadDashboardStats();
-      showToast('Order Deleted', `Order #${id} was deleted successfully.`, 'danger');
     } else {
-      showToast('Delete Failed', data.message || 'Could not delete order.', 'danger');
+      showToast('Delete Failed', data.message || 'Server returned an error.', 'danger');
     }
   } catch (err) {
-    console.error('Error deleting order:', err);
-    showToast('Network Error', 'Could not connect to server.', 'danger');
+    console.error('Error executing delete orders:', err);
+    showToast('Network Error', 'Failed to communicate with server.', 'danger');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
   }
+};
+
+window.deleteInquiry = async (id) => {
+  confirmDeleteOrder(id);
 };
 
 /* ==========================================================================

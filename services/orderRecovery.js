@@ -149,7 +149,10 @@ async function syncBrevoOrders(force = false) {
         const delPath = path.join(__dirname, '..', 'data', 'deleted-orders.json');
         if (fs.existsSync(delPath)) {
           const dels = JSON.parse(fs.readFileSync(delPath, 'utf8'));
-          if (Array.isArray(dels) && dels.includes(orderId.toLowerCase())) continue;
+          if (Array.isArray(dels)) {
+            const delSet = new Set(dels.map(d => String(d).toLowerCase().trim().replace(/^#/, '')));
+            if (delSet.has(orderId.toLowerCase().trim().replace(/^#/, ''))) continue;
+          }
         }
       } catch (_) {}
 

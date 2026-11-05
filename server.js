@@ -3660,17 +3660,54 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
 app.delete('/api/admin/inquiries/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
   await db.deleteInquiry(id);
-  res.json({ success: true, message: 'Inquiry deleted successfully.' });
+  res.json({ success: true, message: `Inquiry #${id} deleted permanently.` });
 });
 
 /**
- * Delete Order (DELETE)
+ * Bulk Delete Inquiries (POST)
+ */
+app.post('/api/admin/inquiries/bulk-delete', requireAuth, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || !ids.length) {
+      return res.status(400).json({ success: false, message: 'No inquiry IDs provided.' });
+    }
+    const result = await db.deleteOrdersBulk(ids);
+    res.json({ success: true, count: result.count, deletedIds: result.ids, message: `${result.count} inquiry(ies) deleted permanently.` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to bulk delete inquiries: ' + err.message });
+  }
+});
+
+/**
+ * Bulk Delete Orders (POST)
+ */
+app.post('/api/admin/orders/bulk-delete', requireAuth, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || !ids.length) {
+      return res.status(400).json({ success: false, message: 'No order IDs provided for deletion.' });
+    }
+    const result = await db.deleteOrdersBulk(ids);
+    res.json({
+      success: true,
+      count: result.count,
+      deletedIds: result.ids,
+      message: `${result.count} order(s) permanently deleted.`
+    });
+  } catch (err) {
+    console.error('Error in bulk-delete orders:', err);
+    res.status(500).json({ success: false, message: 'Failed to bulk delete orders: ' + err.message });
+  }
+});
+
+/**
+ * Delete Single Order (DELETE)
  */
 app.delete('/api/admin/orders/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
   await db.deleteOrder(id);
-  await db.deleteInquiry(id);
-  res.json({ success: true, message: `Order #${id} deleted successfully.` });
+  res.json({ success: true, message: `Order #${id} deleted permanently.` });
 });
 
 /**
@@ -3678,13 +3715,7 @@ app.delete('/api/admin/orders/:id', requireAuth, async (req, res) => {
  */
 app.delete('/api/admin/orders', requireAuth, async (req, res) => {
   await db.clearAllOrders();
-  const inquiries = await db.getInquiries();
-  const nonOrderInquiries = inquiries.filter(i => !i.id || (!i.id.startsWith('RF-ORD') && (!i.product || !i.product.includes('[ONLINE ORDER]'))));
-  const INQUIRIES_FILE = path.join(__dirname, 'data', 'inquiries.json');
-  try {
-    fs.writeFileSync(INQUIRIES_FILE, JSON.stringify(nonOrderInquiries, null, 2));
-  } catch (_) {}
-  res.json({ success: true, message: 'All orders removed successfully.' });
+  res.json({ success: true, message: 'All orders removed permanently.' });
 });
 
 /**

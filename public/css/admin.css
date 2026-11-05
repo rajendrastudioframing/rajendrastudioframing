@@ -1170,15 +1170,36 @@ body.admin-dashboard-body[data-theme="dark"] {
   box-shadow: var(--shadow-hover);
 }
 
-/* 8-Column Slim Grid (Customer Photo & Delivery Status integrated) */
+/* 9-Column Slim Grid (Checkbox + Thumbnail + 7 Data Columns) */
 .order-card-body {
   display: grid;
-  grid-template-columns: 46px 115px 135px minmax(140px, 1.6fr) 85px 100px 105px 90px;
+  grid-template-columns: 24px 46px 115px 135px minmax(140px, 1.6fr) 85px 100px 105px 90px;
   align-items: center;
   gap: 10px;
   padding: 12px 18px;
   background: var(--bg-card);
   min-width: 0;
+}
+
+/* 0. Selection Checkbox Column */
+.order-col-select {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.order-cb-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0;
+}
+.order-select-cb {
+  width: 17px;
+  height: 17px;
+  accent-color: #8C6A1E;
+  cursor: pointer;
+  margin: 0;
 }
 
 /* 1. Thumbnail Wrap */
@@ -1743,6 +1764,18 @@ body.admin-dashboard-body[data-theme="dark"] {
   transform: translateY(-1px);
 }
 
+[data-theme="light"] .btn-card-action.delete {
+  background: #FFF5F5;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+}
+[data-theme="light"] .btn-card-action.delete:hover {
+  background: #FEE2E2;
+  border-color: #EF4444;
+  color: #991B1B;
+  transform: translateY(-1px);
+}
+
 /* Dark Mode Action Buttons: Glowing Translucent Glass */
 [data-theme="dark"] .btn-card-action.accept {
   background: rgba(16, 185, 129, 0.14);
@@ -1785,6 +1818,18 @@ body.admin-dashboard-body[data-theme="dark"] {
 [data-theme="dark"] .btn-card-action.cancel:hover {
   background: rgba(239, 68, 68, 0.22);
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .btn-card-action.delete {
+  background: rgba(220, 38, 38, 0.14);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+[data-theme="dark"] .btn-card-action.delete:hover {
+  background: rgba(220, 38, 38, 0.25);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
+  color: #FCA5A5;
   transform: translateY(-1px);
 }
 
@@ -2923,7 +2968,7 @@ body.modal-open {
     grid-template-columns: 1fr;
   }
   .order-card-body {
-    grid-template-columns: 44px 110px 125px minmax(120px, 1fr) 80px 95px 100px 85px;
+    grid-template-columns: 24px 44px 110px 125px minmax(120px, 1fr) 80px 95px 100px 85px;
     gap: 8px;
     padding: 10px 14px;
   }
@@ -2931,7 +2976,7 @@ body.modal-open {
 
 @media (max-width: 992px) {
   .order-card-body {
-    grid-template-columns: 46px 1fr 1fr;
+    grid-template-columns: 24px 46px 1fr 1fr;
     gap: 12px;
   }
   .order-col-delivery {
@@ -2979,7 +3024,7 @@ body.modal-open {
 @media (max-width: 600px) {
   /* Harmonized compact mobile order card rules */
   .order-card-body {
-    grid-template-columns: 46px 1fr auto;
+    grid-template-columns: 24px 46px 1fr auto;
     padding: 12px;
     gap: 8px 10px;
   }
@@ -5639,4 +5684,135 @@ body.admin-login-body {
   color: #93C5FD !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* ==========================================================================
+   ORDERS BULK ACTION BAR
+   ========================================================================== */
+.orders-bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  border: 1.5px solid var(--primary, #8C6A1E);
+  box-shadow: 0 4px 16px rgba(140, 106, 30, 0.12);
+  border-radius: 10px;
+  padding: 10px 18px;
+  margin-bottom: 14px;
+  gap: 12px;
+  animation: slideDownBulk 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: sticky;
+  top: 72px;
+  z-index: 15;
+}
+
+@keyframes slideDownBulk {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bulk-bar-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.bulk-select-all-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.bulk-select-all-label input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--primary, #8C6A1E);
+  cursor: pointer;
+  margin: 0;
+}
+
+.bulk-divider {
+  color: var(--border-subtle);
+  font-size: 0.9rem;
+}
+
+.bulk-selected-badge {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: inline-block;
+}
+
+[data-theme="dark"] .bulk-selected-badge {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FCD34D;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.bulk-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-bulk-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #DC2626;
+  color: #FFFFFF !important;
+  border: 1px solid #DC2626;
+  border-radius: 8px;
+  padding: 7px 15px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.22);
+  transition: all 0.18s ease;
+}
+
+.btn-bulk-delete:hover {
+  background: #B91C1C;
+  border-color: #B91C1C;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(185, 28, 28, 0.35);
+}
+
+.btn-bulk-deselect {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 7px 13px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-bulk-deselect:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+  border-color: var(--border-focus);
+}
+
+@media (max-width: 600px) {
+  .orders-bulk-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  .bulk-bar-actions {
+    justify-content: flex-end;
+  }
 }
