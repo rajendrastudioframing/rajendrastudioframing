@@ -169,16 +169,20 @@
           <!-- Filter Tabs -->
           <div class="orders-tabs-bar" role="tablist">
             <button type="button" class="orders-tab-btn active" data-tab="all" onclick="switchOrdersTab('all')">
-              <span>All Orders</span>
+              <span>All orders</span>
               <span class="orders-tab-count" id="countAll">0</span>
             </button>
-            <button type="button" class="orders-tab-btn" data-tab="active" onclick="switchOrdersTab('active')">
-              <span>In Production</span>
-              <span class="orders-tab-count" id="countActive">0</span>
+            <button type="button" class="orders-tab-btn" data-tab="pending" onclick="switchOrdersTab('pending')">
+              <span>Pending Orders</span>
+              <span class="orders-tab-count" id="countPending">0</span>
             </button>
-            <button type="button" class="orders-tab-btn" data-tab="delivered" onclick="switchOrdersTab('delivered')">
-              <span>Delivered</span>
-              <span class="orders-tab-count" id="countDelivered">0</span>
+            <button type="button" class="orders-tab-btn" data-tab="in_production" onclick="switchOrdersTab('in_production')">
+              <span>In production order</span>
+              <span class="orders-tab-count" id="countInProduction">0</span>
+            </button>
+            <button type="button" class="orders-tab-btn" data-tab="picked_up" onclick="switchOrdersTab('picked_up')">
+              <span>Picked up</span>
+              <span class="orders-tab-count" id="countPickedUp">0</span>
             </button>
           </div>
 

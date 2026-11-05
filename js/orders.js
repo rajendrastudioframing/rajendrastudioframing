@@ -93,9 +93,14 @@ function updateUserGreetingUI(user, isLoggedIn) {
 }
 
 function updateTabButtonsUI() {
+  const normalizedActive = 
+    activeFilter === 'active' ? 'in_production' :
+    activeFilter === 'delivered' ? 'picked_up' : 
+    activeFilter;
+
   document.querySelectorAll('.orders-tab-btn').forEach(btn => {
     const tab = btn.getAttribute('data-tab');
-    if (tab === activeFilter) {
+    if (tab === normalizedActive || tab === activeFilter) {
       btn.classList.add('active');
     } else {
       btn.classList.remove('active');
@@ -158,13 +163,19 @@ async function fetchAndRenderCustomerOrders() {
 
 function updateTabCounts() {
   const total = allCustomerOrders.length;
-  const active = allCustomerOrders.filter(isOrderActive).length;
-  const delivered = allCustomerOrders.filter(isOrderDelivered).length;
+  const pending = allCustomerOrders.filter(isOrderPending).length;
+  const inProduction = allCustomerOrders.filter(isOrderInProduction).length;
+  const pickedUp = allCustomerOrders.filter(isOrderPickedUp).length;
   const cancelled = allCustomerOrders.filter(isOrderCancelled).length;
 
   setCountText('countAll', total);
-  setCountText('countActive', active);
-  setCountText('countDelivered', delivered);
+  setCountText('countPending', pending);
+  setCountText('countInProduction', inProduction);
+  setCountText('countPickedUp', pickedUp);
+
+  // Backward compatibility aliases
+  setCountText('countActive', inProduction);
+  setCountText('countDelivered', pickedUp);
   setCountText('countCancelled', cancelled);
 }
 
@@ -173,19 +184,39 @@ function setCountText(id, count) {
   if (el) el.textContent = count;
 }
 
+function isOrderPending(o) {
+  const s = (o.status || 'pending').toLowerCase().trim();
+  // Orders waiting for studio/admin approval
+  return s === 'pending' || s === 'new' || s === 'placed' || s === 'order placed' || !s;
+}
+
+function isOrderInProduction(o) {
+  const s = (o.status || '').toLowerCase().trim();
+  // From accept to before pickup
+  return s === 'confirmed' || s === 'accepted' || s === 'in progress' || 
+         s === 'processing' || s === 'in production' || s === 'framing' || 
+         s === 'ready_for_pickup' || s === 'ready for pickup' || 
+         s === 'pickup ready' || s === 'shipped' || s === 'dispatched';
+}
+
+function isOrderPickedUp(o) {
+  const s = (o.status || '').toLowerCase().trim();
+  // Successfully complete and picked up
+  return s === 'picked_up' || s === 'picked up' || s === 'completed' || s === 'delivered';
+}
+
 function isOrderActive(o) {
-  const s = (o.status || 'placed').toLowerCase();
-  return s !== 'delivered' && s !== 'completed' && s !== 'cancelled';
+  // Retained for action buttons (e.g. edit order) - active while not completed/picked up or cancelled
+  return !isOrderPickedUp(o) && !isOrderCancelled(o);
 }
 
 function isOrderDelivered(o) {
-  const s = (o.status || '').toLowerCase();
-  return s === 'delivered' || s === 'completed';
+  return isOrderPickedUp(o);
 }
 
 function isOrderCancelled(o) {
-  const s = (o.status || '').toLowerCase();
-  return s === 'cancelled';
+  const s = (o.status || '').toLowerCase().trim();
+  return s === 'cancelled' || s === 'canceled';
 }
 
 function renderOrdersList() {
@@ -194,8 +225,9 @@ function renderOrdersList() {
 
   // Filter by active tab
   let filtered = allCustomerOrders.filter(o => {
-    if (activeFilter === 'active') return isOrderActive(o);
-    if (activeFilter === 'delivered') return isOrderDelivered(o);
+    if (activeFilter === 'pending') return isOrderPending(o);
+    if (activeFilter === 'in_production' || activeFilter === 'active') return isOrderInProduction(o);
+    if (activeFilter === 'picked_up' || activeFilter === 'delivered') return isOrderPickedUp(o);
     if (activeFilter === 'cancelled') return isOrderCancelled(o);
     return true; // 'all'
   });
@@ -230,15 +262,27 @@ function renderOrdersList() {
       `;
     } else {
       // Filter returned empty
+      const tabDisplayNames = {
+        'all': 'All orders',
+        'pending': 'Pending Orders',
+        'in_production': 'In production order',
+        'active': 'In production order',
+        'picked_up': 'Picked up',
+        'delivered': 'Picked up',
+        'cancelled': 'Cancelled Orders'
+      };
+      const currentTabName = tabDisplayNames[activeFilter] || activeFilter;
+      const filterMessage = searchQuery 
+        ? `No orders found in <strong>${escapeHtml(currentTabName)}</strong> matching "<strong>${escapeHtml(searchQuery)}</strong>".`
+        : `You currently have 0 orders in <strong>${escapeHtml(currentTabName)}</strong>.`;
+
       container.innerHTML = `
         <div class="orders-empty-card">
           <div class="orders-empty-icon">🔍</div>
-          <h3 class="orders-empty-title">No Orders Matching Your Filter</h3>
-          <p class="orders-empty-desc">
-            No orders found under the "<strong>${escapeHtml(activeFilter)}</strong>" filter or matching "${escapeHtml(searchQuery)}".
-          </p>
-          <button type="button" class="order-btn order-btn-outline" onclick="switchOrdersTab('all'); handleOrdersSearch(''); document.getElementById('ordersSearchInput').value='';" style="margin: 0 auto;">
-            Reset Filters
+          <h3 class="orders-empty-title">No Orders in ${escapeHtml(currentTabName)}</h3>
+          <p class="orders-empty-desc">${filterMessage}</p>
+          <button type="button" class="order-btn order-btn-outline" onclick="switchOrdersTab('all'); handleOrdersSearch(''); const s = document.getElementById('ordersSearchInput'); if (s) s.value='';" style="margin: 0 auto;">
+            View All Orders
           </button>
         </div>
       `;
@@ -382,9 +426,9 @@ function createOrderCardHtml(order) {
 }
 
 function getTimelineStage(status) {
-  const s = (status || '').toLowerCase();
+  const s = (status || '').toLowerCase().trim();
   
-  if (s === 'delivered' || s === 'completed') {
+  if (s === 'delivered' || s === 'completed' || s === 'picked_up' || s === 'picked up') {
     return {
       progressPercent: 100,
       step1Class: 'completed',
@@ -395,7 +439,7 @@ function getTimelineStage(status) {
     };
   }
 
-  if (s === 'dispatched' || s === 'shipped') {
+  if (s === 'dispatched' || s === 'shipped' || s === 'ready_for_pickup' || s === 'ready for pickup' || s === 'pickup ready') {
     return {
       progressPercent: 75,
       step1Class: 'completed',
@@ -406,7 +450,7 @@ function getTimelineStage(status) {
     };
   }
 
-  if (s === 'framing' || s === 'in production' || s === 'processing') {
+  if (s === 'confirmed' || s === 'accepted' || s === 'framing' || s === 'in production' || s === 'processing' || s === 'in progress') {
     return {
       progressPercent: 50,
       step1Class: 'completed',
@@ -417,7 +461,7 @@ function getTimelineStage(status) {
     };
   }
 
-  if (s === 'new' || s === 'placed' || s === 'order placed') {
+  if (s === 'new' || s === 'placed' || s === 'order placed' || s === 'pending') {
     return {
       progressPercent: 25,
       step1Class: 'completed',

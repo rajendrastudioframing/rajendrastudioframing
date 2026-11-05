@@ -986,31 +986,31 @@
   .orders-tabs-bar {
     display: flex !important;
     width: 100% !important;
-    gap: 4px !important;
-    padding: 3px !important;
+    gap: 6px !important;
+    padding: 4px !important;
     background: #F3F4F6 !important;
     border-radius: 12px !important;
     overflow-x: auto !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
     box-sizing: border-box !important;
+    -webkit-overflow-scrolling: touch !important;
   }
   .orders-tabs-bar::-webkit-scrollbar {
     display: none !important;
   }
   .orders-tab-btn {
-    flex: 1 1 0% !important;
-    padding: 8px 6px !important;
-    font-size: 0.76rem !important;
+    flex: 0 0 auto !important;
+    padding: 8px 12px !important;
+    font-size: 0.78rem !important;
     border-radius: 9px !important;
     justify-content: center !important;
     white-space: nowrap !important;
-    gap: 4px !important;
-    min-width: 0 !important;
+    gap: 5px !important;
   }
   .orders-tab-count {
     font-size: 0.68rem !important;
-    padding: 1px 5px !important;
+    padding: 1px 6px !important;
   }
   .orders-main-section,
   .orders-container,
