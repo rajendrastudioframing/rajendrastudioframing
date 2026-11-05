@@ -334,7 +334,7 @@
     }
 
     /* 5th Card: Customers (Executive Horizontal Highlight Card with Proper Separation) */
-    .metric-segment-bar.five-cols .metric-segment:last-child {
+    #overviewView .metric-segment-bar.five-cols .metric-segment:last-child {
       grid-column: 1 / -1 !important;
       display: grid !important;
       grid-template-columns: 1fr auto auto !important;
@@ -347,7 +347,7 @@
       cursor: pointer !important;
     }
 
-    .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-top {
+    #overviewView .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-top {
       margin-bottom: 0 !important;
       display: flex !important;
       flex-direction: column !important;
@@ -355,24 +355,24 @@
       gap: 2px !important;
     }
 
-    .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-label {
+    #overviewView .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-label {
       font-size: 0.72rem !important;
       color: var(--text-main) !important;
       font-weight: 800 !important;
     }
 
-    .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-val {
+    #overviewView .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-val {
       margin: 0 !important;
       font-size: 1.55rem !important;
       font-weight: 800 !important;
       color: var(--primary) !important;
     }
 
-    .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-tag {
+    #overviewView .metric-segment-bar.five-cols .metric-segment:last-child .metric-segment-tag {
       display: none !important;
     }
 
-    .metric-segment-bar.five-cols .metric-segment:last-child::after {
+    #overviewView .metric-segment-bar.five-cols .metric-segment:last-child::after {
       content: "View Directory →" !important;
       font-size: 0.70rem !important;
       font-weight: 700 !important;
@@ -2645,7 +2645,19 @@
             </div>
 
             <!-- Connected 4-Segment Metric Bar -->
-            <div class="metric-segment-bar">
+            <div class="metric-segment-bar five-cols">
+              <div class="metric-segment active-kpi-filter" id="ordersCardAll" style="cursor: pointer;" onclick="filterOrdersByStatus('all')" title="Click to view All Orders">
+                <div class="metric-segment-top">
+                  <div class="metric-label-group">
+                    <span class="metric-icon-dot" style="background:#8C6A1E;box-shadow:0 0 8px rgba(140,106,30,0.5);"></span>
+                    <span class="metric-segment-label">All Orders</span>
+                  </div>
+                  <span class="metric-segment-dots" title="View All Orders">•••</span>
+                </div>
+                <div class="metric-segment-val" id="ordersKpiTotal">0</div>
+                <div class="metric-segment-tag neutral" id="ordersKpiTotalTag">0 total</div>
+              </div>
+
               <div class="metric-segment" id="ordersCardNew" style="cursor: pointer;" onclick="filterOrdersByStatus('New')" title="Click to filter New / Pending Orders">
                 <div class="metric-segment-top">
                   <div class="metric-label-group">

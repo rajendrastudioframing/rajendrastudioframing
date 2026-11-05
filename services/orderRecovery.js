@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 /**
  * RAJENDRA STUDIO & FRAMING - ORDER RECOVERY & CLOUD BACKUP SERVICE
  * Guarantees zero order loss by cross-referencing Brevo transactional email receipts
@@ -135,6 +137,14 @@ async function syncBrevoOrders(force = false) {
       if (existingOrderIds.has(orderId.toLowerCase())) {
         continue; // Order already in system
       }
+      // Never restore deleted orders
+      try {
+        const delPath = path.join(__dirname, '..', 'data', 'deleted-orders.json');
+        if (fs.existsSync(delPath)) {
+          const dels = JSON.parse(fs.readFileSync(delPath, 'utf8'));
+          if (Array.isArray(dels) && dels.includes(orderId.toLowerCase())) continue;
+        }
+      } catch (_) {}
 
       // Fetch detail
       try {

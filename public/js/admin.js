@@ -858,6 +858,7 @@ function updateOrdersKPIs(orders) {
   const elComp = document.getElementById('ordersKpiCompleted');
   const elCanc = document.getElementById('ordersKpiCancelled');
 
+  if (elTotal) elTotal.textContent = orders.length;
   if (elNew) elNew.textContent = newCount;
   if (elProc) elProc.textContent = processingCount;
   if (elComp) elComp.textContent = completedCount;
@@ -869,6 +870,9 @@ function updateOrdersKPIs(orders) {
   const elCompTag = document.getElementById('ordersKpiCompletedTag');
   const elCancTag = document.getElementById('ordersKpiCancelledTag');
 
+  if (elTotalTag) {
+    elTotalTag.textContent = `${orders.length} total`;
+  }
   if (elNewTag) {
     elNewTag.innerHTML = newToday > 0 ? `<span style="font-size:0.85em;">●</span> ${newToday} today` : `<span style="font-size:0.85em;">●</span> ${newCount} pending`;
   }
