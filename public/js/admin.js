@@ -853,6 +853,7 @@ function updateOrdersKPIs(orders) {
   const totalPipelineVal = orders.reduce((sum, item) => sum + (Number(item.total || item.estimatedValue) || 0), 0);
 
   // 1. Orders View KPI Elements
+  const elTotal = document.getElementById('ordersKpiTotal');
   const elNew = document.getElementById('ordersKpiNew');
   const elProc = document.getElementById('ordersKpiProcessing');
   const elComp = document.getElementById('ordersKpiCompleted');
@@ -865,6 +866,7 @@ function updateOrdersKPIs(orders) {
   if (elCanc) elCanc.textContent = cancelledCount;
 
   // Orders View Dynamic Sub-tags
+  const elTotalTag = document.getElementById('ordersKpiTotalTag');
   const elNewTag = document.getElementById('ordersKpiNewTag');
   const elProcTag = document.getElementById('ordersKpiProcessingTag');
   const elCompTag = document.getElementById('ordersKpiCompletedTag');
@@ -2021,6 +2023,7 @@ window.filterOrdersByStatus = function(statusFilter) {
   });
 
   const cards = [
+    { id: 'ordersCardAll', filter: 'all' },
     { id: 'ordersCardNew', filter: 'new' },
     { id: 'ordersCardProc', filter: 'in progress' },
     { id: 'ordersCardComp', filter: 'completed' },
