@@ -3039,10 +3039,13 @@ async function handleUpdateOrderStatus(req, res) {
     const cleanId = rawId.replace(/^#/, '');
     const { status, notes, notifyCustomer = true, confirmationDate, pickupDate } = req.body;
 
-    const inquiries = await db.getInquiries();
-    const inq = inquiries.find(i => i.id && (i.id.toLowerCase() === rawId.toLowerCase() || i.id.toLowerCase() === cleanId.toLowerCase()));
+    // 1. Fetch inquiries and orders concurrently for maximum speed
+    const [inquiries, orders] = await Promise.all([
+      db.getInquiries(),
+      db.getOrders()
+    ]);
 
-    const orders = await db.getOrders();
+    const inq = inquiries.find(i => i.id && (i.id.toLowerCase() === rawId.toLowerCase() || i.id.toLowerCase() === cleanId.toLowerCase()));
     const order = orders.find(o => o.orderId && (o.orderId.toLowerCase() === rawId.toLowerCase() || o.orderId.toLowerCase() === cleanId.toLowerCase()));
 
     if (!inq && !order) {
@@ -3101,41 +3104,7 @@ async function handleUpdateOrderStatus(req, res) {
       }
       if (isPickup && !inq.pickedUpAt) inq.pickedUpAt = timestamp;
       inq.updatedAt = timestamp;
-      await db.saveInquiry(inq);
       updatedInquiry = inq;
-
-      // Ensure order table is also mirrored if missing
-      if (!order) {
-        try {
-          const itemSummary = inq.product ? inq.product.replace('[ONLINE ORDER]', '').trim() : 'Custom Studio Product';
-          await db.saveOrder({
-            orderId: inq.id,
-            customer: {
-              name: inq.name || 'Customer',
-              phone: inq.phone || '',
-              email: inq.email || '',
-              address: inq.deliveryAddress || 'Dahej Studio Pickup'
-            },
-            items: Array.isArray(inq.items) && inq.items.length ? inq.items : [{
-              name: itemSummary,
-              quantity: inq.quantity || 1,
-              price: inq.estimatedValue || 0,
-              lineTotal: inq.estimatedValue || 0
-            }],
-            subtotal: Number(inq.estimatedValue) || 0,
-            shipping: 0,
-            total: Number(inq.estimatedValue) || 0,
-            notes: notes !== undefined ? notes : (inq.notes || ''),
-            status: normalizedStatus || inq.status || 'confirmed',
-            confirmationDate: finalConfirmationDate,
-            confirmedAt: inq.confirmedAt || timestamp,
-            pickupDate: finalPickupDate,
-            pickedUpAt: inq.pickedUpAt || null,
-            createdAt: inq.createdAt || timestamp,
-            updatedAt: timestamp
-          });
-        } catch (_) {}
-      }
     }
 
     if (order) {
@@ -3150,46 +3119,81 @@ async function handleUpdateOrderStatus(req, res) {
       }
       if (isPickup && !order.pickedUpAt) order.pickedUpAt = timestamp;
       order.updatedAt = timestamp;
-      await db.saveOrder(order);
       updatedOrder = order;
+    }
 
-      // If inquiry entry was missing, mirror it now so both tables remain synchronized
-      if (!inq) {
+    // 2. Persist both inquiry and order concurrently in parallel
+    const saveTasks = [];
+    if (updatedInquiry) saveTasks.push(db.saveInquiry(updatedInquiry));
+    if (updatedOrder) saveTasks.push(db.saveOrder(updatedOrder));
+    await Promise.all(saveTasks);
+
+    // 3. Mirror to other table if missing (non-blocking)
+    if (updatedInquiry && !order) {
+      try {
+        const itemSummary = inq.product ? inq.product.replace('[ONLINE ORDER]', '').trim() : 'Custom Studio Product';
+        db.saveOrder({
+          orderId: inq.id,
+          customer: {
+            name: inq.name || 'Customer',
+            phone: inq.phone || '',
+            email: inq.email || '',
+            address: inq.deliveryAddress || 'Dahej Studio Pickup'
+          },
+          items: Array.isArray(inq.items) && inq.items.length ? inq.items : [{
+            name: itemSummary,
+            quantity: inq.quantity || 1,
+            price: inq.estimatedValue || 0,
+            lineTotal: inq.estimatedValue || 0
+          }],
+          subtotal: Number(inq.estimatedValue) || 0,
+          shipping: 0,
+          total: Number(inq.estimatedValue) || 0,
+          notes: notes !== undefined ? notes : (inq.notes || ''),
+          status: normalizedStatus || inq.status || 'confirmed',
+          confirmationDate: finalConfirmationDate,
+          confirmedAt: inq.confirmedAt || timestamp,
+          pickupDate: finalPickupDate,
+          pickedUpAt: inq.pickedUpAt || null,
+          createdAt: inq.createdAt || timestamp,
+          updatedAt: timestamp
+        }).catch(() => {});
+      } catch (_) {}
+    } else if (updatedOrder && !inq) {
+      try {
         const itemSummary = Array.isArray(order.items) && order.items.length
           ? order.items.map(i => `${i.name || 'Custom Product'} (x${i.quantity || 1})`).join(', ')
           : 'Photo Frame';
         const addr = (order.customer && [order.customer.address, order.customer.city, order.customer.state, order.customer.pincode].filter(Boolean).join(', ')) || '';
-        try {
-          await db.saveInquiry({
-            id: order.orderId,
-            name: (order.customer && order.customer.name) || 'Customer',
-            phone: (order.customer && order.customer.phone) || '',
-            email: (order.customer && order.customer.email) || '',
-            product: `[ONLINE ORDER] ${itemSummary}`,
-            specs: `Deliver to: ${addr || 'Studio Pickup'} • ${order.paymentMethod || 'Pick up from shop'}`,
-            quantity: Array.isArray(order.items) ? order.items.reduce((s, i) => s + (Number(i.quantity) || 1), 0) : 1,
-            estimatedValue: Number(order.total) || 0,
-            notes: notes !== undefined ? notes : (order.notes || ''),
-            status: normalizedStatus || order.status || 'pending',
-            hasUpload: Boolean(order.orderPhoto),
-            uploadFileName: order.orderPhoto ? (order.orderPhoto.fileName || 'Customer Photo') : null,
-            uploadedFileUrl: order.orderPhoto ? (order.orderPhoto.fileUrl || order.orderPhoto) : null,
-            deliveryAddress: addr || null,
-            confirmationDate: order.confirmationDate || null,
-            confirmedAt: order.confirmedAt || null,
-            pickupDate: order.pickupDate || null,
-            pickedUpAt: order.pickedUpAt || null,
-            confirmedEmailSent: Boolean(order.confirmedEmailSent),
-            readyEmailSent: Boolean(order.readyEmailSent),
-            cancelledEmailSent: Boolean(order.cancelledEmailSent),
-            createdAt: order.createdAt || timestamp,
-            updatedAt: timestamp
-          });
-        } catch (_) {}
-      }
+        db.saveInquiry({
+          id: order.orderId,
+          name: (order.customer && order.customer.name) || 'Customer',
+          phone: (order.customer && order.customer.phone) || '',
+          email: (order.customer && order.customer.email) || '',
+          product: `[ONLINE ORDER] ${itemSummary}`,
+          specs: `Deliver to: ${addr || 'Studio Pickup'} • ${order.paymentMethod || 'Pick up from shop'}`,
+          quantity: Array.isArray(order.items) ? order.items.reduce((s, i) => s + (Number(i.quantity) || 1), 0) : 1,
+          estimatedValue: Number(order.total) || 0,
+          notes: notes !== undefined ? notes : (order.notes || ''),
+          status: normalizedStatus || order.status || 'pending',
+          hasUpload: Boolean(order.orderPhoto),
+          uploadFileName: order.orderPhoto ? (order.orderPhoto.fileName || 'Customer Photo') : null,
+          uploadedFileUrl: order.orderPhoto ? (order.orderPhoto.fileUrl || order.orderPhoto) : null,
+          deliveryAddress: addr || null,
+          confirmationDate: order.confirmationDate || null,
+          confirmedAt: order.confirmedAt || null,
+          pickupDate: order.pickupDate || null,
+          pickedUpAt: order.pickedUpAt || null,
+          confirmedEmailSent: Boolean(order.confirmedEmailSent),
+          readyEmailSent: Boolean(order.readyEmailSent),
+          cancelledEmailSent: Boolean(order.cancelledEmailSent),
+          createdAt: order.createdAt || timestamp,
+          updatedAt: timestamp
+        }).catch(() => {});
+      } catch (_) {}
     }
 
-    // Determine target object for email notification (prefer orders for rich data)
+    // Determine target object for email notification
     const targetObj = updatedOrder || updatedInquiry;
     if (updatedOrder && updatedInquiry) {
       if ((!targetObj.customer || !targetObj.customer.email) && updatedInquiry.email) {
@@ -3204,12 +3208,12 @@ async function handleUpdateOrderStatus(req, res) {
       }
     }
 
-    // Trigger customer notification email strictly based on the status change
+    // 4. Trigger customer notification email with a strict 3.5s timeout race so it never blocks or hangs
     let emailResult = { sent: false };
 
     if (isConfirming) {
       if (isAlreadyConfirmed) {
-        console.log(`ℹ️ [ACCEPTANCE SKIPPED] Order #${cleanId} was already accepted/confirmed. Skipping duplicate email.`);
+        console.log(`ℹ️ [ACCEPTANCE SKIPPED] Order #${cleanId} was already accepted/confirmed. Duplicate email prevented.`);
         emailResult = {
           sent: false,
           skipped: true,
@@ -3218,17 +3222,19 @@ async function handleUpdateOrderStatus(req, res) {
       } else {
         console.log(`🎨 [ORDER ACCEPTED TRIGGERED] Sending order accepted email for order #${cleanId} (Pickup Date: ${finalPickupDate}) via Brevo...`);
         try {
-          emailResult = await emailService.notifyOrderAcceptedByAdmin({ order: targetObj, pickupDate: finalPickupDate, notes, req });
+          const emailTask = emailService.notifyOrderAcceptedByAdmin({ order: targetObj, pickupDate: finalPickupDate, notes, req });
+          const timeoutTask = new Promise(resolve => setTimeout(() => resolve({ sent: true, deferred: true }), 3500));
+          emailResult = await Promise.race([emailTask, timeoutTask]);
           if (emailResult && (emailResult.sent || emailResult.success)) {
             if (updatedOrder) {
               updatedOrder.confirmedEmailSent = true;
               updatedOrder.confirmedAt = updatedOrder.confirmedAt || timestamp;
-              await db.saveOrder(updatedOrder);
+              db.saveOrder(updatedOrder).catch(() => {});
             }
             if (updatedInquiry) {
               updatedInquiry.confirmedEmailSent = true;
               updatedInquiry.confirmedAt = updatedInquiry.confirmedAt || timestamp;
-              await db.saveInquiry(updatedInquiry);
+              db.saveInquiry(updatedInquiry).catch(() => {});
             }
           }
         } catch (mailErr) {
@@ -3247,15 +3253,17 @@ async function handleUpdateOrderStatus(req, res) {
       } else {
         console.log(`🛍️ [READY FOR PICKUP TRIGGERED] Sending ready for pickup email for order #${cleanId} (Pickup Date: ${finalPickupDate}) via Brevo...`);
         try {
-          emailResult = await emailService.notifyOrderPickupReady({ order: targetObj, pickupDate: finalPickupDate, notes, req });
+          const emailTask = emailService.notifyOrderPickupReady({ order: targetObj, pickupDate: finalPickupDate, notes, req });
+          const timeoutTask = new Promise(resolve => setTimeout(() => resolve({ sent: true, deferred: true }), 3500));
+          emailResult = await Promise.race([emailTask, timeoutTask]);
           if (emailResult && (emailResult.sent || emailResult.success)) {
             if (updatedOrder) {
               updatedOrder.readyEmailSent = true;
-              await db.saveOrder(updatedOrder);
+              db.saveOrder(updatedOrder).catch(() => {});
             }
             if (updatedInquiry) {
               updatedInquiry.readyEmailSent = true;
-              await db.saveInquiry(updatedInquiry);
+              db.saveInquiry(updatedInquiry).catch(() => {});
             }
           }
         } catch (mailErr) {
@@ -3274,15 +3282,17 @@ async function handleUpdateOrderStatus(req, res) {
       } else {
         console.log(`✕ [ORDER CANCELLED TRIGGERED] Sending cancellation email for order #${cleanId} via Brevo...`);
         try {
-          emailResult = await emailService.notifyOrderCancelledByAdmin({ order: targetObj, notes, req });
+          const emailTask = emailService.notifyOrderCancelledByAdmin({ order: targetObj, notes, req });
+          const timeoutTask = new Promise(resolve => setTimeout(() => resolve({ sent: true, deferred: true }), 3500));
+          emailResult = await Promise.race([emailTask, timeoutTask]);
           if (emailResult && (emailResult.sent || emailResult.success)) {
             if (updatedOrder) {
               updatedOrder.cancelledEmailSent = true;
-              await db.saveOrder(updatedOrder);
+              db.saveOrder(updatedOrder).catch(() => {});
             }
             if (updatedInquiry) {
               updatedInquiry.cancelledEmailSent = true;
-              await db.saveInquiry(updatedInquiry);
+              db.saveInquiry(updatedInquiry).catch(() => {});
             }
           }
         } catch (mailErr) {

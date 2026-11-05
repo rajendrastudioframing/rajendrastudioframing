@@ -822,7 +822,8 @@ module.exports = {
       const supaIds = new Set(supabaseOrders.map(so => (so.orderId || '').toLowerCase().trim()));
       const unSynced = localOrders.filter(lo => lo && lo.orderId && !supaIds.has(lo.orderId.toLowerCase().trim()));
       if (unSynced.length > 0) {
-        Promise.all(unSynced.map(o => this.saveOrder(o))).catch(e => console.warn('Background Supabase cloud sync notice:', e.message));
+        const batch = unSynced.slice(0, 2);
+        Promise.all(batch.map(o => this.saveOrder(o))).catch(e => console.warn('Background Supabase cloud sync notice:', e.message));
       }
     }
 
@@ -923,7 +924,7 @@ module.exports = {
     if (supabase && isSupabaseOperational()) {
       try {
         const upsertPromise = supabase.from('orders').upsert(dbRow, { onConflict: 'order_id' });
-        const { error } = await withTimeout(upsertPromise, 6000, 'Supabase saveOrder');
+        const { error } = await withTimeout(upsertPromise, 3500, 'Supabase saveOrder');
         if (error) {
           console.warn('⚠️ [DATABASE] Supabase saveOrder warning:', error.message);
           // Self-healing fallback: strip dynamic columns and retry with core schema
@@ -940,33 +941,12 @@ module.exports = {
               created_at: dbRow.created_at,
               updated_at: dbRow.updated_at
             };
-            const { error: coreErr } = await supabase.from('orders').upsert(coreRow, { onConflict: 'order_id' });
-            if (coreErr) {
-              console.warn('⚠️ [DATABASE] Supabase saveOrder core upsert warning:', coreErr.message);
-            }
+            const fallbackPromise = supabase.from('orders').upsert(coreRow, { onConflict: 'order_id' });
+            await withTimeout(fallbackPromise, 2500, 'Supabase core saveOrder');
           } catch (_) {}
         }
-        // Always issue a direct update to ensure status is 100% saved in Supabase
-        try {
-          await supabase.from('orders')
-            .update({
-              status: dbRow.status,
-              notes: dbRow.notes,
-              updated_at: dbRow.updated_at
-            })
-            .ilike('order_id', order.orderId);
-        } catch (_) {}
       } catch (err) {
-        console.warn('⚠️ [DATABASE] Supabase saveOrder exception, syncing locally:', err.message);
-        try {
-          await supabase.from('orders')
-            .update({
-              status: dbRow.status,
-              notes: dbRow.notes,
-              updated_at: dbRow.updated_at
-            })
-            .ilike('order_id', order.orderId);
-        } catch (_) {}
+        console.warn('⚠️ [DATABASE] Supabase saveOrder notice, syncing locally:', err.message);
       }
     }
 
@@ -1134,7 +1114,7 @@ module.exports = {
     if (supabase && isSupabaseOperational()) {
       try {
         const upsertPromise = supabase.from('inquiries').upsert(dbRow, { onConflict: 'id' });
-        const { error } = await withTimeout(upsertPromise, 6000, 'Supabase saveInquiry');
+        const { error } = await withTimeout(upsertPromise, 3500, 'Supabase saveInquiry');
         if (error) {
           console.warn('⚠️ [DATABASE] Supabase saveInquiry warning:', error.message);
           // Self-healing fallback: strip dynamic columns and retry with core schema
@@ -1153,33 +1133,12 @@ module.exports = {
               created_at: dbRow.created_at,
               updated_at: dbRow.updated_at
             };
-            const { error: coreErr } = await supabase.from('inquiries').upsert(coreInqRow, { onConflict: 'id' });
-            if (coreErr) {
-              console.warn('⚠️ [DATABASE] Supabase saveInquiry core upsert warning:', coreErr.message);
-            }
+            const fallbackPromise = supabase.from('inquiries').upsert(coreInqRow, { onConflict: 'id' });
+            await withTimeout(fallbackPromise, 2500, 'Supabase core saveInquiry');
           } catch (_) {}
         }
-        // Always issue a direct update to ensure status is 100% saved in Supabase
-        try {
-          await supabase.from('inquiries')
-            .update({
-              status: dbRow.status,
-              notes: dbRow.notes,
-              updated_at: dbRow.updated_at
-            })
-            .ilike('id', inquiry.id);
-        } catch (_) {}
       } catch (err) {
-        console.warn('⚠️ [DATABASE] Supabase saveInquiry exception, syncing locally:', err.message);
-        try {
-          await supabase.from('inquiries')
-            .update({
-              status: dbRow.status,
-              notes: dbRow.notes,
-              updated_at: dbRow.updated_at
-            })
-            .ilike('id', inquiry.id);
-        } catch (_) {}
+        console.warn('⚠️ [DATABASE] Supabase saveInquiry notice, syncing locally:', err.message);
       }
     }
 

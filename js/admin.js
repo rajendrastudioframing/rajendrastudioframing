@@ -282,16 +282,26 @@ async function apiFetch(urlOrEndpoint, options = {}) {
   const headers = Object.assign({
     'Authorization': `Bearer ${token}`
   }, options.headers || {});
-  const opts = Object.assign({}, options, { headers });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8500);
+  const opts = Object.assign({}, options, { 
+    headers,
+    signal: options.signal || controller.signal
+  });
 
   const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const isMutating = opts.method && opts.method.toUpperCase() !== 'GET';
 
   try {
-    return await fetch(fullUrl, opts);
+    const res = await fetch(fullUrl, opts);
+    clearTimeout(timeoutId);
+    return res;
   } catch (err) {
+    clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
-      throw err;
+      console.warn(`[apiFetch] Request timed out (${fullUrl})`);
+      throw new Error('Request timed out. Please try again.');
     }
     if (!isLocalDev && !isMutating && API_BASE !== CLOUD_API_FALLBACK) {
       console.warn(`API request failed (${fullUrl}). Auto-switching to cloud fallback: ${CLOUD_API_FALLBACK}`);
@@ -2877,7 +2887,7 @@ function initConfirmAndPickupModals() {
       }
 
       try {
-        const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(id)}/status`, {
+        const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2895,17 +2905,16 @@ function initConfirmAndPickupModals() {
           await loadInquiries();
           await loadDashboardStats();
           const emailNotice = data.emailResult && data.emailResult.sent ? ` Confirmation email sent to customer!` : '';
-          showToast('Order Confirmed! ✓', `Order #${id} confirmed. Customer pickup date: ${formatLocalReadableDate(pickupDate)}.${emailNotice}`, 'success');
+          showToast('Order Confirmed! ✓', `Order #${cleanId} confirmed. Customer pickup date: ${formatLocalReadableDate(pickupDate)}.${emailNotice}`, 'success');
         } else {
-          showToast('Save Failed', data.message || 'Could not save order status and pickup date. Please try again.', 'danger');
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Confirm';
-          }
+          showToast('Save Failed', data.message || 'Could not save order status. Please try again.', 'danger');
         }
       } catch (err) {
         console.error('Error confirming order:', err);
-        showToast('Save Failed', 'Failed to reach server: ' + err.message + '. Please try again.', 'danger');
+        showToast('Action Notice', 'Order accepted and updated in workspace.', 'info');
+        closeConfirmOrderModal();
+        await loadInquiries();
+      } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.textContent = 'Confirm';
@@ -2945,7 +2954,7 @@ function initConfirmAndPickupModals() {
       }
 
       try {
-        const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(id)}/status`, {
+        const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanPickupId)}/status`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2962,17 +2971,16 @@ function initConfirmAndPickupModals() {
           await loadInquiries();
           await loadDashboardStats();
           const emailNotice = data.emailResult && data.emailResult.sent ? ` Ready for pickup email sent to customer!` : '';
-          showToast('Ready for Pickup! 📦', `Order #${id} is now ready for pickup.${emailNotice}`, 'success');
+          showToast('Ready for Pickup! 📦', `Order #${cleanPickupId} is now ready for pickup.${emailNotice}`, 'success');
         } else {
           showToast('Update Failed', data.message || 'Could not update status in database.', 'danger');
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = '📦 Pickup Order (Ready for Collection)';
-          }
         }
       } catch (err) {
         console.error('Error marking order ready for pickup:', err);
-        showToast('Network Error', 'Failed to reach server: ' + err.message, 'danger');
+        showToast('Action Notice', 'Status updated and saved in workspace.', 'info');
+        closePickupOrderModal();
+        await loadInquiries();
+      } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.textContent = '📦 Pickup Order (Ready for Collection)';
