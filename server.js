@@ -2898,6 +2898,8 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
       order: {
         orderId,
         status,
+        pickupDate: (foundOrder && (foundOrder.pickupDate || foundOrder.pickup_date)) || (foundInq && (foundInq.pickupDate || foundInq.pickup_date)) || null,
+        confirmationDate: (foundOrder && (foundOrder.confirmationDate || foundOrder.confirmation_date)) || (foundInq && (foundInq.confirmationDate || foundInq.confirmation_date)) || null,
         isCancelled,
         canEdit: (status === 'New' || status === 'Pending' || status === 'Placed' || status === 'In Progress') && !isCancelled,
         customer: {

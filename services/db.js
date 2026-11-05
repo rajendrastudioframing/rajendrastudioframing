@@ -969,6 +969,12 @@ module.exports = {
   },
 
   async clearAllOrders() {
+    try {
+      const orders = await this.getOrders();
+      if (Array.isArray(orders) && orders.length) {
+        await Promise.all(orders.map(o => this.deleteOrder(o.orderId)));
+      }
+    } catch (_) {}
     if (supabase && isSupabaseOperational()) {
       try {
         await supabase.from('orders').delete().neq('order_id', '');
