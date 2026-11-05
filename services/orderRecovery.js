@@ -128,7 +128,8 @@ async function syncBrevoOrders(force = false) {
     const existingOrderIds = new Set(currentOrders.map(o => (o.orderId || '').toLowerCase().trim()));
 
     const recovered = [];
-    const RECOVERY_CUTOFF = new Date('2026-11-05T00:00:00.000Z');
+    // Only recover orders placed during the real store era (from 12:30 PM IST / 07:00 UTC today onwards)
+    const RECOVERY_CUTOFF = new Date('2026-11-05T07:00:00.000Z');
 
     for (const item of emailList) {
       const emailDate = new Date(item.date || 0);

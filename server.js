@@ -3078,6 +3078,31 @@ app.post('/api/admin/orders/resync-store', requireAuth, async (req, res) => {
     const inqs = fs.existsSync(inqPath) ? JSON.parse(fs.readFileSync(inqPath, 'utf8')) : [];
     const custs = fs.existsSync(custPath) ? JSON.parse(fs.readFileSync(custPath, 'utf8')) : [];
 
+    // Purge any residual test orders not part of the active orders list
+    if (db.supabase) {
+      const validOrderIds = orders.map(o => o.orderId.toLowerCase());
+      try {
+        const { data: dbOrders } = await db.supabase.from('orders').select('order_id');
+        if (Array.isArray(dbOrders)) {
+          for (const row of dbOrders) {
+            if (row && row.order_id && !validOrderIds.includes(row.order_id.toLowerCase())) {
+              await db.supabase.from('orders').delete().eq('order_id', row.order_id);
+            }
+          }
+        }
+      } catch (_) {}
+      try {
+        const { data: dbInqs } = await db.supabase.from('inquiries').select('id');
+        if (Array.isArray(dbInqs)) {
+          for (const row of dbInqs) {
+            if (row && row.id && row.id.startsWith('RF-ORD-') && !validOrderIds.includes(row.id.toLowerCase())) {
+              await db.supabase.from('inquiries').delete().eq('id', row.id);
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
     for (const o of orders) {
       await db.saveOrder(o);
     }
