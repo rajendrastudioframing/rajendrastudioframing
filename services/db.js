@@ -806,12 +806,11 @@ module.exports = {
     });
 
     // Self-healing: if Supabase is connected, ensure all local/recovered orders are backed up to Supabase Cloud
-    if (supabase && isSupabaseOperational() && supabaseOrders.length > 0) {
+    if (supabase && isSupabaseOperational()) {
       const supaIds = new Set(supabaseOrders.map(so => (so.orderId || '').toLowerCase().trim()));
       const unSynced = localOrders.filter(lo => lo && lo.orderId && !supaIds.has(lo.orderId.toLowerCase().trim()));
       if (unSynced.length > 0) {
-        const batch = unSynced.slice(0, 2);
-        Promise.all(batch.map(o => this.saveOrder(o))).catch(e => console.warn('Background Supabase cloud sync notice:', e.message));
+        Promise.all(unSynced.map(o => this.saveOrder(o))).catch(e => console.warn('Background Supabase cloud sync notice:', e.message));
       }
     }
 
@@ -1121,6 +1120,15 @@ module.exports = {
         }
       }
     });
+
+    // Self-healing: if Supabase is connected, ensure all local inquiries/orders are backed up to Supabase Cloud
+    if (supabase && isSupabaseOperational()) {
+      const supaIds = new Set(supabaseInqs.map(si => (si.id || '').toLowerCase().trim()));
+      const unSynced = localInqs.filter(li => li && li.id && !supaIds.has(li.id.toLowerCase().trim()));
+      if (unSynced.length > 0) {
+        Promise.all(unSynced.map(i => this.saveInquiry(i))).catch(e => console.warn('Background Supabase cloud inquiry sync notice:', e.message));
+      }
+    }
 
     const combined = Array.from(mergedMap.values());
     combined.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));

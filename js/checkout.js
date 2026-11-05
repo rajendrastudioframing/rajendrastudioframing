@@ -372,6 +372,12 @@ async function submitCheckoutOrder(e) {
     return;
   }
 
+  if (window._isPlacingOrder) {
+    console.warn('Order submission already in progress.');
+    return;
+  }
+  window._isPlacingOrder = true;
+
   const subtotal = typeof getCartSubtotal === 'function'
     ? getCartSubtotal()
     : cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.quantity) || 1)), 0);
@@ -519,6 +525,7 @@ async function submitCheckoutOrder(e) {
       document.body.style.overflow = 'hidden';
     }
   } finally {
+    window._isPlacingOrder = false;
     if (desktopBtn) desktopBtn.disabled = false;
     if (mobileBtn) mobileBtn.disabled = false;
     if (btnText) btnText.textContent = 'Place Order';

@@ -128,8 +128,14 @@ async function syncBrevoOrders(force = false) {
     const existingOrderIds = new Set(currentOrders.map(o => (o.orderId || '').toLowerCase().trim()));
 
     const recovered = [];
+    const RECOVERY_CUTOFF = new Date('2026-11-05T00:00:00.000Z');
 
     for (const item of emailList) {
+      const emailDate = new Date(item.date || 0);
+      if (emailDate < RECOVERY_CUTOFF) {
+        continue; // Strictly skip legacy test emails prior to today
+      }
+
       const m = item.subject && item.subject.match(/🛒 \[New Online Order\] #(RF-ORD-[\w-]+) from (.*?) \(₹(\d+)\)/);
       if (!m) continue;
 

@@ -2523,6 +2523,10 @@ app.post('/api/upload-photo', async (req, res) => {
 /**
  * Public Customer Endpoint: Place Checkout Order (POST)
  */
+// Order creation atomic mutex and sequence tracker to prevent any ID collision
+let _orderMutex = Promise.resolve();
+let _highestOrderSequence = 4;
+
 app.post('/api/orders', async (req, res) => {
   try {
     const {
@@ -2574,72 +2578,101 @@ app.post('/api/orders', async (req, res) => {
 
     const orderEmail = (customerEmail && customerEmail.trim().toLowerCase()) || (authenticatedEmail && authenticatedEmail.trim().toLowerCase());
 
-    const [orders, inquiries] = await Promise.all([
-      db.getOrders(),
-      db.getInquiries()
-    ]);
-    const currentYear = new Date().getFullYear();
-    const ordPrefixRegex = new RegExp(`^RF-ORD-${currentYear}-(\\d+)$`, 'i');
-    let maxNum = 0;
-    if (Array.isArray(orders)) {
-      orders.forEach(o => {
-        if (o && o.orderId) {
-          const m = o.orderId.match(ordPrefixRegex);
-          if (m) {
-            const num = parseInt(m[1], 10);
-            if (num > maxNum) maxNum = num;
-          }
-        }
-      });
-    }
-    if (Array.isArray(inquiries)) {
-      inquiries.forEach(i => {
-        if (i && i.id) {
-          const m = i.id.match(ordPrefixRegex);
-          if (m) {
-            const num = parseInt(m[1], 10);
-            if (num > maxNum) maxNum = num;
-          }
-        }
-      });
-    }
-    const orderNumber = String(maxNum + 1).padStart(3, '0');
-    const orderId = `RF-ORD-${currentYear}-${orderNumber}`;
+    // Acquire order creation lock to guarantee 100% collision-free sequential IDs
+    let releaseOrderLock;
+    const lockWait = new Promise(resolve => { releaseOrderLock = resolve; });
+    const currentLock = _orderMutex;
+    _orderMutex = lockWait;
+    await currentLock;
 
-    const newOrder = {
-      orderId,
-      customer: {
-        name: customerName.trim(),
-        phone: customerPhone.trim(),
-        email: orderEmail,
-        address: orderAddress,
-        city: orderCity,
-        state: orderState,
-        pincode: orderPincode
-      },
-      items: items.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: Number(item.price) || 0,
-        quantity: Number(item.quantity) || 1,
-        size: item.size || 'Standard',
-        finish: item.finish || 'Standard',
-        image: item.image || 'assets/images/custom_canvas.jpg',
-        uploadedPhoto: item.uploadedPhoto || null,
-        lineTotal: (Number(item.price) || 0) * (Number(item.quantity) || 1)
-      })),
-      subtotal: Number(subtotal) || 0,
-      shipping: Number(shipping) || 0,
-      total: Number(total) || 0,
-      notes: notes || '',
-      orderPhoto: orderPhoto || null,
-      paymentMethod: req.body.paymentMethod || 'Pick up from shop',
-      upiUtr: req.body.upiUtr || null,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    };
+    let newOrder;
+    let orderId;
 
-    await db.saveOrder(newOrder);
+    try {
+      const currentYear = new Date().getFullYear();
+      const ordPrefixRegex = new RegExp(`^RF-ORD-${currentYear}-(\\d+)$`, 'i');
+
+      const [orders, inquiries] = await Promise.all([
+        db.getOrders(),
+        db.getInquiries()
+      ]);
+
+      let maxNum = _highestOrderSequence || 4;
+      if (Array.isArray(orders)) {
+        orders.forEach(o => {
+          if (o && o.orderId) {
+            const m = o.orderId.match(ordPrefixRegex);
+            if (m) {
+              const num = parseInt(m[1], 10);
+              if (num > maxNum) maxNum = num;
+            }
+          }
+        });
+      }
+      if (Array.isArray(inquiries)) {
+        inquiries.forEach(i => {
+          if (i && i.id) {
+            const m = i.id.match(ordPrefixRegex);
+            if (m) {
+              const num = parseInt(m[1], 10);
+              if (num > maxNum) maxNum = num;
+            }
+          }
+        });
+      }
+
+      let nextNum = maxNum + 1;
+      let candidateId = `RF-ORD-${currentYear}-${String(nextNum).padStart(3, '0')}`;
+
+      const existingIds = new Set([
+        ...(orders || []).map(o => (o.orderId || '').toLowerCase().trim()),
+        ...(inquiries || []).map(i => (i.id || '').toLowerCase().trim())
+      ]);
+      while (existingIds.has(candidateId.toLowerCase())) {
+        nextNum++;
+        candidateId = `RF-ORD-${currentYear}-${String(nextNum).padStart(3, '0')}`;
+      }
+
+      _highestOrderSequence = nextNum;
+      orderId = candidateId;
+
+      newOrder = {
+        orderId,
+        customer: {
+          name: customerName.trim(),
+          phone: customerPhone.trim(),
+          email: orderEmail,
+          address: orderAddress,
+          city: orderCity,
+          state: orderState,
+          pincode: orderPincode
+        },
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: Number(item.price) || 0,
+          quantity: Number(item.quantity) || 1,
+          size: item.size || 'Standard',
+          finish: item.finish || 'Standard',
+          image: item.image || 'assets/images/custom_canvas.jpg',
+          uploadedPhoto: item.uploadedPhoto || null,
+          lineTotal: (Number(item.price) || 0) * (Number(item.quantity) || 1)
+        })),
+        subtotal: Number(subtotal) || 0,
+        shipping: Number(shipping) || 0,
+        total: Number(total) || 0,
+        notes: notes || '',
+        orderPhoto: orderPhoto || null,
+        paymentMethod: req.body.paymentMethod || 'Pick up from shop',
+        upiUtr: req.body.upiUtr || null,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+
+      await db.saveOrder(newOrder);
+    } finally {
+      if (typeof releaseOrderLock === 'function') releaseOrderLock();
+    }
 
     // Update Customer profile & lifetime order stats
     try {
@@ -3027,6 +3060,45 @@ app.post('/api/admin/orders/recover-from-brevo', requireAuth, async (req, res) =
     });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Order recovery failed: ' + err.message });
+  }
+});
+
+/**
+ * Admin: Synchronize and Guarantee All Real Orders to Supabase Cloud & Local (POST)
+ */
+app.post('/api/admin/orders/resync-store', requireAuth, async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const ordersPath = path.join(__dirname, 'data', 'orders.json');
+    const inqPath = path.join(__dirname, 'data', 'inquiries.json');
+    const custPath = path.join(__dirname, 'data', 'customers.json');
+
+    const orders = fs.existsSync(ordersPath) ? JSON.parse(fs.readFileSync(ordersPath, 'utf8')) : [];
+    const inqs = fs.existsSync(inqPath) ? JSON.parse(fs.readFileSync(inqPath, 'utf8')) : [];
+    const custs = fs.existsSync(custPath) ? JSON.parse(fs.readFileSync(custPath, 'utf8')) : [];
+
+    for (const o of orders) {
+      await db.saveOrder(o);
+    }
+    for (const i of inqs) {
+      await db.saveInquiry(i);
+    }
+    for (const c of custs) {
+      await db.saveCustomer(c);
+    }
+
+    const verifiedOrders = await db.getOrders();
+    const verifiedInquiries = await db.getInquiries();
+
+    res.json({
+      success: true,
+      ordersCount: verifiedOrders.length,
+      inquiriesCount: verifiedInquiries.length,
+      orders: verifiedOrders
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Store resync failed: ' + err.message });
   }
 });
 

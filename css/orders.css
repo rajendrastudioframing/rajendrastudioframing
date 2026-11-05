@@ -983,6 +983,7 @@
     justify-content: space-between !important;
     box-sizing: border-box !important;
   }
+
   .orders-tabs-bar {
     display: flex !important;
     width: 100% !important;
@@ -996,9 +997,11 @@
     box-sizing: border-box !important;
     -webkit-overflow-scrolling: touch !important;
   }
+
   .orders-tabs-bar::-webkit-scrollbar {
     display: none !important;
   }
+
   .orders-tab-btn {
     flex: 0 0 auto !important;
     padding: 8px 12px !important;
@@ -1008,10 +1011,12 @@
     white-space: nowrap !important;
     gap: 5px !important;
   }
+
   .orders-tab-count {
     font-size: 0.68rem !important;
     padding: 1px 6px !important;
   }
+
   .orders-main-section,
   .orders-container,
   #ordersListContainer {

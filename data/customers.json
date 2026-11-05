@@ -1,1 +1,24 @@
-[]
+[
+  {
+    "id": "CUST-001",
+    "name": "Het",
+    "email": "hetp82259@gmail.com",
+    "phone": "9662003947",
+    "ordersCount": 2,
+    "totalSpent": 628,
+    "lastOrderAt": "2026-11-05T07:13:24.000Z",
+    "createdAt": "2026-11-05T07:12:54.000Z",
+    "updatedAt": "2026-11-05T07:13:24.000Z"
+  },
+  {
+    "id": "CUST-002",
+    "name": "Het Patel",
+    "email": "hetp82250@gmail.com",
+    "phone": "9662003947",
+    "ordersCount": 2,
+    "totalSpent": 1416,
+    "lastOrderAt": "2026-11-05T12:39:28.000Z",
+    "createdAt": "2026-11-05T12:38:27.000Z",
+    "updatedAt": "2026-11-05T12:39:28.000Z"
+  }
+]
