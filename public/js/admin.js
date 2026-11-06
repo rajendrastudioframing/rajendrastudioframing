@@ -290,15 +290,16 @@ async function apiFetch(urlOrEndpoint, options = {}) {
     'Authorization': `Bearer ${token}`
   }, options.headers || {});
 
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const isMutating = options.method && options.method.toUpperCase() !== 'GET';
+  const timeoutMs = isMutating ? 25000 : 8500;
+
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8500);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   const opts = Object.assign({}, options, { 
     headers,
     signal: options.signal || controller.signal
   });
-
-  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const isMutating = opts.method && opts.method.toUpperCase() !== 'GET';
 
   try {
     const res = await fetch(fullUrl, opts);
@@ -3150,21 +3151,11 @@ function initConfirmAndPickupModals() {
         return;
       }
 
+      const cleanId = id.replace(/^#/, '');
+
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Saving...';
-      }
-
-      // 1. Instant optimistic UI update
-      const cleanId = id.replace(/^#/, '');
-      const existingInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanId || (i.orderId || '').replace(/^#/, '') === cleanId);
-      if (existingInq) {
-        existingInq.status = 'confirmed';
-        existingInq.confirmationDate = pickupDate;
-        existingInq.pickupDate = pickupDate;
-        if (notes) existingInq.notes = notes;
-        renderOrders();
-        renderOrderStats();
+        submitBtn.innerHTML = '⏳ Confirming & Sending Email...';
       }
 
       try {
@@ -3181,20 +3172,43 @@ function initConfirmAndPickupModals() {
         });
 
         const data = await res.json();
-        if (data.success) {
+        if (data && data.success) {
+          // Update in-memory state ONLY AFTER successful server response
+          const existingInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanId || (i.orderId || '').replace(/^#/, '') === cleanId);
+          if (existingInq) {
+            existingInq.status = 'confirmed';
+            existingInq.confirmationDate = pickupDate;
+            existingInq.pickupDate = pickupDate;
+            if (notes) existingInq.notes = notes;
+            if (data.emailSent || (data.emailResult && data.emailResult.sent)) {
+              existingInq.confirmedEmailSent = true;
+            }
+          }
+
+          try {
+            localStorage.setItem('rs_admin_inquiries_cache', JSON.stringify(allInquiries));
+          } catch (_) {}
+
+          renderOrders();
+          renderOrderStats();
           closeConfirmOrderModal();
-          await loadInquiries();
-          await loadDashboardStats();
-          const emailNotice = data.emailResult && data.emailResult.sent ? ` Confirmation email sent to customer!` : '';
-          showToast('Order Confirmed! ✓', `Order #${cleanId} confirmed. Customer pickup date: ${formatLocalReadableDate(pickupDate)}.${emailNotice}`, 'success');
+
+          loadInquiries().catch(() => {});
+          loadDashboardStats().catch(() => {});
+
+          const emailSent = Boolean(data.emailSent || (data.emailResult && (data.emailResult.sent || data.emailResult.success)));
+          if (emailSent) {
+            showToast('Order Confirmed! ✓', `Order #${cleanId} confirmed. Acceptance email sent to customer (Pickup: ${formatLocalReadableDate(pickupDate)}).`, 'success');
+          } else {
+            const reason = (data.emailResult && (data.emailResult.error || data.emailResult.reason)) || 'Customer email not sent or could not be delivered';
+            showToast('Order Saved (Email Pending)', `Order #${cleanId} saved with pickup date ${formatLocalReadableDate(pickupDate)}, but email was not sent: ${reason}`, 'warning');
+          }
         } else {
-          showToast('Save Failed', data.message || 'Could not save order status. Please try again.', 'danger');
+          showToast('Could Not Confirm Order', (data && data.message) || 'Server could not update order status. Please try again.', 'danger');
         }
       } catch (err) {
         console.error('Error confirming order:', err);
-        showToast('Action Notice', 'Order accepted and updated in workspace.', 'info');
-        closeConfirmOrderModal();
-        await loadInquiries();
+        showToast('Confirmation Failed', 'Could not confirm order: ' + (err.message || 'Network error'), 'danger');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -3218,20 +3232,11 @@ function initConfirmAndPickupModals() {
         return;
       }
 
+      const cleanPickupId = id.replace(/^#/, '');
+
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Updating & Notifying Customer...';
-      }
-
-      // 1. Instant optimistic UI update
-      const cleanPickupId = id.replace(/^#/, '');
-      const existingPickupInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanPickupId || (i.orderId || '').replace(/^#/, '') === cleanPickupId);
-      if (existingPickupInq) {
-        existingPickupInq.status = 'ready_for_pickup';
-        existingPickupInq.pickupDate = pickupDate;
-        if (notes) existingPickupInq.notes = notes;
-        renderOrders();
-        renderOrderStats();
+        submitBtn.innerHTML = '⏳ Updating & Notifying Customer...';
       }
 
       try {
@@ -3247,20 +3252,41 @@ function initConfirmAndPickupModals() {
         });
 
         const data = await res.json();
-        if (data.success) {
+        if (data && data.success) {
+          const existingPickupInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanPickupId || (i.orderId || '').replace(/^#/, '') === cleanPickupId);
+          if (existingPickupInq) {
+            existingPickupInq.status = 'ready_for_pickup';
+            existingPickupInq.pickupDate = pickupDate;
+            if (notes) existingPickupInq.notes = notes;
+            if (data.emailSent || (data.emailResult && data.emailResult.sent)) {
+              existingPickupInq.readyEmailSent = true;
+            }
+          }
+
+          try {
+            localStorage.setItem('rs_admin_inquiries_cache', JSON.stringify(allInquiries));
+          } catch (_) {}
+
+          renderOrders();
+          renderOrderStats();
           closePickupOrderModal();
-          await loadInquiries();
-          await loadDashboardStats();
-          const emailNotice = data.emailResult && data.emailResult.sent ? ` Ready for pickup email sent to customer!` : '';
-          showToast('Ready for Pickup! 📦', `Order #${cleanPickupId} is now ready for pickup.${emailNotice}`, 'success');
+
+          loadInquiries().catch(() => {});
+          loadDashboardStats().catch(() => {});
+
+          const emailSent = Boolean(data.emailSent || (data.emailResult && (data.emailResult.sent || data.emailResult.success)));
+          if (emailSent) {
+            showToast('Ready for Pickup! 🛍️', `Order #${cleanPickupId} is now ready for collection. Pickup email sent to customer!`, 'success');
+          } else {
+            const reason = (data.emailResult && (data.emailResult.error || data.emailResult.reason)) || 'Email delivery pending';
+            showToast('Ready for Pickup (Email Notice)', `Order #${cleanPickupId} status updated to Ready for Pick Up, but email notice was not sent: ${reason}`, 'warning');
+          }
         } else {
-          showToast('Update Failed', data.message || 'Could not update status in database.', 'danger');
+          showToast('Update Failed', (data && data.message) || 'Could not update status in database. Please try again.', 'danger');
         }
       } catch (err) {
         console.error('Error marking order ready for pickup:', err);
-        showToast('Action Notice', 'Status updated and saved in workspace.', 'info');
-        closePickupOrderModal();
-        await loadInquiries();
+        showToast('Update Failed', 'Could not update order status: ' + (err.message || 'Network error'), 'danger');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -3541,21 +3567,6 @@ function initCancelOrderModal() {
       confirmBtn.textContent = 'Cancelling & Notifying...';
     }
 
-    // 1. Instant optimistic UI update
-    const existingInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanId || (i.orderId || '').replace(/^#/, '') === cleanId);
-    if (existingInq) {
-      existingInq.status = 'cancelled';
-      existingInq.notes = cancelNotes;
-      const orders = allInquiries.filter(i => 
-        (i.id && i.id.startsWith('RF-ORD')) || 
-        (i.product && i.product.includes('[ONLINE ORDER]')) ||
-        (i.orderId && String(i.orderId).startsWith('RF-ORD'))
-      );
-      updateOrdersKPIs(orders);
-      renderOverviewOrders(orders.slice(0, 5));
-      renderAllOrders(orders);
-    }
-
     try {
       const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
         method: 'PUT',
@@ -3570,10 +3581,23 @@ function initCancelOrderModal() {
       });
 
       const data = await res.json();
-      if (data.success) {
+      if (data && data.success) {
+        const existingInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanId || (i.orderId || '').replace(/^#/, '') === cleanId);
+        if (existingInq) {
+          existingInq.status = 'cancelled';
+          existingInq.notes = cancelNotes;
+        }
+
+        try {
+          localStorage.setItem('rs_admin_inquiries_cache', JSON.stringify(allInquiries));
+        } catch (_) {}
+
         closeCancelOrderModal();
-        await loadInquiries();
-        await loadDashboardStats();
+        renderOrders();
+        renderOrderStats();
+
+        loadInquiries().catch(() => {});
+        loadDashboardStats().catch(() => {});
         if (data.emailResult && data.emailResult.sent) {
           showToast('Order Cancelled', `Order #${cleanId} cancelled and cancellation email sent to ${data.emailResult.recipient}!`, 'warning');
         } else if (notifyCustomer && data.emailResult && data.emailResult.reason) {
