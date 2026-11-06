@@ -2979,7 +2979,7 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
 
   } catch (err) {
     console.error('Error tracking order:', err);
-    res.status(500).json({ success: false, message: 'Server error retrieving order status.' });
+    res.status(500).json({ success: false, message: 'Server error retrieving order status.', error: err.message, stack: err.stack });
   }
 });
 
