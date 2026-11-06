@@ -254,12 +254,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadMessages();
   await loadSettings();
 
-  // Background live update sync (checks every 20 seconds for new orders/inquiries)
+  // Background live update sync (checks smoothly for new orders/inquiries)
   setInterval(async () => {
     if (!token) return;
     try {
-      const res = await apiFetch(`${API_BASE}/api/admin/inquiries`);
-      const data = await res.json();
       await loadInquiries();
       updateNotificationBadges();
       // Also background sync live customer accounts & metrics
@@ -268,7 +266,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
       // Background sync quiet
     }
-  }, 15000);
+  }, 20000);
 });
 
 /* ==========================================================================
@@ -706,19 +704,66 @@ async function loadInquiries() {
     const data = await inqRes.json();
     if (!data.success) return;
 
-    allInquiries = data.inquiries || [];
+    window._deletedOrderIdsCache = window._deletedOrderIdsCache || new Set();
+    const isDeleted = (id) => {
+      if (!id) return false;
+      const clean = String(id).toLowerCase().trim().replace(/^#/, '');
+      return window._deletedOrderIdsCache.has(clean);
+    };
 
-    // Dual-channel safety merge: if an order exists in /api/admin/orders, ensure it is in allInquiries
+    // State-preserving anti-flicker map: start with existing in-memory state
+    const mergedMap = new Map();
+    if (Array.isArray(allInquiries)) {
+      allInquiries.forEach(item => {
+        if (!item) return;
+        const key = (item.id || item.orderId || '').toLowerCase().trim().replace(/^#/, '');
+        if (key && !isDeleted(key)) {
+          mergedMap.set(key, { ...item });
+        }
+      });
+    }
+
+    // Merge incoming inquiries from server
+    const incomingInqs = Array.isArray(data.inquiries) ? data.inquiries : [];
+    incomingInqs.forEach(inq => {
+      if (!inq) return;
+      const key = (inq.id || inq.orderId || '').toLowerCase().trim().replace(/^#/, '');
+      if (!key || isDeleted(key)) return;
+
+      const existing = mergedMap.get(key);
+      if (existing) {
+        existing.status = resolveBestStatus(existing.status, inq.status);
+        if (inq.notes && !inq.notes.includes('Standard Studio') && !inq.notes.includes('None')) existing.notes = inq.notes;
+        if (inq.name) existing.name = inq.name;
+        if (inq.phone) existing.phone = inq.phone;
+        if (inq.email) existing.email = inq.email;
+        if (inq.deliveryAddress) existing.deliveryAddress = inq.deliveryAddress;
+        if (inq.items && inq.items.length) existing.items = inq.items;
+        if (inq.confirmationDate) existing.confirmationDate = inq.confirmationDate;
+        if (inq.confirmedAt) existing.confirmedAt = inq.confirmedAt;
+        if (inq.pickupDate) existing.pickupDate = inq.pickupDate;
+        if (inq.pickedUpAt) existing.pickedUpAt = inq.pickedUpAt;
+        if (inq.estimatedValue) existing.estimatedValue = inq.estimatedValue;
+        if (inq.total) existing.total = inq.total;
+        if (inq.paymentMethod) existing.paymentMethod = inq.paymentMethod;
+        if (inq.upiUtr) existing.upiUtr = inq.upiUtr;
+        if (inq.customerPhotoUrl) existing.customerPhotoUrl = inq.customerPhotoUrl;
+      } else {
+        mergedMap.set(key, { ...inq });
+      }
+    });
+
+    // Dual-channel safety merge: if an order exists in /api/admin/orders, ensure it is in mergedMap
     if (ordRes && ordRes.ok) {
       try {
         const ordData = await ordRes.json();
         if (ordData.success && Array.isArray(ordData.orders)) {
-          const existingMap = new Map(allInquiries.map(i => [(i.id || '').toLowerCase().trim(), i]));
           ordData.orders.forEach(o => {
             if (!o || !o.orderId) return;
-            const cleanOrderId = o.orderId.toLowerCase().trim();
-            const existing = existingMap.get(cleanOrderId);
+            const cleanOrderId = o.orderId.toLowerCase().trim().replace(/^#/, '');
+            if (isDeleted(cleanOrderId)) return;
 
+            const existing = mergedMap.get(cleanOrderId);
             const addrParts = o.customer ? [o.customer.address, o.customer.city, o.customer.state, o.customer.pincode].filter(Boolean) : [];
             const deliveryAddress = addrParts.join(', ');
             const itemsList = Array.isArray(o.items) ? o.items : [];
@@ -730,7 +775,6 @@ async function loadInquiries() {
               if (o.confirmedAt) existing.confirmedAt = o.confirmedAt;
               if (o.pickupDate) existing.pickupDate = o.pickupDate;
               if (o.pickedUpAt) existing.pickedUpAt = o.pickedUpAt;
-              // Enrich existing inquiry with full order structure
               if (itemsList.length > 0 && (!existing.items || !existing.items.length)) {
                 existing.items = itemsList;
               }
@@ -775,13 +819,14 @@ async function loadInquiries() {
                 total: Number(o.total) || 0,
                 createdAt: o.createdAt || new Date().toISOString()
               };
-              allInquiries.push(newInq);
-              existingMap.set(cleanOrderId, newInq);
+              mergedMap.set(cleanOrderId, newInq);
             }
           });
         }
       } catch (_) {}
     }
+
+    allInquiries = Array.from(mergedMap.values());
 
     // Sort by createdAt descending
     allInquiries.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
@@ -1955,9 +2000,9 @@ function initOrderFiltering() {
       const titleEl = document.getElementById('ordersSectionTitle');
       if (titleEl) {
         if (activeFilter === 'all') titleEl.textContent = 'All Orders';
-        else if (normF === 'new') titleEl.textContent = 'New & Pending Orders';
-        else if (normF === 'in progress') titleEl.textContent = 'Processing & Framing Orders';
-        else if (normF === 'completed') titleEl.textContent = 'Completed & Delivered Orders';
+        else if (normF === 'new') titleEl.textContent = 'Pending Orders';
+        else if (normF === 'in progress') titleEl.textContent = 'In production order';
+        else if (normF === 'completed') titleEl.textContent = 'Picked up';
         else if (normF === 'cancelled') titleEl.textContent = 'Cancelled Orders';
       }
 
@@ -2441,6 +2486,8 @@ window.executeDeleteOrders = async () => {
 
   const idsToDelete = [...window.pendingDeleteOrderIds];
   const idsToDeleteSet = new Set(idsToDelete.map(x => (x || '').toString().toLowerCase().trim().replace(/^#/, '')));
+  window._deletedOrderIdsCache = window._deletedOrderIdsCache || new Set();
+  idsToDeleteSet.forEach(id => window._deletedOrderIdsCache.add(id));
 
   try {
     let res;

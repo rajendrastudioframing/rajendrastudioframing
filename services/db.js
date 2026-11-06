@@ -345,34 +345,37 @@ module.exports = {
 
   // --- PERMANENT DELETED ORDERS REGISTRY (SUPABASE CLOUD + LOCAL) ---
   async getDeletedOrderIds() {
+    // 1. Authoritative Supabase Cloud persistent registry
+    if (supabase && isSupabaseOperational()) {
+      try {
+        const queryPromise = supabase.from('admin_config').select('smtp').eq('id', 'deleted_orders').maybeSingle();
+        const { data, error } = await withTimeout(queryPromise, 6000, 'Supabase getDeletedOrderIds');
+        if (!error && data && data.smtp && Array.isArray(data.smtp.ids)) {
+          const freshSet = new Set();
+          data.smtp.ids.forEach(id => {
+            if (id) freshSet.add(String(id).toLowerCase().trim().replace(/^#/, ''));
+          });
+          global._rfMemoryStore = global._rfMemoryStore || {};
+          global._rfMemoryStore['deleted_orders'] = Array.from(freshSet);
+          return freshSet;
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Failed to read deleted_orders from Supabase, using cached fallback:', err.message);
+      }
+    }
+
+    // 2. In-memory fast cache or local fallback
     const ids = new Set();
-    // 1. In-memory fast cache
     if (global._rfMemoryStore && Array.isArray(global._rfMemoryStore['deleted_orders'])) {
       global._rfMemoryStore['deleted_orders'].forEach(id => {
         if (id) ids.add(String(id).toLowerCase().trim().replace(/^#/, ''));
       });
+      return ids;
     }
-    // 2. Local file /tmp cache
     try {
       const localSet = getDeletedOrderIdsSet();
       localSet.forEach(id => ids.add(id));
     } catch (_) {}
-    // 3. Supabase Cloud persistent registry
-    if (supabase && isSupabaseOperational()) {
-      try {
-        const queryPromise = supabase.from('admin_config').select('smtp').eq('id', 'deleted_orders').maybeSingle();
-        const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getDeletedOrderIds');
-        if (!error && data && data.smtp && Array.isArray(data.smtp.ids)) {
-          data.smtp.ids.forEach(id => {
-            if (id) ids.add(String(id).toLowerCase().trim().replace(/^#/, ''));
-          });
-          global._rfMemoryStore = global._rfMemoryStore || {};
-          global._rfMemoryStore['deleted_orders'] = Array.from(ids);
-        }
-      } catch (err) {
-        console.warn('⚠️ [DATABASE] Failed to read deleted_orders from Supabase:', err.message);
-      }
-    }
     return ids;
   },
 
@@ -553,8 +556,8 @@ module.exports = {
       });
     } catch (_) {}
 
-    // 7. Guarantee baseline sequence is at least 5 (since RF-ORD-2026-005 exists today)
-    if (highestKnown < 5) highestKnown = 5;
+    // 7. Guarantee baseline sequence is at least 6 (since RF-ORD-2026-006 exists)
+    if (highestKnown < 6) highestKnown = 6;
 
     // 8. Monotonic increment: next order number
     const nextNum = highestKnown + 1;
@@ -1025,7 +1028,7 @@ module.exports = {
     if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('orders').select('*').order('created_at', { ascending: false });
-        const { data, error } = await withTimeout(queryPromise, 6500, 'Supabase getOrders');
+        const { data, error } = await withTimeout(queryPromise, 8000, 'Supabase getOrders');
         if (!error && Array.isArray(data)) {
           recordSupabaseSuccess();
           const supabaseOrders = data
@@ -1376,7 +1379,7 @@ module.exports = {
     if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('inquiries').select('*').order('created_at', { ascending: false });
-        const { data, error } = await withTimeout(queryPromise, 6500, 'Supabase getInquiries');
+        const { data, error } = await withTimeout(queryPromise, 8000, 'Supabase getInquiries');
         if (!error && Array.isArray(data)) {
           supabaseInqs = data.map(i => {
             let parsedItems = Array.isArray(i.items) ? i.items : [];
@@ -1411,6 +1414,13 @@ module.exports = {
               updatedAt: i.updated_at
             };
           });
+
+          const deletedIds = await this.getDeletedOrderIds();
+          return supabaseInqs.filter(i => {
+            if (!i || !i.id) return false;
+            const clean = i.id.toLowerCase().trim().replace(/^#/, '');
+            return !deletedIds.has(clean) && (i.status || '').toLowerCase() !== 'deleted';
+          });
         }
         if (error) console.warn('⚠️ [DATABASE] Supabase getInquiries error:', error.message);
       } catch (err) {
@@ -1418,16 +1428,7 @@ module.exports = {
       }
     }
 
-    if (supabase && isSupabaseOperational()) {
-      const deletedIds = await this.getDeletedOrderIds();
-      return supabaseInqs.filter(i => {
-        if (!i || !i.id) return false;
-        const clean = i.id.toLowerCase().trim().replace(/^#/, '');
-        return !deletedIds.has(clean) && (i.status || '').toLowerCase() !== 'deleted';
-      });
-    }
-
-    const deletedIds = getDeletedOrderIdsSet();
+    const deletedIds = await this.getDeletedOrderIds();
     const localInqs = readJson(INQUIRIES_FILE, []);
     return localInqs.filter(i => {
       if (!i || !i.id) return false;

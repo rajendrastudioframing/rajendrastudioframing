@@ -1,5 +1,38 @@
 [
   {
+    "orderId": "RF-ORD-2026-006",
+    "customer": {
+      "name": "Het Patel",
+      "phone": "9662003947",
+      "email": "hetp82250@gmail.com",
+      "address": "Studio Pickup - Dahej Shop, Dahej / Bharuch (392130)",
+      "city": "Dahej / Bharuch",
+      "state": "Gujarat",
+      "pincode": "392130"
+    },
+    "total": 439,
+    "subtotal": 439,
+    "shipping": 0,
+    "paymentMethod": "Pick up from shop",
+    "paymentStatus": "Pending",
+    "status": "pending",
+    "notes": "Standard Studio Packaging",
+    "createdAt": "2026-11-06T05:06:34.710+01:00",
+    "items": [
+      {
+        "id": "item",
+        "name": "Plastic Photo Frame",
+        "size": "Standard",
+        "finish": "Studio Matte Black",
+        "quantity": 1,
+        "price": 439,
+        "lineTotal": 439,
+        "image": "assets/images/glass_frame.jpg",
+        "uploadedPhoto": null
+      }
+    ]
+  },
+  {
     "orderId": "RF-ORD-2026-005",
     "customer": {
       "name": "Het",
