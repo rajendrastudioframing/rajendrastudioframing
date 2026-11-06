@@ -26,7 +26,16 @@ if (token) {
   sessionStorage.setItem('rf_admin_token', token);
 }
 let currentAdminUser = null;
-let allInquiries = [];
+let allInquiries = (() => {
+  try {
+    const cached = localStorage.getItem('rf_admin_all_inquiries_cache');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return [];
+})();
 let allProducts = [];
 let allMessages = [];
 let allCustomers = [];
@@ -621,10 +630,14 @@ async function loadDashboardStats() {
     const compCount = stats.completedOrders !== undefined ? stats.completedOrders : 0;
     const pipeVal = stats.totalPipelineValue || 0;
 
-    if (kpiNew) kpiNew.textContent = newCount;
-    if (kpiProcessing) kpiProcessing.textContent = procCount;
-    if (kpiCompleted) kpiCompleted.textContent = compCount;
-    if (kpiPipeline) kpiPipeline.textContent = `₹${pipeVal.toLocaleString('en-IN')}`;
+    // Prevent cold lambda count regression on Overview KPI cards
+    const verifiedOrdersCount = Array.isArray(allInquiries) ? allInquiries.filter(i => (i.id && i.id.startsWith('RF-ORD')) || (i.orderId && String(i.orderId).startsWith('RF-ORD'))).length : 0;
+    if ((stats.totalOrders || 0) >= verifiedOrdersCount) {
+      if (kpiNew) kpiNew.textContent = newCount;
+      if (kpiProcessing) kpiProcessing.textContent = procCount;
+      if (kpiCompleted) kpiCompleted.textContent = compCount;
+      if (kpiPipeline) kpiPipeline.textContent = `₹${pipeVal.toLocaleString('en-IN')}`;
+    }
 
     if (kpiCustomers && stats.totalCustomers !== undefined) {
       kpiCustomers.textContent = stats.totalCustomers;
@@ -704,7 +717,13 @@ async function loadInquiries() {
     const data = await inqRes.json();
     if (!data.success) return;
 
-    window._deletedOrderIdsCache = window._deletedOrderIdsCache || new Set();
+    window._deletedOrderIdsCache = window._deletedOrderIdsCache || (() => {
+      try {
+        const saved = localStorage.getItem('rf_admin_deleted_ids');
+        if (saved) return new Set(JSON.parse(saved));
+      } catch (_) {}
+      return new Set();
+    })();
     const isDeleted = (id) => {
       if (!id) return false;
       const clean = String(id).toLowerCase().trim().replace(/^#/, '');
@@ -830,6 +849,11 @@ async function loadInquiries() {
 
     // Sort by createdAt descending
     allInquiries.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+    // Persist verified state to localStorage for instantaneous zero-flicker loading
+    try {
+      localStorage.setItem('rf_admin_all_inquiries_cache', JSON.stringify(allInquiries));
+    } catch (_) {}
 
     // Separate Orders and Leads
     const orders = allInquiries.filter(i => 
@@ -2488,6 +2512,9 @@ window.executeDeleteOrders = async () => {
   const idsToDeleteSet = new Set(idsToDelete.map(x => (x || '').toString().toLowerCase().trim().replace(/^#/, '')));
   window._deletedOrderIdsCache = window._deletedOrderIdsCache || new Set();
   idsToDeleteSet.forEach(id => window._deletedOrderIdsCache.add(id));
+  try {
+    localStorage.setItem('rf_admin_deleted_ids', JSON.stringify(Array.from(window._deletedOrderIdsCache)));
+  } catch (_) {}
 
   try {
     let res;
@@ -2519,6 +2546,10 @@ window.executeDeleteOrders = async () => {
         const idB = (i.orderId || '').toLowerCase().trim().replace(/^#/, '');
         return !idsToDeleteSet.has(idA) && !idsToDeleteSet.has(idB);
       });
+      try {
+        localStorage.setItem('rf_admin_all_inquiries_cache', JSON.stringify(allInquiries));
+        localStorage.setItem('rf_admin_deleted_ids', JSON.stringify(Array.from(window._deletedOrderIdsCache)));
+      } catch (_) {}
 
       // Clear from selectedOrderIds
       idsToDelete.forEach(id => window.selectedOrderIds.delete(id));

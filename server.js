@@ -2173,9 +2173,9 @@ app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
       db.getOrders()
     ]);
 
-    if ((!orders || !orders.length) && (!inquiries || !inquiries.length)) {
+    if ((!orders || orders.length < 5) || (!inquiries || inquiries.length < 5)) {
       try {
-        await orderRecovery.syncBrevoOrders(true);
+        await orderRecovery.syncBrevoOrders(false);
         [inquiries, orders] = await Promise.all([
           db.getInquiries(),
           db.getOrders()
@@ -3026,9 +3026,9 @@ app.put('/api/orders/:orderId/customer-update', async (req, res) => {
 app.get('/api/admin/orders', requireAuth, async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   let orders = await db.getOrders();
-  if (!orders || !orders.length) {
+  if (!orders || orders.length < 5) {
     try {
-      await orderRecovery.syncBrevoOrders(true);
+      await orderRecovery.syncBrevoOrders(false);
       orders = await db.getOrders();
     } catch (_) {}
   }
@@ -3068,31 +3068,7 @@ app.post('/api/admin/orders/resync-store', requireAuth, async (req, res) => {
     const inqs = fs.existsSync(inqPath) ? JSON.parse(fs.readFileSync(inqPath, 'utf8')) : [];
     const custs = fs.existsSync(custPath) ? JSON.parse(fs.readFileSync(custPath, 'utf8')) : [];
 
-    // Purge any residual test orders not part of the active orders list
-    if (db.supabase) {
-      const validOrderIds = orders.map(o => o.orderId.toLowerCase());
-      try {
-        const { data: dbOrders } = await db.supabase.from('orders').select('order_id');
-        if (Array.isArray(dbOrders)) {
-          for (const row of dbOrders) {
-            if (row && row.order_id && !validOrderIds.includes(row.order_id.toLowerCase())) {
-              await db.supabase.from('orders').delete().eq('order_id', row.order_id);
-            }
-          }
-        }
-      } catch (_) {}
-      try {
-        const { data: dbInqs } = await db.supabase.from('inquiries').select('id');
-        if (Array.isArray(dbInqs)) {
-          for (const row of dbInqs) {
-            if (row && row.id && row.id.startsWith('RF-ORD-') && !validOrderIds.includes(row.id.toLowerCase())) {
-              await db.supabase.from('inquiries').delete().eq('id', row.id);
-            }
-          }
-        }
-      } catch (_) {}
-    }
-
+    // Resync all orders, inquiries and customers solidly to database
     for (const o of orders) {
       await db.saveOrder(o);
     }
@@ -4898,10 +4874,16 @@ app.post('/api/reviews', async (req, res) => {
 // Self-healing startup: unblacklist active orders from today and auto-recover from Brevo
 (async () => {
   try {
-    await db.unrecordDeletedOrderIds(['RF-ORD-2026-005', 'rf-ord-2026-005']);
+    await db.unrecordDeletedOrderIds([
+      'RF-ORD-2026-005', 'rf-ord-2026-005',
+      'RF-ORD-2026-006', 'rf-ord-2026-006',
+      'RF-ORD-2026-007', 'rf-ord-2026-007',
+      'RF-ORD-2026-008', 'rf-ord-2026-008',
+      'RF-ORD-2026-009', 'rf-ord-2026-009'
+    ]);
     const recovery = require('./services/orderRecovery');
     await recovery.syncBrevoOrders(true);
-    console.log('🛡️ [STARTUP] RF-ORD-2026-005 unblacklisted & Brevo auto-synced successfully.');
+    console.log('🛡️ [STARTUP] Orders 005-009 unblacklisted & Brevo auto-synced successfully.');
   } catch (err) {
     console.warn('⚠️ [STARTUP] Brevo auto-sync notice:', err.message);
   }

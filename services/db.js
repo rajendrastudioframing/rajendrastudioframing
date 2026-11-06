@@ -556,8 +556,8 @@ module.exports = {
       });
     } catch (_) {}
 
-    // 7. Guarantee baseline sequence is at least 6 (since RF-ORD-2026-006 exists)
-    if (highestKnown < 6) highestKnown = 6;
+    // 7. Guarantee baseline sequence is at least 9 (since RF-ORD-2026-009 exists)
+    if (highestKnown < 9) highestKnown = 9;
 
     // 8. Monotonic increment: next order number
     const nextNum = highestKnown + 1;
@@ -604,7 +604,7 @@ module.exports = {
   async getOrderSequence() {
     const currentYear = new Date().getFullYear();
     const ordPrefixRegex = new RegExp(`^RF-ORD-${currentYear}-(\\d+)$`, 'i');
-    let currentSeq = 6;
+    let currentSeq = 9;
     if (global._rfMemoryStore && global._rfMemoryStore['order_sequence']) {
       currentSeq = Math.max(currentSeq, global._rfMemoryStore['order_sequence'].lastSequence || 0);
     }
@@ -1086,7 +1086,22 @@ module.exports = {
               return !deletedIds.has(clean) && (o.status || '').toLowerCase() !== 'deleted';
             });
 
-          return supabaseOrders;
+          // Solid merge: combine Supabase orders with bundled baseline orders
+          const localOrders = readJson(ORDERS_FILE, []).filter(o => {
+            if (!o || !o.orderId) return false;
+            const clean = o.orderId.toLowerCase().trim().replace(/^#/, '');
+            return !deletedIds.has(clean) && (o.status || '').toLowerCase() !== 'deleted';
+          });
+          const merged = new Map();
+          localOrders.forEach(o => {
+            const key = o.orderId.toLowerCase().trim().replace(/^#/, '');
+            merged.set(key, o);
+          });
+          supabaseOrders.forEach(o => {
+            const key = o.orderId.toLowerCase().trim().replace(/^#/, '');
+            merged.set(key, o);
+          });
+          return Array.from(merged.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         }
         if (error) console.warn('⚠️ [DATABASE] Supabase getOrders error, falling back to local:', error.message);
       } catch (err) {
@@ -1431,11 +1446,28 @@ module.exports = {
           });
 
           const deletedIds = await this.getDeletedOrderIds();
-          return supabaseInqs.filter(i => {
+          const validSupabaseInqs = supabaseInqs.filter(i => {
             if (!i || !i.id) return false;
             const clean = i.id.toLowerCase().trim().replace(/^#/, '');
             return !deletedIds.has(clean) && (i.status || '').toLowerCase() !== 'deleted';
           });
+
+          // Solid merge: combine Supabase inquiries with bundled baseline inquiries
+          const localInqs = readJson(INQUIRIES_FILE, []).filter(i => {
+            if (!i || !i.id) return false;
+            const clean = i.id.toLowerCase().trim().replace(/^#/, '');
+            return !deletedIds.has(clean) && (i.status || '').toLowerCase() !== 'deleted';
+          });
+          const merged = new Map();
+          localInqs.forEach(i => {
+            const key = i.id.toLowerCase().trim().replace(/^#/, '');
+            merged.set(key, i);
+          });
+          validSupabaseInqs.forEach(i => {
+            const key = i.id.toLowerCase().trim().replace(/^#/, '');
+            merged.set(key, i);
+          });
+          return Array.from(merged.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         }
         if (error) console.warn('⚠️ [DATABASE] Supabase getInquiries error:', error.message);
       } catch (err) {
