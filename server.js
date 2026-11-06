@@ -3039,8 +3039,6 @@ app.put('/api/orders/:orderId/customer-update', async (req, res) => {
  */
 app.get('/api/admin/orders', requireAuth, async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
-  // Background check to guarantee zero order loss
-  orderRecovery.syncBrevoOrders().catch(err => console.warn('Brevo auto-recovery notice:', err.message));
   const orders = await db.getOrders();
   res.json({ success: true, orders });
 });

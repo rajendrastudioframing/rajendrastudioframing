@@ -125,7 +125,8 @@ async function syncBrevoOrders(force = false) {
     if (!emailList.length) return { checkedCount: 0, recoveredCount: 0 };
 
     const currentOrders = await db.getOrders();
-    const existingOrderIds = new Set(currentOrders.map(o => (o.orderId || '').toLowerCase().trim()));
+    const existingOrderIds = new Set(currentOrders.map(o => (o.orderId || '').toLowerCase().trim().replace(/^#/, '')));
+    const deletedIds = await db.getDeletedOrderIds();
 
     const recovered = [];
     // Only recover orders placed during the real store era (from 12:30 PM IST / 07:00 UTC today onwards)
@@ -141,20 +142,16 @@ async function syncBrevoOrders(force = false) {
       if (!m) continue;
 
       const orderId = m[1];
-      if (existingOrderIds.has(orderId.toLowerCase())) {
+      const cleanOrderId = orderId.toLowerCase().trim().replace(/^#/, '');
+
+      if (existingOrderIds.has(cleanOrderId) || existingOrderIds.has(orderId.toLowerCase())) {
         continue; // Order already in system
       }
-      // Never restore deleted orders
-      try {
-        const delPath = path.join(__dirname, '..', 'data', 'deleted-orders.json');
-        if (fs.existsSync(delPath)) {
-          const dels = JSON.parse(fs.readFileSync(delPath, 'utf8'));
-          if (Array.isArray(dels)) {
-            const delSet = new Set(dels.map(d => String(d).toLowerCase().trim().replace(/^#/, '')));
-            if (delSet.has(orderId.toLowerCase().trim().replace(/^#/, ''))) continue;
-          }
-        }
-      } catch (_) {}
+
+      // Never restore permanently deleted orders
+      if (deletedIds.has(cleanOrderId) || deletedIds.has(orderId.toLowerCase())) {
+        continue;
+      }
 
       // Fetch detail
       try {

@@ -342,6 +342,77 @@ module.exports = {
   syncCategoriesDataFiles,
   withTimeout,
 
+  // --- PERMANENT DELETED ORDERS REGISTRY (SUPABASE CLOUD + LOCAL) ---
+  async getDeletedOrderIds() {
+    const ids = new Set();
+    // 1. In-memory fast cache
+    if (global._rfMemoryStore && Array.isArray(global._rfMemoryStore['deleted_orders'])) {
+      global._rfMemoryStore['deleted_orders'].forEach(id => {
+        if (id) ids.add(String(id).toLowerCase().trim().replace(/^#/, ''));
+      });
+    }
+    // 2. Local file /tmp cache
+    try {
+      const localSet = getDeletedOrderIdsSet();
+      localSet.forEach(id => ids.add(id));
+    } catch (_) {}
+    // 3. Supabase Cloud persistent registry
+    if (supabase && isSupabaseOperational()) {
+      try {
+        const queryPromise = supabase.from('admin_config').select('smtp').eq('id', 'deleted_orders').maybeSingle();
+        const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getDeletedOrderIds');
+        if (!error && data && data.smtp && Array.isArray(data.smtp.ids)) {
+          data.smtp.ids.forEach(id => {
+            if (id) ids.add(String(id).toLowerCase().trim().replace(/^#/, ''));
+          });
+          global._rfMemoryStore = global._rfMemoryStore || {};
+          global._rfMemoryStore['deleted_orders'] = Array.from(ids);
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Failed to read deleted_orders from Supabase:', err.message);
+      }
+    }
+    return ids;
+  },
+
+  async recordDeletedOrderIds(newIds) {
+    if (!Array.isArray(newIds) || !newIds.length) return;
+    const cleanList = newIds.map(x => String(x || '').toLowerCase().trim().replace(/^#/, '')).filter(Boolean);
+    if (!cleanList.length) return;
+
+    // 1. Local storage & in-memory cache
+    try {
+      recordDeletedOrderIds(cleanList);
+    } catch (_) {}
+    global._rfMemoryStore = global._rfMemoryStore || {};
+    const memCurrent = new Set(global._rfMemoryStore['deleted_orders'] || []);
+    cleanList.forEach(id => memCurrent.add(id));
+    global._rfMemoryStore['deleted_orders'] = Array.from(memCurrent);
+
+    // 2. Supabase Cloud persistent storage in admin_config
+    if (supabase && isSupabaseOperational()) {
+      try {
+        const queryPromise = supabase.from('admin_config').select('smtp').eq('id', 'deleted_orders').maybeSingle();
+        const { data } = await withTimeout(queryPromise, 3500, 'Supabase fetch deleted_orders');
+        let existingIds = [];
+        if (data && data.smtp && Array.isArray(data.smtp.ids)) {
+          existingIds = data.smtp.ids;
+        }
+        const combined = Array.from(new Set([...existingIds, ...cleanList]));
+        const upsertPromise = supabase.from('admin_config').upsert({
+          id: 'deleted_orders',
+          admin_name: 'Deleted Orders Registry',
+          smtp: { ids: combined, updatedAt: new Date().toISOString() },
+          updated_at: new Date().toISOString()
+        });
+        await withTimeout(upsertPromise, 4000, 'Supabase upsert deleted_orders');
+        console.log(`🛡️ [DATABASE] Successfully registered ${cleanList.length} deleted order IDs in Supabase Cloud.`);
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Failed to write deleted_orders to Supabase:', err.message);
+      }
+    }
+  },
+
   // --- PRODUCTS ---
   async hasProduct(slug) {
     if (!slug) return false;
@@ -747,45 +818,55 @@ module.exports = {
 
   // --- ORDERS ---
   async getOrders() {
-    let supabaseOrders = [];
+    const deletedIds = await this.getDeletedOrderIds();
+
     if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('orders').select('*').order('created_at', { ascending: false });
         const { data, error } = await withTimeout(queryPromise, 6500, 'Supabase getOrders');
         if (!error && Array.isArray(data)) {
-          supabaseOrders = data.map(o => {
-            let parsedCustomer = o.customer || {};
-            if (typeof parsedCustomer === 'string' && parsedCustomer.trim().startsWith('{')) {
-              try { parsedCustomer = JSON.parse(parsedCustomer); } catch (_) {}
-            }
-            let parsedItems = Array.isArray(o.items) ? o.items : [];
-            if (!parsedItems.length && typeof o.items === 'string' && o.items.trim().startsWith('[')) {
-              try { parsedItems = JSON.parse(o.items); } catch (_) {}
-            }
-            return {
-              orderId: o.order_id,
-              customer: parsedCustomer,
-              items: parsedItems,
-              subtotal: Number(o.subtotal) || 0,
-              shipping: Number(o.shipping) || 0,
-              total: Number(o.total) || 0,
-              notes: o.notes || '',
-              orderPhoto: o.order_photo || null,
-              paymentMethod: o.payment_method || 'Pick up from shop',
-              paymentStatus: o.payment_status || 'Pending',
-              upiUtr: o.upi_utr || null,
-              status: o.status || 'pending',
-              confirmedAt: o.confirmed_at || o.confirmedAt || null,
-              confirmationDate: o.confirmation_date || o.confirmationDate || null,
-              pickedUpAt: o.picked_up_at || o.pickedUpAt || null,
-              pickupDate: o.pickup_date || o.pickupDate || null,
-              confirmedEmailSent: Boolean(o.confirmed_email_sent || o.confirmedEmailSent),
-              readyEmailSent: Boolean(o.ready_email_sent || o.readyEmailSent),
-              cancelledEmailSent: Boolean(o.cancelled_email_sent || o.cancelledEmailSent),
-              createdAt: o.created_at,
-              updatedAt: o.updated_at
-            };
-          });
+          recordSupabaseSuccess();
+          const supabaseOrders = data
+            .map(o => {
+              let parsedCustomer = o.customer || {};
+              if (typeof parsedCustomer === 'string' && parsedCustomer.trim().startsWith('{')) {
+                try { parsedCustomer = JSON.parse(parsedCustomer); } catch (_) {}
+              }
+              let parsedItems = Array.isArray(o.items) ? o.items : [];
+              if (!parsedItems.length && typeof o.items === 'string' && o.items.trim().startsWith('[')) {
+                try { parsedItems = JSON.parse(o.items); } catch (_) {}
+              }
+              return {
+                orderId: o.order_id,
+                customer: parsedCustomer,
+                items: parsedItems,
+                subtotal: Number(o.subtotal) || 0,
+                shipping: Number(o.shipping) || 0,
+                total: Number(o.total) || 0,
+                notes: o.notes || '',
+                orderPhoto: o.order_photo || null,
+                paymentMethod: o.payment_method || 'Pick up from shop',
+                paymentStatus: o.payment_status || 'Pending',
+                upiUtr: o.upi_utr || null,
+                status: o.status || 'pending',
+                confirmedAt: o.confirmed_at || o.confirmedAt || null,
+                confirmationDate: o.confirmation_date || o.confirmationDate || null,
+                pickedUpAt: o.picked_up_at || o.pickedUpAt || null,
+                pickupDate: o.pickup_date || o.pickupDate || null,
+                confirmedEmailSent: Boolean(o.confirmed_email_sent || o.confirmedEmailSent),
+                readyEmailSent: Boolean(o.ready_email_sent || o.readyEmailSent),
+                cancelledEmailSent: Boolean(o.cancelled_email_sent || o.cancelledEmailSent),
+                createdAt: o.created_at,
+                updatedAt: o.updated_at
+              };
+            })
+            .filter(o => {
+              if (!o || !o.orderId) return false;
+              const clean = o.orderId.toLowerCase().trim().replace(/^#/, '');
+              return !deletedIds.has(clean) && (o.status || '').toLowerCase() !== 'deleted';
+            });
+
+          return supabaseOrders;
         }
         if (error) console.warn('⚠️ [DATABASE] Supabase getOrders error, falling back to local:', error.message);
       } catch (err) {
@@ -793,68 +874,13 @@ module.exports = {
       }
     }
 
-    const deletedIds = getDeletedOrderIdsSet();
+    // Offline / Local fallback ONLY
     const localOrders = readJson(ORDERS_FILE, []);
-    const mergedMap = new Map();
-
-    // Add local orders first (strictly ignore permanently deleted orders)
-    localOrders.forEach(o => {
-      if (o && o.orderId) {
-        const key = o.orderId.toLowerCase().trim().replace(/^#/, '');
-        if (!deletedIds.has(key)) {
-          mergedMap.set(key, o);
-        }
-      }
+    return localOrders.filter(o => {
+      if (!o || !o.orderId) return false;
+      const clean = o.orderId.toLowerCase().trim().replace(/^#/, '');
+      return !deletedIds.has(clean);
     });
-
-    // Merge Supabase orders (strictly ignore permanently deleted orders)
-    supabaseOrders.forEach(so => {
-      if (so && so.orderId) {
-        const key = so.orderId.toLowerCase().trim().replace(/^#/, '');
-        if (deletedIds.has(key)) return;
-        const existing = mergedMap.get(key);
-        if (existing) {
-          const resolvedStatus = so.status ? so.status : (existing.status || "pending");
-          const confirmationDate = so.confirmationDate || existing.confirmationDate || null;
-          const confirmedAt = so.confirmedAt || existing.confirmedAt || null;
-          const pickupDate = so.pickupDate || existing.pickupDate || null;
-          const pickedUpAt = so.pickedUpAt || existing.pickedUpAt || null;
-          const notes = (so.notes && !so.notes.includes('Standard Studio') && !so.notes.includes('None'))
-            ? so.notes
-            : (existing.notes || so.notes || '');
-
-          mergedMap.set(key, {
-            ...existing,
-            ...so,
-            status: resolvedStatus,
-            confirmationDate,
-            confirmedAt,
-            pickupDate,
-            pickedUpAt,
-            notes
-          });
-        } else {
-          mergedMap.set(key, so);
-        }
-      }
-    });
-
-    // Self-healing: if Supabase is connected, ensure all non-deleted local/recovered orders are backed up to Supabase Cloud
-    if (supabase && isSupabaseOperational()) {
-      const supaIds = new Set(supabaseOrders.map(so => (so.orderId || '').toLowerCase().trim().replace(/^#/, '')));
-      const unSynced = localOrders.filter(lo => {
-        if (!lo || !lo.orderId) return false;
-        const clean = lo.orderId.toLowerCase().trim().replace(/^#/, '');
-        return !deletedIds.has(clean) && !supaIds.has(clean);
-      });
-      if (unSynced.length > 0) {
-        Promise.all(unSynced.map(o => this.saveOrder(o))).catch(e => console.warn('Background Supabase cloud sync notice:', e.message));
-      }
-    }
-
-    const combined = Array.from(mergedMap.values());
-    combined.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-    return combined;
   },
 
   async getOrderById(orderId) {
@@ -989,12 +1015,13 @@ module.exports = {
   async deleteOrder(orderId) {
     const cleanId = (orderId || '').trim().replace(/^#/, '');
     if (!cleanId) return false;
-    recordDeletedOrderIds([cleanId]);
+    await this.recordDeletedOrderIds([cleanId]);
 
     if (supabase && isSupabaseOperational()) {
       try {
-        await supabase.from('orders').delete().ilike('order_id', cleanId);
-        await supabase.from('inquiries').delete().ilike('id', cleanId);
+        const idVariants = [cleanId, cleanId.toLowerCase(), cleanId.toUpperCase(), '#' + cleanId];
+        await supabase.from('orders').delete().in('order_id', idVariants);
+        await supabase.from('inquiries').delete().in('id', idVariants);
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase deleteOrder exception:', err.message);
       }
@@ -1014,14 +1041,20 @@ module.exports = {
     if (!cleanIds.length) return { count: 0, ids: [] };
     const cleanIdsLower = new Set(cleanIds.map(x => x.toLowerCase()));
 
-    // 1. Permanently record to deleted orders so Brevo scanner & auto-healer NEVER restore them
-    recordDeletedOrderIds(cleanIds);
+    // 1. Permanently record to Supabase Cloud & local registry
+    await this.recordDeletedOrderIds(cleanIds);
 
-    // 2. Supabase deletion
+    // 2. Supabase deletion (with all casing / prefix variants)
     if (supabase && isSupabaseOperational()) {
       try {
-        await supabase.from('orders').delete().in('order_id', cleanIds);
-        await supabase.from('inquiries').delete().in('id', cleanIds);
+        const idVariants = Array.from(new Set([
+          ...cleanIds,
+          ...cleanIds.map(x => x.toLowerCase()),
+          ...cleanIds.map(x => x.toUpperCase()),
+          ...cleanIds.map(x => '#' + x)
+        ]));
+        await supabase.from('orders').delete().in('order_id', idVariants);
+        await supabase.from('inquiries').delete().in('id', idVariants);
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase deleteOrdersBulk exception:', err.message);
       }
@@ -1057,7 +1090,7 @@ module.exports = {
     } catch (_) {}
 
     if (orderIdsToRecord.length) {
-      recordDeletedOrderIds(orderIdsToRecord);
+      await this.recordDeletedOrderIds(orderIdsToRecord);
     }
 
     if (supabase && isSupabaseOperational()) {
@@ -1170,66 +1203,22 @@ module.exports = {
       }
     }
 
-    const deletedIds = getDeletedOrderIdsSet();
-    const localInqs = readJson(INQUIRIES_FILE, []);
-    const mergedMap = new Map();
-
-    localInqs.forEach(i => {
-      if (i && i.id) {
-        const key = i.id.toLowerCase().trim().replace(/^#/, '');
-        if (!deletedIds.has(key)) {
-          mergedMap.set(key, i);
-        }
-      }
-    });
-
-    supabaseInqs.forEach(si => {
-      if (si && si.id) {
-        const key = si.id.toLowerCase().trim().replace(/^#/, '');
-        if (deletedIds.has(key)) return;
-        const existing = mergedMap.get(key);
-        if (existing) {
-          const resolvedStatus = si.status ? si.status : (existing.status || "pending");
-          const confirmationDate = si.confirmationDate || existing.confirmationDate || null;
-          const confirmedAt = si.confirmedAt || existing.confirmedAt || null;
-          const pickupDate = si.pickupDate || existing.pickupDate || null;
-          const pickedUpAt = si.pickedUpAt || existing.pickedUpAt || null;
-          const notes = (si.notes && !si.notes.includes('Standard Studio') && !si.notes.includes('None'))
-            ? si.notes
-            : (existing.notes || si.notes || '');
-
-          mergedMap.set(key, {
-            ...existing,
-            ...si,
-            status: resolvedStatus,
-            confirmationDate,
-            confirmedAt,
-            pickupDate,
-            pickedUpAt,
-            notes
-          });
-        } else {
-          mergedMap.set(key, si);
-        }
-      }
-    });
-
-    // Self-healing: if Supabase is connected, ensure all non-deleted local inquiries/orders are backed up to Supabase Cloud
     if (supabase && isSupabaseOperational()) {
-      const supaIds = new Set(supabaseInqs.map(si => (si.id || '').toLowerCase().trim().replace(/^#/, '')));
-      const unSynced = localInqs.filter(li => {
-        if (!li || !li.id) return false;
-        const clean = li.id.toLowerCase().trim().replace(/^#/, '');
-        return !deletedIds.has(clean) && !supaIds.has(clean);
+      const deletedIds = await this.getDeletedOrderIds();
+      return supabaseInqs.filter(i => {
+        if (!i || !i.id) return false;
+        const clean = i.id.toLowerCase().trim().replace(/^#/, '');
+        return !deletedIds.has(clean) && (i.status || '').toLowerCase() !== 'deleted';
       });
-      if (unSynced.length > 0) {
-        Promise.all(unSynced.map(i => this.saveInquiry(i))).catch(e => console.warn('Background Supabase cloud inquiry sync notice:', e.message));
-      }
     }
 
-    const combined = Array.from(mergedMap.values());
-    combined.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-    return combined;
+    const deletedIds = getDeletedOrderIdsSet();
+    const localInqs = readJson(INQUIRIES_FILE, []);
+    return localInqs.filter(i => {
+      if (!i || !i.id) return false;
+      const clean = i.id.toLowerCase().trim().replace(/^#/, '');
+      return !deletedIds.has(clean);
+    });
   },
 
   async saveInquiry(inquiry) {
@@ -1310,12 +1299,13 @@ module.exports = {
   async deleteInquiry(id) {
     const cleanId = (id || '').trim().replace(/^#/, '');
     if (!cleanId) return false;
-    recordDeletedOrderIds([cleanId]);
+    await this.recordDeletedOrderIds([cleanId]);
 
     if (supabase && isSupabaseOperational()) {
       try {
-        await supabase.from('inquiries').delete().ilike('id', cleanId);
-        await supabase.from('orders').delete().ilike('order_id', cleanId);
+        const idVariants = [cleanId, cleanId.toLowerCase(), cleanId.toUpperCase(), '#' + cleanId];
+        await supabase.from('inquiries').delete().in('id', idVariants);
+        await supabase.from('orders').delete().in('order_id', idVariants);
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase deleteInquiry exception:', err.message);
       }
