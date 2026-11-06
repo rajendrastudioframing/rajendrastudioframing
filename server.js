@@ -2816,11 +2816,11 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
       });
     }
 
-    const orderId = (foundOrder && foundOrder.orderId) || foundInq.id;
-    const status = (foundOrder && foundOrder.status) || foundInq.status || 'In Progress';
-    const createdAt = (foundOrder && foundOrder.createdAt) || foundInq.createdAt || new Date().toISOString();
-    const updatedAt = (foundOrder && foundOrder.updatedAt) || foundInq.updatedAt || createdAt;
-    const notes = (foundOrder && foundOrder.notes) || foundInq.notes || '';
+    const orderId = (foundOrder && foundOrder.orderId) || (foundInq && foundInq.id) || rawId;
+    const status = (foundOrder && foundOrder.status) || (foundInq && foundInq.status) || 'In Progress';
+    const createdAt = (foundOrder && foundOrder.createdAt) || (foundInq && foundInq.createdAt) || new Date().toISOString();
+    const updatedAt = (foundOrder && foundOrder.updatedAt) || (foundInq && foundInq.updatedAt) || createdAt;
+    const notes = (foundOrder && foundOrder.notes) || (foundInq && foundInq.notes) || '';
 
     // Customer Info (Masked for privacy)
     let custObj = (foundOrder && foundOrder.customer) || {};
@@ -2979,7 +2979,7 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
 
   } catch (err) {
     console.error('Error tracking order:', err);
-    res.status(500).json({ success: false, message: 'Server error retrieving order status.', error: err.message, stack: err.stack });
+    res.status(500).json({ success: false, message: 'Server error retrieving order status.' });
   }
 });
 
