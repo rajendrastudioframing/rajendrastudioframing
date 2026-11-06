@@ -110,10 +110,16 @@ function saveCart(cart) {
     try {
       sessionStorage.setItem('rf_cart_just_cleared', 'true');
     } catch (_) {}
+  } else if (Array.isArray(cart) && cart.length > 0) {
+    try {
+      sessionStorage.removeItem('rf_cart_just_cleared');
+    } catch (_) {}
   }
 
   try {
-    localStorage.setItem(getCartStorageKey(), JSON.stringify(cart));
+    const key = getCartStorageKey();
+    localStorage.setItem(key, JSON.stringify(cart));
+    localStorage.setItem('rf_cart', JSON.stringify(cart));
     updateCartBadges();
     renderCartDrawer();
     window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { cart } }));
@@ -132,7 +138,18 @@ async function loadCustomerCartFromServer() {
     return;
   }
 
-  const localCart = getCart(); // Preserves active local cart
+  const localCart = getCart(); // Active local cart
+
+  // CRITICAL CHECKOUT PROTECTION:
+  // If user is currently on the checkout page and already has items in their cart,
+  // NEVER overwrite, merge, or wipe local items from server background sync!
+  const isCheckout = window.location.pathname.includes('checkout') || window.location.href.includes('checkout');
+  if (isCheckout && Array.isArray(localCart) && localCart.length > 0) {
+    syncCartToServer(localCart, true);
+    updateCartBadges();
+    renderCartDrawer();
+    return;
+  }
 
   try {
     const res = await fetch(`${CART_API_BASE}/api/customer/sync`, {
@@ -142,37 +159,44 @@ async function loadCustomerCartFromServer() {
       const data = await res.json();
       const serverCart = (data && data.success && Array.isArray(data.cart)) ? data.cart : [];
 
-      if (serverCart.length > 0) {
-        let justCleared = false;
-        try {
-          justCleared = (sessionStorage.getItem('rf_cart_just_cleared') === 'true');
-        } catch (_) {}
+      const currentLocal = getCart();
 
-        if (justCleared) {
-          try { sessionStorage.removeItem('rf_cart_just_cleared'); } catch (_) {}
-          saveCart([]);
-          syncCartToServer([], true);
-          return;
-        }
-
-        // Server has stored items: merge with localCart without losing items
-        const merged = mergeCartLists(serverCart, localCart);
+      // If user actively has items locally (e.g. added via Buy Now or Add to Cart),
+      // NEVER wipe them out! Always preserve local user actions!
+      if (currentLocal.length > 0) {
+        try { sessionStorage.removeItem('rf_cart_just_cleared'); } catch (_) {}
+        const merged = mergeCartLists(currentLocal, serverCart);
         localStorage.setItem(getCartStorageKey(), JSON.stringify(merged));
+        localStorage.setItem('rf_cart', JSON.stringify(merged));
         updateCartBadges();
         renderCartDrawer();
         window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { cart: merged } }));
-        // If local had extra items not on server, sync merged back
-        if (merged.length !== serverCart.length) {
-          syncCartToServer(merged, true);
-        }
-      } else if (localCart.length > 0) {
-        // Server returned empty, but user HAS items locally:
-        // NEVER WIPE LOCAL CART! Persist local items to server!
-        syncCartToServer(localCart, true);
+        syncCartToServer(merged, true);
+        return;
+      }
+
+      // If current local is empty, check if cart was intentionally cleared in this session
+      let justCleared = false;
+      try {
+        justCleared = (sessionStorage.getItem('rf_cart_just_cleared') === 'true');
+      } catch (_) {}
+
+      if (justCleared) {
+        // User intentionally cleared cart: keep it empty and sync empty to server
+        syncCartToServer([], true);
         updateCartBadges();
         renderCartDrawer();
+        return;
+      }
+
+      // If server has stored items and local is empty without being cleared:
+      if (serverCart.length > 0) {
+        localStorage.setItem(getCartStorageKey(), JSON.stringify(serverCart));
+        localStorage.setItem('rf_cart', JSON.stringify(serverCart));
+        updateCartBadges();
+        renderCartDrawer();
+        window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { cart: serverCart } }));
       } else {
-        // Both empty
         updateCartBadges();
         renderCartDrawer();
       }
@@ -293,7 +317,41 @@ function buyNow(product, quantity = 1) {
     return;
   }
 
-  addToCart(product, quantity, false);
+  // Clear any stale just_cleared flags immediately
+  try {
+    sessionStorage.removeItem('rf_cart_just_cleared');
+  } catch (_) {}
+
+  const qtyToAdd = Math.max(1, parseInt(quantity, 10) || 1);
+  const size = product.size || 'Standard';
+  const finish = product.finish || 'Standard';
+  const price = Number(product.price) || 650;
+
+  const buyNowItem = {
+    id: product.id,
+    name: product.name,
+    price: price,
+    image: product.image || 'assets/images/custom_canvas.jpg',
+    category: product.category || 'frames',
+    size: size,
+    finish: finish,
+    uploadedPhoto: product.uploadedPhoto || null,
+    leadTime: product.leadTime || '24 - 48 Hours',
+    quantity: qtyToAdd
+  };
+
+  // Set as primary Buy Now item in sessionStorage as resilient backup
+  try {
+    sessionStorage.setItem('rf_buy_now_item', JSON.stringify(buyNowItem));
+  } catch (_) {}
+
+  // Add directly to cart
+  addToCart(buyNowItem, qtyToAdd, false);
+
+  // Sync to server immediately before navigating
+  const activeCart = getCart();
+  syncCartToServer(activeCart, true);
+
   window.location.href = 'checkout';
 }
 

@@ -762,9 +762,10 @@ function setupOptionInteractions() {
 
 
       const sizeStr = selectedSize ? selectedSize.name : 'Standard';
-      const finishStr = 'Standard';
-      const activePrice = selectedSize ? selectedSize.price : currentProduct.price;
-      const activeImg = currentProduct.image;
+      const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
+      const finishDelta = (selectedFinish && typeof selectedFinish.priceDelta === 'number') ? selectedFinish.priceDelta : 0;
+      const activePrice = (selectedSize ? selectedSize.price : currentProduct.price) + finishDelta;
+      const activeImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : currentProduct.image;
 
       if (window.addToCart) {
         window.addToCart({
@@ -811,9 +812,10 @@ function setupOptionInteractions() {
       }
 
       const sizeStr = selectedSize ? selectedSize.name : 'Standard';
-      const finishStr = 'Standard';
-      const activePrice = selectedSize ? selectedSize.price : currentProduct.price;
-      const activeImg = currentProduct.image;
+      const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
+      const finishDelta = (selectedFinish && typeof selectedFinish.priceDelta === 'number') ? selectedFinish.priceDelta : 0;
+      const activePrice = (selectedSize ? selectedSize.price : currentProduct.price) + finishDelta;
+      const activeImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : currentProduct.image;
 
       if (window.buyNow) {
         window.buyNow({

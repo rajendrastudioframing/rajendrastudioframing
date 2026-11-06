@@ -140,17 +140,40 @@ function renderCheckoutOrderSummary() {
     }
   }
 
+  // Safety restoration for Buy Now:
+  // If cart is empty, check if user came via Buy Now and restore the item immediately!
   if (!cart || cart.length === 0) {
-    if (emptyState) emptyState.style.display = 'block';
-    if (activeContainer) activeContainer.style.display = 'none';
+    try {
+      const pendingRaw = sessionStorage.getItem('rf_buy_now_item');
+      if (pendingRaw) {
+        const item = JSON.parse(pendingRaw);
+        if (item && item.id) {
+          cart = [item];
+          if (typeof saveCart === 'function') {
+            saveCart(cart);
+          } else {
+            const key = (typeof getCartStorageKey === 'function') ? getCartStorageKey() : 'rf_cart';
+            localStorage.setItem(key, JSON.stringify(cart));
+            localStorage.setItem('rf_cart', JSON.stringify(cart));
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (!cart || cart.length === 0) {
+    if (emptyState) emptyState.style.setProperty('display', 'block', 'important');
+    if (activeContainer) activeContainer.style.setProperty('display', 'none', 'important');
     if (subtotalEl) subtotalEl.textContent = '₹0';
     if (totalEl) totalEl.textContent = '₹0';
     if (itemsList) itemsList.innerHTML = '';
     return;
   }
 
-  if (emptyState) emptyState.style.display = 'none';
-  if (activeContainer) activeContainer.style.display = 'grid';
+  if (emptyState) emptyState.style.setProperty('display', 'none', 'important');
+  if (activeContainer) {
+    activeContainer.style.removeProperty('display');
+  }
 
   let subtotal = 0;
   if (typeof getCartSubtotal === 'function') {
@@ -483,7 +506,8 @@ async function submitCheckoutOrder(e) {
         trackBtn.href = `track-order?id=${encodeURIComponent(orderId)}`;
       }
 
-      // Clear cart
+      // Clear cart & buy now state
+      try { sessionStorage.removeItem('rf_buy_now_item'); } catch (_) {}
       if (typeof clearCart === 'function') {
         clearCart();
       } else {
