@@ -2168,10 +2168,20 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
 app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   try {
-    const [inquiries, orders] = await Promise.all([
+    let [inquiries, orders] = await Promise.all([
       db.getInquiries(),
       db.getOrders()
     ]);
+
+    if ((!orders || !orders.length) && (!inquiries || !inquiries.length)) {
+      try {
+        await orderRecovery.syncBrevoOrders(true);
+        [inquiries, orders] = await Promise.all([
+          db.getInquiries(),
+          db.getOrders()
+        ]);
+      } catch (_) {}
+    }
 
     const ordersMap = new Map();
     if (Array.isArray(orders)) {
@@ -2592,49 +2602,40 @@ app.post('/api/orders', async (req, res) => {
       const currentYear = new Date().getFullYear();
       const ordPrefixRegex = new RegExp(`^RF-ORD-${currentYear}-(\\d+)$`, 'i');
 
-      const [orders, inquiries] = await Promise.all([
+      const [orders, inquiries, deletedIds] = await Promise.all([
         db.getOrders(),
-        db.getInquiries()
+        db.getInquiries(),
+        db.getDeletedOrderIds()
       ]);
 
-      let maxNum = _highestOrderSequence || 4;
-      if (Array.isArray(orders)) {
-        orders.forEach(o => {
-          if (o && o.orderId) {
-            const m = o.orderId.match(ordPrefixRegex);
-            if (m) {
-              const num = parseInt(m[1], 10);
-              if (num > maxNum) maxNum = num;
-            }
-          }
-        });
-      }
-      if (Array.isArray(inquiries)) {
-        inquiries.forEach(i => {
-          if (i && i.id) {
-            const m = i.id.match(ordPrefixRegex);
-            if (m) {
-              const num = parseInt(m[1], 10);
-              if (num > maxNum) maxNum = num;
-            }
-          }
-        });
-      }
+      const allKnownIds = new Set([
+        ...(orders || []).map(o => (o.orderId || '').toLowerCase().trim()),
+        ...(inquiries || []).map(i => (i.id || '').toLowerCase().trim()),
+        ...Array.from(deletedIds || []).map(id => (id || '').toLowerCase().trim())
+      ]);
+
+      let maxNum = _highestOrderSequence || 5;
+      allKnownIds.forEach(id => {
+        const m = id.match(ordPrefixRegex);
+        if (m) {
+          const num = parseInt(m[1], 10);
+          if (num > maxNum) maxNum = num;
+        }
+      });
 
       let nextNum = maxNum + 1;
       let candidateId = `RF-ORD-${currentYear}-${String(nextNum).padStart(3, '0')}`;
 
-      const existingIds = new Set([
-        ...(orders || []).map(o => (o.orderId || '').toLowerCase().trim()),
-        ...(inquiries || []).map(i => (i.id || '').toLowerCase().trim())
-      ]);
-      while (existingIds.has(candidateId.toLowerCase())) {
+      while (allKnownIds.has(candidateId.toLowerCase())) {
         nextNum++;
         candidateId = `RF-ORD-${currentYear}-${String(nextNum).padStart(3, '0')}`;
       }
 
       _highestOrderSequence = nextNum;
       orderId = candidateId;
+
+      // Ensure candidateId is immediately unblacklisted if it was ever in deleted registry
+      await db.unrecordDeletedOrderIds([orderId]);
 
       newOrder = {
         orderId,
@@ -2822,34 +2823,42 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
     const notes = (foundOrder && foundOrder.notes) || foundInq.notes || '';
 
     // Customer Info (Masked for privacy)
-    const name = (foundOrder && foundOrder.customer && foundOrder.customer.name) || (foundInq && foundInq.name) || 'Customer';
-    const rawPhone = (foundOrder && foundOrder.customer && foundOrder.customer.phone) || (foundInq && foundInq.phone) || '';
+    let custObj = (foundOrder && foundOrder.customer) || {};
+    if (typeof custObj === 'string' && custObj.trim().startsWith('{')) {
+      try { custObj = JSON.parse(custObj); } catch (_) {}
+    }
+    const name = custObj.name || (foundInq && foundInq.name) || 'Customer';
+    const rawPhone = String(custObj.phone || (foundInq && foundInq.phone) || '').trim();
     const maskedPhone = rawPhone.length >= 10 ? rawPhone.slice(0, 3) + '••••' + rawPhone.slice(-3) : rawPhone;
-    const rawEmail = (foundOrder && foundOrder.customer && foundOrder.customer.email) || (foundInq && foundInq.email) || '';
+    const rawEmail = String(custObj.email || (foundInq && foundInq.email) || '').trim();
     const maskedEmail = rawEmail.includes('@') ? rawEmail.split('@')[0].slice(0, 2) + '••••@' + rawEmail.split('@')[1] : rawEmail;
-    const address = (foundOrder && foundOrder.customer && foundOrder.customer.address) || (foundInq && foundInq.specs) || 'Dahej / Bharuch Delivery';
-    const city = (foundOrder && foundOrder.customer && foundOrder.customer.city) || 'Dahej / Bharuch';
-    const pincode = (foundOrder && foundOrder.customer && foundOrder.customer.pincode) || '';
+    const address = custObj.address || (foundInq && (foundInq.deliveryAddress || foundInq.specs)) || 'Dahej / Bharuch Delivery';
+    const city = custObj.city || 'Dahej / Bharuch';
+    const pincode = custObj.pincode || '';
 
     // Items List
+    let rawItems = (foundOrder && foundOrder.items) || (foundInq && foundInq.items) || [];
+    if (typeof rawItems === 'string' && rawItems.trim().startsWith('[')) {
+      try { rawItems = JSON.parse(rawItems); } catch (_) {}
+    }
     let items = [];
-    if (foundOrder && foundOrder.items && foundOrder.items.length) {
-      items = foundOrder.items.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        size: item.size || 'Standard',
-        finish: item.finish || 'Standard',
-        image: item.image || 'assets/images/glass_frame.jpg',
-        uploadedPhoto: item.uploadedPhoto || null
+    if (Array.isArray(rawItems) && rawItems.length) {
+      items = rawItems.map(item => ({
+        id: (item && item.id) || 'item',
+        name: (item && item.name) || 'Custom Product',
+        price: Number(item && item.price) || 0,
+        quantity: Number(item && item.quantity) || 1,
+        size: (item && item.size) || 'Standard',
+        finish: (item && item.finish) || 'Standard',
+        image: (item && item.image) || 'assets/images/glass_frame.jpg',
+        uploadedPhoto: (item && item.uploadedPhoto) || null
       }));
     } else if (foundInq) {
       items = [{
         id: 'frame-item',
         name: (foundInq.product || 'Photo Frame').replace('[ONLINE ORDER]', '').trim(),
-        price: foundInq.estimatedValue || 0,
-        quantity: foundInq.quantity || 1,
+        price: Number(foundInq.estimatedValue) || 0,
+        quantity: Number(foundInq.quantity) || 1,
         size: 'Custom Specifications',
         finish: 'Studio Handcrafted',
         image: 'assets/images/glass_frame.jpg',
@@ -2857,8 +2866,8 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
       }];
     }
 
-    const total = (foundOrder && foundOrder.total) || foundInq.estimatedValue || 0;
-    const paymentMethod = (foundOrder && foundOrder.paymentMethod) || 'Pick up from shop';
+    const total = Number((foundOrder && foundOrder.total) || (foundInq && (foundInq.total || foundInq.estimatedValue)) || 0);
+    const paymentMethod = String((foundOrder && foundOrder.paymentMethod) || (foundInq && foundInq.paymentMethod) || 'Pick up from shop');
     const isPaid = paymentMethod.toLowerCase().includes('upi') || status === 'Completed';
     const paymentStatus = isPaid ? 'Paid' : 'Pending';
 
@@ -2870,13 +2879,25 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
     const isShipped = status === 'Shipped' || status === 'Dispatched';
     const isCompleted = status === 'Completed' || status === 'Delivered';
 
-    const orderDateFormatted = new Date(createdAt).toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
+    let orderDateFormatted = 'Recent';
+    try {
+      const dt = new Date(createdAt);
+      if (!isNaN(dt.getTime())) {
+        orderDateFormatted = dt.toLocaleDateString('en-IN', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+      }
+    } catch (_) {}
 
-    const updateDateFormatted = new Date(updatedAt).toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
+    let updateDateFormatted = orderDateFormatted;
+    try {
+      const dt = new Date(updatedAt);
+      if (!isNaN(dt.getTime())) {
+        updateDateFormatted = dt.toLocaleDateString('en-IN', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+      }
+    } catch (_) {}
 
     const timeline = [
       {
@@ -3039,7 +3060,13 @@ app.put('/api/orders/:orderId/customer-update', async (req, res) => {
  */
 app.get('/api/admin/orders', requireAuth, async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
-  const orders = await db.getOrders();
+  let orders = await db.getOrders();
+  if (!orders || !orders.length) {
+    try {
+      await orderRecovery.syncBrevoOrders(true);
+      orders = await db.getOrders();
+    } catch (_) {}
+  }
   res.json({ success: true, orders });
 });
 
@@ -4896,6 +4923,18 @@ app.post('/api/reviews', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to save review.' });
   }
 });
+
+// Self-healing startup: unblacklist active orders from today and auto-recover from Brevo
+(async () => {
+  try {
+    await db.unrecordDeletedOrderIds(['RF-ORD-2026-005', 'rf-ord-2026-005']);
+    const recovery = require('./services/orderRecovery');
+    await recovery.syncBrevoOrders(true);
+    console.log('🛡️ [STARTUP] RF-ORD-2026-005 unblacklisted & Brevo auto-synced successfully.');
+  } catch (err) {
+    console.warn('⚠️ [STARTUP] Brevo auto-sync notice:', err.message);
+  }
+})();
 
 // Start Server locally when executed directly
 if (require.main === module) {

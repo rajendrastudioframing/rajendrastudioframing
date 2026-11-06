@@ -129,8 +129,8 @@ async function syncBrevoOrders(force = false) {
     const deletedIds = await db.getDeletedOrderIds();
 
     const recovered = [];
-    // Only recover orders placed during the real store era (from 12:30 PM IST / 07:00 UTC today onwards)
-    const RECOVERY_CUTOFF = new Date('2026-11-05T07:00:00.000Z');
+    // Only recover orders placed during the real store era (from Nov 6, 2026 onwards)
+    const RECOVERY_CUTOFF = new Date('2026-11-06T00:00:00.000Z');
 
     for (const item of emailList) {
       const emailDate = new Date(item.date || 0);
@@ -148,9 +148,12 @@ async function syncBrevoOrders(force = false) {
         continue; // Order already in system
       }
 
-      // Never restore permanently deleted orders
+      // If placed on/after RECOVERY_CUTOFF (today), guarantee it's not suppressed by legacy test deletion
       if (deletedIds.has(cleanOrderId) || deletedIds.has(orderId.toLowerCase())) {
-        continue;
+        console.log(`🛡️ [ORDER RECOVERY] Order ${orderId} placed today is in deleted list, restoring and unblacklisting...`);
+        await db.unrecordDeletedOrderIds([orderId, cleanOrderId]);
+        deletedIds.delete(cleanOrderId);
+        deletedIds.delete(orderId.toLowerCase());
       }
 
       // Fetch detail
@@ -202,6 +205,7 @@ async function syncBrevoOrders(force = false) {
           shipping: 0
         };
 
+        await db.unrecordDeletedOrderIds([fullOrder.orderId]);
         await db.saveOrder(fullOrder);
 
         // Mirror to inquiries

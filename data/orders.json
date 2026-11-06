@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "orderId": "RF-ORD-2026-005",
+    "customer": {
+      "name": "Het",
+      "phone": "9662003947",
+      "email": "hetp82259@gmail.com",
+      "address": "Studio Pickup - Dahej Shop, Dahej / Bharuch (392130)",
+      "city": "Dahej / Bharuch",
+      "state": "Gujarat",
+      "pincode": "392130"
+    },
+    "total": 251,
+    "subtotal": 251,
+    "shipping": 0,
+    "paymentMethod": "Pick up from shop",
+    "paymentStatus": "Pending",
+    "status": "pending",
+    "notes": "Standard Studio Packaging",
+    "createdAt": "2026-11-06T03:27:37.021+01:00",
+    "items": [
+      {
+        "name": "Mug Printing",
+        "size": "Standard",
+        "finish": "Glossy Alpine White",
+        "quantity": 1,
+        "price": 251,
+        "lineTotal": 251
+      }
+    ]
+  }
+]

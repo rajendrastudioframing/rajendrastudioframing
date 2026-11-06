@@ -413,6 +413,58 @@ module.exports = {
     }
   },
 
+  async unrecordDeletedOrderIds(idsToUnrecord) {
+    if (!Array.isArray(idsToUnrecord) || !idsToUnrecord.length) return;
+    const toRemove = new Set(idsToUnrecord.map(x => String(x || '').toLowerCase().trim().replace(/^#/, '')).filter(Boolean));
+    if (!toRemove.size) return;
+
+    // 1. Remove from local memory
+    if (global._rfMemoryStore && Array.isArray(global._rfMemoryStore['deleted_orders'])) {
+      global._rfMemoryStore['deleted_orders'] = global._rfMemoryStore['deleted_orders'].filter(id => {
+        const clean = String(id || '').toLowerCase().trim().replace(/^#/, '');
+        return !toRemove.has(clean);
+      });
+    }
+
+    // 2. Remove from local file
+    try {
+      let localArr = readJson(DELETED_ORDERS_FILE, []);
+      if (Array.isArray(localArr)) {
+        localArr = localArr.filter(id => {
+          const clean = String(id || '').toLowerCase().trim().replace(/^#/, '');
+          return !toRemove.has(clean);
+        });
+        writeJson(DELETED_ORDERS_FILE, localArr);
+        const rawPath = path.join(DATA_DIR, 'deleted-orders.json');
+        fs.writeFileSync(rawPath, JSON.stringify(localArr, null, 2), 'utf8');
+      }
+    } catch (_) {}
+
+    // 3. Remove from Supabase Cloud persistent registry
+    if (supabase && isSupabaseOperational()) {
+      try {
+        const queryPromise = supabase.from('admin_config').select('smtp').eq('id', 'deleted_orders').maybeSingle();
+        const { data } = await withTimeout(queryPromise, 3500, 'Supabase fetch deleted_orders');
+        if (data && data.smtp && Array.isArray(data.smtp.ids)) {
+          const remaining = data.smtp.ids.filter(id => {
+            const clean = String(id || '').toLowerCase().trim().replace(/^#/, '');
+            return !toRemove.has(clean);
+          });
+          const upsertPromise = supabase.from('admin_config').upsert({
+            id: 'deleted_orders',
+            admin_name: 'Deleted Orders Registry',
+            smtp: { ids: remaining, updatedAt: new Date().toISOString() },
+            updated_at: new Date().toISOString()
+          });
+          await withTimeout(upsertPromise, 4000, 'Supabase upsert deleted_orders');
+          console.log(`🛡️ [DATABASE] Successfully unblacklisted ${toRemove.size} order ID(s) from deleted registry in Supabase.`);
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Failed to unrecord deleted_orders in Supabase:', err.message);
+      }
+    }
+  },
+
   // --- PRODUCTS ---
   async hasProduct(slug) {
     if (!slug) return false;
@@ -895,10 +947,18 @@ module.exports = {
           .maybeSingle();
         const { data, error } = await withTimeout(queryPromise, 4000, 'Supabase getOrderById');
         if (!error && data) {
+          let parsedCustomer = data.customer || {};
+          if (typeof parsedCustomer === 'string' && parsedCustomer.trim().startsWith('{')) {
+            try { parsedCustomer = JSON.parse(parsedCustomer); } catch (_) {}
+          }
+          let parsedItems = Array.isArray(data.items) ? data.items : [];
+          if (!parsedItems.length && typeof data.items === 'string' && data.items.trim().startsWith('[')) {
+            try { parsedItems = JSON.parse(data.items); } catch (_) {}
+          }
           return {
             orderId: data.order_id,
-            customer: data.customer,
-            items: Array.isArray(data.items) ? data.items : [],
+            customer: parsedCustomer,
+            items: parsedItems,
             subtotal: Number(data.subtotal) || 0,
             shipping: Number(data.shipping) || 0,
             total: Number(data.total) || 0,
@@ -944,6 +1004,11 @@ module.exports = {
   async saveOrder(order) {
     if (!order) return null;
     order.status = order.status || 'pending';
+    if (order.orderId) {
+      try {
+        await this.unrecordDeletedOrderIds([order.orderId]);
+      } catch (_) {}
+    }
     const dbRow = {
       order_id: order.orderId,
       customer: order.customer || {},
@@ -1222,6 +1287,11 @@ module.exports = {
   },
 
   async saveInquiry(inquiry) {
+    if (inquiry && inquiry.id) {
+      try {
+        await this.unrecordDeletedOrderIds([inquiry.id]);
+      } catch (_) {}
+    }
     const photoUrl = inquiry.uploadedFileUrl || inquiry.customerPhotoUrl || null;
     const photoName = inquiry.uploadFileName || inquiry.customerPhotoName || null;
     const dbRow = {
