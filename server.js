@@ -2600,42 +2600,7 @@ app.post('/api/orders', async (req, res) => {
 
     try {
       const currentYear = new Date().getFullYear();
-      const ordPrefixRegex = new RegExp(`^RF-ORD-${currentYear}-(\\d+)$`, 'i');
-
-      const [orders, inquiries, deletedIds] = await Promise.all([
-        db.getOrders(),
-        db.getInquiries(),
-        db.getDeletedOrderIds()
-      ]);
-
-      const allKnownIds = new Set([
-        ...(orders || []).map(o => (o.orderId || '').toLowerCase().trim()),
-        ...(inquiries || []).map(i => (i.id || '').toLowerCase().trim()),
-        ...Array.from(deletedIds || []).map(id => (id || '').toLowerCase().trim())
-      ]);
-
-      let maxNum = _highestOrderSequence || 5;
-      allKnownIds.forEach(id => {
-        const m = id.match(ordPrefixRegex);
-        if (m) {
-          const num = parseInt(m[1], 10);
-          if (num > maxNum) maxNum = num;
-        }
-      });
-
-      let nextNum = maxNum + 1;
-      let candidateId = `RF-ORD-${currentYear}-${String(nextNum).padStart(3, '0')}`;
-
-      while (allKnownIds.has(candidateId.toLowerCase())) {
-        nextNum++;
-        candidateId = `RF-ORD-${currentYear}-${String(nextNum).padStart(3, '0')}`;
-      }
-
-      _highestOrderSequence = nextNum;
-      orderId = candidateId;
-
-      // Ensure candidateId is immediately unblacklisted if it was ever in deleted registry
-      await db.unrecordDeletedOrderIds([orderId]);
+      orderId = await db.reserveNextOrderId(currentYear);
 
       newOrder = {
         orderId,
@@ -4341,6 +4306,11 @@ app.get('/api/db-status', async (req, res) => {
     // ignore
   }
 
+  let orderSequence = null;
+  try {
+    orderSequence = await db.getOrderSequence();
+  } catch (_) {}
+
   res.json({
     success: true,
     isCloud: db.isCloud(),
@@ -4351,6 +4321,7 @@ app.get('/api/db-status', async (req, res) => {
     tables: tablesCheck,
     ordersCount,
     inquiriesCount,
+    orderSequence,
     ordersFileExists,
     environment: {
       isVercel: Boolean(process.env.VERCEL),

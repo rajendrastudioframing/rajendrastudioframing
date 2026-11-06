@@ -21,6 +21,7 @@ const CUSTOMERS_FILE = path.join(DATA_DIR, 'customers.json');
 const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json');
 const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json');
 const DELETED_ORDERS_FILE = path.join(DATA_DIR, 'deleted-orders.json');
+const ORDER_SEQUENCE_FILE = path.join(DATA_DIR, 'order-sequence.json');
 
 // Ensure local data dir exists when running in local development
 if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
@@ -463,6 +464,155 @@ module.exports = {
         console.warn('⚠️ [DATABASE] Failed to unrecord deleted_orders in Supabase:', err.message);
       }
     }
+  },
+
+  // --- MONOTONIC PERSISTENT ORDER SEQUENCE GENERATOR ---
+  // Guarantees order numbers ONLY INCREMENT and NEVER decrease, even if orders are deleted
+  async reserveNextOrderId(forcedYear) {
+    const currentYear = forcedYear || new Date().getFullYear();
+    const ordPrefixRegex = new RegExp(`^RF-ORD-${currentYear}-(\\d+)$`, 'i');
+
+    let highestKnown = 0;
+
+    // 1. Check in-memory fast cache
+    if (global._rfMemoryStore && global._rfMemoryStore['order_sequence']) {
+      const mem = global._rfMemoryStore['order_sequence'];
+      if (mem && (mem.currentYear === currentYear || mem.year === currentYear)) {
+        if (typeof mem.lastSequence === 'number' && mem.lastSequence > highestKnown) {
+          highestKnown = mem.lastSequence;
+        }
+      }
+    }
+
+    // 2. Check local file storage (serverless /tmp or local data)
+    try {
+      const localSeq = readJson(ORDER_SEQUENCE_FILE, { lastSequence: 0, currentYear });
+      if (localSeq && (localSeq.currentYear === currentYear || localSeq.year === currentYear)) {
+        if (typeof localSeq.lastSequence === 'number' && localSeq.lastSequence > highestKnown) {
+          highestKnown = localSeq.lastSequence;
+        }
+      }
+    } catch (_) {}
+
+    // 3. Check Supabase Cloud persistent counter in admin_config table
+    if (supabase && isSupabaseOperational()) {
+      try {
+        const queryPromise = supabase.from('admin_config').select('smtp').eq('id', 'order_sequence').maybeSingle();
+        const { data } = await withTimeout(queryPromise, 3500, 'Supabase fetch order_sequence');
+        if (data && data.smtp && typeof data.smtp.lastSequence === 'number') {
+          if (data.smtp.currentYear === currentYear && data.smtp.lastSequence > highestKnown) {
+            highestKnown = data.smtp.lastSequence;
+          }
+        }
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Failed to read order_sequence from Supabase:', err.message);
+      }
+    }
+
+    // 4. Scan existing orders in database
+    try {
+      const orders = await this.getOrders();
+      if (Array.isArray(orders)) {
+        orders.forEach(o => {
+          if (o && o.orderId) {
+            const m = o.orderId.match(ordPrefixRegex);
+            if (m) {
+              const num = parseInt(m[1], 10);
+              if (num > highestKnown) highestKnown = num;
+            }
+          }
+        });
+      }
+    } catch (_) {}
+
+    // 5. Scan inquiries in database
+    try {
+      const inqs = await this.getInquiries();
+      if (Array.isArray(inqs)) {
+        inqs.forEach(i => {
+          if (i && i.id) {
+            const m = i.id.match(ordPrefixRegex);
+            if (m) {
+              const num = parseInt(m[1], 10);
+              if (num > highestKnown) highestKnown = num;
+            }
+          }
+        });
+      }
+    } catch (_) {}
+
+    // 6. Scan ALL deleted order IDs (so even if an order was deleted, its number is permanently accounted for!)
+    try {
+      const deletedIds = await this.getDeletedOrderIds();
+      deletedIds.forEach(id => {
+        const m = id.match(ordPrefixRegex);
+        if (m) {
+          const num = parseInt(m[1], 10);
+          if (num > highestKnown) highestKnown = num;
+        }
+      });
+    } catch (_) {}
+
+    // 7. Guarantee baseline sequence is at least 5 (since RF-ORD-2026-005 exists today)
+    if (highestKnown < 5) highestKnown = 5;
+
+    // 8. Monotonic increment: next order number
+    const nextNum = highestKnown + 1;
+    const nextOrderId = `RF-ORD-${currentYear}-${String(nextNum).padStart(3, '0')}`;
+
+    // 9. Persist the new sequence counter immediately to Memory, Local File & Supabase Cloud
+    const updatedSeq = {
+      lastSequence: nextNum,
+      currentYear,
+      lastOrderId: nextOrderId,
+      updatedAt: new Date().toISOString()
+    };
+
+    global._rfMemoryStore = global._rfMemoryStore || {};
+    global._rfMemoryStore['order_sequence'] = updatedSeq;
+
+    try {
+      writeJson(ORDER_SEQUENCE_FILE, updatedSeq);
+      const rawPath = path.join(DATA_DIR, 'order-sequence.json');
+      fs.writeFileSync(rawPath, JSON.stringify(updatedSeq, null, 2), 'utf8');
+    } catch (_) {}
+
+    if (supabase && isSupabaseOperational()) {
+      try {
+        const upsertPromise = supabase.from('admin_config').upsert({
+          id: 'order_sequence',
+          admin_name: 'Order Monotonic Sequence Counter',
+          smtp: updatedSeq,
+          updated_at: new Date().toISOString()
+        });
+        await withTimeout(upsertPromise, 4000, 'Supabase upsert order_sequence');
+        console.log(`🔢 [ORDER SEQUENCE] Monotonic sequence counter advanced to ${nextNum} (${nextOrderId}) in Supabase.`);
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Failed to write order_sequence to Supabase:', err.message);
+      }
+    }
+
+    // 10. Automatically ensure nextOrderId is never in deleted registry
+    await this.unrecordDeletedOrderIds([nextOrderId]);
+
+    return nextOrderId;
+  },
+
+  async getOrderSequence() {
+    const currentYear = new Date().getFullYear();
+    let currentSeq = 5;
+    if (global._rfMemoryStore && global._rfMemoryStore['order_sequence']) {
+      currentSeq = global._rfMemoryStore['order_sequence'].lastSequence || currentSeq;
+    }
+    if (supabase && isSupabaseOperational()) {
+      try {
+        const { data } = await supabase.from('admin_config').select('smtp').eq('id', 'order_sequence').maybeSingle();
+        if (data && data.smtp && typeof data.smtp.lastSequence === 'number') {
+          currentSeq = Math.max(currentSeq, data.smtp.lastSequence);
+        }
+      } catch (_) {}
+    }
+    return { lastSequence: currentSeq, currentYear, nextOrderId: `RF-ORD-${currentYear}-${String(currentSeq + 1).padStart(3, '0')}` };
   },
 
   // --- PRODUCTS ---
