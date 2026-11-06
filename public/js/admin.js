@@ -3068,6 +3068,11 @@ window.openAcceptOrderModal = window.openConfirmDateModal = (id) => {
 window.closeConfirmOrderModal = () => {
   const modal = document.getElementById('confirmOrderModal');
   if (modal) modal.classList.remove('open');
+  const submitBtn = document.getElementById('confirmOrderSubmitBtn');
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Confirm';
+  }
 };
 
 window.openPickupOrderModal = window.openPickupDateModal = (id) => {

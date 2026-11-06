@@ -3167,64 +3167,7 @@ async function handleUpdateOrderStatus(req, res) {
       targetObj.total = targetObj.total || inq.estimatedValue || 0;
     }
 
-    // 2. Trigger customer notification email FIRST so DB records genuine delivery status
-    let emailResult = { sent: false };
-
-    if (isConfirming) {
-      if (notifyCustomer !== false) {
-        console.log(`🎨 [ORDER ACCEPTED TRIGGERED] Sending order accepted email for order #${cleanId} (Pickup Date: ${finalPickupDate}) via Brevo...`);
-        try {
-          emailResult = await emailService.notifyOrderAcceptedByAdmin({
-            order: targetObj,
-            pickupDate: finalPickupDate,
-            confirmationDate: finalConfirmationDate,
-            notes,
-            req
-          });
-        } catch (mailErr) {
-          console.warn('⚠️ [EMAIL NOTICE] Brevo accepted email dispatch warning:', mailErr.message);
-          emailResult = { sent: false, error: mailErr.message };
-        }
-      }
-    } else if (isReadyForPickup) {
-      if (notifyCustomer !== false) {
-        console.log(`🛍️ [READY FOR PICKUP TRIGGERED] Sending ready for pickup email for order #${cleanId} (Pickup Date: ${finalPickupDate}) via Brevo...`);
-        try {
-          emailResult = await emailService.notifyOrderPickupReady({
-            order: targetObj,
-            pickupDate: finalPickupDate,
-            notes,
-            req
-          });
-        } catch (mailErr) {
-          console.warn('⚠️ [EMAIL NOTICE] Brevo pickup email dispatch warning:', mailErr.message);
-          emailResult = { sent: false, error: mailErr.message };
-        }
-      }
-    } else if (isCancelling) {
-      if (notifyCustomer !== false) {
-        console.log(`✕ [ORDER CANCELLED TRIGGERED] Sending cancellation email for order #${cleanId} via Brevo...`);
-        try {
-          emailResult = await emailService.notifyOrderCancelledByAdmin({
-            order: targetObj,
-            notes,
-            req
-          });
-        } catch (mailErr) {
-          console.warn('⚠️ [EMAIL NOTICE] Brevo cancel email dispatch warning:', mailErr.message);
-          emailResult = { sent: false, error: mailErr.message };
-        }
-      }
-    } else if (isPickup) {
-      console.log(`📦 [ORDER PICKED UP] Order #${cleanId} marked as picked up on ${finalPickupDate}.`);
-      emailResult = { sent: false, skipped: true, reason: 'Order collected and marked as picked_up.' };
-    } else if (notifyCustomer !== false) {
-      emailResult = await sendCustomerOrderNotification(targetObj, normalizedStatus, notes, req);
-    }
-
-    const emailSentSuccess = Boolean(emailResult && (emailResult.sent || emailResult.success));
-
-    // 3. Update in-memory models
+    // 2. Update in-memory models
     if (inq) {
       if (normalizedStatus) inq.status = normalizedStatus;
       if (notes !== undefined) inq.notes = notes;
@@ -3232,12 +3175,10 @@ async function handleUpdateOrderStatus(req, res) {
         inq.confirmationDate = finalConfirmationDate;
         if (!inq.confirmedAt) inq.confirmedAt = timestamp;
       }
-      if (finalPickupDate) {
-        inq.pickupDate = finalPickupDate;
-      }
-      if (isConfirming && emailSentSuccess) inq.confirmedEmailSent = true;
-      if (isReadyForPickup && emailSentSuccess) inq.readyEmailSent = true;
-      if (isCancelling && emailSentSuccess) inq.cancelledEmailSent = true;
+      if (finalPickupDate) inq.pickupDate = finalPickupDate;
+      if (isConfirming) inq.confirmedEmailSent = true;
+      if (isReadyForPickup) inq.readyEmailSent = true;
+      if (isCancelling) inq.cancelledEmailSent = true;
       if (isPickup && !inq.pickedUpAt) inq.pickedUpAt = timestamp;
       inq.updatedAt = timestamp;
     }
@@ -3249,21 +3190,70 @@ async function handleUpdateOrderStatus(req, res) {
         order.confirmationDate = finalConfirmationDate;
         if (!order.confirmedAt) order.confirmedAt = timestamp;
       }
-      if (finalPickupDate) {
-        order.pickupDate = finalPickupDate;
-      }
-      if (isConfirming && emailSentSuccess) order.confirmedEmailSent = true;
-      if (isReadyForPickup && emailSentSuccess) order.readyEmailSent = true;
-      if (isCancelling && emailSentSuccess) order.cancelledEmailSent = true;
+      if (finalPickupDate) order.pickupDate = finalPickupDate;
+      if (isConfirming) order.confirmedEmailSent = true;
+      if (isReadyForPickup) order.readyEmailSent = true;
+      if (isCancelling) order.cancelledEmailSent = true;
       if (isPickup && !order.pickedUpAt) order.pickedUpAt = timestamp;
       order.updatedAt = timestamp;
     }
 
-    // 4. Persist to database once in parallel
-    const saveTasks = [];
-    if (inq) saveTasks.push(db.saveInquiry(inq));
-    if (order) saveTasks.push(db.saveOrder(order));
-    await Promise.all(saveTasks);
+    // 3. Prepare email dispatch task
+    let emailPromise = Promise.resolve({ sent: false });
+    if (isConfirming) {
+      if (notifyCustomer !== false) {
+        console.log(`🎨 [ORDER ACCEPTED TRIGGERED] Sending order accepted email for order #${cleanId} (Pickup Date: ${finalPickupDate}) via Brevo...`);
+        emailPromise = emailService.notifyOrderAcceptedByAdmin({
+          order: targetObj,
+          pickupDate: finalPickupDate,
+          confirmationDate: finalConfirmationDate,
+          notes,
+          req
+        }).catch(mailErr => {
+          console.warn('⚠️ [EMAIL NOTICE] Brevo accepted email warning:', mailErr.message);
+          return { sent: false, error: mailErr.message };
+        });
+      }
+    } else if (isReadyForPickup) {
+      if (notifyCustomer !== false) {
+        console.log(`🛍️ [READY FOR PICKUP TRIGGERED] Sending ready for pickup email for order #${cleanId} via Brevo...`);
+        emailPromise = emailService.notifyOrderPickupReady({
+          order: targetObj,
+          pickupDate: finalPickupDate,
+          notes,
+          req
+        }).catch(mailErr => {
+          console.warn('⚠️ [EMAIL NOTICE] Brevo pickup email warning:', mailErr.message);
+          return { sent: false, error: mailErr.message };
+        });
+      }
+    } else if (isCancelling) {
+      if (notifyCustomer !== false) {
+        console.log(`✕ [ORDER CANCELLED TRIGGERED] Sending cancellation email for order #${cleanId} via Brevo...`);
+        emailPromise = emailService.notifyOrderCancelledByAdmin({
+          order: targetObj,
+          notes,
+          req
+        }).catch(mailErr => {
+          console.warn('⚠️ [EMAIL NOTICE] Brevo cancel email warning:', mailErr.message);
+          return { sent: false, error: mailErr.message };
+        });
+      }
+    } else if (isPickup) {
+      console.log(`📦 [ORDER PICKED UP] Order #${cleanId} marked as picked up on ${finalPickupDate}.`);
+      emailPromise = Promise.resolve({ sent: false, skipped: true, reason: 'Order collected.' });
+    } else if (notifyCustomer !== false) {
+      emailPromise = sendCustomerOrderNotification(targetObj, normalizedStatus, notes, req).catch(err => ({ sent: false, error: err.message }));
+    }
+
+    // 4. Persist to database AND send email in parallel (Concurrent Execution)
+    const [_, __, emailResult] = await Promise.all([
+      inq ? db.saveInquiry(inq) : null,
+      order ? db.saveOrder(order) : null,
+      emailPromise
+    ]);
+
+    const emailSentSuccess = Boolean(emailResult && (emailResult.sent || emailResult.success));
 
     // 5. Mirror to opposite table if one was missing (non-blocking)
     if (inq && !order) {

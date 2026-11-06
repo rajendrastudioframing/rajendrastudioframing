@@ -1608,49 +1608,43 @@ async function notifyOrderAcceptedByAdmin({ order, pickupDate = null, confirmati
     </html>
   `;
 
-  let adminEmailResult = { success: false };
-  let customerEmailResult = { success: false, reason: 'No valid customer email' };
-
-  // Dispatch admin log email
-  const adminPromise = sendOrderBrevoEmail({
+  // Dispatch admin log email in background (non-blocking)
+  sendOrderBrevoEmail({
     to: ORDER_ALERT_EMAIL,
     subject: adminSubject,
     htmlContent: adminHtml,
     textContent: `Order #${cleanId} accepted by admin. Pickup Date: ${formattedPickupDate}. Customer: ${customerName} (${customerPhone}). Total: ₹${total}`
-  }).then(res => {
-    adminEmailResult = res;
-    return res;
   }).catch(err => {
-    adminEmailResult = { success: false, error: err.message };
-    return adminEmailResult;
+    console.warn('⚠️ [Admin log email notice]:', err.message);
   });
 
   // Dispatch customer acceptance email (Strict user specification text)
-  let customerPromise = Promise.resolve(customerEmailResult);
+  let customerEmailResult = { success: false, reason: 'No valid customer email' };
   if (customerEmail && customerEmail.includes('@')) {
-    customerPromise = sendOrderBrevoEmail({
-      to: customerEmail,
-      subject: customerSubject,
-      htmlContent: customerHtml,
-      textContent: `Hello ${customerName},\n\nYour order #${cleanId} has been successfully confirmed by our team.\n\nYour Pickup Date: ${formattedPickupDate}\n\nPlease visit our shop on the scheduled date to collect your order.\n\nThank you for shopping with Rajendra Studio & Framing!`
-    }).then(res => {
+    try {
+      const emailSendTask = sendOrderBrevoEmail({
+        to: customerEmail,
+        subject: customerSubject,
+        htmlContent: customerHtml,
+        textContent: `Hello ${customerName},\n\nYour order #${cleanId} has been successfully confirmed by our team.\n\nYour Pickup Date: ${formattedPickupDate}\n\nPlease visit our shop on the scheduled date to collect your order.\n\nThank you for shopping with Rajendra Studio & Framing!`
+      });
+      // Safety timeout of 5 seconds on customer email
+      const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error('Brevo email timeout (5s)')), 5000));
+      const res = await Promise.race([emailSendTask, timeoutTask]);
       customerEmailResult = res;
       if (res && res.success) {
         console.log(`✅ [ORDER ACCEPTED EMAIL DELIVERED TO CUSTOMER] #${cleanId} -> ${customerEmail}`);
       } else {
         console.warn(`⚠️ [ORDER ACCEPTED EMAIL FAILED] #${cleanId} -> ${customerEmail}:`, res ? (res.error || res.statusCode) : 'Unknown');
       }
-      return res;
-    }).catch(err => {
+    } catch (err) {
       customerEmailResult = { success: false, error: err.message };
       console.error(`❌ [ORDER ACCEPTED EMAIL ERROR] #${cleanId} -> ${customerEmail}:`, err.message);
-      return customerEmailResult;
-    });
+    }
   } else {
     console.warn(`⚠️ [notifyOrderAcceptedByAdmin] Order #${cleanId} does not have a valid customer email on file (Found: "${customerEmail}")`);
   }
 
-  await Promise.allSettled([adminPromise, customerPromise]);
   const isCustomerSent = Boolean(customerEmailResult && customerEmailResult.success);
 
   return {
@@ -1658,7 +1652,6 @@ async function notifyOrderAcceptedByAdmin({ order, pickupDate = null, confirmati
     sent: isCustomerSent,
     recipient: customerEmail,
     customerResult: customerEmailResult,
-    adminResult: adminEmailResult,
     orderNotified: isCustomerSent
   };
 }
