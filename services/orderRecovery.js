@@ -148,12 +148,9 @@ async function syncBrevoOrders(force = false) {
         continue; // Order already in system
       }
 
-      // If placed on/after RECOVERY_CUTOFF (today), guarantee it's not suppressed by legacy test deletion
+      // If deleted by admin, respect deletion and NEVER resurrect
       if (deletedIds.has(cleanOrderId) || deletedIds.has(orderId.toLowerCase())) {
-        console.log(`🛡️ [ORDER RECOVERY] Order ${orderId} placed today is in deleted list, restoring and unblacklisting...`);
-        await db.unrecordDeletedOrderIds([orderId, cleanOrderId]);
-        deletedIds.delete(cleanOrderId);
-        deletedIds.delete(orderId.toLowerCase());
+        continue;
       }
 
       // Fetch detail

@@ -629,6 +629,16 @@ module.exports = {
           }
         });
       }
+      try {
+        const deletedIds = await this.getDeletedOrderIds();
+        deletedIds.forEach(id => {
+          const m = String(id).match(ordPrefixRegex);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            if (num > currentSeq) currentSeq = num;
+          }
+        });
+      } catch (_) {}
     } catch (_) {}
     return { lastSequence: currentSeq, currentYear, nextOrderId: `RF-ORD-${currentYear}-${String(currentSeq + 1).padStart(3, '0')}` };
   },
@@ -1101,7 +1111,9 @@ module.exports = {
             const key = o.orderId.toLowerCase().trim().replace(/^#/, '');
             merged.set(key, o);
           });
-          return Array.from(merged.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+          const finalOrders = Array.from(merged.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+          try { writeJson(ORDERS_FILE, finalOrders); } catch (_) {}
+          return finalOrders;
         }
         if (error) console.warn('⚠️ [DATABASE] Supabase getOrders error, falling back to local:', error.message);
       } catch (err) {
@@ -1221,11 +1233,12 @@ module.exports = {
     };
 
     if (supabase && isSupabaseOperational()) {
-      try {
-        const upsertPromise = supabase.from('orders').upsert(dbRow, { onConflict: 'order_id' });
-        const { error } = await withTimeout(upsertPromise, 3500, 'Supabase saveOrder');
-        if (error) {
-          console.warn('⚠️ [DATABASE] Supabase saveOrder warning:', error.message);
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const upsertPromise = supabase.from('orders').upsert(dbRow, { onConflict: 'order_id' });
+          const { error } = await withTimeout(upsertPromise, 12000, `Supabase saveOrder attempt ${attempt}`);
+          if (!error) break;
+          console.warn(`⚠️ [DATABASE] Supabase saveOrder attempt ${attempt} warning:`, error.message);
           // Self-healing fallback: strip dynamic columns and retry with core schema
           try {
             const coreRow = {
@@ -1241,11 +1254,13 @@ module.exports = {
               updated_at: dbRow.updated_at
             };
             const fallbackPromise = supabase.from('orders').upsert(coreRow, { onConflict: 'order_id' });
-            await withTimeout(fallbackPromise, 2500, 'Supabase core saveOrder');
+            const fbRes = await withTimeout(fallbackPromise, 6000, 'Supabase core saveOrder');
+            if (!fbRes.error) break;
           } catch (_) {}
+        } catch (err) {
+          console.warn(`⚠️ [DATABASE] Supabase saveOrder attempt ${attempt} notice:`, err.message);
+          if (attempt < 2) await new Promise(r => setTimeout(r, 400));
         }
-      } catch (err) {
-        console.warn('⚠️ [DATABASE] Supabase saveOrder notice, syncing locally:', err.message);
       }
     }
 
@@ -1467,7 +1482,9 @@ module.exports = {
             const key = i.id.toLowerCase().trim().replace(/^#/, '');
             merged.set(key, i);
           });
-          return Array.from(merged.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+          const finalInqs = Array.from(merged.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+          try { writeJson(INQUIRIES_FILE, finalInqs); } catch (_) {}
+          return finalInqs;
         }
         if (error) console.warn('⚠️ [DATABASE] Supabase getInquiries error:', error.message);
       } catch (err) {
@@ -1523,11 +1540,12 @@ module.exports = {
     };
 
     if (supabase && isSupabaseOperational()) {
-      try {
-        const upsertPromise = supabase.from('inquiries').upsert(dbRow, { onConflict: 'id' });
-        const { error } = await withTimeout(upsertPromise, 3500, 'Supabase saveInquiry');
-        if (error) {
-          console.warn('⚠️ [DATABASE] Supabase saveInquiry warning:', error.message);
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const upsertPromise = supabase.from('inquiries').upsert(dbRow, { onConflict: 'id' });
+          const { error } = await withTimeout(upsertPromise, 12000, `Supabase saveInquiry attempt ${attempt}`);
+          if (!error) break;
+          console.warn(`⚠️ [DATABASE] Supabase saveInquiry attempt ${attempt} warning:`, error.message);
           // Self-healing fallback: strip dynamic columns and retry with core schema
           try {
             const coreInqRow = {
@@ -1545,11 +1563,13 @@ module.exports = {
               updated_at: dbRow.updated_at
             };
             const fallbackPromise = supabase.from('inquiries').upsert(coreInqRow, { onConflict: 'id' });
-            await withTimeout(fallbackPromise, 2500, 'Supabase core saveInquiry');
+            const fbRes = await withTimeout(fallbackPromise, 6000, 'Supabase core saveInquiry');
+            if (!fbRes.error) break;
           } catch (_) {}
+        } catch (err) {
+          console.warn(`⚠️ [DATABASE] Supabase saveInquiry attempt ${attempt} notice:`, err.message);
+          if (attempt < 2) await new Promise(r => setTimeout(r, 400));
         }
-      } catch (err) {
-        console.warn('⚠️ [DATABASE] Supabase saveInquiry notice, syncing locally:', err.message);
       }
     }
 
