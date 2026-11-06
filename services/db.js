@@ -603,9 +603,10 @@ module.exports = {
 
   async getOrderSequence() {
     const currentYear = new Date().getFullYear();
-    let currentSeq = 5;
+    const ordPrefixRegex = new RegExp(`^RF-ORD-${currentYear}-(\\d+)$`, 'i');
+    let currentSeq = 6;
     if (global._rfMemoryStore && global._rfMemoryStore['order_sequence']) {
-      currentSeq = global._rfMemoryStore['order_sequence'].lastSequence || currentSeq;
+      currentSeq = Math.max(currentSeq, global._rfMemoryStore['order_sequence'].lastSequence || 0);
     }
     if (supabase && isSupabaseOperational()) {
       try {
@@ -615,6 +616,20 @@ module.exports = {
         }
       } catch (_) {}
     }
+    try {
+      const orders = await this.getOrders();
+      if (Array.isArray(orders)) {
+        orders.forEach(o => {
+          if (o && o.orderId) {
+            const m = o.orderId.match(ordPrefixRegex);
+            if (m) {
+              const num = parseInt(m[1], 10);
+              if (num > currentSeq) currentSeq = num;
+            }
+          }
+        });
+      }
+    } catch (_) {}
     return { lastSequence: currentSeq, currentYear, nextOrderId: `RF-ORD-${currentYear}-${String(currentSeq + 1).padStart(3, '0')}` };
   },
 
