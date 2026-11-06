@@ -1066,6 +1066,29 @@ function renderAllOrders(orders) {
   if (typeof updateBulkBarState === 'function') updateBulkBarState();
 }
 
+function renderOrders() {
+  const orders = allInquiries.filter(i => 
+    (i.id && i.id.startsWith('RF-ORD')) || 
+    (i.product && i.product.includes('[ONLINE ORDER]')) ||
+    (i.orderId && String(i.orderId).startsWith('RF-ORD'))
+  );
+  if (typeof updateOrdersKPIs === 'function') updateOrdersKPIs(orders);
+  if (typeof renderOverviewOrders === 'function') renderOverviewOrders(orders.slice(0, 5));
+  if (typeof renderAllOrders === 'function') renderAllOrders(orders);
+}
+
+function renderOrderStats() {
+  const orders = allInquiries.filter(i => 
+    (i.id && i.id.startsWith('RF-ORD')) || 
+    (i.product && i.product.includes('[ONLINE ORDER]')) ||
+    (i.orderId && String(i.orderId).startsWith('RF-ORD'))
+  );
+  if (typeof updateOrdersKPIs === 'function') updateOrdersKPIs(orders);
+}
+
+window.renderOrders = renderOrders;
+window.renderOrderStats = renderOrderStats;
+
 function getOrderDeliveryAddress(order) {
   if (order.deliveryAddress && typeof order.deliveryAddress === 'string' && order.deliveryAddress.trim() && !order.deliveryAddress.includes('undefined')) {
     return order.deliveryAddress.trim();
@@ -3178,7 +3201,10 @@ function initConfirmAndPickupModals() {
 
         const data = await res.json();
         if (data && data.success) {
-          // Update in-memory state ONLY AFTER successful server response
+          // 1. Close modal immediately on success
+          closeConfirmOrderModal();
+
+          // 2. Update in-memory state
           const existingInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanId || (i.orderId || '').replace(/^#/, '') === cleanId);
           if (existingInq) {
             existingInq.status = 'confirmed';
@@ -3194,9 +3220,12 @@ function initConfirmAndPickupModals() {
             localStorage.setItem('rs_admin_inquiries_cache', JSON.stringify(allInquiries));
           } catch (_) {}
 
-          renderOrders();
-          renderOrderStats();
-          closeConfirmOrderModal();
+          try {
+            renderOrders();
+            renderOrderStats();
+          } catch (renderErr) {
+            console.warn('Render notice:', renderErr);
+          }
 
           loadInquiries().catch(() => {});
           loadDashboardStats().catch(() => {});
@@ -3213,7 +3242,7 @@ function initConfirmAndPickupModals() {
         }
       } catch (err) {
         console.error('Error confirming order:', err);
-        showToast('Confirmation Failed', 'Could not confirm order: ' + (err.message || 'Network error'), 'danger');
+        showToast('Confirmation Notice', 'Could not confirm order: ' + (err.message || 'Network error'), 'danger');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -3258,6 +3287,9 @@ function initConfirmAndPickupModals() {
 
         const data = await res.json();
         if (data && data.success) {
+          // 1. Close modal immediately on success
+          closePickupOrderModal();
+
           const existingPickupInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanPickupId || (i.orderId || '').replace(/^#/, '') === cleanPickupId);
           if (existingPickupInq) {
             existingPickupInq.status = 'ready_for_pickup';
@@ -3272,9 +3304,12 @@ function initConfirmAndPickupModals() {
             localStorage.setItem('rs_admin_inquiries_cache', JSON.stringify(allInquiries));
           } catch (_) {}
 
-          renderOrders();
-          renderOrderStats();
-          closePickupOrderModal();
+          try {
+            renderOrders();
+            renderOrderStats();
+          } catch (renderErr) {
+            console.warn('Render notice:', renderErr);
+          }
 
           loadInquiries().catch(() => {});
           loadDashboardStats().catch(() => {});
@@ -3291,7 +3326,7 @@ function initConfirmAndPickupModals() {
         }
       } catch (err) {
         console.error('Error marking order ready for pickup:', err);
-        showToast('Update Failed', 'Could not update order status: ' + (err.message || 'Network error'), 'danger');
+        showToast('Update Notice', 'Could not update order status: ' + (err.message || 'Network error'), 'danger');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -3598,8 +3633,10 @@ function initCancelOrderModal() {
         } catch (_) {}
 
         closeCancelOrderModal();
-        renderOrders();
-        renderOrderStats();
+        try {
+          renderOrders();
+          renderOrderStats();
+        } catch (_) {}
 
         loadInquiries().catch(() => {});
         loadDashboardStats().catch(() => {});
