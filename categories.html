@@ -519,7 +519,7 @@
         const res = await fetch('/api/categories?t=' + Date.now(), { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
-          if (data && data.success && Array.isArray(data.categories) && data.categories.length > 0) {
+          if (data && data.success && Array.isArray(data.categories)) {
             categories = data.categories;
             window.CATEGORIES_DATA = categories;
           }

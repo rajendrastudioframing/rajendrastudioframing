@@ -3885,7 +3885,7 @@ const globalCategoryLabels = {
 };
 
 function applyCategoriesList(cats) {
-  if (!Array.isArray(cats) || cats.length === 0) return;
+  if (!Array.isArray(cats)) return;
   allAdminCategories = cats;
   allAdminCategories.forEach(c => {
     CATEGORY_META[c.id] = {
@@ -3914,13 +3914,13 @@ async function loadAdminCategories() {
       if (localStr) cached = JSON.parse(localStr);
     } catch (_) {}
 
-    if (!Array.isArray(cached) || cached.length === 0) {
-      if (typeof window !== 'undefined' && Array.isArray(window.CATEGORIES_DATA) && window.CATEGORIES_DATA.length > 0) {
+    if (!Array.isArray(cached)) {
+      if (typeof window !== 'undefined' && Array.isArray(window.CATEGORIES_DATA)) {
         cached = window.CATEGORIES_DATA;
       }
     }
 
-    if (Array.isArray(cached) && cached.length > 0) {
+    if (Array.isArray(cached)) {
       applyCategoriesList(cached);
     }
 
@@ -3940,10 +3940,8 @@ async function loadAdminCategories() {
 
     if (data && (data.success || Array.isArray(data.categories))) {
       const serverCategories = data.categories || [];
-      if (serverCategories.length > 0) {
-        localStorage.setItem('rf_admin_categories', JSON.stringify(serverCategories));
-        applyCategoriesList(serverCategories);
-      }
+      localStorage.setItem('rf_admin_categories', JSON.stringify(serverCategories));
+      applyCategoriesList(serverCategories);
     }
   } catch (err) {
     console.warn('Failed to load categories:', err);
@@ -3987,11 +3985,14 @@ function populateProductCategoryDropdowns() {
   const newCatSelect = document.getElementById('newProductCategory');
   const editCatSelect = document.getElementById('editProductCategory');
 
-  if (allAdminCategories.length === 0) return;
-
-  const optionsHtml = allAdminCategories.map(c => 
-    `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`
-  ).join('');
+  let optionsHtml = '';
+  if (allAdminCategories.length === 0) {
+    optionsHtml = '<option value="">No categories yet - create category first</option>';
+  } else {
+    optionsHtml = allAdminCategories.map(c => 
+      `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`
+    ).join('');
+  }
 
   if (newCatSelect) {
     const currentVal = newCatSelect.value;
@@ -4021,8 +4022,26 @@ window.openAddCategoryModal = function(origin = null) {
   const modal = document.getElementById('addCategoryModal');
   const form = document.getElementById('addCategoryForm');
   if (form) form.reset();
+  const modeInput = document.getElementById('categoryModalMode');
+  if (modeInput) modeInput.value = 'new';
+  const titleEl = document.getElementById('categoryModalTitle');
+  if (titleEl) titleEl.textContent = 'Add New Category';
+  const subEl = document.getElementById('categoryModalSubtitle');
+  if (subEl) subEl.textContent = 'Create catalog category for products & store navigation.';
+  const submitText = document.getElementById('btnSubmitAddCategoryText');
+  if (submitText) submitText.textContent = 'Save Category';
+
   const slugInput = document.getElementById('newCategoryId');
-  if (slugInput) delete slugInput.dataset.manualEdited;
+  if (slugInput) {
+    delete slugInput.dataset.manualEdited;
+    slugInput.readOnly = false;
+    slugInput.style.background = '';
+    slugInput.style.opacity = '1';
+    slugInput.style.cursor = 'text';
+  }
+  const helpText = document.getElementById('newCategoryIdHelp');
+  if (helpText) helpText.textContent = 'Unique identifier used in URLs & database';
+
   const colorInput = document.getElementById('newCategoryColor');
   const colorHex = document.getElementById('newCategoryColorHex');
   if (colorInput) colorInput.value = '#C99A3D';
@@ -4031,10 +4050,122 @@ window.openAddCategoryModal = function(origin = null) {
   if (modal) modal.classList.add('open');
 };
 
+window.openEditCategoryModal = function(catId) {
+  if (!catId || catId === 'all') return;
+  const cat = allAdminCategories.find(c => (c.id || '').toLowerCase() === (catId || '').toLowerCase());
+  if (!cat) {
+    showToast('Category Not Found', `Category "${catId}" was not found.`, 'warning');
+    return;
+  }
+
+  const modal = document.getElementById('addCategoryModal');
+  const form = document.getElementById('addCategoryForm');
+  if (form) form.reset();
+
+  const modeInput = document.getElementById('categoryModalMode');
+  if (modeInput) modeInput.value = 'edit';
+  const titleEl = document.getElementById('categoryModalTitle');
+  if (titleEl) titleEl.textContent = `Edit Category: ${cat.name}`;
+  const subEl = document.getElementById('categoryModalSubtitle');
+  if (subEl) subEl.textContent = 'Update category details and storefront presentation.';
+  const submitText = document.getElementById('btnSubmitAddCategoryText');
+  if (submitText) submitText.textContent = 'Update Category';
+
+  const nameInput = document.getElementById('newCategoryName');
+  if (nameInput) nameInput.value = cat.name || '';
+
+  const slugInput = document.getElementById('newCategoryId');
+  if (slugInput) {
+    slugInput.value = cat.id || '';
+    slugInput.readOnly = true;
+    slugInput.style.background = 'var(--bg-hover)';
+    slugInput.style.opacity = '0.75';
+    slugInput.style.cursor = 'not-allowed';
+    slugInput.dataset.manualEdited = 'true';
+  }
+  const helpText = document.getElementById('newCategoryIdHelp');
+  if (helpText) helpText.textContent = 'Category identifier cannot be changed once created.';
+
+  const descInput = document.getElementById('newCategoryDesc');
+  if (descInput) descInput.value = cat.desc || '';
+
+  const badgeInput = document.getElementById('newCategoryBadge');
+  if (badgeInput) badgeInput.value = cat.badge || cat.name || '';
+
+  const colorInput = document.getElementById('newCategoryColor');
+  const colorHex = document.getElementById('newCategoryColorHex');
+  const catColor = cat.color || '#C99A3D';
+  if (colorInput) colorInput.value = catColor;
+  if (colorHex) colorHex.textContent = catColor;
+
+  if (modal) modal.classList.add('open');
+};
+
 window.closeAddCategoryModal = function() {
   const modal = document.getElementById('addCategoryModal');
   if (modal) modal.classList.remove('open');
 };
+
+window.openManageCategoriesModal = function() {
+  const modal = document.getElementById('manageCategoriesModal');
+  if (!modal) return;
+  renderManageCategoriesTable();
+  modal.classList.add('open');
+};
+
+window.closeManageCategoriesModal = function() {
+  const modal = document.getElementById('manageCategoriesModal');
+  if (modal) modal.classList.remove('open');
+};
+
+function renderManageCategoriesTable() {
+  const tbody = document.getElementById('manageCategoriesTableBody');
+  if (!tbody) return;
+
+  if (!allAdminCategories || allAdminCategories.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 32px 16px; color: var(--text-muted);">
+          No categories found. Click <strong>+ Add Category</strong> to create your first category.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = allAdminCategories.map(cat => {
+    const prodCount = allProducts.filter(p => (p.category || '').toLowerCase() === (cat.id || '').toLowerCase()).length;
+    return `
+      <tr>
+        <td>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: ${escapeHtml(cat.color || '#C99A3D')};"></span>
+            <strong style="color: var(--text-main); font-size: 0.88rem;">${escapeHtml(cat.name)}</strong>
+            ${cat.badge ? `<span style="font-size: 0.68rem; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle); color: var(--text-muted);">${escapeHtml(cat.badge)}</span>` : ''}
+          </div>
+          ${cat.desc ? `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 3px; max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(cat.desc)}</div>` : ''}
+        </td>
+        <td>
+          <code style="font-size: 0.78rem; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle); color: var(--text-secondary);">${escapeHtml(cat.id)}</code>
+        </td>
+        <td style="text-align: center; font-weight: 700; color: var(--primary);">
+          ${prodCount}
+        </td>
+        <td style="text-align: right;">
+          <div style="display: inline-flex; align-items: center; gap: 6px;">
+            <button type="button" class="btn-sub-action outline" onclick="closeManageCategoriesModal(); openEditCategoryModal('${escapeHtml(cat.id)}')" style="padding: 4px 10px; font-size: 0.74rem;" title="Edit category">
+              ✏️ Edit
+            </button>
+            <button type="button" class="btn-sub-action outline" onclick="deleteCategory('${escapeHtml(cat.id)}')" style="padding: 4px 10px; font-size: 0.74rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Delete category">
+              🗑️ Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+window.renderManageCategoriesTable = renderManageCategoriesTable;
 
 window.selectAdminCategory = function(catKey) {
   adminActiveCategory = catKey || 'all';
@@ -4232,14 +4363,14 @@ function updateAdminCategoryBanner(catKey, currentProducts) {
     storefrontLinkEl.href = catKey === 'all' ? 'products.html' : `index.html#${meta.anchor}`;
   }
 
+  const editBtn = document.getElementById('categoryEditBtn');
   const deleteBtn = document.getElementById('categoryDeleteBtn');
-  if (deleteBtn) {
-    const currentCatObj = allAdminCategories.find(c => c.id === catKey);
-    if (catKey !== 'all' && currentCatObj && !currentCatObj.isDefault) {
-      deleteBtn.style.display = 'inline-flex';
-    } else {
-      deleteBtn.style.display = 'none';
-    }
+  if (catKey !== 'all') {
+    if (editBtn) editBtn.style.display = 'inline-flex';
+    if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+  } else {
+    if (editBtn) editBtn.style.display = 'none';
+    if (deleteBtn) deleteBtn.style.display = 'none';
   }
 }
 
@@ -5448,9 +5579,13 @@ function initProductModals() {
         submitBtn.innerHTML = '<span>Saving to Database...</span>';
       }
 
+      const mode = (document.getElementById('categoryModalMode') && document.getElementById('categoryModalMode').value) || 'new';
+      const endpoint = mode === 'edit' ? `/api/admin/categories/${encodeURIComponent(cleanId)}` : '/api/admin/categories';
+      const httpMethod = mode === 'edit' ? 'PUT' : 'POST';
+
       try {
-        const res = await apiFetch('/api/admin/categories', {
-          method: 'POST',
+        const res = await apiFetch(endpoint, {
+          method: httpMethod,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: cleanId, name, icon, desc, badge, color })
         });
@@ -5469,12 +5604,17 @@ function initProductModals() {
           localStorage.setItem('rf_admin_categories', JSON.stringify(savedCategories));
           applyCategoriesList(savedCategories);
 
+          if (typeof renderManageCategoriesTable === 'function') {
+            renderManageCategoriesTable();
+          }
+
           try {
             const bc = new BroadcastChannel('rf_catalog_sync');
-            bc.postMessage({ type: 'CATEGORY_ADDED', category: savedCat, timestamp: Date.now() });
+            bc.postMessage({ type: mode === 'edit' ? 'CATEGORY_UPDATED' : 'CATEGORY_ADDED', category: savedCat, timestamp: Date.now() });
           } catch (_) {}
 
-          showToast('Category Created', `Category "${name}" created and saved successfully!`, 'success');
+          const actionLabel = mode === 'edit' ? 'Updated' : 'Created';
+          showToast(`Category ${actionLabel}`, `Category "${name}" ${actionLabel.toLowerCase()} and saved successfully!`, 'success');
           closeAddCategoryModal();
           updateAdminCategoryCounters(allProducts);
 
@@ -5560,6 +5700,9 @@ window.deleteCategory = async (id) => {
         allAdminCategories = allAdminCategories.filter(c => c.id !== id);
         localStorage.setItem('rf_admin_categories', JSON.stringify(allAdminCategories));
         applyCategoriesList(allAdminCategories);
+      }
+      if (typeof renderManageCategoriesTable === 'function') {
+        renderManageCategoriesTable();
       }
       try {
         const bc = new BroadcastChannel('rf_catalog_sync');

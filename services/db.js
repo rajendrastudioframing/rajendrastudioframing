@@ -712,8 +712,8 @@ module.exports = {
       try {
         const queryPromise = supabase.from('products').select('*').order('created_at', { ascending: false });
         const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getProducts');
-        if (!error && data && data.length > 0) {
-          return data.map(remote => ({
+        if (!error && Array.isArray(data)) {
+          const mapped = data.map(remote => ({
             id: remote.id,
             name: remote.name,
             title: remote.name,
@@ -742,36 +742,7 @@ module.exports = {
             createdAt: remote.created_at,
             updatedAt: remote.updated_at
           }));
-        }
-
-        // If Supabase has 0 products and local products exist, seed in a single batch upsert
-        if (!error && (!data || data.length === 0) && localProducts.length > 0) {
-          const seedRows = localProducts.map(p => ({
-            id: p.id,
-            name: p.name,
-            category: p.category,
-            category_label: p.categoryLabel || p.category,
-            price: Number(p.price) || 0,
-            original_price: p.originalPrice ? Number(p.originalPrice) : null,
-            price_display: p.priceDisplay || `Starting from ₹${p.price}`,
-            rating: Number(p.rating) || 5.0,
-            reviews_count: Number(p.reviewsCount) || 1,
-            badge: p.badge || '',
-            image: p.image,
-            images: Array.isArray(p.images) ? p.images : (p.image ? [p.image] : []),
-            short_description: p.shortDescription || '',
-            description: p.description || '',
-            material: p.material || '',
-            printing_type: p.printingType || '',
-            status: p.status || 'In Stock',
-            in_stock: p.inStock !== undefined ? Boolean(p.inStock) : true,
-            stock_qty: p.stockQty !== undefined ? Number(p.stockQty) : 100,
-            lead_time: p.leadTime || '24 - 48 Hours',
-            sizes: p.sizes || [],
-            finishes: p.finishes || []
-          }));
-          await withTimeout(supabase.from('products').upsert(seedRows, { onConflict: 'id' }), 5000, 'Supabase seedProducts');
-          return localProducts;
+          return mapped;
         }
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase getProducts error, using fallback:', err.message);
@@ -905,21 +876,11 @@ module.exports = {
 
   // --- CATEGORIES ---
   async getCategories() {
-    const defaultCategories = [
-      { id: 'frames', name: 'Studio & Framing', icon: '🖼️', desc: 'Classic wood and acrylic glass frames, certificate frames, collage memory boxes, and gallery wall displays.', color: '#854d0e', bg: 'rgba(234, 179, 8, 0.15)', badge: 'Studio & Framing', isDefault: true },
-      { id: 'personalized', name: 'Personalized Printing', icon: '☕', desc: 'Custom printed ceramic mugs, insulated bottles, custom apparel, and personalized daily keepsakes.', color: '#1e40af', bg: 'rgba(59, 130, 246, 0.15)', badge: 'Personalized Printing', isDefault: true },
-      { id: 'office', name: 'Office Printing', icon: '📁', desc: 'Corporate presentation folders, customized file binders, business cards, letterheads, and executive desk accessories.', color: '#166534', bg: 'rgba(34, 197, 94, 0.15)', badge: 'Office Printing', isDefault: true },
-      { id: 'custom', name: 'Custom Printing', icon: '🎨', desc: 'Museum-grade canvas gallery wraps, edge-to-edge acrylic prints, metallic prints, and bespoke art installations.', color: '#6b21a8', bg: 'rgba(168, 85, 247, 0.15)', badge: 'Custom Printing', isDefault: true },
-      { id: 'gifts', name: 'Photo Gifts & Keepsakes', icon: '🎁', desc: 'Personalized 3D photo crystals, acrylic desktop plaques, customized keychains, and commemorative photo clocks.', color: '#9d174d', bg: 'rgba(236, 72, 153, 0.15)', badge: 'Photo Gifts & Keepsakes', isDefault: true },
-      { id: 'canvas-gallery', name: 'Canvas Gallery', icon: '🖼️', desc: 'Museum-quality wrapped canvas prints and framed canvas arts.', badge: 'Premium Canvas', color: '#c99a3d', bg: 'rgba(201, 154, 61, 0.15)', isDefault: false, createdAt: '2026-10-25T19:23:35.568Z' },
-      { id: 'luxury-art', name: 'Luxury Art Collection', icon: '🎨', desc: 'Exclusive handcrafted museum gallery art frames and master prints.', badge: 'Luxury Art', color: '#d97706', bg: 'rgba(201, 154, 61, 0.15)', isDefault: false, createdAt: '2026-10-26T04:07:08.823Z' }
-    ];
-
     if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('categories').select('*').order('created_at', { ascending: true });
         const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getCategories');
-        if (!error && data && data.length > 0) {
+        if (!error && Array.isArray(data)) {
           const mapped = data.map(cat => ({
             id: cat.id,
             name: cat.name,
@@ -928,45 +889,24 @@ module.exports = {
             badge: cat.badge || cat.name,
             color: cat.color || '#C99A3D',
             bg: cat.bg || 'rgba(201, 154, 61, 0.15)',
-            isDefault: cat.is_default !== undefined ? Boolean(cat.is_default) : Boolean(cat.isDefault),
+            isDefault: false,
             createdAt: cat.created_at || cat.createdAt
           }));
           setImmediate(() => { try { syncCategoriesDataFiles(mapped); } catch (_) {} });
           return mapped;
-        }
-
-        // If Supabase has 0 categories, seed default categories in a single batch
-        if (!error && (!data || data.length === 0)) {
-          const seedCategories = defaultCategories.map(c => ({
-            id: c.id,
-            name: c.name,
-            icon: c.icon,
-            desc: c.desc,
-            badge: c.badge,
-            color: c.color,
-            bg: c.bg,
-            is_default: c.isDefault,
-            created_at: new Date().toISOString()
-          }));
-          await withTimeout(supabase.from('categories').upsert(seedCategories, { onConflict: 'id' }), 5000, 'Supabase seedCategories');
-          return defaultCategories;
         }
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase getCategories exception:', err.message);
       }
     }
 
-    let categories = readJson(CATEGORIES_FILE, null);
-    if (!categories || !Array.isArray(categories) || categories.length === 0) {
-      categories = defaultCategories;
-      writeJson(CATEGORIES_FILE, categories);
-    }
+    let categories = readJson(CATEGORIES_FILE, []);
     setImmediate(() => { try { syncCategoriesDataFiles(categories); } catch (_) {} });
     return categories;
   },
 
   async saveCategory(category) {
-    let categories = await this.getCategories();
+    let categories = readJson(CATEGORIES_FILE, []);
     const cleanId = (category.id || category.name || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-|-$/g, '') || `cat-${Date.now()}`;
     const cleanName = (category.name || '').trim();
     const cleanIcon = (category.icon || '🏷️').trim();
@@ -983,7 +923,7 @@ module.exports = {
       badge: cleanBadge,
       color: cleanColor,
       bg: cleanBg,
-      isDefault: Boolean(category.isDefault),
+      isDefault: false,
       createdAt: category.createdAt || new Date().toISOString()
     };
 
@@ -997,7 +937,7 @@ module.exports = {
           badge: newCategory.badge,
           color: newCategory.color,
           bg: newCategory.bg,
-          is_default: newCategory.isDefault,
+          is_default: false,
           created_at: newCategory.createdAt
         }, { onConflict: 'id' });
         const { error } = await withTimeout(upsertPromise, 5000, 'Supabase saveCategory');
@@ -1011,7 +951,7 @@ module.exports = {
       }
     }
 
-    const existingIndex = categories.findIndex(c => c.id.toLowerCase() === cleanId.toLowerCase());
+    const existingIndex = categories.findIndex(c => (c.id || '').toLowerCase() === cleanId.toLowerCase());
     if (existingIndex !== -1) {
       categories[existingIndex] = { ...categories[existingIndex], ...newCategory };
     } else {
@@ -1039,8 +979,8 @@ module.exports = {
       }
     }
 
-    let categories = await this.getCategories();
-    categories = categories.filter(c => c.id.toLowerCase() !== cleanId);
+    let categories = readJson(CATEGORIES_FILE, []);
+    categories = categories.filter(c => (c.id || '').toLowerCase() !== cleanId);
     writeJson(CATEGORIES_FILE, categories);
     syncCategoriesDataFiles(categories);
     return true;

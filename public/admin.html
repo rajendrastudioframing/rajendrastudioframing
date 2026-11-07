@@ -2969,14 +2969,21 @@
                   </svg>
                   <span>Export Products</span>
                 </button>
-                <button type="button" class="btn-sub-action outline" id="openAddCategoryModalBtn" onclick="openAddCategoryModal()" title="Add new product category">
+                <button type="button" class="btn-sub-action outline" id="openManageCategoriesBtn" onclick="openManageCategoriesModal()" title="View and manage all categories">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="7" height="7" rx="1"></rect>
                     <rect x="14" y="3" width="7" height="7" rx="1"></rect>
                     <rect x="14" y="14" width="7" height="7" rx="1"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1"></rect>
                   </svg>
-                  <span>Add Category</span>
+                  <span>Manage Categories</span>
+                </button>
+                <button type="button" class="btn-sub-action outline" id="openAddCategoryModalBtn" onclick="openAddCategoryModal()" title="Add new product category">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  <span>+ Add Category</span>
                 </button>
                 <button type="button" class="btn-sub-action primary" id="openAddProductModalBtn" onclick="openAddProductModal()">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -3106,8 +3113,11 @@
                 <a id="categoryInfoStorefrontLink" href="products.html" target="_blank" class="btn-sub-action outline" style="padding: 6px 12px; font-size: 0.78rem;" title="View in storefront">
                   <span>Storefront ↗</span>
                 </a>
-                <button type="button" id="categoryDeleteBtn" class="btn-sub-action outline" style="display: none; padding: 6px 10px; font-size: 0.78rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Delete this custom category" onclick="deleteCategory(adminActiveCategory)">
-                  <span>🗑️ Delete</span>
+                <button type="button" id="categoryEditBtn" class="btn-sub-action outline" style="display: none; padding: 6px 12px; font-size: 0.78rem; color: var(--primary, #C99A3D); border-color: rgba(201, 154, 61, 0.35);" title="Edit this category" onclick="openEditCategoryModal(adminActiveCategory)">
+                  <span>✏️ Edit Category</span>
+                </button>
+                <button type="button" id="categoryDeleteBtn" class="btn-sub-action outline" style="display: none; padding: 6px 10px; font-size: 0.78rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Delete this category" onclick="deleteCategory(adminActiveCategory)">
+                  <span>🗑️ Delete Category</span>
                 </button>
               </div>
             </div>
@@ -3878,18 +3888,19 @@
   </div>
 
   <!-- ==========================================================================
-       MODAL: ADD NEW CATEGORY
+       MODAL: ADD / EDIT CATEGORY
        ========================================================================== -->
   <div class="admin-modal-overlay" id="addCategoryModal">
     <div class="admin-modal" style="max-width: 540px;">
       <div class="admin-modal-header">
         <div>
-          <h4 class="admin-modal-title">Add New Category</h4>
-          <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">Create catalog category for products &amp; store navigation.</div>
+          <h4 class="admin-modal-title" id="categoryModalTitle">Add New Category</h4>
+          <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;" id="categoryModalSubtitle">Create catalog category for products &amp; store navigation.</div>
         </div>
         <button type="button" class="admin-modal-close" onclick="closeAddCategoryModal()">&times;</button>
       </div>
       <form id="addCategoryForm">
+        <input type="hidden" id="categoryModalMode" value="new" />
         <div class="admin-modal-body">
           <div class="setting-row">
             <label class="setting-label">Category Name *</label>
@@ -3899,7 +3910,7 @@
           <div class="setting-row">
             <label class="setting-label">Category Key / Slug *</label>
             <input type="text" class="setting-input" id="newCategoryId" placeholder="e.g. apparel" required />
-            <div style="font-size: 0.70rem; color: var(--text-muted); margin-top: 3px;">Unique identifier used in URLs &amp; database</div>
+            <div style="font-size: 0.70rem; color: var(--text-muted); margin-top: 3px;" id="newCategoryIdHelp">Unique identifier used in URLs &amp; database</div>
           </div>
 
           <div class="setting-row">
@@ -3930,9 +3941,54 @@
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            <span>Save Category</span>
+            <span id="btnSubmitAddCategoryText">Save Category</span>
           </button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: MANAGE ALL CATEGORIES (DYNAMIC ADD / EDIT / DELETE)
+       ========================================================================== -->
+  <div class="admin-modal-overlay" id="manageCategoriesModal">
+    <div class="admin-modal" style="max-width: 680px; width: 95%;">
+      <div class="admin-modal-header">
+        <div>
+          <h4 class="admin-modal-title">Manage Categories</h4>
+          <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">Add, edit or delete product categories. Changes appear live on the store.</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="btn-sub-action primary" onclick="closeManageCategoriesModal(); openAddCategoryModal('manage')" style="padding: 6px 12px; font-size: 0.78rem;">
+            + Add Category
+          </button>
+          <button type="button" class="admin-modal-close" onclick="closeManageCategoriesModal()">&times;</button>
+        </div>
+      </div>
+      <div class="admin-modal-body" style="padding: 16px 20px;">
+        <div class="order-detail-table-wrap" style="max-height: 420px; overflow-y: auto;">
+          <table class="order-detail-table" style="width: 100%;">
+            <thead>
+              <tr>
+                <th style="width: 35%;">Category Name</th>
+                <th style="width: 25%;">Slug / ID</th>
+                <th style="width: 15%; text-align: center;">Products</th>
+                <th style="width: 25%; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="manageCategoriesTableBody">
+              <tr>
+                <td colspan="4" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading categories...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-sub-action outline" onclick="closeManageCategoriesModal()">Close</button>
+      </div>
+    </div>
+  </div>
       </form>
     </div>
   </div>

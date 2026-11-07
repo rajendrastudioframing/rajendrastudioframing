@@ -34,17 +34,11 @@ function renderCategorySelectors() {
   const dropdownMenu = document.getElementById('categoryDropdownMenu');
   const drawerPills = document.querySelector('.drawer-category-pills');
 
-  const categories = (typeof window.CATEGORIES_DATA !== 'undefined' && Array.isArray(window.CATEGORIES_DATA) && window.CATEGORIES_DATA.length > 0)
+  const categories = (typeof window.CATEGORIES_DATA !== 'undefined' && Array.isArray(window.CATEGORIES_DATA))
     ? window.CATEGORIES_DATA
-    : ((typeof CATEGORIES_DATA !== 'undefined' && Array.isArray(CATEGORIES_DATA) && CATEGORIES_DATA.length > 0)
+    : ((typeof CATEGORIES_DATA !== 'undefined' && Array.isArray(CATEGORIES_DATA))
         ? CATEGORIES_DATA
-        : [
-            { id: 'frames', name: 'Studio & Framing' },
-            { id: 'personalized', name: 'Personalized Printing' },
-            { id: 'office', name: 'Office Printing' },
-            { id: 'custom', name: 'Custom Printing' },
-            { id: 'gifts', name: 'Photo Gifts & Keepsakes' }
-          ]);
+        : []);
 
   const normCurrent = (currentCategory || 'all').toLowerCase();
 
@@ -90,7 +84,7 @@ function renderCategorySelectors() {
 }
 
 function getCatalogProducts() {
-  if (window.PRODUCTS_DATA && Array.isArray(window.PRODUCTS_DATA) && window.PRODUCTS_DATA.length > 0) {
+  if (window.PRODUCTS_DATA && Array.isArray(window.PRODUCTS_DATA)) {
     return window.PRODUCTS_DATA;
   }
   if (typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) {
@@ -108,7 +102,7 @@ async function fetchLiveCatalogData() {
 
     if (catRes && catRes.ok) {
       const catData = await catRes.json();
-      if (catData && catData.success && Array.isArray(catData.categories) && catData.categories.length > 0) {
+      if (catData && catData.success && Array.isArray(catData.categories)) {
         window.CATEGORIES_DATA = catData.categories;
         refreshCategoryMap(catData.categories);
         renderCategorySelectors();
@@ -117,7 +111,7 @@ async function fetchLiveCatalogData() {
 
     if (prodRes && prodRes.ok) {
       const prodData = await prodRes.json();
-      if (prodData && prodData.success && Array.isArray(prodData.products) && prodData.products.length > 0) {
+      if (prodData && prodData.success && Array.isArray(prodData.products)) {
         window.PRODUCTS_DATA = prodData.products;
         if (typeof PRODUCTS_DATA !== 'undefined') {
           try { PRODUCTS_DATA = prodData.products; } catch (_) {}
