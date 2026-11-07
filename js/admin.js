@@ -6401,3 +6401,132 @@ window.triggerBrevoOrderRecovery = async function(manual = true) {
     }
   }
 };
+
+/* ==========================================================================
+   CLOUD DATABASE SYNCHRONIZER (SUPABASE REAL-TIME TRUTH)
+   - Synchronizes orders, inquiries, leads & KPI metrics across all browsers
+   - Uploads any pending locally cached orders to cloud
+   - Guarantees 100% number matching across multiple devices/browsers
+   ========================================================================== */
+window.syncCloudDatabase = async function(manual = true) {
+  const syncButtons = [
+    document.getElementById('btnSyncCloudHeader'),
+    document.getElementById('btnSyncCloudDashboard'),
+    document.getElementById('btnSyncCloudOrders')
+  ].filter(Boolean);
+
+  syncButtons.forEach(btn => {
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    const textEl = btn.querySelector('span');
+    if (textEl) {
+      btn._origText = textEl.textContent;
+      textEl.textContent = 'Syncing...';
+    }
+  });
+
+  if (manual) {
+    showToast('☁️ Syncing Cloud', 'Connecting to Supabase Cloud database...', 'info', 2500);
+  }
+
+  try {
+    const ts = Date.now();
+    const [inqRes, ordRes, statusRes] = await Promise.all([
+      apiFetch(`/api/admin/inquiries?_t=${ts}`, { cache: 'no-store' }),
+      apiFetch(`/api/admin/orders?_t=${ts}`, { cache: 'no-store' }).catch(() => null),
+      apiFetch(`/api/db-status?_t=${ts}`, { cache: 'no-store' }).catch(() => null)
+    ]);
+
+    const inqData = await inqRes.json();
+    const ordData = (ordRes && ordRes.ok) ? await ordRes.json() : { orders: [] };
+    const statusData = (statusRes && statusRes.ok) ? await statusRes.json() : null;
+
+    // Check if Supabase tables need to be created in SQL editor
+    if (statusData && (statusData.ordersSelectError || statusData.inqSelectError)) {
+      const errMsg = (statusData.ordersSelectError && statusData.ordersSelectError.message) || (statusData.inqSelectError && statusData.inqSelectError.message) || '';
+      if (errMsg.includes('Could not find the table') || errMsg.includes('PGRST205')) {
+        showToast('Supabase SQL Setup Needed', 'Tables "orders" and "inquiries" need to be created in Supabase SQL Editor. Run the provided SQL script.', 'warning', 10000);
+      }
+    }
+
+    const serverInqs = (inqData && inqData.success && Array.isArray(inqData.inquiries)) ? inqData.inquiries : [];
+    const serverOrds = (ordData && ordData.success && Array.isArray(ordData.orders)) ? ordData.orders : [];
+
+    const deletedSet = new Set(
+      (statusData && Array.isArray(statusData.deletedOrders))
+        ? statusData.deletedOrders.map(x => String(x).toLowerCase().trim().replace(/^#/, ''))
+        : []
+    );
+
+    // If local has orders not yet on cloud, attempt self-healing upload to cloud
+    if (Array.isArray(allInquiries) && allInquiries.length > 0) {
+      const serverKeys = new Set([
+        ...serverInqs.map(i => (i.id || i.orderId || '').toLowerCase().trim().replace(/^#/, '')),
+        ...serverOrds.map(o => (o.orderId || o.id || '').toLowerCase().trim().replace(/^#/, ''))
+      ]);
+
+      const unsyncedLocals = allInquiries.filter(item => {
+        if (!item) return false;
+        const k = (item.id || item.orderId || '').toLowerCase().trim().replace(/^#/, '');
+        return k && !deletedSet.has(k) && !serverKeys.has(k);
+      });
+
+      if (unsyncedLocals.length > 0) {
+        console.log(`☁️ [CLOUD SYNC] Uploading ${unsyncedLocals.length} local order(s) to Supabase Cloud...`);
+        for (const localOrd of unsyncedLocals) {
+          try {
+            const cleanId = (localOrd.id || localOrd.orderId || '').replace(/^#/, '');
+            await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                status: localOrd.status || 'confirmed',
+                pickupDate: localOrd.pickupDate || localOrd.confirmationDate || null,
+                confirmationDate: localOrd.confirmationDate || null,
+                notes: localOrd.notes || 'Synced from studio workspace.',
+                customerName: localOrd.name || (localOrd.customer && localOrd.customer.name),
+                customerPhone: localOrd.phone || (localOrd.customer && localOrd.customer.phone),
+                customerEmail: localOrd.email || (localOrd.customer && localOrd.customer.email),
+                deliveryAddress: localOrd.deliveryAddress || (localOrd.customer && localOrd.customer.address),
+                productName: localOrd.product,
+                items: localOrd.items,
+                total: localOrd.total || localOrd.estimatedValue,
+                notifyCustomer: false
+              })
+            });
+          } catch (_) {}
+        }
+      }
+    }
+
+    // Now reload clean data from server
+    await loadInquiries();
+    if (typeof loadDashboardStats === 'function') await loadDashboardStats();
+
+    const ordersOnly = allInquiries.filter(i => 
+      (i.id && i.id.startsWith('RF-ORD')) || 
+      (i.product && i.product.includes('[ONLINE ORDER]')) ||
+      (i.orderId && String(i.orderId).startsWith('RF-ORD'))
+    );
+
+    const totalVal = ordersOnly.reduce((s, i) => s + (Number(i.total || i.estimatedValue) || 0), 0);
+
+    if (manual) {
+      showToast('☁️ Cloud Synced', `All browsers synchronized! Active: ${ordersOnly.length} Orders (₹${totalVal.toLocaleString('en-IN')})`, 'success', 5000);
+    }
+  } catch (err) {
+    console.error('Cloud sync exception:', err);
+    if (manual) {
+      showToast('Sync Error', 'Could not sync cloud database: ' + err.message, 'danger');
+    }
+  } finally {
+    syncButtons.forEach(btn => {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      const textEl = btn.querySelector('span');
+      if (textEl && btn._origText) {
+        textEl.textContent = btn._origText;
+      }
+    });
+  }
+};

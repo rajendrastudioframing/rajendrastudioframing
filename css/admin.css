@@ -741,6 +741,46 @@ body.admin-dashboard-body[data-theme="dark"] {
   transform: scale(0.97);
 }
 
+.btn-sub-action.primary-alt {
+  background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);
+  border: 1px solid #0284C7;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+}
+
+.btn-sub-action.primary-alt:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45);
+}
+
+.btn-topbar-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(2, 132, 199, 0.12);
+  border: 1px solid rgba(2, 132, 199, 0.35);
+  color: #0284C7;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+}
+
+[data-theme="dark"] .btn-topbar-action {
+  background: rgba(14, 165, 233, 0.18);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38BDF8;
+}
+
+.btn-topbar-action:hover {
+  background: rgba(2, 132, 199, 0.22);
+  transform: translateY(-1px);
+}
+
 /* ==========================================================================
    4-SEGMENT CONNECTED METRIC BAR (ELEVATED GRAPHURA SAAS)
    ========================================================================== */
