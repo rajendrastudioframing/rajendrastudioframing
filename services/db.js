@@ -299,6 +299,17 @@ function withTimeout(promise, ms, operationName = 'Database operation') {
     });
 }
 
+function isTableMissingError(err) {
+  if (!err) return false;
+  const msg = (err.message || String(err)).toLowerCase();
+  const code = String(err.code || '');
+  return code === 'PGRST204' || 
+         code === '42P01' || 
+         msg.includes('schema cache') || 
+         msg.includes('not find the table') || 
+         (msg.includes('relation') && msg.includes('does not exist'));
+}
+
 function safeIsoDate(val) {
   if (!val) return null;
   const s = String(val).trim();
@@ -828,12 +839,20 @@ module.exports = {
         const upsertPromise = supabase.from('products').upsert(supabaseRow, { onConflict: 'id' });
         const { error } = await withTimeout(upsertPromise, 8000, 'Supabase products table upsert');
         if (error) {
-          console.error('❌ [DATABASE] Supabase saveProduct error:', error.message);
-          throw new Error('Supabase database error: ' + error.message);
+          if (isTableMissingError(error)) {
+            console.warn('⚠️ [DATABASE] Supabase products table missing or schema cache not updated. Updating local store.');
+          } else {
+            console.error('❌ [DATABASE] Supabase saveProduct error:', error.message);
+            throw new Error('Supabase database error: ' + error.message);
+          }
         }
       } catch (err) {
-        console.error('❌ [DATABASE] Supabase saveProduct exception:', err.message);
-        throw err;
+        if (isTableMissingError(err)) {
+          console.warn('⚠️ [DATABASE] Supabase products table missing or schema cache not updated. Updating local store.');
+        } else {
+          console.error('❌ [DATABASE] Supabase saveProduct exception:', err.message);
+          throw err;
+        }
       }
     }
 
@@ -857,12 +876,20 @@ module.exports = {
         const delPromise = supabase.from('products').delete().eq('id', id);
         const { error } = await withTimeout(delPromise, 5000, 'Supabase deleteProduct');
         if (error) {
-          console.error('❌ [DATABASE] Supabase deleteProduct error:', error.message);
-          throw new Error('Supabase database error: ' + error.message);
+          if (isTableMissingError(error)) {
+            console.warn('⚠️ [DATABASE] Supabase products table missing or schema cache not updated. Updating local store.');
+          } else {
+            console.error('❌ [DATABASE] Supabase deleteProduct error:', error.message);
+            throw new Error('Supabase database error: ' + error.message);
+          }
         }
       } catch (err) {
-        console.error('❌ [DATABASE] Supabase deleteProduct exception:', err.message);
-        throw err;
+        if (isTableMissingError(err)) {
+          console.warn('⚠️ [DATABASE] Supabase products table missing or schema cache not updated. Updating local store.');
+        } else {
+          console.error('❌ [DATABASE] Supabase deleteProduct exception:', err.message);
+          throw err;
+        }
       }
     }
     let products = readJson(PRODUCTS_FILE, []);
@@ -942,12 +969,20 @@ module.exports = {
         }, { onConflict: 'id' });
         const { error } = await withTimeout(upsertPromise, 5000, 'Supabase saveCategory');
         if (error) {
-          console.error('❌ [DATABASE] Supabase saveCategory error:', error.message);
-          throw new Error('Supabase database error: ' + error.message);
+          if (isTableMissingError(error)) {
+            console.warn('⚠️ [DATABASE] Supabase categories table missing or schema cache not updated. Updating local store.');
+          } else {
+            console.error('❌ [DATABASE] Supabase saveCategory error:', error.message);
+            throw new Error('Supabase database error: ' + error.message);
+          }
         }
       } catch (err) {
-        console.error('❌ [DATABASE] Supabase saveCategory exception:', err.message);
-        throw err;
+        if (isTableMissingError(err)) {
+          console.warn('⚠️ [DATABASE] Supabase categories table missing or schema cache not updated. Updating local store.');
+        } else {
+          console.error('❌ [DATABASE] Supabase saveCategory exception:', err.message);
+          throw err;
+        }
       }
     }
 
@@ -970,12 +1005,20 @@ module.exports = {
         const delPromise = supabase.from('categories').delete().eq('id', cleanId);
         const { error } = await withTimeout(delPromise, 5000, 'Supabase deleteCategory');
         if (error) {
-          console.error('❌ [DATABASE] Supabase deleteCategory error:', error.message);
-          throw new Error('Supabase database error: ' + error.message);
+          if (isTableMissingError(error)) {
+            console.warn('⚠️ [DATABASE] Supabase categories table missing or schema cache not updated. Updating local store.');
+          } else {
+            console.error('❌ [DATABASE] Supabase deleteCategory error:', error.message);
+            throw new Error('Supabase database error: ' + error.message);
+          }
         }
       } catch (err) {
-        console.error('❌ [DATABASE] Supabase deleteCategory exception:', err.message);
-        throw err;
+        if (isTableMissingError(err)) {
+          console.warn('⚠️ [DATABASE] Supabase categories table missing or schema cache not updated. Updating local store.');
+        } else {
+          console.error('❌ [DATABASE] Supabase deleteCategory exception:', err.message);
+          throw err;
+        }
       }
     }
 
