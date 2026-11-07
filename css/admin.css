@@ -4575,8 +4575,8 @@ body.admin-login-body {
 
 .variant-fields-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr 110px;
-  gap: 10px;
+  grid-template-columns: 1.4fr 1.6fr 120px;
+  gap: 12px;
   align-items: end;
 }
 
@@ -4590,6 +4590,31 @@ body.admin-login-body {
   .variant-fields-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.variant-color-swatch-input {
+  width: 36px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border-medium, #CBD5E1);
+  border-radius: 6px;
+  cursor: pointer;
+  background: transparent;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .variant-color-swatch-input {
+  border-color: #2D3748 !important;
+}
+
+.variant-color-swatch-input::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.variant-color-swatch-input::-webkit-color-swatch {
+  border-radius: 4px;
+  border: none;
 }
 
 .variant-field-label {
