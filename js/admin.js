@@ -3180,6 +3180,7 @@ function initConfirmAndPickupModals() {
       }
 
       const cleanId = id.replace(/^#/, '');
+      const existingInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanId || (i.orderId || '').replace(/^#/, '') === cleanId);
 
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -3187,16 +3188,28 @@ function initConfirmAndPickupModals() {
       }
 
       try {
+        const payload = {
+          status: 'confirmed',
+          pickupDate,
+          confirmationDate: pickupDate,
+          notes: notes || 'Order accepted by studio. Custom framing and crafting underway.',
+          notifyCustomer: true
+        };
+        if (existingInq) {
+          payload.customerName = existingInq.name || (existingInq.customer && existingInq.customer.name);
+          payload.customerPhone = existingInq.phone || (existingInq.customer && existingInq.customer.phone);
+          payload.customerEmail = existingInq.email || existingInq.customerEmail || (existingInq.customer && existingInq.customer.email);
+          payload.deliveryAddress = existingInq.deliveryAddress || (existingInq.customer && existingInq.customer.address);
+          payload.productName = existingInq.product;
+          payload.items = existingInq.items;
+          payload.total = existingInq.total || existingInq.estimatedValue;
+          payload.paymentMethod = existingInq.paymentMethod;
+        }
+
         const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: 'confirmed',
-            pickupDate,
-            confirmationDate: pickupDate,
-            notes: notes || 'Order accepted by studio. Custom framing and crafting underway.',
-            notifyCustomer: true
-          })
+          body: JSON.stringify(payload)
         });
 
         const data = await res.json();
@@ -3267,6 +3280,7 @@ function initConfirmAndPickupModals() {
       }
 
       const cleanPickupId = id.replace(/^#/, '');
+      const existingPickupInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanPickupId || (i.orderId || '').replace(/^#/, '') === cleanPickupId);
 
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -3274,15 +3288,27 @@ function initConfirmAndPickupModals() {
       }
 
       try {
+        const payload = {
+          status: 'ready_for_pickup',
+          pickupDate,
+          notes: notes || 'Your order is ready for pickup! Please visit us to collect your custom frame.',
+          notifyCustomer: true
+        };
+        if (existingPickupInq) {
+          payload.customerName = existingPickupInq.name || (existingPickupInq.customer && existingPickupInq.customer.name);
+          payload.customerPhone = existingPickupInq.phone || (existingPickupInq.customer && existingPickupInq.customer.phone);
+          payload.customerEmail = existingPickupInq.email || existingPickupInq.customerEmail || (existingPickupInq.customer && existingPickupInq.customer.email);
+          payload.deliveryAddress = existingPickupInq.deliveryAddress || (existingPickupInq.customer && existingPickupInq.customer.address);
+          payload.productName = existingPickupInq.product;
+          payload.items = existingPickupInq.items;
+          payload.total = existingPickupInq.total || existingPickupInq.estimatedValue;
+          payload.paymentMethod = existingPickupInq.paymentMethod;
+        }
+
         const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanPickupId)}/status`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: 'ready_for_pickup',
-            pickupDate,
-            notes: notes || 'Your order is ready for pickup! Please visit us to collect your custom frame.',
-            notifyCustomer: true
-          })
+          body: JSON.stringify(payload)
         });
 
         const data = await res.json();

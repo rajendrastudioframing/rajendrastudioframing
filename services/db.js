@@ -1119,12 +1119,20 @@ module.exports = {
   async getOrderById(orderId) {
     const cleanId = (orderId || '').trim().replace(/^#/, '');
     if (!cleanId) return null;
+    const idVariants = Array.from(new Set([
+      cleanId,
+      '#' + cleanId,
+      cleanId.toLowerCase(),
+      '#' + cleanId.toLowerCase(),
+      cleanId.toUpperCase(),
+      '#' + cleanId.toUpperCase()
+    ]));
     if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase
           .from('orders')
           .select('*')
-          .ilike('order_id', cleanId)
+          .in('order_id', idVariants)
           .maybeSingle();
         const { data, error } = await withTimeout(queryPromise, 4000, 'Supabase getOrderById');
         if (!error && data) {
@@ -1346,12 +1354,20 @@ module.exports = {
   async getInquiryById(id) {
     const cleanId = (id || '').trim().replace(/^#/, '');
     if (!cleanId) return null;
+    const idVariants = Array.from(new Set([
+      cleanId,
+      '#' + cleanId,
+      cleanId.toLowerCase(),
+      '#' + cleanId.toLowerCase(),
+      cleanId.toUpperCase(),
+      '#' + cleanId.toUpperCase()
+    ]));
     if (supabase) {
       try {
         const queryPromise = supabase
           .from('inquiries')
           .select('*')
-          .ilike('id', cleanId)
+          .in('id', idVariants)
           .maybeSingle();
         const { data, error } = await withTimeout(queryPromise, 4000, 'Supabase getInquiryById');
         if (!error && data) {
