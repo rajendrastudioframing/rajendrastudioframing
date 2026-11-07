@@ -1358,7 +1358,7 @@ async function notifyOrderAcceptedByAdmin({ order, pickupDate = null, confirmati
   `).join('');
 
   // A) Customer Acceptance Email (Triggered strictly on Admin Acceptance)
-  const customerSubject = 'Your Order Has Been Confirmed!';
+  const customerSubject = `Order #${cleanId} Confirmed: Ready for Pickup on ${formattedPickupDate}`;
   const customerHtml = `
     <!DOCTYPE html>
     <html lang="en">
@@ -1367,7 +1367,7 @@ async function notifyOrderAcceptedByAdmin({ order, pickupDate = null, confirmati
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <meta name="color-scheme" content="light">
       <meta name="supported-color-schemes" content="light">
-      <title>Your Order Has Been Confirmed!</title>
+      <title>Your Order #${cleanId} Has Been Confirmed!</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #111827;">
       <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F3F4F6; padding: 24px 12px;">
@@ -1392,16 +1392,16 @@ async function notifyOrderAcceptedByAdmin({ order, pickupDate = null, confirmati
               <tr>
                 <td style="background: #ECFDF5; padding: 26px 24px 22px; text-align: center; border-bottom: 1px solid #A7F3D0;">
                   <div style="display: inline-block; background-color: #059669; color: #FFFFFF; font-weight: 800; font-size: 11px; letter-spacing: 1.2px; padding: 6px 18px; border-radius: 999px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);">
-                    ORDER CONFIRMED
+                    ORDER CONFIRMED &bull; READY FOR PICKUP
                   </div>
                   <h1 style="margin: 14px 0 6px; font-size: 24px; font-weight: 800; color: #064E3B; line-height: 1.25;">
                     Your Order Has Been Confirmed!
                   </h1>
                   <p style="margin: 0; font-size: 14px; color: #047857; line-height: 1.5;">
-                    Your order #${cleanId} has been successfully confirmed by our team.
+                    Your custom order #${cleanId} has been confirmed and will be ready on <strong>${formattedPickupDate}</strong>.
                   </p>
-                  <div style="display: inline-block; margin-top: 14px; background-color: #FFFFFF; border: 1px solid #6EE7B7; border-radius: 8px; padding: 7px 16px; font-size: 13px; color: #065F46; font-weight: 700;">
-                    Order ID: <span style="color: #D97706;">#${cleanId}</span> &bull; Scheduled Pickup: ${formattedPickupDate}
+                  <div style="display: inline-block; margin-top: 14px; background-color: #FFFFFF; border: 2px solid #059669; border-radius: 8px; padding: 10px 20px; font-size: 15px; color: #064E3B; font-weight: 800; box-shadow: 0 2px 8px rgba(5, 150, 105, 0.15);">
+                    🗓️ Ready for Shop Pickup on: <span style="color: #059669;">${formattedPickupDate}</span>
                   </div>
                 </td>
               </tr>
@@ -1424,13 +1424,13 @@ async function notifyOrderAcceptedByAdmin({ order, pickupDate = null, confirmati
                       <td width="33%" align="center" style="vertical-align: top; padding: 0 4px; border-left: 2px dashed #059669; border-right: 2px dashed #E5E7EB;">
                         <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #059669; color: #FFFFFF; line-height: 32px; font-size: 14px; font-weight: 800; margin: 0 auto 6px; box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3);">✓</div>
                         <div style="font-size: 12px; font-weight: 800; color: #065F46;">2. Accepted</div>
-                        <div style="font-size: 10px; color: #059669; font-weight: 700; margin-top: 2px;">Pickup Scheduled</div>
+                        <div style="font-size: 10px; color: #059669; font-weight: 700; margin-top: 2px;">Pickup: ${formattedPickupDate}</div>
                       </td>
                       <!-- Step 3: Fulfilment -->
                       <td width="33%" align="center" style="vertical-align: top; padding: 0 4px;">
                         <div style="width: 32px; height: 32px; border-radius: 50%; background-color: #F3F4F6; color: #9CA3AF; line-height: 32px; font-size: 14px; font-weight: 800; margin: 0 auto 6px;">📦</div>
                         <div style="font-size: 12px; font-weight: 600; color: #6B7280;">3. Ready for Pickup</div>
-                        <div style="font-size: 10px; color: #9CA3AF; margin-top: 2px;">Collection Date: ${formattedPickupDate}</div>
+                        <div style="font-size: 10px; color: #9CA3AF; margin-top: 2px;">Collect on: ${formattedPickupDate}</div>
                       </td>
                     </tr>
                   </table>
@@ -1440,13 +1440,32 @@ async function notifyOrderAcceptedByAdmin({ order, pickupDate = null, confirmati
               <!-- Customer Greeting & Acceptance Message -->
               <tr>
                 <td style="padding: 24px 28px 0;">
-                  <!-- Official Acceptance Message Box -->
-                  <div style="background-color: #ECFDF5; border: 1.5px solid #A7F3D0; border-radius: 12px; padding: 20px 22px; margin-bottom: 22px; color: #065F46; font-size: 15px; line-height: 1.6;">
-                    <p style="margin: 0 0 10px; font-size: 15px; color: #111827;">Hello <strong>${customerName}</strong>,</p>
-                    <p style="margin: 0 0 10px; font-size: 15px; color: #064E3B; font-weight: 700;">Your order <strong>#${cleanId}</strong> has been successfully confirmed by our team.</p>
-                    <p style="margin: 0 0 10px; font-size: 14px; color: #111827;"><strong>Your Pickup Date:</strong> <span style="color: #059669; font-weight: 700; font-size: 15px;">${formattedPickupDate}</span></p>
-                    <p style="margin: 0 0 10px; font-size: 14px; color: #065F46;">Please visit our shop on the scheduled date to collect your order.</p>
-                    <p style="margin: 10px 0 0; font-size: 14px; color: #4B5563;">Thank you for shopping with Rajendra Studio &amp; Framing!</p>
+                  <!-- Official Acceptance & Pickup Callout Box -->
+                  <div style="background-color: #ECFDF5; border: 2px solid #6EE7B7; border-radius: 12px; padding: 22px 24px; margin-bottom: 22px; color: #065F46; font-size: 15px; line-height: 1.6;">
+                    <p style="margin: 0 0 10px; font-size: 16px; color: #111827;">Hello <strong>${customerName}</strong>,</p>
+                    <p style="margin: 0 0 12px; font-size: 15px; color: #064E3B; font-weight: 700;">
+                      Great news! Your order <strong>#${cleanId}</strong> has been confirmed by our studio team and crafting is underway.
+                    </p>
+                    
+                    <div style="background-color: #FFFFFF; border: 2px solid #059669; border-radius: 10px; padding: 16px 20px; margin: 16px 0; box-shadow: 0 2px 6px rgba(5, 150, 105, 0.1);">
+                      <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #059669; margin-bottom: 4px;">
+                        🛍️ PRODUCT READY &amp; SHOP PICKUP DATE:
+                      </div>
+                      <div style="font-size: 22px; font-weight: 800; color: #064E3B; margin-bottom: 6px;">
+                        ${formattedPickupDate}
+                      </div>
+                      <div style="font-size: 14px; color: #374151; font-weight: 600; line-height: 1.5;">
+                        Your product will be ready on <strong style="color: #059669;">${formattedPickupDate}</strong>. Please visit our shop on this date to collect your handcrafted order.
+                      </div>
+                    </div>
+
+                    <div style="margin-top: 14px; font-size: 13px; color: #1F2937; line-height: 1.6; background-color: #F0FDF4; border-radius: 8px; padding: 10px 14px; border: 1px dashed #A7F3D0;">
+                      📍 <strong>Shop Address for Pickup:</strong><br>
+                      <strong>Rajesh Framing Studio</strong> &bull; GIDC Commercial Area, Dahej / Bharuch, Gujarat (392130)<br>
+                      📞 <strong>Phone / WhatsApp:</strong> +91 95107 57513 &bull; ⏰ <strong>Studio Timings:</strong> 9:00 AM – 9:00 PM
+                    </div>
+
+                    <p style="margin: 14px 0 0; font-size: 13px; color: #4B5563;">Thank you for shopping with Rajendra Studio &amp; Framing!</p>
                   </div>
 
                   <p style="font-size: 13px; color: #6B7280; line-height: 1.5; margin: 0 0 18px;">
@@ -1626,7 +1645,7 @@ async function notifyOrderAcceptedByAdmin({ order, pickupDate = null, confirmati
         to: customerEmail,
         subject: customerSubject,
         htmlContent: customerHtml,
-        textContent: `Hello ${customerName},\n\nYour order #${cleanId} has been successfully confirmed by our team.\n\nYour Pickup Date: ${formattedPickupDate}\n\nPlease visit our shop on the scheduled date to collect your order.\n\nThank you for shopping with Rajendra Studio & Framing!`
+        textContent: `Hello ${customerName},\n\nYour custom order #${cleanId} has been confirmed by our studio team!\n\nPRODUCT READY & SHOP PICKUP DATE: ${formattedPickupDate}\nYour product will be ready on ${formattedPickupDate}. Please visit our shop on this date to collect your handcrafted order.\n\nShop Address for Pickup:\nRajesh Framing Studio, GIDC Commercial Area, Dahej / Bharuch, Gujarat (392130)\nPhone / WhatsApp: +91 95107 57513\nStudio Timings: 9:00 AM – 9:00 PM\n\nThank you for shopping with Rajendra Studio & Framing!`
       });
       // Safety timeout of 5 seconds on customer email
       const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error('Brevo email timeout (5s)')), 5000));
