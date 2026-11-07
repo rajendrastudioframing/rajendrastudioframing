@@ -2043,6 +2043,9 @@ module.exports = {
     return review;
   },
 
+  // Supabase client instance
+  supabase,
+
   // Local file references for legacy imports
   readJson,
   writeJson,
