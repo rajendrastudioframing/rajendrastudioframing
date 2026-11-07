@@ -26,16 +26,10 @@ if (token) {
   sessionStorage.setItem('rf_admin_token', token);
 }
 let currentAdminUser = null;
-let allInquiries = (() => {
-  try {
-    const cached = localStorage.getItem('rf_admin_all_inquiries_cache');
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (_) {}
-  return [];
-})();
+try {
+  localStorage.removeItem('rf_admin_all_inquiries_cache');
+} catch (_) {}
+let allInquiries = [];
 let allProducts = [];
 let allMessages = [];
 let allCustomers = [];
@@ -731,17 +725,8 @@ async function loadInquiries() {
       return window._deletedOrderIdsCache.has(clean);
     };
 
-    // State-preserving anti-flicker map: start with existing in-memory state
+    // Authoritative map directly from live server data (single source of truth)
     const mergedMap = new Map();
-    if (Array.isArray(allInquiries)) {
-      allInquiries.forEach(item => {
-        if (!item) return;
-        const key = (item.id || item.orderId || '').toLowerCase().trim().replace(/^#/, '');
-        if (key && !isDeleted(key)) {
-          mergedMap.set(key, { ...item });
-        }
-      });
-    }
 
     // Merge incoming inquiries from server
     const incomingInqs = Array.isArray(data.inquiries) ? data.inquiries : [];
@@ -850,11 +835,6 @@ async function loadInquiries() {
 
     // Sort by createdAt descending
     allInquiries.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
-    // Persist verified state to localStorage for instantaneous zero-flicker loading
-    try {
-      localStorage.setItem('rf_admin_all_inquiries_cache', JSON.stringify(allInquiries));
-    } catch (_) {}
 
     // Separate Orders and Leads
     const orders = allInquiries.filter(i => 
@@ -2549,7 +2529,7 @@ window.executeDeleteOrders = async () => {
         return !idsToDeleteSet.has(idA) && !idsToDeleteSet.has(idB);
       });
       try {
-        localStorage.setItem('rf_admin_all_inquiries_cache', JSON.stringify(allInquiries));
+        localStorage.removeItem('rf_admin_all_inquiries_cache');
         localStorage.setItem('rf_admin_deleted_ids', JSON.stringify(Array.from(window._deletedOrderIdsCache)));
       } catch (_) {}
 
@@ -6458,48 +6438,12 @@ window.syncCloudDatabase = async function(manual = true) {
         : []
     );
 
-    // If local has orders not yet on cloud, attempt self-healing upload to cloud
-    if (Array.isArray(allInquiries) && allInquiries.length > 0) {
-      const serverKeys = new Set([
-        ...serverInqs.map(i => (i.id || i.orderId || '').toLowerCase().trim().replace(/^#/, '')),
-        ...serverOrds.map(o => (o.orderId || o.id || '').toLowerCase().trim().replace(/^#/, ''))
-      ]);
+    // Purge any stale local caches across all browsers
+    try {
+      localStorage.removeItem('rf_admin_all_inquiries_cache');
+    } catch (_) {}
 
-      const unsyncedLocals = allInquiries.filter(item => {
-        if (!item) return false;
-        const k = (item.id || item.orderId || '').toLowerCase().trim().replace(/^#/, '');
-        return k && !deletedSet.has(k) && !serverKeys.has(k);
-      });
-
-      if (unsyncedLocals.length > 0) {
-        console.log(`☁️ [CLOUD SYNC] Uploading ${unsyncedLocals.length} local order(s) to Supabase Cloud...`);
-        for (const localOrd of unsyncedLocals) {
-          try {
-            const cleanId = (localOrd.id || localOrd.orderId || '').replace(/^#/, '');
-            await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                status: localOrd.status || 'confirmed',
-                pickupDate: localOrd.pickupDate || localOrd.confirmationDate || null,
-                confirmationDate: localOrd.confirmationDate || null,
-                notes: localOrd.notes || 'Synced from studio workspace.',
-                customerName: localOrd.name || (localOrd.customer && localOrd.customer.name),
-                customerPhone: localOrd.phone || (localOrd.customer && localOrd.customer.phone),
-                customerEmail: localOrd.email || (localOrd.customer && localOrd.customer.email),
-                deliveryAddress: localOrd.deliveryAddress || (localOrd.customer && localOrd.customer.address),
-                productName: localOrd.product,
-                items: localOrd.items,
-                total: localOrd.total || localOrd.estimatedValue,
-                notifyCustomer: false
-              })
-            });
-          } catch (_) {}
-        }
-      }
-    }
-
-    // Now reload clean data from server
+    // Reload authoritative data directly from Supabase Cloud server
     await loadInquiries();
     if (typeof loadDashboardStats === 'function') await loadDashboardStats();
 
@@ -6512,7 +6456,7 @@ window.syncCloudDatabase = async function(manual = true) {
     const totalVal = ordersOnly.reduce((s, i) => s + (Number(i.total || i.estimatedValue) || 0), 0);
 
     if (manual) {
-      showToast('☁️ Cloud Synced', `All browsers synchronized! Active: ${ordersOnly.length} Orders (₹${totalVal.toLocaleString('en-IN')})`, 'success', 5000);
+      showToast('☁️ Cloud Synced', `All browsers synchronized with Cloud! Active: ${ordersOnly.length} Orders (₹${totalVal.toLocaleString('en-IN')})`, 'success', 5000);
     }
   } catch (err) {
     console.error('Cloud sync exception:', err);

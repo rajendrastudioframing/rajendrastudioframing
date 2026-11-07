@@ -146,3 +146,4 @@ CREATE POLICY "Allow Delete Inquiries" ON public.inquiries FOR DELETE USING (tru
 
 -- Reload PostgREST schema cache immediately
 NOTIFY pgrst, 'reload schema';
+
