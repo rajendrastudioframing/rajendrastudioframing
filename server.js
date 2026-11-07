@@ -4285,7 +4285,7 @@ app.get('/api/admin/categories', requireAuth, async (req, res) => {
  */
 app.post('/api/admin/categories', requireAuth, async (req, res) => {
   try {
-    const { id, name, icon, desc, badge, color, bg } = req.body;
+    const { id, name, icon, desc, badge, color, bg, image } = req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ success: false, message: 'Category name is required.' });
     }
@@ -4305,7 +4305,8 @@ app.post('/api/admin/categories', requireAuth, async (req, res) => {
       desc: cleanDesc,
       badge: cleanBadge,
       color: cleanColor,
-      bg: cleanBg
+      bg: cleanBg,
+      image: (image && typeof image === 'string') ? image.trim() : null
     });
 
     const allCategories = await db.getCategories();
@@ -4327,7 +4328,7 @@ app.post('/api/admin/categories', requireAuth, async (req, res) => {
 app.put('/api/admin/categories/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, icon, desc, badge, color, bg } = req.body;
+    const { name, icon, desc, badge, color, bg, image } = req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ success: false, message: 'Category name is required.' });
     }
@@ -4347,7 +4348,8 @@ app.put('/api/admin/categories/:id', requireAuth, async (req, res) => {
       desc: cleanDesc,
       badge: cleanBadge,
       color: cleanColor,
-      bg: cleanBg
+      bg: cleanBg,
+      image: (image && typeof image === 'string') ? image.trim() : null
     });
 
     const allCategories = await db.getCategories();

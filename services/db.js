@@ -912,6 +912,7 @@ module.exports = {
             id: cat.id,
             name: cat.name,
             icon: cat.icon || '🏷️',
+            image: cat.image || null,
             desc: cat.desc || cat.description || '',
             badge: cat.badge || cat.name,
             color: cat.color || '#C99A3D',
@@ -941,11 +942,13 @@ module.exports = {
     const cleanBadge = (category.badge || cleanName).trim();
     const cleanColor = category.color || '#C99A3D';
     const cleanBg = category.bg || 'rgba(201, 154, 61, 0.15)';
+    const cleanImage = (category.image && typeof category.image === 'string' && category.image.trim()) ? category.image.trim() : null;
 
     const newCategory = {
       id: cleanId,
       name: cleanName,
       icon: cleanIcon,
+      image: cleanImage,
       desc: cleanDesc,
       badge: cleanBadge,
       color: cleanColor,
@@ -960,6 +963,7 @@ module.exports = {
           id: newCategory.id,
           name: newCategory.name,
           icon: newCategory.icon,
+          image: newCategory.image,
           desc: newCategory.desc,
           badge: newCategory.badge,
           color: newCategory.color,

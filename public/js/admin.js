@@ -4017,6 +4017,66 @@ window.autoGenerateCategorySlug = function(val) {
   slugInput.value = (val || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 };
 
+
+window.handleCategoryImageUpload = async function(event) {
+  const file = event && event.target && event.target.files && event.target.files[0];
+  if (!file) return;
+
+  // 1. Validate max 2 MB
+  const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+  if (file.size > MAX_SIZE_BYTES) {
+    showToast('Image Too Large', `Category photo (${(file.size / (1024 * 1024)).toFixed(2)} MB) exceeds 2 MB limit. Please select a smaller photo.`, 'warning');
+    if (event.target) event.target.value = '';
+    return;
+  }
+
+  try {
+    // 2. Compress & scale image via canvas (max 1200x1200px, 0.82 quality)
+    const compressedDataUrl = await compressAdminImage(file, 1200, 1200, 0.82);
+    if (!compressedDataUrl) {
+      showToast('Image Error', 'Could not process selected image.', 'warning');
+      return;
+    }
+
+    const dataInput = document.getElementById('categoryImageData');
+    if (dataInput) dataInput.value = compressedDataUrl;
+
+    const previewImg = document.getElementById('categoryImagePreviewImg');
+    if (previewImg) previewImg.src = compressedDataUrl;
+
+    const fileNameEl = document.getElementById('categoryImageFileName');
+    if (fileNameEl) fileNameEl.textContent = file.name;
+
+    const fileSizeEl = document.getElementById('categoryImageFileSize');
+    const approxKb = Math.round((compressedDataUrl.length * 3 / 4) / 1024);
+    if (fileSizeEl) fileSizeEl.textContent = `${approxKb} KB (Optimized)`;
+
+    const dropEmpty = document.getElementById('categoryDropzoneEmpty');
+    const previewBox = document.getElementById('categoryImagePreviewBox');
+    if (dropEmpty) dropEmpty.style.display = 'none';
+    if (previewBox) previewBox.style.display = 'flex';
+  } catch (err) {
+    console.error('Category image upload processing error:', err);
+    showToast('Processing Error', 'Failed to process category image: ' + err.message, 'danger');
+  }
+};
+
+window.removeCategoryImage = function() {
+  const fileInput = document.getElementById('categoryImageFileInput');
+  if (fileInput) fileInput.value = '';
+
+  const dataInput = document.getElementById('categoryImageData');
+  if (dataInput) dataInput.value = '';
+
+  const previewImg = document.getElementById('categoryImagePreviewImg');
+  if (previewImg) previewImg.src = '';
+
+  const dropEmpty = document.getElementById('categoryDropzoneEmpty');
+  const previewBox = document.getElementById('categoryImagePreviewBox');
+  if (dropEmpty) dropEmpty.style.display = 'flex';
+  if (previewBox) previewBox.style.display = 'none';
+};
+
 window.openAddCategoryModal = function(origin = null) {
   categoryModalOrigin = origin;
   const modal = document.getElementById('addCategoryModal');
@@ -4046,6 +4106,8 @@ window.openAddCategoryModal = function(origin = null) {
   const colorHex = document.getElementById('newCategoryColorHex');
   if (colorInput) colorInput.value = '#C99A3D';
   if (colorHex) colorHex.textContent = '#C99A3D';
+
+  if (typeof removeCategoryImage === 'function') removeCategoryImage();
 
   if (modal) modal.classList.add('open');
 };
@@ -4098,6 +4160,27 @@ window.openEditCategoryModal = function(catId) {
   if (colorInput) colorInput.value = catColor;
   if (colorHex) colorHex.textContent = catColor;
 
+  if (cat.image) {
+    const dataInput = document.getElementById('categoryImageData');
+    if (dataInput) dataInput.value = cat.image;
+
+    const previewImg = document.getElementById('categoryImagePreviewImg');
+    if (previewImg) previewImg.src = cat.image;
+
+    const fileNameEl = document.getElementById('categoryImageFileName');
+    if (fileNameEl) fileNameEl.textContent = `${cat.name} Showcase Image`;
+
+    const fileSizeEl = document.getElementById('categoryImageFileSize');
+    if (fileSizeEl) fileSizeEl.textContent = 'Saved in database';
+
+    const dropEmpty = document.getElementById('categoryDropzoneEmpty');
+    const previewBox = document.getElementById('categoryImagePreviewBox');
+    if (dropEmpty) dropEmpty.style.display = 'none';
+    if (previewBox) previewBox.style.display = 'flex';
+  } else {
+    if (typeof removeCategoryImage === 'function') removeCategoryImage();
+  }
+
   if (modal) modal.classList.add('open');
 };
 
@@ -4138,12 +4221,17 @@ function renderManageCategoriesTable() {
     return `
       <tr>
         <td>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: ${escapeHtml(cat.color || '#C99A3D')};"></span>
-            <strong style="color: var(--text-main); font-size: 0.88rem;">${escapeHtml(cat.name)}</strong>
-            ${cat.badge ? `<span style="font-size: 0.68rem; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle); color: var(--text-muted);">${escapeHtml(cat.badge)}</span>` : ''}
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="${escapeHtml(cat.image || 'assets/images/glass_frame.jpg')}" alt="${escapeHtml(cat.name)}" style="width: 38px; height: 38px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0;" onerror="this.src='assets/images/glass_frame.jpg'" />
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${escapeHtml(cat.color || '#C99A3D')};"></span>
+                <strong style="color: var(--text-main); font-size: 0.88rem;">${escapeHtml(cat.name)}</strong>
+                ${cat.badge ? `<span style="font-size: 0.68rem; background: var(--bg-hover); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border-subtle); color: var(--text-muted);">${escapeHtml(cat.badge)}</span>` : ''}
+              </div>
+              ${cat.desc ? `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(cat.desc)}</div>` : ''}
+            </div>
           </div>
-          ${cat.desc ? `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 3px; max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(cat.desc)}</div>` : ''}
         </td>
         <td>
           <code style="font-size: 0.78rem; background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle); color: var(--text-secondary);">${escapeHtml(cat.id)}</code>
@@ -5560,10 +5648,12 @@ function initProductModals() {
       }
 
       const cleanId = (id || name).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-|-$/g, '') || `cat-${Date.now()}`;
+      const categoryImgData = (document.getElementById('categoryImageData') && document.getElementById('categoryImageData').value.trim()) || null;
       const newCatObj = {
         id: cleanId,
         name,
         icon: icon || '🏷️',
+        image: categoryImgData,
         desc: desc || `Browse handcrafted ${name} collection.`,
         badge: badge || name,
         color: color || '#C99A3D',
@@ -5587,7 +5677,7 @@ function initProductModals() {
         const res = await apiFetch(endpoint, {
           method: httpMethod,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: cleanId, name, icon, desc, badge, color })
+          body: JSON.stringify({ id: cleanId, name, icon, desc, badge, color, image: categoryImgData })
         });
 
         let data = null;

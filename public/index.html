@@ -566,17 +566,12 @@
         return;
       }
 
-      const titleEl = document.getElementById('homeCategoriesTitle');
-      if (titleEl) {
-        titleEl.textContent = `Explore Our ${categories.length} Categories`;
-      }
-
       grid.innerHTML = categories.map((cat, idx) => {
         const catId = (cat.id || '').toLowerCase();
         const catProducts = products.filter(p => (p.category || '').toLowerCase() === catId);
         const count = catProducts.length;
 
-        let imgSrc = '';
+        let imgSrc = (cat.image && typeof cat.image === 'string' && cat.image.trim()) ? cat.image.trim() : '';
         if (catProducts.length > 0) {
           const firstWithImg = catProducts.find(p => (p.images && p.images.length > 0) || p.image);
           if (firstWithImg) {

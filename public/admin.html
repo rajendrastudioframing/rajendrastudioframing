@@ -3913,6 +3913,43 @@
             <div style="font-size: 0.70rem; color: var(--text-muted); margin-top: 3px;" id="newCategoryIdHelp">Unique identifier used in URLs &amp; database</div>
           </div>
 
+          <!-- Category Showcase Photo (Max 2 MB) -->
+          <div class="setting-row" style="margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <label class="setting-label" style="margin-bottom: 0;">Category Showcase Image</label>
+              <span style="font-size: 0.70rem; color: var(--text-muted);">Max 2 MB (PNG, JPG, WEBP)</span>
+            </div>
+            
+            <input type="file" id="categoryImageFileInput" accept="image/png,image/jpeg,image/webp,image/jpg" style="display: none;" onchange="handleCategoryImageUpload(event)" />
+            <input type="hidden" id="categoryImageData" value="" />
+
+            <div class="admin-image-dropzone" id="categoryImageDropzone" onclick="document.getElementById('categoryImageFileInput').click()" style="padding: 12px 16px; min-height: 80px; text-align: center; border: 1.5px dashed var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">
+              <div id="categoryDropzoneEmpty" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <div style="font-size: 0.80rem; font-weight: 600; color: var(--text-heading);">
+                  <span style="color: var(--primary);">Click to upload category photo</span> or drag &amp; drop
+                </div>
+                <span style="font-size: 0.68rem; color: var(--text-muted);">Displayed on main website category card (Max 2 MB)</span>
+              </div>
+
+              <div id="categoryImagePreviewBox" style="display: none; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <img id="categoryImagePreviewImg" src="" alt="Category Preview" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);" />
+                  <div style="text-align: left;">
+                    <div id="categoryImageFileName" style="font-size: 0.78rem; font-weight: 600; color: var(--text-heading); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">category.jpg</div>
+                    <div id="categoryImageFileSize" style="font-size: 0.68rem; color: var(--text-muted);">0 KB</div>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <button type="button" class="btn-sub-action outline" onclick="event.stopPropagation(); document.getElementById('categoryImageFileInput').click();" style="padding: 4px 10px; font-size: 0.74rem;">Change</button>
+                  <button type="button" class="btn-table-icon delete" onclick="event.stopPropagation(); removeCategoryImage();" title="Remove photo" style="padding: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="setting-row">
             <label class="setting-label">Category Description</label>
             <textarea class="setting-input" id="newCategoryDesc" rows="2" placeholder="Brief summary of products in this category..."></textarea>

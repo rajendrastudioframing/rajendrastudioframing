@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   icon TEXT DEFAULT '🏷️',
+  image TEXT,
   "desc" TEXT,
   description TEXT,
   badge TEXT,
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
 
 -- Ensure all columns exist even if table was previously created with fewer columns
 ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS icon TEXT DEFAULT '🏷️';
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS image TEXT;
 ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS "desc" TEXT;
 ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description TEXT;
 ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS badge TEXT;
@@ -134,3 +136,4 @@ CREATE POLICY "Allow Delete Products" ON public.products FOR DELETE USING (true)
 -- 3. REFRESH POSTGREST SCHEMA CACHE (Fixes "Could not find table in schema cache")
 -- =============================================================================
 NOTIFY pgrst, 'reload schema';
+
