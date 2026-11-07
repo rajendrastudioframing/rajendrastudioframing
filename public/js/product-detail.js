@@ -181,34 +181,41 @@ function populateProductData() {
   }
 
   // Main Image & Active Variant Image
-  const initialImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : p.image;
+  const initialImg = (selectedFinish && selectedFinish.image) ? selectedFinish.image : (p.image || (Array.isArray(p.images) && p.images[0]) || 'assets/images/custom_canvas.jpg');
   const mainImg = document.getElementById('detailMainImg');
   if (mainImg) {
     mainImg.src = initialImg;
     mainImg.alt = `${p.name} - ${selectedFinish ? selectedFinish.name : ''}`;
+    mainImg.onerror = function() {
+      this.onerror = null;
+      this.src = 'assets/images/custom_canvas.jpg';
+    };
   }
 
   // Thumbnails & Image Gallery
   const thumbsContainer = document.getElementById('detailThumbsContainer');
   if (thumbsContainer) {
-    // Assemble rich image gallery from product photos (up to 5), finishes & craft perspectives
-    const productPhotos = (Array.isArray(p.images) && p.images.length > 0)
-      ? p.images.map((src, i) => ({ src, finishId: '', label: `${p.name} - Photo ${i + 1}` }))
-      : [{ src: p.image, finishId: '', label: p.name }];
+    // Assemble image gallery from product photos (up to 5) & finishes
+    const rawPhotos = (Array.isArray(p.images) && p.images.length > 0)
+      ? p.images.filter(x => typeof x === 'string' && x.trim())
+      : (p.image ? [p.image.trim()] : ['assets/images/custom_canvas.jpg']);
 
-    const finishImages = (p.finishes && p.finishes.length)
-      ? p.finishes.map(f => ({ src: f.image || p.image, finishId: f.id, label: `${p.name} - ${f.name}` }))
+    const productPhotos = rawPhotos.map((src, i) => ({
+      src,
+      finishId: '',
+      label: `${p.name} - Photo ${i + 1}`
+    }));
+
+    const finishImages = (Array.isArray(p.finishes) && p.finishes.length)
+      ? p.finishes
+          .filter(f => f && f.image && typeof f.image === 'string' && f.image.trim())
+          .map(f => ({ src: f.image.trim(), finishId: f.id, label: `${p.name} - ${f.name}` }))
       : [];
-
-    const perspectiveImages = [
-      { src: 'assets/images/workshop.jpg', finishId: '', label: `${p.name} - Craft & Workshop Detail` },
-      { src: 'assets/images/hero_showcase.jpg', finishId: '', label: `${p.name} - Gallery Showcase` }
-    ];
 
     // Combine and deduplicate by source
     const galleryItems = [];
     const seenSrcs = new Set();
-    [...productPhotos, ...finishImages, ...perspectiveImages].forEach(item => {
+    [...productPhotos, ...finishImages].forEach(item => {
       if (item.src && !seenSrcs.has(item.src)) {
         seenSrcs.add(item.src);
         galleryItems.push(item);
@@ -220,10 +227,10 @@ function populateProductData() {
       return `
         <div class="detail-thumb ${isActive ? 'active' : ''}" 
              draggable="true" 
-             data-src="${item.src}" 
-             data-finish-id="${item.finishId || ''}" 
-             title="${item.label} (Click or drag onto preview to select)">
-          <img src="${item.src}" alt="${item.label}" />
+             data-src="${escapeHtml(item.src)}" 
+             data-finish-id="${escapeHtml(item.finishId || '')}" 
+             title="${escapeHtml(item.label)} (Click or drag onto preview to select)">
+          <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.label)}" onerror="this.onerror=null;this.src='assets/images/custom_canvas.jpg';" />
         </div>
       `;
     }).join('');

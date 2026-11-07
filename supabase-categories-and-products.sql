@@ -133,7 +133,38 @@ CREATE POLICY "Allow Delete Products" ON public.products FOR DELETE USING (true)
 
 
 -- =============================================================================
--- 3. REFRESH POSTGREST SCHEMA CACHE (Fixes "Could not find table in schema cache")
+-- 3. CREATE STORAGE BUCKET FOR PHOTOS & PRODUCT IMAGES (Max 5MB per image, Public Read)
+-- =============================================================================
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'photos',
+  'photos',
+  true,
+  5242880, -- 5 MB limit
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = true,
+  file_size_limit = 5242880,
+  allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+
+-- Storage RLS Policies for 'photos' bucket (Allow Read & Upload)
+DROP POLICY IF EXISTS "Public Read Photos" ON storage.objects;
+CREATE POLICY "Public Read Photos" ON storage.objects FOR SELECT USING (bucket_id = 'photos');
+
+DROP POLICY IF EXISTS "Public Insert Photos" ON storage.objects;
+CREATE POLICY "Public Insert Photos" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'photos');
+
+DROP POLICY IF EXISTS "Public Update Photos" ON storage.objects;
+CREATE POLICY "Public Update Photos" ON storage.objects FOR UPDATE USING (bucket_id = 'photos') WITH CHECK (bucket_id = 'photos');
+
+DROP POLICY IF EXISTS "Public Delete Photos" ON storage.objects;
+CREATE POLICY "Public Delete Photos" ON storage.objects FOR DELETE USING (bucket_id = 'photos');
+
+
+-- =============================================================================
+-- 4. REFRESH POSTGREST SCHEMA CACHE (Fixes "Could not find table in schema cache")
 -- =============================================================================
 NOTIFY pgrst, 'reload schema';
+
 

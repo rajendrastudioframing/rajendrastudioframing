@@ -4702,7 +4702,7 @@ function initProductModals() {
       const isCover = idx === 0;
       html += `
         <div class="admin-photo-card ${isCover ? 'is-cover' : ''}" title="${isCover ? '⭐ Primary Cover Photo' : 'Photo #' + (idx + 1)}">
-          <img src="${escapeHtml(src)}" alt="Product Photo ${idx + 1}" />
+          <img src="${escapeHtml(src)}" alt="Product Photo ${idx + 1}" onerror="this.onerror=null;this.src='assets/images/custom_canvas.jpg';" />
           <span class="admin-photo-badge">${isCover ? '⭐ Cover' : '#' + (idx + 1)}</span>
           <button type="button" class="admin-photo-remove" onclick="removeAdminPhotoAt(${idx}, event)" title="Remove photo">&times;</button>
           ${!isCover ? `<button type="button" class="admin-photo-make-cover" onclick="makeCoverPhoto(${idx}, event)" title="Set as primary cover">Make Cover</button>` : ''}
@@ -4737,7 +4737,7 @@ function initProductModals() {
       const isCover = idx === 0;
       html += `
         <div class="admin-photo-card ${isCover ? 'is-cover' : ''}" title="${isCover ? '⭐ Primary Cover Photo' : 'Photo #' + (idx + 1)}">
-          <img src="${escapeHtml(src)}" alt="Product Photo ${idx + 1}" />
+          <img src="${escapeHtml(src)}" alt="Product Photo ${idx + 1}" onerror="this.onerror=null;this.src='assets/images/custom_canvas.jpg';" />
           <span class="admin-photo-badge">${isCover ? '⭐ Cover' : '#' + (idx + 1)}</span>
           <button type="button" class="admin-photo-remove" onclick="removeEditAdminPhotoAt(${idx}, event)" title="Remove photo">&times;</button>
           ${!isCover ? `<button type="button" class="admin-photo-make-cover" onclick="makeEditCoverPhoto(${idx}, event)" title="Set as primary cover">Make Cover</button>` : ''}
@@ -4775,6 +4775,10 @@ function initProductModals() {
 
     for (const file of filesToUpload) {
       if (!file.type.startsWith('image/')) continue;
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('File Too Large', `"${file.name}" exceeds 2MB limit. Please choose an image under 2MB.`, 'warning');
+        continue;
+      }
       const compressed = await compressAdminImage(file);
       if (compressed && uploadedProductImages.length < 5) {
         uploadedProductImages.push(compressed);
@@ -4832,6 +4836,87 @@ function initProductModals() {
 
   window.handleAdminImageUpload = window.handleAdminMultiImageUpload;
   window.removeAdminImage = window.removeAllAdminPhotos;
+
+  // Edit Product Multi-Photo Handlers
+  window.handleEditAdminMultiImageUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const remainingSlots = 5 - uploadedEditProductImages.length;
+    if (remainingSlots <= 0) {
+      showToast('Photo Limit', 'Maximum 5 photos allowed per product.', 'warning');
+      e.target.value = '';
+      return;
+    }
+
+    const filesToUpload = files.slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      showToast('Limit Reached', `Only ${remainingSlots} photo(s) added (max 5 photos per product).`, 'info');
+    }
+
+    for (const file of filesToUpload) {
+      if (!file.type.startsWith('image/')) continue;
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('File Too Large', `"${file.name}" exceeds 2MB limit. Please choose an image under 2MB.`, 'warning');
+        continue;
+      }
+      const compressed = await compressAdminImage(file);
+      if (compressed && uploadedEditProductImages.length < 5) {
+        uploadedEditProductImages.push(compressed);
+      }
+    }
+
+    uploadedEditProductImageBase64 = uploadedEditProductImages[0] || null;
+    e.target.value = '';
+    renderEditAdminPhotosGrid();
+  };
+
+  window.removeEditAdminPhotoAt = (idx, e) => {
+    if (e) e.stopPropagation();
+    if (idx >= 0 && idx < uploadedEditProductImages.length) {
+      uploadedEditProductImages.splice(idx, 1);
+      uploadedEditProductImageBase64 = uploadedEditProductImages[0] || null;
+      renderEditAdminPhotosGrid();
+    }
+  };
+
+  window.makeEditCoverPhoto = (idx, e) => {
+    if (e) e.stopPropagation();
+    if (idx > 0 && idx < uploadedEditProductImages.length) {
+      const [item] = uploadedEditProductImages.splice(idx, 1);
+      uploadedEditProductImages.unshift(item);
+      uploadedEditProductImageBase64 = uploadedEditProductImages[0] || null;
+      renderEditAdminPhotosGrid();
+      showToast('Cover Updated', 'First photo is now the primary catalog cover.', 'info');
+    }
+  };
+
+  window.removeAllEditPhotos = (e) => {
+    if (e) e.stopPropagation();
+    uploadedEditProductImages = [];
+    uploadedEditProductImageBase64 = null;
+    const fileInput = document.getElementById('editProductImageFile');
+    if (fileInput) fileInput.value = '';
+    renderEditAdminPhotosGrid();
+  };
+
+  window.addPresetAsEditProductPhoto = () => {
+    const presetEl = document.getElementById('editProductImagePreset');
+    const val = presetEl ? presetEl.value : '';
+    if (!val) return;
+    if (uploadedEditProductImages.length >= 5) {
+      showToast('Photo Limit', 'Maximum 5 photos allowed per product.', 'warning');
+      return;
+    }
+    uploadedEditProductImages.push(val);
+    uploadedEditProductImageBase64 = uploadedEditProductImages[0] || null;
+    renderEditAdminPhotosGrid();
+    window.switchEditImageMode('upload');
+    showToast('Photo Added', 'Preset photo added to product gallery (Max 5).', 'success');
+  };
+
+  window.handleEditAdminImageUpload = window.handleEditAdminMultiImageUpload;
+  window.removeEditAdminImage = window.removeAllEditPhotos;
 
   // Category change listener to set intelligent preset default
   const newCatSelect = document.getElementById('newProductCategory');
@@ -5278,26 +5363,9 @@ function initProductModals() {
   };
 
   window.handleEditAdminImageUpload = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      showToast('Invalid File', 'Please select an image file (PNG, JPG, WEBP).', 'warning');
-      return;
+    if (typeof window.handleEditAdminMultiImageUpload === 'function') {
+      return window.handleEditAdminMultiImageUpload(e);
     }
-
-    const reader = new FileReader();
-    reader.onload = (loadEvt) => {
-      uploadedEditProductImageBase64 = loadEvt.target.result;
-      const previewImg = document.getElementById('editDropzonePreviewImg');
-      const fileNameEl = document.getElementById('editDropzoneFileName');
-      const fileSizeEl = document.getElementById('editDropzoneFileSize');
-
-      if (previewImg) previewImg.src = uploadedEditProductImageBase64;
-      if (fileNameEl) fileNameEl.textContent = file.name;
-      if (fileSizeEl) fileSizeEl.textContent = (file.size / 1024 < 1024) ? `${Math.round(file.size / 1024)} KB (Ready to save)` : `${(file.size / (1024 * 1024)).toFixed(1)} MB (Ready to save)`;
-    };
-    reader.readAsDataURL(file);
   };
 
   window.handleEditPresetChange = (presetUrl) => {

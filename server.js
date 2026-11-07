@@ -3867,12 +3867,19 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
             }
           }
 
-          // Asynchronous local disk write
-          await Promise.all([
-            fs.promises.writeFile(path.join(uploadDir, cleanName), buffer).catch(() => {}),
-            fs.promises.writeFile(path.join(pubUploadDir, cleanName), buffer).catch(() => {})
-          ]);
-          return `assets/images/uploads/${cleanName}`;
+          // Local disk write for non-serverless development
+          if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+            try {
+              await Promise.all([
+                fs.promises.writeFile(path.join(uploadDir, cleanName), buffer).catch(() => {}),
+                fs.promises.writeFile(path.join(pubUploadDir, cleanName), buffer).catch(() => {})
+              ]);
+              return `assets/images/uploads/${cleanName}`;
+            } catch (_) {}
+          }
+          // On Vercel / Cloud when Supabase Storage is not ready or timed out:
+          // Return the compressed base64 data URL directly so it NEVER 404s or shows broken image!
+          return imgItem;
         }
       } catch (e) {
         console.warn('Error saving uploaded image:', e.message);
@@ -4065,12 +4072,19 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
               }
             }
 
-            // Asynchronous local disk write
-            await Promise.all([
-              fs.promises.writeFile(path.join(uploadDir, cleanName), buffer).catch(() => {}),
-              fs.promises.writeFile(path.join(pubUploadDir, cleanName), buffer).catch(() => {})
-            ]);
-            return `assets/images/uploads/${cleanName}`;
+            // Local disk write for non-serverless development
+            if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+              try {
+                await Promise.all([
+                  fs.promises.writeFile(path.join(uploadDir, cleanName), buffer).catch(() => {}),
+                  fs.promises.writeFile(path.join(pubUploadDir, cleanName), buffer).catch(() => {})
+                ]);
+                return `assets/images/uploads/${cleanName}`;
+              } catch (_) {}
+            }
+            // On Vercel / Cloud when Supabase Storage is not ready or timed out:
+            // Return the compressed base64 data URL directly so it NEVER 404s or shows broken image!
+            return imgItem;
           }
         } catch (e) {
           console.warn('Error saving updated product image:', e.message);
@@ -4196,11 +4210,7 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
       }
     }
     target.finishes = resolvedFinishes.map(f => {
-      const copy = { ...f };
-      if (copy.image && copy.image.startsWith('data:image/')) {
-        copy.image = target.image;
-      }
-      return copy;
+      return { ...f };
     });
   }
 

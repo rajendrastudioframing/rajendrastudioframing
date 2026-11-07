@@ -572,7 +572,7 @@
         const count = catProducts.length;
 
         let imgSrc = (cat.image && typeof cat.image === 'string' && cat.image.trim()) ? cat.image.trim() : '';
-        if (catProducts.length > 0) {
+        if (!imgSrc && catProducts.length > 0) {
           const firstWithImg = catProducts.find(p => (p.images && p.images.length > 0) || p.image);
           if (firstWithImg) {
             imgSrc = (firstWithImg.images && firstWithImg.images[0]) || firstWithImg.image;

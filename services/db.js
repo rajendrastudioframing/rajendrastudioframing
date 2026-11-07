@@ -724,35 +724,53 @@ module.exports = {
         const queryPromise = supabase.from('products').select('*').order('created_at', { ascending: false });
         const { data, error } = await withTimeout(queryPromise, 3500, 'Supabase getProducts');
         if (!error && Array.isArray(data)) {
-          const mapped = data.map(remote => ({
-            id: remote.id,
-            name: remote.name,
-            title: remote.name,
-            category: remote.category,
-            categoryLabel: remote.category_label || remote.categoryLabel || remote.category,
-            price: Number(remote.price) || 0,
-            originalPrice: remote.original_price ? Number(remote.original_price) : null,
-            priceDisplay: remote.price_display || `Starting from ₹${remote.price}`,
-            rating: Number(remote.rating) || 5.0,
-            reviewsCount: Number(remote.reviews_count) || 1,
-            badge: remote.badge || '',
-            image: remote.image,
-            images: (Array.isArray(remote.images) && remote.images.length > 0) ? remote.images : (remote.image ? [remote.image] : []),
-            shortDescription: remote.short_description || '',
-            description: remote.description || remote.short_description || '',
-            material: remote.material || '',
-            printingType: remote.printing_type || '',
-            status: remote.status || 'In Stock',
-            inStock: remote.in_stock !== undefined ? Boolean(remote.in_stock) : (remote.status === 'In Stock'),
-            stockQty: remote.stock_qty !== undefined ? Number(remote.stock_qty) : 100,
-            leadTime: remote.lead_time || '24 - 48 Hours',
-            sizes: Array.isArray(remote.sizes) ? remote.sizes : [],
-            finishes: Array.isArray(remote.finishes) ? remote.finishes : [],
-            variants: Array.isArray(remote.variants) ? remote.variants : [],
-            features: Array.isArray(remote.features) ? remote.features : [],
-            createdAt: remote.created_at,
-            updatedAt: remote.updated_at
-          }));
+          const mapped = data.map(remote => {
+            let resolvedImages = [];
+            if (Array.isArray(remote.images)) {
+              resolvedImages = remote.images.filter(x => typeof x === 'string' && x.trim());
+            } else if (typeof remote.images === 'string') {
+              try {
+                const parsed = JSON.parse(remote.images);
+                if (Array.isArray(parsed)) resolvedImages = parsed.filter(x => typeof x === 'string' && x.trim());
+              } catch (_) {}
+            }
+            if (!resolvedImages.length && remote.image && typeof remote.image === 'string' && remote.image.trim()) {
+              resolvedImages = [remote.image.trim()];
+            }
+            const cleanImage = (remote.image && typeof remote.image === 'string' && remote.image.trim())
+              ? remote.image.trim()
+              : (resolvedImages[0] || 'assets/images/custom_canvas.jpg');
+
+            return {
+              id: remote.id,
+              name: remote.name,
+              title: remote.name,
+              category: remote.category,
+              categoryLabel: remote.category_label || remote.categoryLabel || remote.category,
+              price: Number(remote.price) || 0,
+              originalPrice: remote.original_price ? Number(remote.original_price) : null,
+              priceDisplay: remote.price_display || `Starting from ₹${remote.price}`,
+              rating: Number(remote.rating) || 5.0,
+              reviewsCount: Number(remote.reviews_count) || 1,
+              badge: remote.badge || '',
+              image: cleanImage,
+              images: resolvedImages.length > 0 ? resolvedImages : [cleanImage],
+              shortDescription: remote.short_description || '',
+              description: remote.description || remote.short_description || '',
+              material: remote.material || '',
+              printingType: remote.printing_type || '',
+              status: remote.status || 'In Stock',
+              inStock: remote.in_stock !== undefined ? Boolean(remote.in_stock) : (remote.status === 'In Stock'),
+              stockQty: remote.stock_qty !== undefined ? Number(remote.stock_qty) : 100,
+              leadTime: remote.lead_time || '24 - 48 Hours',
+              sizes: Array.isArray(remote.sizes) ? remote.sizes : [],
+              finishes: Array.isArray(remote.finishes) ? remote.finishes : [],
+              variants: Array.isArray(remote.variants) ? remote.variants : [],
+              features: Array.isArray(remote.features) ? remote.features : [],
+              createdAt: remote.created_at,
+              updatedAt: remote.updated_at
+            };
+          });
           return mapped;
         }
       } catch (err) {
@@ -763,20 +781,20 @@ module.exports = {
   },
 
   async saveProduct(product) {
-    const cleanImage = (product.image && typeof product.image === 'string' && !product.image.startsWith('data:image/'))
+    const cleanImage = (product.image && typeof product.image === 'string' && product.image.trim())
       ? product.image.trim()
-      : (Array.isArray(product.images) && product.images[0] && !product.images[0].startsWith('data:image/')
+      : (Array.isArray(product.images) && product.images[0] && typeof product.images[0] === 'string' && product.images[0].trim()
         ? product.images[0].trim()
         : 'assets/images/custom_canvas.jpg');
 
     const cleanImages = (Array.isArray(product.images) && product.images.length > 0)
-      ? product.images.filter(img => typeof img === 'string' && !img.startsWith('data:image/')).map(s => s.trim())
+      ? product.images.filter(img => typeof img === 'string' && img.trim()).map(s => s.trim())
       : [cleanImage];
 
     const cleanFinishes = Array.isArray(product.finishes)
       ? product.finishes.map(f => ({
           ...f,
-          image: (f.image && typeof f.image === 'string' && !f.image.startsWith('data:image/')) ? f.image.trim() : cleanImage
+          image: (f.image && typeof f.image === 'string' && f.image.trim()) ? f.image.trim() : cleanImage
         }))
       : [];
 
