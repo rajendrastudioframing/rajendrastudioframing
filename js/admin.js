@@ -1206,11 +1206,11 @@ function createOrderCardRowHTML(order) {
   const paymentClass = paymentStatus.toLowerCase();
   const paymentMethod = isOnlinePayment ? 'Online UPI' : 'Pay on Delivery';
   const ordSt = (order.status || '').toLowerCase().trim();
-  const isCancelled = ordSt === 'cancelled';
+  const isCancelled = ordSt === 'cancelled' || ordSt === 'canceled' || ordSt === 'rejected';
   const isPickedUp = ordSt === 'picked_up' || ordSt === 'picked up';
   const isReadyForPickup = ordSt === 'ready_for_pickup' || ordSt === 'ready for pickup' || ordSt === 'shipped' || ordSt === 'dispatched' || ordSt === 'pickup ready';
-  const isConfirmed = ordSt === 'confirmed' || ordSt === 'accepted' || Boolean(order.confirmationDate) || Boolean(order.confirmedAt);
-  const isPending = ordSt === 'pending' || ordSt === 'new' || !ordSt;
+  const isConfirmed = !isCancelled && (ordSt === 'confirmed' || ordSt === 'accepted' || Boolean(order.confirmationDate) || Boolean(order.confirmedAt));
+  const isPending = !isCancelled && !isConfirmed && !isPickedUp && !isReadyForPickup;
 
   let displayStatus = 'Pending';
   if (isCancelled) {
@@ -1375,12 +1375,20 @@ function createOrderCardRowHTML(order) {
           <!-- 1. Accept Order (Once accepted, locked as confirmed badge) -->
           <button type="button" 
                   class="btn-card-action accept ${isConfirmed ? 'active-state' : ''}" 
-                  ${isConfirmed ? 'disabled style="cursor: default; opacity: 1; pointer-events: none;"' : (isCancelled || isPickedUp ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openAcceptOrderModal('${escapeHtml(order.id)}')"`)} 
-                  title="${isConfirmed ? 'Order already accepted (Pickup Date: ' + escapeHtml(formatLocalReadableDate(order.pickupDate)) + ')' : isCancelled ? 'Order is cancelled' : 'Accept order and select mandatory pickup date'}">
+                  ${isConfirmed ? 'disabled style="cursor: default; opacity: 1; pointer-events: none;"' : (isCancelled || isPickedUp ? 'disabled style="opacity: 0.38; cursor: not-allowed; pointer-events: none;"' : `onclick="openAcceptOrderModal('${escapeHtml(order.id)}')"`)} 
+                  title="${isConfirmed ? 'Order already accepted (Pickup Date: ' + escapeHtml(formatLocalReadableDate(order.pickupDate)) + ')' : isCancelled ? 'Order is rejected and cannot be accepted' : 'Accept order and select mandatory pickup date'}">
             ${isConfirmed ? '✓ Accepted' : '✓ Accept Order'}
           </button>
 
-          <!-- 2. View Order (Complete details & specifications) -->
+          <!-- 2. Reject Order (Once rejected, locked as rejected badge) -->
+          <button type="button" 
+                  class="btn-card-action cancel ${isCancelled ? 'active-state' : ''}" 
+                  ${isCancelled ? 'disabled style="cursor: default; opacity: 1; pointer-events: none;"' : (isConfirmed || isPickedUp ? 'disabled style="opacity: 0.38; cursor: not-allowed; pointer-events: none;"' : `onclick="openCancelOrderModal('${escapeHtml(order.id)}')"`)} 
+                  title="${isCancelled ? 'Order already rejected' : isConfirmed ? 'Order is already accepted and cannot be rejected' : 'Reject order and send cancellation email to customer'}">
+            ${isCancelled ? '✕ Rejected' : '✕ Reject Order'}
+          </button>
+
+          <!-- 3. View Order (Complete details & specifications) -->
           <button type="button" 
                   class="btn-card-action details view-order" 
                   onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" 
@@ -1388,7 +1396,7 @@ function createOrderCardRowHTML(order) {
             👁️ View Order
           </button>
 
-          <!-- 3. Delete Order Permanently -->
+          <!-- 4. Delete Order Permanently -->
           <button type="button" 
                   class="btn-card-action delete" 
                   onclick="confirmDeleteOrder('${escapeHtml(order.id)}')" 
@@ -1657,8 +1665,17 @@ window.openOrderDetailsModal = (orderId) => {
           ${order.pickupDate ? ` &bull; <strong>Scheduled Pickup:</strong> ${escapeHtml(formatLocalReadableDate(order.pickupDate))}` : ''}
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="btn-sub-action primary" ${isConfirmed ? 'disabled style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px; cursor: default; opacity: 1; pointer-events: none;"' : (isCancelled || isPickedUp ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openAcceptOrderModal('${escapeHtml(displayOrderId)}')"`)} style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
+          <button type="button" class="btn-sub-action primary" 
+                  ${isConfirmed ? 'disabled style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px; cursor: default; opacity: 1; pointer-events: none;"' : (isCancelled || isPickedUp ? 'disabled style="opacity: 0.38; cursor: not-allowed; pointer-events: none; font-size: 0.82rem; padding: 7px 14px;"' : `onclick="closeOrderDetailsModal(); openAcceptOrderModal('${escapeHtml(displayOrderId)}')"`)} 
+                  style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px;"
+                  title="${isConfirmed ? 'Order already accepted' : isCancelled ? 'Order is rejected and cannot be accepted' : 'Accept order and select pickup date'}">
             ${isConfirmed ? '✓ Accepted' : '✓ Accept Order'}
+          </button>
+          <button type="button" class="btn-sub-action" 
+                  ${isCancelled ? 'disabled style="background: #DC2626; border-color: #DC2626; color: #fff; font-size: 0.82rem; padding: 7px 14px; cursor: default; opacity: 1; pointer-events: none;"' : (isConfirmed || isPickedUp ? 'disabled style="opacity: 0.38; cursor: not-allowed; pointer-events: none; font-size: 0.82rem; padding: 7px 14px;"' : `onclick="closeOrderDetailsModal(); openCancelOrderModal('${escapeHtml(displayOrderId)}')"`)} 
+                  style="background: #DC2626; border-color: #DC2626; color: #fff; font-size: 0.82rem; padding: 7px 14px;"
+                  title="${isCancelled ? 'Order already rejected' : isConfirmed ? 'Order is already accepted and cannot be rejected' : 'Reject order and send cancellation email to customer'}">
+            ${isCancelled ? '✕ Rejected' : '✕ Reject Order'}
           </button>
           <button type="button" class="btn-sub-action" onclick="closeOrderDetailsModal(); confirmDeleteOrder('${escapeHtml(displayOrderId)}')" style="background: #991B1B; border-color: #991B1B; color: #fff; font-size: 0.82rem; padding: 7px 14px;" title="Permanently delete order">
             🗑️ Delete Order
@@ -3001,6 +3018,15 @@ window.openAcceptOrderModal = window.openConfirmDateModal = (id) => {
     showToast('Order Already Accepted', `Order #${cleanId} has already been accepted and scheduled for pickup.`, 'info');
     return;
   }
+
+  const isAlreadyCancelled = item && (
+    (item.status && (item.status.toLowerCase() === 'cancelled' || item.status.toLowerCase() === 'canceled' || item.status.toLowerCase() === 'rejected'))
+  );
+
+  if (isAlreadyCancelled) {
+    showToast('Order Already Rejected', `Order #${cleanId} has already been rejected/cancelled and cannot be accepted.`, 'warning');
+    return;
+  }
   const modal = document.getElementById('confirmOrderModal');
   const titleIdEl = document.getElementById('confirmModalOrderId');
   const idInput = document.getElementById('confirmOrderIdInput');
@@ -3552,12 +3578,32 @@ function initEditOrderModal() {
 }
 
 /* ==========================================================================
-   MODAL: CANCEL ORDER (WITH REASON & CUSTOMER NOTIFICATION)
+   MODAL: REJECT / CANCEL ORDER (WITH REASON & CUSTOMER NOTIFICATION)
    ========================================================================== */
 window.openCancelOrderModal = (id) => {
   const cleanId = (id || '').trim().replace(/^#/, '');
-  const item = allInquiries.find(i => i.id && (i.id === id || i.id.replace(/^#/, '') === cleanId));
+  const item = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanId || (i.orderId || '').replace(/^#/, '') === cleanId);
   if (!item) return;
+
+  const isAlreadyConfirmed = item && (
+    (item.status && (item.status.toLowerCase() === 'confirmed' || item.status.toLowerCase() === 'accepted')) ||
+    Boolean(item.confirmationDate) ||
+    Boolean(item.confirmedAt)
+  );
+
+  if (isAlreadyConfirmed) {
+    showToast('Order Already Accepted', `Order #${cleanId} has already been accepted and cannot be rejected.`, 'warning');
+    return;
+  }
+
+  const isAlreadyCancelled = item && (
+    (item.status && (item.status.toLowerCase() === 'cancelled' || item.status.toLowerCase() === 'canceled' || item.status.toLowerCase() === 'rejected'))
+  );
+
+  if (isAlreadyCancelled) {
+    showToast('Order Already Rejected', `Order #${cleanId} is already rejected/cancelled.`, 'info');
+    return;
+  }
 
   const modal = document.getElementById('cancelOrderModal');
   const idInput = document.getElementById('cancelOrderId');
@@ -3565,6 +3611,7 @@ window.openCancelOrderModal = (id) => {
   const reasonSelect = document.getElementById('cancelOrderReason');
   const remarksText = document.getElementById('cancelOrderRemarks');
   const notifyCheck = document.getElementById('cancelNotifyCheckbox');
+  const confirmBtn = document.getElementById('confirmCancelBtn');
 
   if (!modal) return;
 
@@ -3573,6 +3620,10 @@ window.openCancelOrderModal = (id) => {
   if (reasonSelect) reasonSelect.selectedIndex = 0;
   if (remarksText) remarksText.value = '';
   if (notifyCheck) notifyCheck.checked = true;
+  if (confirmBtn) {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = '✕ Reject Order';
+  }
 
   modal.classList.add('open');
 };
@@ -3580,6 +3631,11 @@ window.openCancelOrderModal = (id) => {
 window.closeCancelOrderModal = () => {
   const modal = document.getElementById('cancelOrderModal');
   if (modal) modal.classList.remove('open');
+  const confirmBtn = document.getElementById('confirmCancelBtn');
+  if (confirmBtn) {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = '✕ Reject Order';
+  }
 };
 
 function initCancelOrderModal() {
@@ -3594,25 +3650,38 @@ function initCancelOrderModal() {
     const remarks = document.getElementById('cancelOrderRemarks').value.trim();
     const notifyCustomer = document.getElementById('cancelNotifyCheckbox').checked;
 
-    const cancelNotes = `Order cancelled by studio. Reason: ${reason}.${remarks ? ' Remarks: ' + remarks : ''}`;
+    const cancelNotes = `Order rejected by studio. Reason: ${reason}.${remarks ? ' Remarks: ' + remarks : ''}`;
 
     const confirmBtn = document.getElementById('confirmCancelBtn');
     if (confirmBtn) {
       confirmBtn.disabled = true;
-      confirmBtn.textContent = 'Cancelling & Notifying...';
+      confirmBtn.textContent = 'Rejecting & Notifying...';
     }
 
     try {
+      const existingInq = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanId || (i.orderId || '').replace(/^#/, '') === cleanId);
+      const payload = {
+        status: 'cancelled',
+        notes: cancelNotes,
+        notifyCustomer
+      };
+      if (existingInq) {
+        payload.customerName = existingInq.name || (existingInq.customer && existingInq.customer.name);
+        payload.customerPhone = existingInq.phone || (existingInq.customer && existingInq.customer.phone);
+        payload.customerEmail = existingInq.email || existingInq.customerEmail || (existingInq.customer && existingInq.customer.email);
+        payload.deliveryAddress = existingInq.deliveryAddress || (existingInq.customer && existingInq.customer.address);
+        payload.productName = existingInq.product;
+        payload.items = existingInq.items;
+        payload.total = existingInq.total || existingInq.estimatedValue;
+        payload.paymentMethod = existingInq.paymentMethod;
+      }
+
       const res = await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          status: 'Cancelled',
-          notes: cancelNotes,
-          notifyCustomer
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
@@ -3635,23 +3704,23 @@ function initCancelOrderModal() {
 
         loadInquiries().catch(() => {});
         loadDashboardStats().catch(() => {});
-        if (data.emailResult && data.emailResult.sent) {
-          showToast('Order Cancelled', `Order #${cleanId} cancelled and cancellation email sent to ${data.emailResult.recipient}!`, 'warning');
+        if (data.emailResult && (data.emailResult.sent || data.emailResult.success)) {
+          showToast('Order Rejected', `Order #${cleanId} rejected and cancellation email sent to customer.`, 'warning');
         } else if (notifyCustomer && data.emailResult && data.emailResult.reason) {
-          showToast('Order Cancelled', `Order #${cleanId} marked Cancelled. (Email notice: ${data.emailResult.reason})`, 'info');
+          showToast('Order Rejected', `Order #${cleanId} marked Rejected. (Email notice: ${data.emailResult.reason})`, 'info');
         } else {
-          showToast('Order Cancelled', `Order #${cleanId} has been marked as Cancelled.`, 'warning');
+          showToast('Order Rejected', `Order #${cleanId} has been marked as Rejected/Cancelled.`, 'warning');
         }
       } else {
-        showToast('Action Failed', data.message || 'Could not cancel order.', 'danger');
+        showToast('Action Failed', data.message || 'Could not reject order.', 'danger');
       }
     } catch (err) {
-      console.error('Error cancelling order:', err);
+      console.error('Error rejecting order:', err);
       showToast('Network Error', 'Failed to communicate with server.', 'danger');
     } finally {
       if (confirmBtn) {
         confirmBtn.disabled = false;
-        confirmBtn.textContent = '✕ Cancel Order';
+        confirmBtn.textContent = '✕ Reject Order';
       }
     }
   });

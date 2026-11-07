@@ -1956,13 +1956,19 @@ body.admin-dashboard-body[data-theme="dark"] {
   background: #FEE2E2 !important;
   color: #991B1B !important;
   border-color: #F87171 !important;
-  opacity: 0.9 !important;
+  opacity: 1 !important;
 }
 [data-theme="dark"] .btn-card-action.cancel.active-state {
   background: rgba(239, 68, 68, 0.25) !important;
   color: #FCA5A5 !important;
   border-color: #EF4444 !important;
-  opacity: 0.9 !important;
+  opacity: 1 !important;
+}
+
+.btn-card-action.cancel.active-state:disabled {
+  cursor: default !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
 }
 
 /* Mark Completed / Delivered Button */

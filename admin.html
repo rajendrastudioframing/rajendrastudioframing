@@ -4354,7 +4354,7 @@
         <div style="display: flex; align-items: center; gap: 10px;">
           <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--badge-red-bg); color: var(--badge-red-text); display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</div>
           <div>
-            <h4 class="admin-modal-title" style="color: var(--badge-red-text);">Cancel Order</h4>
+            <h4 class="admin-modal-title" style="color: var(--badge-red-text);">Reject Order</h4>
             <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;" id="cancelModalOrderSubtitle">Order #RF-ORD-000</div>
           </div>
         </div>
@@ -4364,15 +4364,15 @@
         <input type="hidden" id="cancelOrderId" />
         <div class="admin-modal-body">
           <p style="font-size: 0.86rem; color: var(--text-secondary); margin: 0 0 16px; line-height: 1.45;">
-            Are you sure you want to cancel this order? This will update the order status to <strong>cancelled</strong> in the database and send a cancellation email to the customer.
+            Are you sure you want to reject this order? This will update the order status to <strong>cancelled</strong> in the database and send a rejection email to the customer. Once rejected, this order cannot be accepted.
           </p>
 
           <div class="setting-row">
-            <label class="setting-label">Cancellation Reason *</label>
+            <label class="setting-label">Rejection Reason *</label>
             <select class="setting-select" id="cancelOrderReason" required>
-              <option value="Customer requested cancellation">Customer requested cancellation</option>
               <option value="Material / Frame stock unavailable">Material / Frame stock unavailable</option>
               <option value="Delivery address outside serviceable area">Delivery address outside serviceable area</option>
+              <option value="Customer requested cancellation">Customer requested cancellation</option>
               <option value="Duplicate order placed">Duplicate order placed</option>
               <option value="Customer unreachable by phone / WhatsApp">Customer unreachable by phone / WhatsApp</option>
               <option value="Custom Studio Notice">Other reason (specified below)</option>
@@ -4387,7 +4387,7 @@
           <div style="background: var(--badge-red-bg); border: 1px solid var(--badge-red-border); padding: 12px 14px; border-radius: 8px; display: flex; align-items: center; gap: 10px; margin-top: 10px;">
             <input type="checkbox" id="cancelNotifyCheckbox" checked style="width: 18px; height: 18px; accent-color: #B42318; cursor: pointer;" />
             <label for="cancelNotifyCheckbox" style="font-size: 0.82rem; font-weight: 700; color: var(--badge-red-text); cursor: pointer;">
-              Send cancellation email to customer
+              Send rejection email to customer
             </label>
           </div>
         </div>
@@ -4396,7 +4396,7 @@
             Keep Order Active
           </button>
           <button type="submit" class="btn-sub-action" id="confirmCancelBtn" style="background: #B42318; color: #FFFFFF; border: 1px solid #B42318;">
-            ✕ Cancel Order
+            ✕ Reject Order
           </button>
         </div>
       </form>

@@ -3109,10 +3109,16 @@ async function handleUpdateOrderStatus(req, res) {
 
     const rawStatus = (status || '').trim();
     const isConfirming = Boolean(rawStatus && (rawStatus.toLowerCase() === 'confirmed' || rawStatus.toLowerCase() === 'accepted'));
+    const isReadyForPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'ready_for_pickup' || rawStatus.toLowerCase() === 'ready for pickup' || rawStatus.toLowerCase() === 'pickup ready'));
+    const isCancelling = Boolean(rawStatus && (rawStatus.toLowerCase() === 'cancelled' || rawStatus.toLowerCase() === 'canceled' || rawStatus.toLowerCase() === 'rejected'));
+    const isPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'picked_up' || rawStatus.toLowerCase() === 'picked up'));
 
     // Guard: Prevent duplicate order acceptance, duplicate email dispatch, or overwriting pickup date
     const isAlreadyAccepted = (order && (order.status === 'confirmed' || order.status === 'accepted' || Boolean(order.confirmationDate))) ||
       (inq && (inq.status === 'confirmed' || inq.status === 'accepted' || Boolean(inq.confirmationDate)));
+
+    const isAlreadyCancelled = (order && (order.status === 'cancelled' || order.status === 'canceled' || order.status === 'rejected')) ||
+      (inq && (inq.status === 'cancelled' || inq.status === 'canceled' || inq.status === 'rejected'));
 
     if (isConfirming && isAlreadyAccepted) {
       console.log(`ℹ️ [ORDER ACCEPT GUARD] Order #${cleanId} is already accepted. Skipping duplicate acceptance email and re-save.`);
@@ -3128,9 +3134,28 @@ async function handleUpdateOrderStatus(req, res) {
       });
     }
 
-    const isReadyForPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'ready_for_pickup' || rawStatus.toLowerCase() === 'ready for pickup' || rawStatus.toLowerCase() === 'pickup ready'));
-    const isCancelling = Boolean(rawStatus && (rawStatus.toLowerCase() === 'cancelled' || rawStatus.toLowerCase() === 'canceled'));
-    const isPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'picked_up' || rawStatus.toLowerCase() === 'picked up'));
+    if (isConfirming && isAlreadyCancelled) {
+      return res.status(400).json({
+        success: false,
+        message: `Order #${cleanId} has already been rejected/cancelled and cannot be accepted.`
+      });
+    }
+
+    if (isCancelling && isAlreadyAccepted) {
+      return res.status(400).json({
+        success: false,
+        message: `Order #${cleanId} has already been accepted and confirmed. It cannot be rejected.`
+      });
+    }
+
+    if (isCancelling && isAlreadyCancelled) {
+      console.log(`ℹ️ [ORDER CANCEL GUARD] Order #${cleanId} is already rejected/cancelled. Skipping duplicate email.`);
+      return res.json({
+        success: true,
+        message: `Order #${cleanId} is already rejected/cancelled.`,
+        alreadyCancelled: true
+      });
+    }
 
     let normalizedStatus = rawStatus;
     if (isConfirming) normalizedStatus = 'confirmed';
@@ -3454,10 +3479,16 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
 
     const rawStatus = (status || '').trim();
     const isConfirming = Boolean(rawStatus && (rawStatus.toLowerCase() === 'confirmed' || rawStatus.toLowerCase() === 'accepted'));
+    const isReadyForPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'ready_for_pickup' || rawStatus.toLowerCase() === 'ready for pickup' || rawStatus.toLowerCase() === 'pickup ready'));
+    const isCancelling = Boolean(rawStatus && (rawStatus.toLowerCase() === 'cancelled' || rawStatus.toLowerCase() === 'canceled' || rawStatus.toLowerCase() === 'rejected'));
+    const isPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'picked_up' || rawStatus.toLowerCase() === 'picked up'));
 
     // Guard: Prevent duplicate order acceptance, duplicate email dispatch, or overwriting pickup date
     const isAlreadyAccepted = (order && (order.status === 'confirmed' || order.status === 'accepted' || Boolean(order.confirmationDate))) ||
       (inq && (inq.status === 'confirmed' || inq.status === 'accepted' || Boolean(inq.confirmationDate)));
+
+    const isAlreadyCancelled = (order && (order.status === 'cancelled' || order.status === 'canceled' || order.status === 'rejected')) ||
+      (inq && (inq.status === 'cancelled' || inq.status === 'canceled' || inq.status === 'rejected'));
 
     if (isConfirming && isAlreadyAccepted) {
       console.log(`ℹ️ [ORDER ACCEPT GUARD] Order #${cleanId} is already accepted. Skipping duplicate acceptance email and re-save.`);
@@ -3473,9 +3504,28 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
       });
     }
 
-    const isReadyForPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'ready_for_pickup' || rawStatus.toLowerCase() === 'ready for pickup' || rawStatus.toLowerCase() === 'pickup ready'));
-    const isCancelling = Boolean(rawStatus && (rawStatus.toLowerCase() === 'cancelled' || rawStatus.toLowerCase() === 'canceled'));
-    const isPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'picked_up' || rawStatus.toLowerCase() === 'picked up'));
+    if (isConfirming && isAlreadyCancelled) {
+      return res.status(400).json({
+        success: false,
+        message: `Order #${cleanId} has already been rejected/cancelled and cannot be accepted.`
+      });
+    }
+
+    if (isCancelling && isAlreadyAccepted) {
+      return res.status(400).json({
+        success: false,
+        message: `Order #${cleanId} has already been accepted and confirmed. It cannot be rejected.`
+      });
+    }
+
+    if (isCancelling && isAlreadyCancelled) {
+      console.log(`ℹ️ [ORDER CANCEL GUARD] Order #${cleanId} is already rejected/cancelled. Skipping duplicate email.`);
+      return res.json({
+        success: true,
+        message: `Order #${cleanId} is already rejected/cancelled.`,
+        alreadyCancelled: true
+      });
+    }
 
     let normalizedStatus = rawStatus;
     if (isConfirming) normalizedStatus = 'confirmed';
