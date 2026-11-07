@@ -3109,6 +3109,25 @@ async function handleUpdateOrderStatus(req, res) {
 
     const rawStatus = (status || '').trim();
     const isConfirming = Boolean(rawStatus && (rawStatus.toLowerCase() === 'confirmed' || rawStatus.toLowerCase() === 'accepted'));
+
+    // Guard: Prevent duplicate order acceptance, duplicate email dispatch, or overwriting pickup date
+    const isAlreadyAccepted = (order && (order.status === 'confirmed' || order.status === 'accepted' || Boolean(order.confirmationDate))) ||
+      (inq && (inq.status === 'confirmed' || inq.status === 'accepted' || Boolean(inq.confirmationDate)));
+
+    if (isConfirming && isAlreadyAccepted) {
+      console.log(`ℹ️ [ORDER ACCEPT GUARD] Order #${cleanId} is already accepted. Skipping duplicate acceptance email and re-save.`);
+      return res.json({
+        success: true,
+        message: `Order #${cleanId} is already accepted and scheduled for pickup.`,
+        alreadyConfirmed: true,
+        order: order || inq,
+        inquiry: inq || order,
+        confirmationDate: (order && order.confirmationDate) || (inq && inq.confirmationDate),
+        pickupDate: (order && order.pickupDate) || (inq && inq.pickupDate),
+        emailSent: false
+      });
+    }
+
     const isReadyForPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'ready_for_pickup' || rawStatus.toLowerCase() === 'ready for pickup' || rawStatus.toLowerCase() === 'pickup ready'));
     const isCancelling = Boolean(rawStatus && (rawStatus.toLowerCase() === 'cancelled' || rawStatus.toLowerCase() === 'canceled'));
     const isPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'picked_up' || rawStatus.toLowerCase() === 'picked up'));
@@ -3435,6 +3454,25 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
 
     const rawStatus = (status || '').trim();
     const isConfirming = Boolean(rawStatus && (rawStatus.toLowerCase() === 'confirmed' || rawStatus.toLowerCase() === 'accepted'));
+
+    // Guard: Prevent duplicate order acceptance, duplicate email dispatch, or overwriting pickup date
+    const isAlreadyAccepted = (order && (order.status === 'confirmed' || order.status === 'accepted' || Boolean(order.confirmationDate))) ||
+      (inq && (inq.status === 'confirmed' || inq.status === 'accepted' || Boolean(inq.confirmationDate)));
+
+    if (isConfirming && isAlreadyAccepted) {
+      console.log(`ℹ️ [ORDER ACCEPT GUARD] Order #${cleanId} is already accepted. Skipping duplicate acceptance email and re-save.`);
+      return res.json({
+        success: true,
+        message: `Order #${cleanId} is already accepted and scheduled for pickup.`,
+        alreadyConfirmed: true,
+        order: order || inq,
+        inquiry: inq || order,
+        confirmationDate: (order && order.confirmationDate) || (inq && inq.confirmationDate),
+        pickupDate: (order && order.pickupDate) || (inq && inq.pickupDate),
+        emailSent: false
+      });
+    }
+
     const isReadyForPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'ready_for_pickup' || rawStatus.toLowerCase() === 'ready for pickup' || rawStatus.toLowerCase() === 'pickup ready'));
     const isCancelling = Boolean(rawStatus && (rawStatus.toLowerCase() === 'cancelled' || rawStatus.toLowerCase() === 'canceled'));
     const isPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'picked_up' || rawStatus.toLowerCase() === 'picked up'));

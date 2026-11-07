@@ -1229,7 +1229,7 @@ function createOrderCardRowHTML(order) {
   const isCancelled = ordSt === 'cancelled';
   const isPickedUp = ordSt === 'picked_up' || ordSt === 'picked up';
   const isReadyForPickup = ordSt === 'ready_for_pickup' || ordSt === 'ready for pickup' || ordSt === 'shipped' || ordSt === 'dispatched' || ordSt === 'pickup ready';
-  const isConfirmed = ordSt === 'confirmed' || ordSt === 'accepted';
+  const isConfirmed = ordSt === 'confirmed' || ordSt === 'accepted' || Boolean(order.confirmationDate) || Boolean(order.confirmedAt);
   const isPending = ordSt === 'pending' || ordSt === 'new' || !ordSt;
 
   let displayStatus = 'Pending';
@@ -1392,7 +1392,15 @@ function createOrderCardRowHTML(order) {
           <span class="order-note-content">${escapeHtml(noteText)}</span>
         </div>
         <div class="order-action-buttons">
-          <!-- 0. View Order (Complete details & specifications) -->
+          <!-- 1. Accept Order (Once accepted, locked as confirmed badge) -->
+          <button type="button" 
+                  class="btn-card-action accept ${isConfirmed ? 'active-state' : ''}" 
+                  ${isConfirmed ? 'disabled style="cursor: default; opacity: 1; pointer-events: none;"' : (isCancelled || isPickedUp ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openAcceptOrderModal('${escapeHtml(order.id)}')"`)} 
+                  title="${isConfirmed ? 'Order already accepted (Pickup Date: ' + escapeHtml(formatLocalReadableDate(order.pickupDate)) + ')' : isCancelled ? 'Order is cancelled' : 'Accept order and select mandatory pickup date'}">
+            ${isConfirmed ? '✓ Accepted' : '✓ Accept Order'}
+          </button>
+
+          <!-- 2. View Order (Complete details & specifications) -->
           <button type="button" 
                   class="btn-card-action details view-order" 
                   onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" 
@@ -1400,31 +1408,7 @@ function createOrderCardRowHTML(order) {
             👁️ View Order
           </button>
 
-          <!-- 1. Accept Order -->
-          <button type="button" 
-                  class="btn-card-action accept ${isConfirmed ? 'active-state' : ''}" 
-                  ${isCancelled || isPickedUp ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openAcceptOrderModal('${escapeHtml(order.id)}')"`} 
-                  title="${isCancelled ? 'Order is cancelled' : isConfirmed ? 'Order accepted for ' + escapeHtml(formatLocalReadableDate(order.pickupDate)) + '. Click to adjust pickup date.' : 'Accept order and select mandatory pickup date'}">
-            ${isConfirmed ? '✓ Accepted' : '✓ Accept Order'}
-          </button>
-
-          <!-- 2. Pickup Order -->
-          <button type="button" 
-                  class="btn-card-action pickup-ready ${isReadyForPickup || isPickedUp ? 'active-state' : ''}" 
-                  ${isCancelled ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openPickupOrderModal('${escapeHtml(order.id)}')"`} 
-                  title="${isCancelled ? 'Order is cancelled' : isPickedUp ? 'Order marked collected.' : isReadyForPickup ? 'Order marked ready for pickup. Click to manage.' : 'Mark order ready for collection and notify customer'}">
-            ${isPickedUp ? '📦 Collected' : (isReadyForPickup ? '📦 Ready' : '📦 Pickup Order')}
-          </button>
-
-          <!-- 3. Cancel Order -->
-          <button type="button" 
-                  class="btn-card-action cancel ${isCancelled ? 'active-state' : ''}" 
-                  ${isCancelled ? 'disabled style="opacity: 0.85; cursor: default; background: #FEE2E2; border-color: #F87171; color: #991B1B;"' : (isPickedUp ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : `onclick="openCancelOrderModal('${escapeHtml(order.id)}')"`)} 
-                  title="${isCancelled ? 'Order has been cancelled' : 'Cancel order and send cancellation email'}">
-            ${isCancelled ? '✕ Cancelled' : '✕ Cancel Order'}
-          </button>
-
-          <!-- 4. Delete Order Permanently -->
+          <!-- 3. Delete Order Permanently -->
           <button type="button" 
                   class="btn-card-action delete" 
                   onclick="confirmDeleteOrder('${escapeHtml(order.id)}')" 
@@ -1693,14 +1677,8 @@ window.openOrderDetailsModal = (orderId) => {
           ${order.pickupDate ? ` &bull; <strong>Scheduled Pickup:</strong> ${escapeHtml(formatLocalReadableDate(order.pickupDate))}` : ''}
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="btn-sub-action primary" ${isCancelled || isPickedUp ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openAcceptOrderModal('${escapeHtml(displayOrderId)}')"`} style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
+          <button type="button" class="btn-sub-action primary" ${isConfirmed ? 'disabled style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px; cursor: default; opacity: 1; pointer-events: none;"' : (isCancelled || isPickedUp ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openAcceptOrderModal('${escapeHtml(displayOrderId)}')"`)} style="background: #059669; border-color: #059669; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
             ${isConfirmed ? '✓ Accepted' : '✓ Accept Order'}
-          </button>
-          <button type="button" class="btn-sub-action primary" ${isCancelled ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openPickupOrderModal('${escapeHtml(displayOrderId)}')"`} style="background: #2563EB; border-color: #2563EB; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
-            ${isPickedUp ? '📦 Collected' : (isReadyForPickup ? '📦 Ready for Pickup' : '📦 Pickup Order')}
-          </button>
-          <button type="button" class="btn-sub-action" ${isCancelled ? 'disabled style="opacity: 0.85; background: #FEE2E2; border-color: #F87171; color: #991B1B;"' : (isPickedUp ? 'disabled style="opacity: 0.45;"' : `onclick="closeOrderDetailsModal(); openCancelOrderModal('${escapeHtml(displayOrderId)}')"`)} style="background: #DC2626; border-color: #DC2626; color: #fff; font-size: 0.82rem; padding: 7px 14px;">
-            ${isCancelled ? '✕ Cancelled' : '✕ Cancel Order'}
           </button>
           <button type="button" class="btn-sub-action" onclick="closeOrderDetailsModal(); confirmDeleteOrder('${escapeHtml(displayOrderId)}')" style="background: #991B1B; border-color: #991B1B; color: #fff; font-size: 0.82rem; padding: 7px 14px;" title="Permanently delete order">
             🗑️ Delete Order
@@ -3031,7 +3009,18 @@ function initNewOrderModal() {
    ========================================================================== */
 window.openAcceptOrderModal = window.openConfirmDateModal = (id) => {
   const cleanId = (id || '').replace(/^#/, '');
-  const item = allInquiries.find(i => i.id === cleanId || i.id === id);
+  const item = allInquiries.find(i => (i.id || '').replace(/^#/, '') === cleanId || (i.orderId || '').replace(/^#/, '') === cleanId);
+
+  const isAlreadyConfirmed = item && (
+    (item.status && (item.status.toLowerCase() === 'confirmed' || item.status.toLowerCase() === 'accepted')) ||
+    Boolean(item.confirmationDate) ||
+    Boolean(item.confirmedAt)
+  );
+
+  if (isAlreadyConfirmed) {
+    showToast('Order Already Accepted', `Order #${cleanId} has already been accepted and scheduled for pickup.`, 'info');
+    return;
+  }
   const modal = document.getElementById('confirmOrderModal');
   const titleIdEl = document.getElementById('confirmModalOrderId');
   const idInput = document.getElementById('confirmOrderIdInput');

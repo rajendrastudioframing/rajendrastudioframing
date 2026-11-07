@@ -1905,6 +1905,12 @@ body.admin-dashboard-body[data-theme="dark"] {
   box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);
 }
 
+.btn-card-action.accept.active-state:disabled {
+  cursor: default !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+}
+
 /* Cancelled Order Button State */
 [data-theme="light"] .btn-card-action.cancel.active-state {
   background: #FEE2E2 !important;
