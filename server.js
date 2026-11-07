@@ -2168,20 +2168,10 @@ app.get('/api/admin/dashboard-stats', requireAuth, async (req, res) => {
 app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   try {
-    let [inquiries, orders] = await Promise.all([
+    const [inquiries, orders] = await Promise.all([
       db.getInquiries(),
       db.getOrders()
     ]);
-
-    if ((!orders || !orders.length) && (!inquiries || !inquiries.length)) {
-      try {
-        await orderRecovery.syncBrevoOrders(false);
-        [inquiries, orders] = await Promise.all([
-          db.getInquiries(),
-          db.getOrders()
-        ]);
-      } catch (_) {}
-    }
 
     const ordersMap = new Map();
     if (Array.isArray(orders)) {
@@ -3025,13 +3015,7 @@ app.put('/api/orders/:orderId/customer-update', async (req, res) => {
  */
 app.get('/api/admin/orders', requireAuth, async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
-  let orders = await db.getOrders();
-  if (!orders || !orders.length) {
-    try {
-      await orderRecovery.syncBrevoOrders(false);
-      orders = await db.getOrders();
-    } catch (_) {}
-  }
+  const orders = await db.getOrders();
   res.json({ success: true, orders });
 });
 
@@ -4789,16 +4773,6 @@ app.post('/api/reviews', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to save review.' });
   }
 });
-
-// Self-healing startup: non-intrusive background sync that strictly respects deleted orders
-(async () => {
-  try {
-    const recovery = require('./services/orderRecovery');
-    await recovery.syncBrevoOrders(false);
-  } catch (err) {
-    console.warn('⚠️ [STARTUP] Brevo auto-sync notice:', err.message);
-  }
-})();
 
 // Start Server locally when executed directly
 if (require.main === module) {

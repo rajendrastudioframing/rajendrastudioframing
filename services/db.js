@@ -1096,22 +1096,8 @@ module.exports = {
               return !deletedIds.has(clean) && (o.status || '').toLowerCase() !== 'deleted';
             });
 
-          // Solid merge: combine Supabase orders with bundled baseline orders
-          const localOrders = readJson(ORDERS_FILE, []).filter(o => {
-            if (!o || !o.orderId) return false;
-            const clean = o.orderId.toLowerCase().trim().replace(/^#/, '');
-            return !deletedIds.has(clean) && (o.status || '').toLowerCase() !== 'deleted';
-          });
-          const merged = new Map();
-          localOrders.forEach(o => {
-            const key = o.orderId.toLowerCase().trim().replace(/^#/, '');
-            merged.set(key, o);
-          });
-          supabaseOrders.forEach(o => {
-            const key = o.orderId.toLowerCase().trim().replace(/^#/, '');
-            merged.set(key, o);
-          });
-          const finalOrders = Array.from(merged.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+          // Supabase is authoritative; mirror to local cache and return
+          const finalOrders = supabaseOrders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
           try { writeJson(ORDERS_FILE, finalOrders); } catch (_) {}
           return finalOrders;
         }
@@ -1182,28 +1168,12 @@ module.exports = {
     const found = orders.find(o => o.orderId && o.orderId.toLowerCase() === cleanId.toLowerCase());
     if (found) return found;
 
-    // Zero-loss fallback: if order was placed across serverless instances, check Brevo receipts
-    try {
-      const orderRecovery = require('./orderRecovery');
-      const rec = await orderRecovery.syncBrevoOrders(true);
-      if (rec && rec.recoveredCount > 0) {
-        const freshOrders = readJson(ORDERS_FILE, []);
-        const recovered = freshOrders.find(o => o.orderId && o.orderId.toLowerCase() === cleanId.toLowerCase());
-        if (recovered) return recovered;
-      }
-    } catch (_) {}
-
     return null;
   },
 
   async saveOrder(order) {
     if (!order) return null;
     order.status = order.status || 'pending';
-    if (order.orderId) {
-      try {
-        await this.unrecordDeletedOrderIds([order.orderId]);
-      } catch (_) {}
-    }
     const dbRow = {
       order_id: order.orderId,
       customer: order.customer || {},
@@ -1467,22 +1437,8 @@ module.exports = {
             return !deletedIds.has(clean) && (i.status || '').toLowerCase() !== 'deleted';
           });
 
-          // Solid merge: combine Supabase inquiries with bundled baseline inquiries
-          const localInqs = readJson(INQUIRIES_FILE, []).filter(i => {
-            if (!i || !i.id) return false;
-            const clean = i.id.toLowerCase().trim().replace(/^#/, '');
-            return !deletedIds.has(clean) && (i.status || '').toLowerCase() !== 'deleted';
-          });
-          const merged = new Map();
-          localInqs.forEach(i => {
-            const key = i.id.toLowerCase().trim().replace(/^#/, '');
-            merged.set(key, i);
-          });
-          validSupabaseInqs.forEach(i => {
-            const key = i.id.toLowerCase().trim().replace(/^#/, '');
-            merged.set(key, i);
-          });
-          const finalInqs = Array.from(merged.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+          // Supabase is authoritative; mirror to local cache and return
+          const finalInqs = validSupabaseInqs.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
           try { writeJson(INQUIRIES_FILE, finalInqs); } catch (_) {}
           return finalInqs;
         }
@@ -1502,11 +1458,6 @@ module.exports = {
   },
 
   async saveInquiry(inquiry) {
-    if (inquiry && inquiry.id) {
-      try {
-        await this.unrecordDeletedOrderIds([inquiry.id]);
-      } catch (_) {}
-    }
     const photoUrl = inquiry.uploadedFileUrl || inquiry.customerPhotoUrl || null;
     const photoName = inquiry.uploadFileName || inquiry.customerPhotoName || null;
     const dbRow = {

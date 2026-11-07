@@ -139,62 +139,84 @@ async function syncToSupabase() {
     console.error('   ❌ Reviews sync failed:', err.message);
   }
 
-  // 4. SYNC ORDERS
+  // 4. SYNC ORDERS (Strictly respects deleted orders)
   try {
-    const orders = readJsonFile('orders.json', []);
-    console.log(`📑 Syncing ${orders.length} orders...`);
-    for (const o of orders) {
-      const { error } = await supabase.from('orders').upsert({
-        order_id: o.orderId,
-        customer: o.customer,
-        items: o.items,
-        subtotal: Number(o.subtotal) || 0,
-        shipping: Number(o.shipping) || 0,
-        total: Number(o.total) || 0,
-        notes: o.notes || '',
-        order_photo: o.orderPhoto || null,
-        payment_method: o.paymentMethod || 'Instant UPI Payment (QR Code)',
-        payment_status: o.paymentStatus || 'Pending',
-        upi_utr: o.upiUtr || null,
-        status: o.status || 'Confirmed',
-        created_at: o.createdAt || new Date().toISOString()
-      }, { onConflict: 'order_id' });
+    const deletedList = readJsonFile('deleted-orders.json', []).map(x => String(x || '').toLowerCase().trim().replace(/^#/, ''));
+    const deletedSet = new Set(deletedList);
+    const orders = readJsonFile('orders.json', []).filter(o => {
+      if (!o || !o.orderId) return false;
+      const clean = String(o.orderId).toLowerCase().trim().replace(/^#/, '');
+      return !deletedSet.has(clean);
+    });
 
-      if (error) {
-        console.warn(`   ⚠️ Order sync error (${o.orderId}):`, error.message);
+    if (orders.length) {
+      console.log(`📑 Syncing ${orders.length} orders...`);
+      for (const o of orders) {
+        const { error } = await supabase.from('orders').upsert({
+          order_id: o.orderId,
+          customer: o.customer,
+          items: o.items,
+          subtotal: Number(o.subtotal) || 0,
+          shipping: Number(o.shipping) || 0,
+          total: Number(o.total) || 0,
+          notes: o.notes || '',
+          order_photo: o.orderPhoto || null,
+          payment_method: o.paymentMethod || 'Instant UPI Payment (QR Code)',
+          payment_status: o.paymentStatus || 'Pending',
+          upi_utr: o.upiUtr || null,
+          status: o.status || 'pending',
+          created_at: o.createdAt || new Date().toISOString()
+        }, { onConflict: 'order_id' });
+
+        if (error) {
+          console.warn(`   ⚠️ Order sync error (${o.orderId}):`, error.message);
+        }
       }
+      console.log('   ✅ Orders synchronized successfully.');
+    } else {
+      console.log('   ℹ️  No pending baseline orders to sync.');
     }
-    console.log('   ✅ Orders synchronized successfully.');
   } catch (err) {
     console.error('   ❌ Orders sync failed:', err.message);
   }
 
-  // 5. SYNC INQUIRIES
+  // 5. SYNC INQUIRIES (Strictly respects deleted orders)
   try {
-    const inquiries = readJsonFile('inquiries.json', []);
-    console.log(`💬 Syncing ${inquiries.length} inquiries...`);
-    for (const i of inquiries) {
-      const { error } = await supabase.from('inquiries').upsert({
-        id: i.id,
-        name: i.name,
-        phone: i.phone,
-        email: i.email || '',
-        product: i.product || '',
-        specs: i.specs || '',
-        quantity: Number(i.quantity) || 1,
-        estimated_value: Number(i.estimatedValue) || 0,
-        notes: i.notes || '',
-        status: i.status || 'New',
-        has_upload: Boolean(i.hasUpload),
-        upload_file_name: i.uploadFileName || null,
-        created_at: i.createdAt || new Date().toISOString()
-      }, { onConflict: 'id' });
+    const deletedList = readJsonFile('deleted-orders.json', []).map(x => String(x || '').toLowerCase().trim().replace(/^#/, ''));
+    const deletedSet = new Set(deletedList);
+    const inquiries = readJsonFile('inquiries.json', []).filter(i => {
+      if (!i || !i.id) return false;
+      const clean = String(i.id).toLowerCase().trim().replace(/^#/, '');
+      return !deletedSet.has(clean);
+    });
 
-      if (error) {
-        console.warn(`   ⚠️ Inquiry sync error (${i.id}):`, error.message);
+    if (inquiries.length) {
+      console.log(`💬 Syncing ${inquiries.length} inquiries...`);
+      for (const i of inquiries) {
+        const { error } = await supabase.from('inquiries').upsert({
+          id: i.id,
+          name: i.name,
+          phone: i.phone,
+          email: i.email || '',
+          product: i.product || '',
+          specs: i.specs || '',
+          quantity: Number(i.quantity) || 1,
+          estimated_value: Number(i.estimatedValue) || 0,
+          notes: i.notes || '',
+          status: i.status || 'New',
+          has_upload: Boolean(i.hasUpload),
+          upload_file_name: i.uploadFileName || null,
+          created_at: i.createdAt || new Date().toISOString()
+        }, { onConflict: 'id' });
+
+        if (error) {
+          console.warn(`   ⚠️ Inquiry sync error (${i.id}):`, error.message);
+        }
       }
+      console.log('   ✅ Inquiries synchronized successfully.');
+    } else {
+      console.log('   ℹ️  No baseline inquiries to sync.');
     }
-    console.log('   ✅ Inquiries synchronized successfully.');
   } catch (err) {
     console.error('   ❌ Inquiries sync failed:', err.message);
   }
@@ -247,6 +269,45 @@ async function syncToSupabase() {
     }
   } catch (err) {
     console.error('   ❌ Admin config sync failed:', err.message);
+  }
+
+  // 8. SYNC DELETED ORDERS REGISTRY & SEQUENCE
+  try {
+    const deletedList = readJsonFile('deleted-orders.json', []).map(x => String(x || '').toLowerCase().trim().replace(/^#/, ''));
+    if (deletedList.length) {
+      console.log(`🛡️  Syncing ${deletedList.length} deleted order IDs to Supabase Cloud...`);
+      const { data: existingDeleted } = await supabase.from('admin_config').select('smtp').eq('id', 'deleted_orders').maybeSingle();
+      const existingIds = (existingDeleted && existingDeleted.smtp && Array.isArray(existingDeleted.smtp.ids)) ? existingDeleted.smtp.ids : [];
+      const mergedDeleted = Array.from(new Set([...existingIds, ...deletedList]));
+      await supabase.from('admin_config').upsert({
+        id: 'deleted_orders',
+        admin_name: 'Deleted Orders Registry',
+        smtp: { ids: mergedDeleted, updatedAt: new Date().toISOString() },
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+
+      // Cleanly remove any lingering deleted records from orders & inquiries tables
+      for (const delId of mergedDeleted) {
+        const idVariants = [delId, delId.toUpperCase(), '#' + delId.toUpperCase(), '#' + delId];
+        await supabase.from('orders').delete().in('order_id', idVariants);
+        await supabase.from('inquiries').delete().in('id', idVariants);
+      }
+      console.log('   ✅ Deleted orders registry synchronized and purge confirmed.');
+    }
+
+    const seq = readJsonFile('order-sequence.json', null);
+    if (seq && seq.lastSequence) {
+      console.log(`🔢 Syncing Monotonic Order Sequence (${seq.lastSequence})...`);
+      await supabase.from('admin_config').upsert({
+        id: 'order_sequence',
+        admin_name: 'Order Monotonic Sequence Counter',
+        smtp: seq,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+      console.log('   ✅ Order sequence counter synchronized.');
+    }
+  } catch (err) {
+    console.error('   ❌ Deleted orders / sequence sync notice:', err.message);
   }
 
   console.log('======================================================');
