@@ -292,7 +292,15 @@ function populateProductData() {
 
   // Descriptions
   const descLead = document.getElementById('detailDescLead');
-  if (descLead) descLead.textContent = p.description;
+  if (descLead) {
+    const text = (p.shortDescription || p.description || '').trim();
+    if (text) {
+      descLead.textContent = text;
+      descLead.style.display = 'block';
+    } else {
+      descLead.style.display = 'none';
+    }
+  }
 
   // Features list in "Product Details"
   const featuresList = document.getElementById('detailFeaturesList');
