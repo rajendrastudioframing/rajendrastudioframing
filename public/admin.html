@@ -3813,63 +3813,25 @@
             <textarea class="setting-input" id="editProductFullDesc" rows="3" placeholder="Comprehensive description, product features, and craft notes..."></textarea>
           </div>
 
-          <!-- Product Options & Variants: 4 Options in 1 Single Row -->
-          <div class="product-options-card" style="margin-bottom: 14px; background: var(--bg-surface, #FBF8F3); border: 1px solid var(--border-subtle, #E6DEC8); border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-            <div style="margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px dashed var(--border-subtle, #E6DEC8);">
-              <label class="setting-label" style="margin-bottom: 2px; font-weight: 700; color: var(--text-primary); font-size: 0.86rem;">Product Options &amp; Variants (1 Option in Each)</label>
-              <div style="font-size: 0.73rem; color: var(--text-muted);">Select 1 size, 1 color, 1 variant, and price in a single row.</div>
+          <!-- Product Options & Variants Manager -->
+          <div class="admin-variants-manager">
+            <div class="variants-manager-header">
+              <div>
+                <div class="variants-manager-title">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color: #C99A3D;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                  <span>Product Options &amp; Variants</span>
+                </div>
+                <div class="variants-manager-sub">Add multiple sizes, colors, and styles with individual pricing.</div>
+              </div>
+              <button type="button" class="btn-add-variant" onclick="addEditProductVariant()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>+ Add Variant</span>
+              </button>
             </div>
 
-            <div class="product-options-row-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: start;">
-              <!-- 1. Size Dropdown -->
-              <div class="setting-row" style="margin-bottom: 0;">
-                <label class="setting-label" style="font-size: 0.76rem; font-weight: 600; margin-bottom: 4px;">📏 Size Option</label>
-                <select class="setting-select" id="editProductSizeSelect" style="font-size: 0.82rem; padding: 7px 6px;">
-                  <option value='6" × 8"'>6" × 8"</option>
-                  <option value='8" × 10"' selected>8" × 10"</option>
-                  <option value='10" × 12"'>10" × 12"</option>
-                  <option value='12" × 18"'>12" × 18"</option>
-                  <option value='16" × 24"'>16" × 24"</option>
-                  <option value='20" × 30"'>20" × 30"</option>
-                  <option value='A4 (8.3" × 11.7")'>A4</option>
-                  <option value='A3 (11.7" × 16.5")'>A3</option>
-                </select>
-              </div>
-
-              <!-- 2. Color Dropdown -->
-              <div class="setting-row" style="margin-bottom: 0;">
-                <label class="setting-label" style="font-size: 0.76rem; font-weight: 600; margin-bottom: 4px;">🎨 Color Option</label>
-                <select class="setting-select" id="editProductColorSelect" style="font-size: 0.82rem; padding: 7px 6px;">
-                  <option value="Warm Gold" data-color="#C99A3D" selected>Warm Gold</option>
-                  <option value="Matte Black" data-color="#111111">Matte Black</option>
-                  <option value="Brushed Silver" data-color="#C0C0C0">Silver</option>
-                  <option value="Rose Gold" data-color="#B76E79">Rose Gold</option>
-                  <option value="Walnut Wood" data-color="#6A432D">Walnut</option>
-                  <option value="Pure White" data-color="#FFFFFF">White</option>
-                  <option value="Royal Navy" data-color="#1E3A8A">Navy Blue</option>
-                </select>
-              </div>
-
-              <!-- 3. Variant Dropdown -->
-              <div class="setting-row" style="margin-bottom: 0;">
-                <label class="setting-label" style="font-size: 0.76rem; font-weight: 600; margin-bottom: 4px;">✨ Variant Style</label>
-                <select class="setting-select" id="editProductVariantSelect" style="font-size: 0.82rem; padding: 7px 6px;">
-                  <option value="Standard Finish" selected>Standard Finish</option>
-                  <option value="Matte Finish">Matte Finish</option>
-                  <option value="Glossy Finish">Glossy Finish</option>
-                  <option value="Textured Canvas">Textured Canvas</option>
-                  <option value="Floating Frame">Floating Frame</option>
-                  <option value="Metallic Finish">Metallic Finish</option>
-                  <option value="Wooden Border">Wooden Border</option>
-                  <option value="Acrylic Block">Acrylic Block</option>
-                </select>
-              </div>
-
-              <!-- 4. Price Field -->
-              <div class="setting-row" style="margin-bottom: 0;">
-                <label class="setting-label" style="font-size: 0.76rem; font-weight: 600; margin-bottom: 4px;">💰 Price (₹) *</label>
-                <input type="number" class="setting-input" id="editProductRowPrice" placeholder="599" min="1" required style="font-size: 0.82rem; padding: 7px 8px;" oninput="document.getElementById('editProductPrice').value = this.value" />
-              </div>
+            <!-- Dynamic List of Variants -->
+            <div class="variants-list" id="editProductVariantsList">
+              <!-- Populated dynamically via renderEditProductVariants() -->
             </div>
           </div>
 
@@ -4155,63 +4117,26 @@
             </div>
           </div>
 
-          <!-- Product Options & Variants: 4 Options in 1 Single Row -->
-          <div class="product-options-card" style="margin-bottom: 14px; background: var(--bg-surface, #FBF8F3); border: 1px solid var(--border-subtle, #E6DEC8); border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-            <div style="margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px dashed var(--border-subtle, #E6DEC8);">
-              <label class="setting-label" style="margin-bottom: 2px; font-weight: 700; color: var(--text-primary); font-size: 0.86rem;">Product Options &amp; Variants (4 Options in 1 Row)</label>
-              <div style="font-size: 0.73rem; color: var(--text-muted);">Select 1 size, 1 color, 1 variant, and enter their price.</div>
+          <!-- Product Options & Variants Manager -->
+          <input type="hidden" id="newProductPrice" value="599" />
+          <div class="admin-variants-manager">
+            <div class="variants-manager-header">
+              <div>
+                <div class="variants-manager-title">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color: #C99A3D;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                  <span>Product Options &amp; Variants</span>
+                </div>
+                <div class="variants-manager-sub">Add multiple sizes, colors, and styles with individual pricing.</div>
+              </div>
+              <button type="button" class="btn-add-variant" onclick="addNewProductVariant()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>+ Add Variant</span>
+              </button>
             </div>
 
-            <div class="product-options-row-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: start;">
-              <!-- 1. Size Dropdown -->
-              <div class="setting-row" style="margin-bottom: 0;">
-                <label class="setting-label" style="font-size: 0.76rem; font-weight: 600; margin-bottom: 4px;">📏 Size Option</label>
-                <select class="setting-select" id="newProductSizeSelect" style="font-size: 0.82rem; padding: 7px 6px;">
-                  <option value='6" × 8"'>6" × 8"</option>
-                  <option value='8" × 10"' selected>8" × 10"</option>
-                  <option value='10" × 12"'>10" × 12"</option>
-                  <option value='12" × 18"'>12" × 18"</option>
-                  <option value='16" × 24"'>16" × 24"</option>
-                  <option value='20" × 30"'>20" × 30"</option>
-                  <option value='A4 (8.3" × 11.7")'>A4</option>
-                  <option value='A3 (11.7" × 16.5")'>A3</option>
-                </select>
-              </div>
-
-              <!-- 2. Color Dropdown -->
-              <div class="setting-row" style="margin-bottom: 0;">
-                <label class="setting-label" style="font-size: 0.76rem; font-weight: 600; margin-bottom: 4px;">🎨 Color Option</label>
-                <select class="setting-select" id="newProductColorSelect" style="font-size: 0.82rem; padding: 7px 6px;">
-                  <option value="Warm Gold" data-color="#C99A3D" selected>Warm Gold</option>
-                  <option value="Matte Black" data-color="#111111">Matte Black</option>
-                  <option value="Brushed Silver" data-color="#C0C0C0">Silver</option>
-                  <option value="Rose Gold" data-color="#B76E79">Rose Gold</option>
-                  <option value="Walnut Wood" data-color="#6A432D">Walnut</option>
-                  <option value="Pure White" data-color="#FFFFFF">White</option>
-                  <option value="Royal Navy" data-color="#1E3A8A">Navy Blue</option>
-                </select>
-              </div>
-
-              <!-- 3. Variant Dropdown -->
-              <div class="setting-row" style="margin-bottom: 0;">
-                <label class="setting-label" style="font-size: 0.76rem; font-weight: 600; margin-bottom: 4px;">✨ Variant Style</label>
-                <select class="setting-select" id="newProductVariantSelect" style="font-size: 0.82rem; padding: 7px 6px;">
-                  <option value="Standard Finish" selected>Standard Finish</option>
-                  <option value="Matte Finish">Matte Finish</option>
-                  <option value="Glossy Finish">Glossy Finish</option>
-                  <option value="Textured Canvas">Textured Canvas</option>
-                  <option value="Floating Frame">Floating Frame</option>
-                  <option value="Metallic Finish">Metallic Finish</option>
-                  <option value="Wooden Border">Wooden Border</option>
-                  <option value="Acrylic Block">Acrylic Block</option>
-                </select>
-              </div>
-
-              <!-- 4. Price Field -->
-              <div class="setting-row" style="margin-bottom: 0;">
-                <label class="setting-label" style="font-size: 0.76rem; font-weight: 600; margin-bottom: 4px;">💰 Price (₹) *</label>
-                <input type="number" class="setting-input" id="newProductPrice" placeholder="599" min="1" required style="font-size: 0.82rem; padding: 7px 8px;" />
-              </div>
+            <!-- Dynamic List of Variants -->
+            <div class="variants-list" id="newProductVariantsList">
+              <!-- Populated dynamically via renderNewProductVariants() -->
             </div>
           </div>
 

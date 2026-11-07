@@ -5037,6 +5037,228 @@ function initProductModals() {
     }
   };
 
+  const ADMIN_SIZE_PRESETS = [
+    '6" × 8"', '8" × 10"', '10" × 12"', '12" × 18"', '16" × 24"', '20" × 30"',
+    'A4 (8.3" × 11.7")', 'A3 (11.7" × 16.5")', 'Custom Size'
+  ];
+  const ADMIN_COLOR_PRESETS = [
+    { name: 'Warm Gold', hex: '#C99A3D' },
+    { name: 'Matte Black', hex: '#111111' },
+    { name: 'Brushed Silver', hex: '#C0C0C0' },
+    { name: 'Rose Gold', hex: '#B76E79' },
+    { name: 'Walnut Wood', hex: '#6A432D' },
+    { name: 'Pure White', hex: '#FFFFFF' },
+    { name: 'Royal Navy', hex: '#1E3A8A' }
+  ];
+  const ADMIN_STYLE_PRESETS = [
+    'Standard Finish', 'Matte Finish', 'Glossy Finish', 'Textured Canvas',
+    'Floating Frame', 'Metallic Finish', 'Wooden Border', 'Acrylic Block'
+  ];
+
+  function getVariantColorHex(name) {
+    const found = ADMIN_COLOR_PRESETS.find(c => c.name.toLowerCase() === (name || '').toLowerCase());
+    return found ? found.hex : '#C99A3D';
+  }
+
+  // Active variants state
+  let newProductVariants = [
+    { size: '8" × 10"', color: 'Warm Gold', variant: 'Standard Finish', price: 599 }
+  ];
+  let editProductVariants = [];
+
+  window.renderNewProductVariants = function() {
+    const list = document.getElementById('newProductVariantsList');
+    if (!list) return;
+
+    if (!newProductVariants || newProductVariants.length === 0) {
+      newProductVariants = [{ size: '8" × 10"', color: 'Warm Gold', variant: 'Standard Finish', price: 599 }];
+    }
+
+    list.innerHTML = newProductVariants.map((v, idx) => {
+      const isDefault = idx === 0;
+      let sizeOpts = ADMIN_SIZE_PRESETS.map(s => `<option value="${escapeHtml(s)}" ${s === v.size ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
+      if (v.size && !ADMIN_SIZE_PRESETS.includes(v.size)) {
+        sizeOpts = `<option value="${escapeHtml(v.size)}" selected>${escapeHtml(v.size)}</option>` + sizeOpts;
+      }
+
+      let colorOpts = ADMIN_COLOR_PRESETS.map(c => `<option value="${escapeHtml(c.name)}" data-color="${c.hex}" ${c.name === v.color ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+      if (v.color && !ADMIN_COLOR_PRESETS.some(c => c.name === v.color)) {
+        colorOpts = `<option value="${escapeHtml(v.color)}" data-color="#C99A3D" selected>${escapeHtml(v.color)}</option>` + colorOpts;
+      }
+
+      let styleOpts = ADMIN_STYLE_PRESETS.map(st => `<option value="${escapeHtml(st)}" ${st === v.variant ? 'selected' : ''}>${escapeHtml(st)}</option>`).join('');
+      if (v.variant && !ADMIN_STYLE_PRESETS.includes(v.variant)) {
+        styleOpts = `<option value="${escapeHtml(v.variant)}" selected>${escapeHtml(v.variant)}</option>` + styleOpts;
+      }
+
+      return `
+        <div class="variant-item-card" data-idx="${idx}">
+          <div class="variant-card-header">
+            <span class="variant-badge ${isDefault ? 'default' : ''}">
+              ${isDefault ? '⭐ Variant #1 (Default Base)' : `Variant #${idx + 1}`}
+            </span>
+            ${!isDefault ? `
+              <button type="button" class="btn-remove-variant" onclick="removeNewProductVariant(${idx})" title="Delete this variant">&times;</button>
+            ` : `<span style="font-size: 0.70rem; color: var(--text-muted);">Main Catalog Price</span>`}
+          </div>
+          <div class="variant-fields-grid">
+            <div class="variant-field-col">
+              <label class="variant-field-label">📏 Size / Dimension</label>
+              <select class="variant-field-select" onchange="updateNewProductVariant(${idx}, 'size', this.value)">
+                ${sizeOpts}
+              </select>
+            </div>
+            <div class="variant-field-col">
+              <label class="variant-field-label">🎨 Color / Finish</label>
+              <select class="variant-field-select" onchange="updateNewProductVariant(${idx}, 'color', this.value)">
+                ${colorOpts}
+              </select>
+            </div>
+            <div class="variant-field-col">
+              <label class="variant-field-label">✨ Variant Style</label>
+              <select class="variant-field-select" onchange="updateNewProductVariant(${idx}, 'variant', this.value)">
+                ${styleOpts}
+              </select>
+            </div>
+            <div class="variant-field-col">
+              <label class="variant-field-label">💰 Price (₹) *</label>
+              <input type="number" class="variant-field-input" value="${v.price !== undefined && v.price !== null ? v.price : ''}" placeholder="600" min="1" required oninput="updateNewProductVariant(${idx}, 'price', this.value)" />
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  window.addNewProductVariant = function() {
+    const nextIdx = newProductVariants.length;
+    const defaultSizes = ['8" × 10"', '10" × 12"', '12" × 18"', '16" × 24"', '20" × 30"'];
+    const nextSize = defaultSizes[nextIdx] || ADMIN_SIZE_PRESETS[nextIdx % ADMIN_SIZE_PRESETS.length];
+    const prevPrice = Number(newProductVariants[newProductVariants.length - 1]?.price) || 599;
+    const nextPrice = Math.round(prevPrice * 1.25);
+
+    newProductVariants.push({
+      size: nextSize,
+      color: newProductVariants[0]?.color || 'Warm Gold',
+      variant: newProductVariants[0]?.variant || 'Standard Finish',
+      price: nextPrice
+    });
+    renderNewProductVariants();
+  };
+
+  window.removeNewProductVariant = function(idx) {
+    if (newProductVariants.length <= 1) return;
+    newProductVariants.splice(idx, 1);
+    renderNewProductVariants();
+  };
+
+  window.updateNewProductVariant = function(idx, field, val) {
+    if (newProductVariants[idx]) {
+      newProductVariants[idx][field] = field === 'price' ? (val === '' ? '' : Number(val)) : val;
+      if (idx === 0 && field === 'price') {
+        const pEl = document.getElementById('newProductPrice');
+        if (pEl) pEl.value = val;
+      }
+    }
+  };
+
+  // Edit Modal Variants
+  window.renderEditProductVariants = function() {
+    const list = document.getElementById('editProductVariantsList');
+    if (!list) return;
+
+    if (!editProductVariants || editProductVariants.length === 0) {
+      editProductVariants = [{ size: '8" × 10"', color: 'Warm Gold', variant: 'Standard Finish', price: 599 }];
+    }
+
+    list.innerHTML = editProductVariants.map((v, idx) => {
+      const isDefault = idx === 0;
+      let sizeOpts = ADMIN_SIZE_PRESETS.map(s => `<option value="${escapeHtml(s)}" ${s === v.size ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
+      if (v.size && !ADMIN_SIZE_PRESETS.includes(v.size)) {
+        sizeOpts = `<option value="${escapeHtml(v.size)}" selected>${escapeHtml(v.size)}</option>` + sizeOpts;
+      }
+
+      let colorOpts = ADMIN_COLOR_PRESETS.map(c => `<option value="${escapeHtml(c.name)}" data-color="${c.hex}" ${c.name === v.color ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+      if (v.color && !ADMIN_COLOR_PRESETS.some(c => c.name === v.color)) {
+        colorOpts = `<option value="${escapeHtml(v.color)}" data-color="#C99A3D" selected>${escapeHtml(v.color)}</option>` + colorOpts;
+      }
+
+      let styleOpts = ADMIN_STYLE_PRESETS.map(st => `<option value="${escapeHtml(st)}" ${st === v.variant ? 'selected' : ''}>${escapeHtml(st)}</option>`).join('');
+      if (v.variant && !ADMIN_STYLE_PRESETS.includes(v.variant)) {
+        styleOpts = `<option value="${escapeHtml(v.variant)}" selected>${escapeHtml(v.variant)}</option>` + styleOpts;
+      }
+
+      return `
+        <div class="variant-item-card" data-idx="${idx}">
+          <div class="variant-card-header">
+            <span class="variant-badge ${isDefault ? 'default' : ''}">
+              ${isDefault ? '⭐ Variant #1 (Default Base)' : `Variant #${idx + 1}`}
+            </span>
+            ${!isDefault ? `
+              <button type="button" class="btn-remove-variant" onclick="removeEditProductVariant(${idx})" title="Delete this variant">&times;</button>
+            ` : `<span style="font-size: 0.70rem; color: var(--text-muted);">Main Catalog Price</span>`}
+          </div>
+          <div class="variant-fields-grid">
+            <div class="variant-field-col">
+              <label class="variant-field-label">📏 Size / Dimension</label>
+              <select class="variant-field-select" onchange="updateEditProductVariant(${idx}, 'size', this.value)">
+                ${sizeOpts}
+              </select>
+            </div>
+            <div class="variant-field-col">
+              <label class="variant-field-label">🎨 Color / Finish</label>
+              <select class="variant-field-select" onchange="updateEditProductVariant(${idx}, 'color', this.value)">
+                ${colorOpts}
+              </select>
+            </div>
+            <div class="variant-field-col">
+              <label class="variant-field-label">✨ Variant Style</label>
+              <select class="variant-field-select" onchange="updateEditProductVariant(${idx}, 'variant', this.value)">
+                ${styleOpts}
+              </select>
+            </div>
+            <div class="variant-field-col">
+              <label class="variant-field-label">💰 Price (₹) *</label>
+              <input type="number" class="variant-field-input" value="${v.price !== undefined && v.price !== null ? v.price : ''}" placeholder="600" min="1" required oninput="updateEditProductVariant(${idx}, 'price', this.value)" />
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  window.addEditProductVariant = function() {
+    const nextIdx = editProductVariants.length;
+    const defaultSizes = ['8" × 10"', '10" × 12"', '12" × 18"', '16" × 24"', '20" × 30"'];
+    const nextSize = defaultSizes[nextIdx] || ADMIN_SIZE_PRESETS[nextIdx % ADMIN_SIZE_PRESETS.length];
+    const prevPrice = Number(editProductVariants[editProductVariants.length - 1]?.price) || Number(document.getElementById('editProductPrice')?.value) || 599;
+    const nextPrice = Math.round(prevPrice * 1.25);
+
+    editProductVariants.push({
+      size: nextSize,
+      color: editProductVariants[0]?.color || 'Warm Gold',
+      variant: editProductVariants[0]?.variant || 'Standard Finish',
+      price: nextPrice
+    });
+    renderEditProductVariants();
+  };
+
+  window.removeEditProductVariant = function(idx) {
+    if (editProductVariants.length <= 1) return;
+    editProductVariants.splice(idx, 1);
+    renderEditProductVariants();
+  };
+
+  window.updateEditProductVariant = function(idx, field, val) {
+    if (editProductVariants[idx]) {
+      editProductVariants[idx][field] = field === 'price' ? (val === '' ? '' : Number(val)) : val;
+      if (idx === 0 && field === 'price') {
+        const pEl = document.getElementById('editProductPrice');
+        if (pEl) pEl.value = val;
+      }
+    }
+  };
+
   window.openAddProductModal = () => {
     if (addForm) addForm.reset();
     try {
@@ -5063,14 +5285,14 @@ function initProductModals() {
         else presetSelect.value = 'assets/images/custom_canvas.jpg';
       }
     }
-    const sizeSel = document.getElementById('newProductSizeSelect');
-    if (sizeSel) sizeSel.value = '8" × 10"';
-    const colorSel = document.getElementById('newProductColorSelect');
-    if (colorSel) colorSel.value = 'Warm Gold';
-    const varSel = document.getElementById('newProductVariantSelect');
-    if (varSel) varSel.value = 'Standard Finish';
+
+    newProductVariants = [
+      { size: '8" × 10"', color: 'Warm Gold', variant: 'Standard Finish', price: 599 }
+    ];
+    window.renderNewProductVariants();
+
     const priceInput = document.getElementById('newProductPrice');
-    if (priceInput) priceInput.value = '';
+    if (priceInput) priceInput.value = '599';
     const optPriceInput = document.getElementById('newProductOptionPrice');
     if (optPriceInput) optPriceInput.value = '';
     const origPriceInput = document.getElementById('newProductOriginalPrice');
@@ -5172,31 +5394,31 @@ function initProductModals() {
         return;
       }
 
-      const priceNum = Number(priceVal);
-      if (!priceVal || isNaN(priceNum) || priceNum <= 0) {
-        showToast('Valid Price Required', 'Please enter a valid selling price in ₹.', 'warning');
-        const priceInput = document.getElementById('newProductPrice');
-        if (priceInput) priceInput.focus();
-        return;
-      }
+      const basePrice = Number(newProductVariants[0]?.price || priceVal || 500);
+      const priceNum = basePrice;
 
-      // 4 Options in 1 Row: 1 Size, 1 Color, 1 Variant, 1 Price
-      const sizeSelect = document.getElementById('newProductSizeSelect');
-      const selectedSize = (sizeSelect && sizeSelect.value) ? sizeSelect.value : '8" × 10"';
-
-      const colorSelect = document.getElementById('newProductColorSelect');
-      const selectedColorOpt = colorSelect ? colorSelect.selectedOptions[0] : null;
-      const selectedColorName = selectedColorOpt ? selectedColorOpt.value : 'Warm Gold';
-      const selectedColorHex = selectedColorOpt ? (selectedColorOpt.getAttribute('data-color') || '#C99A3D') : '#C99A3D';
-
-      const variantSelect = document.getElementById('newProductVariantSelect');
-      const selectedVariant = (variantSelect && variantSelect.value) ? variantSelect.value : 'Standard Finish';
-
-      const resolvedSizes = [{ name: selectedSize, price: priceNum }];
-      const resolvedColors = [{ name: selectedColorName, color: selectedColorHex }];
-      // Do not duplicate base64 image in finishes payload; server points to resolved image
-      const resolvedFinishes = [{ id: 'finish-1', name: selectedColorName, color: selectedColorHex, image: '', priceDelta: 0 }];
-      const resolvedVariants = [ selectedVariant ];
+      // Resolve all variants, sizes, and finishes dynamically from variants list
+      const resolvedSizes = newProductVariants.map(v => ({
+        name: v.size || '8" × 10"',
+        price: Number(v.price) || basePrice
+      }));
+      const resolvedColors = newProductVariants.map(v => ({
+        name: v.color || 'Warm Gold',
+        color: getVariantColorHex(v.color)
+      }));
+      const resolvedFinishes = newProductVariants.map((v, i) => ({
+        id: `finish-${i + 1}`,
+        name: `${v.color || 'Warm Gold'} (${v.variant || 'Standard'})`,
+        color: getVariantColorHex(v.color),
+        image: '',
+        priceDelta: Math.max(0, (Number(v.price) || basePrice) - basePrice)
+      }));
+      const resolvedVariants = newProductVariants.map(v => ({
+        size: v.size || '8" × 10"',
+        color: v.color || 'Warm Gold',
+        variant: v.variant || 'Standard Finish',
+        price: Number(v.price) || basePrice
+      }));
 
       // Image selection: Uploaded photos (up to 5) or catalog preset default
       let productPhotos = (typeof uploadedProductImages !== 'undefined' && Array.isArray(uploadedProductImages) && uploadedProductImages.length > 0) ? [...uploadedProductImages] : [];
@@ -5508,52 +5730,48 @@ function initProductModals() {
       }
     }
 
-    // Populate 4 options in single row: Size, Color, Variant, Price
-    const editSizeSelect = document.getElementById('editProductSizeSelect');
-    if (editSizeSelect) {
-      const firstSize = Array.isArray(prod.sizes) && prod.sizes.length > 0 ? (typeof prod.sizes[0] === 'object' ? prod.sizes[0].name : prod.sizes[0]) : '';
-      if (firstSize) {
-        if (!Array.from(editSizeSelect.options).some(o => o.value === firstSize)) {
-          const opt = new Option(firstSize, firstSize, true, true);
-          editSizeSelect.add(opt);
+    // Extract all variants from prod.variants or prod.sizes
+    editProductVariants = [];
+    if (Array.isArray(prod.variants) && prod.variants.length > 0) {
+      prod.variants.forEach((v, i) => {
+        if (typeof v === 'object' && v !== null) {
+          editProductVariants.push({
+            size: v.size || (Array.isArray(prod.sizes) && prod.sizes[i] ? (typeof prod.sizes[i] === 'object' ? prod.sizes[i].name : prod.sizes[i]) : '8" × 10"'),
+            color: v.color || (Array.isArray(prod.colors) && prod.colors[i] ? (typeof prod.colors[i] === 'object' ? prod.colors[i].name : prod.colors[i]) : 'Warm Gold'),
+            variant: v.variant || v.name || v.style || 'Standard Finish',
+            price: v.price !== undefined ? Number(v.price) : (Array.isArray(prod.sizes) && prod.sizes[i] && prod.sizes[i].price ? Number(prod.sizes[i].price) : Number(prod.price || 599))
+          });
+        } else if (typeof v === 'string') {
+          editProductVariants.push({
+            size: (Array.isArray(prod.sizes) && prod.sizes[i]) ? (typeof prod.sizes[i] === 'object' ? prod.sizes[i].name : prod.sizes[i]) : '8" × 10"',
+            color: (Array.isArray(prod.colors) && prod.colors[i]) ? (typeof prod.colors[i] === 'object' ? prod.colors[i].name : prod.colors[i]) : 'Warm Gold',
+            variant: v,
+            price: (Array.isArray(prod.sizes) && prod.sizes[i] && prod.sizes[i].price) ? Number(prod.sizes[i].price) : Number(prod.price || 599)
+          });
         }
-        editSizeSelect.value = firstSize;
-      }
+      });
+    } else if (Array.isArray(prod.sizes) && prod.sizes.length > 0) {
+      prod.sizes.forEach((s, i) => {
+        const sName = typeof s === 'object' && s !== null ? s.name : String(s);
+        const sPrice = typeof s === 'object' && s !== null && s.price !== undefined ? Number(s.price) : Number(prod.price || 599);
+        const cName = (Array.isArray(prod.finishes) && prod.finishes[i] && prod.finishes[i].name) ||
+                      (Array.isArray(prod.colors) && prod.colors[i] && prod.colors[i].name) || 'Warm Gold';
+        editProductVariants.push({
+          size: sName,
+          color: cName,
+          variant: 'Standard Finish',
+          price: sPrice
+        });
+      });
     }
 
-    const editColorSelect = document.getElementById('editProductColorSelect');
-    if (editColorSelect) {
-      const firstColor = (Array.isArray(prod.finishes) && prod.finishes[0] && prod.finishes[0].name) ||
-                         (Array.isArray(prod.colors) && prod.colors[0] && prod.colors[0].name) || '';
-      if (firstColor) {
-        let matchOpt = Array.from(editColorSelect.options).find(o => o.value.toLowerCase() === firstColor.toLowerCase() || firstColor.toLowerCase().includes(o.value.toLowerCase()));
-        if (matchOpt) {
-          editColorSelect.value = matchOpt.value;
-        } else {
-          const opt = new Option(firstColor, firstColor, true, true);
-          editColorSelect.add(opt);
-          editColorSelect.value = firstColor;
-        }
-      }
+    if (editProductVariants.length === 0) {
+      editProductVariants = [
+        { size: '8" × 10"', color: 'Warm Gold', variant: 'Standard Finish', price: Number(prod.price || 599) }
+      ];
     }
 
-    const editVariantSelect = document.getElementById('editProductVariantSelect');
-    if (editVariantSelect) {
-      const firstVariant = Array.isArray(prod.variants) && prod.variants.length > 0 ? prod.variants[0] : '';
-      if (firstVariant) {
-        let matchOpt = Array.from(editVariantSelect.options).find(o => o.value.toLowerCase() === firstVariant.toLowerCase());
-        if (matchOpt) {
-          editVariantSelect.value = matchOpt.value;
-        } else {
-          const opt = new Option(firstVariant, firstVariant, true, true);
-          editVariantSelect.add(opt);
-          editVariantSelect.value = firstVariant;
-        }
-      }
-    }
-
-    const editRowPrice = document.getElementById('editProductRowPrice');
-    if (editRowPrice) editRowPrice.value = prod.price || '';
+    window.renderEditProductVariants();
 
     editModal.classList.add('open');
   };
@@ -5590,23 +5808,29 @@ function initProductModals() {
       }
       const finalImage = editPhotos[0];
 
-      // 4 Options in 1 Row: 1 Size, 1 Color, 1 Variant, 1 Price
-      const editSizeSelect = document.getElementById('editProductSizeSelect');
-      const selectedSize = (editSizeSelect && editSizeSelect.value) ? editSizeSelect.value : '8" × 10"';
-
-      const editColorSelect = document.getElementById('editProductColorSelect');
-      const selectedColorOpt = editColorSelect ? editColorSelect.selectedOptions[0] : null;
-      const selectedColorName = selectedColorOpt ? selectedColorOpt.value : 'Warm Gold';
-      const selectedColorHex = selectedColorOpt ? (selectedColorOpt.getAttribute('data-color') || '#C99A3D') : '#C99A3D';
-
-      const editVariantSelect = document.getElementById('editProductVariantSelect');
-      const selectedVariant = (editVariantSelect && editVariantSelect.value) ? editVariantSelect.value : 'Standard Finish';
-
-      const priceNum = Number(price);
-      const resolvedSizes = [{ name: selectedSize, price: priceNum }];
-      const resolvedColors = [{ name: selectedColorName, color: selectedColorHex }];
-      const resolvedFinishes = [{ id: 'finish-1', name: selectedColorName, color: selectedColorHex, image: '', priceDelta: 0 }];
-      const resolvedVariants = [ selectedVariant ];
+      // Resolve all variants, sizes, and finishes dynamically from variants list
+      const basePrice = Number(editProductVariants[0]?.price || price || 500);
+      const resolvedSizes = editProductVariants.map(v => ({
+        name: v.size || '8" × 10"',
+        price: Number(v.price) || basePrice
+      }));
+      const resolvedColors = editProductVariants.map(v => ({
+        name: v.color || 'Warm Gold',
+        color: getVariantColorHex(v.color)
+      }));
+      const resolvedFinishes = editProductVariants.map((v, i) => ({
+        id: `finish-${i + 1}`,
+        name: `${v.color || 'Warm Gold'} (${v.variant || 'Standard'})`,
+        color: getVariantColorHex(v.color),
+        image: '',
+        priceDelta: Math.max(0, (Number(v.price) || basePrice) - basePrice)
+      }));
+      const resolvedVariants = editProductVariants.map(v => ({
+        size: v.size || '8" × 10"',
+        color: v.color || 'Warm Gold',
+        variant: v.variant || 'Standard Finish',
+        price: Number(v.price) || basePrice
+      }));
 
       const saveBtn = document.getElementById('btnSaveEditProduct');
       const originalBtnHtml = saveBtn ? saveBtn.innerHTML : 'Save Changes';

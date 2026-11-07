@@ -4000,6 +4000,7 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     leadTime: leadTime || '24 - 48 Hours',
     sizes: resolvedSizes,
     finishes: resolvedFinishes,
+    variants: Array.isArray(variants) ? variants : (typeof variants === 'string' && variants ? variants.split(',').map(v => v.trim()).filter(Boolean) : []),
     createdAt: new Date().toISOString()
   };
 

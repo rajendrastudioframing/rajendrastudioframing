@@ -763,10 +763,10 @@ module.exports = {
               inStock: remote.in_stock !== undefined ? Boolean(remote.in_stock) : (remote.status === 'In Stock'),
               stockQty: remote.stock_qty !== undefined ? Number(remote.stock_qty) : 100,
               leadTime: remote.lead_time || '24 - 48 Hours',
-              sizes: Array.isArray(remote.sizes) ? remote.sizes : [],
-              finishes: Array.isArray(remote.finishes) ? remote.finishes : [],
-              variants: Array.isArray(remote.variants) ? remote.variants : [],
-              features: Array.isArray(remote.features) ? remote.features : [],
+              sizes: Array.isArray(remote.sizes) ? remote.sizes : (typeof remote.sizes === 'string' ? (() => { try { return JSON.parse(remote.sizes); } catch (_) { return []; } })() : []),
+              finishes: Array.isArray(remote.finishes) ? remote.finishes : (typeof remote.finishes === 'string' ? (() => { try { return JSON.parse(remote.finishes); } catch (_) { return []; } })() : []),
+              variants: Array.isArray(remote.variants) ? remote.variants : (typeof remote.variants === 'string' ? (() => { try { return JSON.parse(remote.variants); } catch (_) { return []; } })() : []),
+              features: Array.isArray(remote.features) ? remote.features : (typeof remote.features === 'string' ? (() => { try { return JSON.parse(remote.features); } catch (_) { return []; } })() : []),
               createdAt: remote.created_at,
               updatedAt: remote.updated_at
             };
