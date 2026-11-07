@@ -4345,14 +4345,25 @@ app.get('/api/db-status', async (req, res) => {
 
   let deletedOrdersList = [];
   let rawOrdersList = [];
+  let rawInquiriesList = [];
+  let ordersSelectError = null;
+  let inqSelectError = null;
+  let testUpsertResult = null;
   try {
     const deletedSet = await db.getDeletedOrderIds();
     deletedOrdersList = Array.from(deletedSet);
     if (db.supabase) {
-      const { data } = await db.supabase.from('orders').select('order_id, status, created_at');
-      rawOrdersList = data || [];
+      const ordRes = await db.supabase.from('orders').select('*');
+      ordersSelectError = ordRes.error ? { message: ordRes.error.message, code: ordRes.error.code, details: ordRes.error.details } : null;
+      rawOrdersList = ordRes.data || [];
+
+      const inqRes = await db.supabase.from('inquiries').select('*');
+      inqSelectError = inqRes.error ? { message: inqRes.error.message, code: inqRes.error.code, details: inqRes.error.details } : null;
+      rawInquiriesList = inqRes.data || [];
     }
-  } catch (_) {}
+  } catch (diagErr) {
+    ordersSelectError = { message: diagErr.message };
+  }
 
   res.json({
     success: true,
@@ -4364,6 +4375,9 @@ app.get('/api/db-status', async (req, res) => {
     tables: tablesCheck,
     deletedOrders: deletedOrdersList,
     rawOrdersList: rawOrdersList,
+    rawInquiriesList: rawInquiriesList,
+    ordersSelectError,
+    inqSelectError,
     ordersCount,
     inquiriesCount,
     orderSequence,
