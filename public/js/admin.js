@@ -5047,11 +5047,104 @@ function initProductModals() {
     { name: 'Royal Navy', hex: '#1E3A8A' }
   ];
 
+  function variantColorToHex(colorStr) {
+    if (!colorStr || typeof colorStr !== 'string') return null;
+    const cleanStr = colorStr.trim();
+    if (!cleanStr) return null;
+
+    // 1. Direct hex checks: #FFF, #FFFFFF, FFF, FFFFFF
+    if (/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(cleanStr)) {
+      let hex = cleanStr.startsWith('#') ? cleanStr : `#${cleanStr}`;
+      if (hex.length === 4) {
+        hex = `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`;
+      }
+      return hex.toUpperCase();
+    }
+
+    // 2. Comprehensive named color dictionary
+    const lower = cleanStr.toLowerCase();
+    const commonColors = {
+      'warm gold': '#C99A3D',
+      'gold': '#FFD700',
+      'golden': '#FFD700',
+      'matte black': '#111111',
+      'black': '#000000',
+      'pure white': '#FFFFFF',
+      'white': '#FFFFFF',
+      'royal navy': '#1E3A8A',
+      'navy': '#000080',
+      'navy blue': '#000080',
+      'blue': '#2563EB',
+      'sky blue': '#38BDF8',
+      'light blue': '#93C5FD',
+      'dark blue': '#1E3A8A',
+      'red': '#DC2626',
+      'dark red': '#991B1B',
+      'crimson': '#DC143C',
+      'maroon': '#800000',
+      'green': '#16A34A',
+      'dark green': '#15803D',
+      'light green': '#86EFAC',
+      'emerald': '#10B981',
+      'yellow': '#EAB308',
+      'lemon': '#FEF08A',
+      'orange': '#F97316',
+      'dark orange': '#C2410C',
+      'purple': '#9333EA',
+      'violet': '#8B5CF6',
+      'pink': '#EC4899',
+      'light pink': '#FBCFE8',
+      'rose': '#F43F5E',
+      'rose gold': '#B76E79',
+      'silver': '#C0C0C0',
+      'grey': '#6B7280',
+      'gray': '#6B7280',
+      'light grey': '#D1D5DB',
+      'light gray': '#D1D5DB',
+      'dark grey': '#374151',
+      'dark gray': '#374151',
+      'brown': '#8B4513',
+      'chocolate': '#7B3F00',
+      'bronze': '#CD7F32',
+      'copper': '#B87333',
+      'teal': '#14B8A6',
+      'cyan': '#06B6D4',
+      'turquoise': '#40E0D0',
+      'olive': '#808000',
+      'beige': '#F5F5DC',
+      'cream': '#FFFDD0',
+      'ivory': '#FFFFF0',
+      'tan': '#D2B48C',
+      'amber': '#F59E0B'
+    };
+    if (commonColors[lower]) return commonColors[lower];
+
+    // 3. Fallback via browser canvas (handles all 140+ CSS official color names)
+    if (typeof document !== 'undefined') {
+      try {
+        const ctx = document.createElement('canvas').getContext('2d');
+        ctx.fillStyle = cleanStr;
+        const computed = ctx.fillStyle;
+        if (computed && computed.startsWith('#')) return computed.toUpperCase();
+        if (computed && computed.startsWith('rgb')) {
+          const parts = computed.match(/\d+/g);
+          if (parts && parts.length >= 3) {
+            const r = Number(parts[0]).toString(16).padStart(2, '0');
+            const g = Number(parts[1]).toString(16).padStart(2, '0');
+            const b = Number(parts[2]).toString(16).padStart(2, '0');
+            return `#${r}${g}${b}`.toUpperCase();
+          }
+        }
+      } catch (_) {}
+    }
+
+    return null;
+  }
+
   function getVariantColorHex(name) {
     if (!name) return '#C99A3D';
-    if (name.startsWith('#') && (name.length === 4 || name.length === 7)) return name;
-    const found = ADMIN_COLOR_PRESETS.find(c => c.name.toLowerCase() === name.toLowerCase());
-    return found ? found.hex : '#C99A3D';
+    const found = variantColorToHex(name);
+    return found || '#C99A3D';
   }
 
   // Active variants state (Size, Color/Hex, Price)
@@ -5090,7 +5183,7 @@ function initProductModals() {
             <div class="variant-field-col">
               <label class="variant-field-label">🎨 Color &amp; Hex Code</label>
               <div style="display: flex; gap: 6px; align-items: center;">
-                <input type="color" class="variant-color-swatch-input" value="${hex}" onchange="updateNewProductVariantColorPicker(${idx}, this.value)" title="Click to choose color" />
+                <input type="color" class="variant-color-swatch-input" id="newVariantColorSwatch_${idx}" value="${hex}" oninput="updateNewProductVariantColorPicker(${idx}, this.value)" onchange="updateNewProductVariantColorPicker(${idx}, this.value)" title="Click to choose color" />
                 <input type="text" class="variant-field-input" id="newVariantColorInput_${idx}" placeholder="e.g. Warm Gold or #C99A3D" value="${escapeHtml(v.color || hex)}" oninput="updateNewProductVariant(${idx}, 'color', this.value)" />
               </div>
             </div>
@@ -5106,12 +5199,11 @@ function initProductModals() {
 
   window.updateNewProductVariantColorPicker = function(idx, hexVal) {
     if (newProductVariants[idx]) {
-      newProductVariants[idx].colorHex = hexVal;
-      if (!newProductVariants[idx].color || newProductVariants[idx].color.startsWith('#')) {
-        newProductVariants[idx].color = hexVal;
-        const txtInput = document.getElementById(`newVariantColorInput_${idx}`);
-        if (txtInput) txtInput.value = hexVal;
-      }
+      const upper = (hexVal || '#C99A3D').toUpperCase();
+      newProductVariants[idx].colorHex = upper;
+      newProductVariants[idx].color = upper;
+      const txtInput = document.getElementById(`newVariantColorInput_${idx}`);
+      if (txtInput) txtInput.value = upper;
     }
   };
 
@@ -5140,8 +5232,13 @@ function initProductModals() {
   window.updateNewProductVariant = function(idx, field, val) {
     if (newProductVariants[idx]) {
       newProductVariants[idx][field] = field === 'price' ? (val === '' ? '' : Number(val)) : val;
-      if (field === 'color' && val.startsWith('#') && (val.length === 4 || val.length === 7)) {
-        newProductVariants[idx].colorHex = val;
+      if (field === 'color') {
+        const detected = variantColorToHex(val);
+        if (detected) {
+          newProductVariants[idx].colorHex = detected;
+          const swatch = document.getElementById(`newVariantColorSwatch_${idx}`);
+          if (swatch) swatch.value = detected;
+        }
       }
       if (idx === 0 && field === 'price') {
         const pEl = document.getElementById('newProductPrice');
@@ -5181,7 +5278,7 @@ function initProductModals() {
             <div class="variant-field-col">
               <label class="variant-field-label">🎨 Color &amp; Hex Code</label>
               <div style="display: flex; gap: 6px; align-items: center;">
-                <input type="color" class="variant-color-swatch-input" value="${hex}" onchange="updateEditProductVariantColorPicker(${idx}, this.value)" title="Click to choose color" />
+                <input type="color" class="variant-color-swatch-input" id="editVariantColorSwatch_${idx}" value="${hex}" oninput="updateEditProductVariantColorPicker(${idx}, this.value)" onchange="updateEditProductVariantColorPicker(${idx}, this.value)" title="Click to choose color" />
                 <input type="text" class="variant-field-input" id="editVariantColorInput_${idx}" placeholder="e.g. Warm Gold or #C99A3D" value="${escapeHtml(v.color || hex)}" oninput="updateEditProductVariant(${idx}, 'color', this.value)" />
               </div>
             </div>
@@ -5197,12 +5294,11 @@ function initProductModals() {
 
   window.updateEditProductVariantColorPicker = function(idx, hexVal) {
     if (editProductVariants[idx]) {
-      editProductVariants[idx].colorHex = hexVal;
-      if (!editProductVariants[idx].color || editProductVariants[idx].color.startsWith('#')) {
-        editProductVariants[idx].color = hexVal;
-        const txtInput = document.getElementById(`editVariantColorInput_${idx}`);
-        if (txtInput) txtInput.value = hexVal;
-      }
+      const upper = (hexVal || '#C99A3D').toUpperCase();
+      editProductVariants[idx].colorHex = upper;
+      editProductVariants[idx].color = upper;
+      const txtInput = document.getElementById(`editVariantColorInput_${idx}`);
+      if (txtInput) txtInput.value = upper;
     }
   };
 
@@ -5231,8 +5327,13 @@ function initProductModals() {
   window.updateEditProductVariant = function(idx, field, val) {
     if (editProductVariants[idx]) {
       editProductVariants[idx][field] = field === 'price' ? (val === '' ? '' : Number(val)) : val;
-      if (field === 'color' && val.startsWith('#') && (val.length === 4 || val.length === 7)) {
-        editProductVariants[idx].colorHex = val;
+      if (field === 'color') {
+        const detected = variantColorToHex(val);
+        if (detected) {
+          editProductVariants[idx].colorHex = detected;
+          const swatch = document.getElementById(`editVariantColorSwatch_${idx}`);
+          if (swatch) swatch.value = detected;
+        }
       }
       if (idx === 0 && field === 'price') {
         const pEl = document.getElementById('editProductPrice');
