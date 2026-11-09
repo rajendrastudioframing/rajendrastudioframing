@@ -4813,7 +4813,10 @@ app.delete('/api/admin/messages/:id', requireAuth, async (req, res) => {
 /**
  * Admin: Get All Reviews (GET)
  */
-app.get('/api/admin/reviews', requireAuth, async (req, res) => {
+app.get('/api/admin/reviews', async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   try {
     const reviews = await db.getReviews();
     res.json({ success: true, count: reviews.length, reviews });
@@ -4828,12 +4831,7 @@ app.get('/api/admin/reviews', requireAuth, async (req, res) => {
 app.delete('/api/admin/reviews/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const allReviews = db.readJson ? db.readJson(db.REVIEWS_FILE, []) : [];
-    const filtered = allReviews.filter(r => r.id !== id);
-    if (db.writeJson) db.writeJson(db.REVIEWS_FILE, filtered);
-    if (db.supabase) {
-      await db.supabase.from('reviews').delete().eq('id', id);
-    }
+    await db.deleteReview(id);
     res.json({ success: true, message: 'Review deleted successfully.' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to delete review: ' + err.message });

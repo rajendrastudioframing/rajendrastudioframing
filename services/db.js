@@ -2074,18 +2074,16 @@ module.exports = {
     const targetProduct = productId ? String(productId).trim().toLowerCase() : null;
     let allFound = [];
 
-    // 1. Fetch from Supabase reviews table
+    // 1. Fetch from Supabase reviews table (all reviews to allow alias mapping)
     if (supabase && isSupabaseOperational()) {
       try {
-        let query = supabase.from('reviews').select('*').order('created_at', { ascending: false });
-        if (targetProduct) {
-          query = query.ilike('product_id', targetProduct);
-        }
-        const { data, error } = await query;
+        const { data, error } = await supabase.from('reviews').select('*').order('created_at', { ascending: false });
         if (!error && Array.isArray(data)) {
           const remoteReviews = data.map(r => ({
             id: r.id,
             productId: r.product_id,
+            productSlug: r.product_slug || '',
+            productName: r.product_name || '',
             author: r.author,
             city: r.city || 'Dahej / Bharuch',
             rating: Number(r.rating) || 5,
@@ -2133,10 +2131,33 @@ module.exports = {
     // Exclude diagnostic mock reviews
     allFound = allFound.filter(r => !r.id || !r.id.startsWith('test-diagnostic'));
 
-    // Strict product-wise isolation
+    // Strict product-wise isolation with alias awareness (matching ID, slug, and name)
     if (targetProduct) {
-      return allFound.filter(r => (r.productId || '').trim().toLowerCase() === targetProduct);
+      const allowedIds = new Set([targetProduct]);
+      try {
+        const catalogProducts = await this.getProducts();
+        const matchedProd = catalogProducts.find(p => {
+          if (!p) return false;
+          const pid = String(p.id || '').trim().toLowerCase();
+          const pslug = String(p.slug || '').trim().toLowerCase();
+          const pname = String(p.name || '').trim().toLowerCase();
+          return pid === targetProduct || pslug === targetProduct || pname === targetProduct;
+        });
+        if (matchedProd) {
+          if (matchedProd.id) allowedIds.add(String(matchedProd.id).trim().toLowerCase());
+          if (matchedProd.slug) allowedIds.add(String(matchedProd.slug).trim().toLowerCase());
+          if (matchedProd.name) allowedIds.add(String(matchedProd.name).trim().toLowerCase());
+        }
+      } catch (_) {}
+
+      return allFound.filter(r => {
+        const rp = String(r.productId || r.product_id || '').trim().toLowerCase();
+        const rs = String(r.productSlug || '').trim().toLowerCase();
+        const rn = String(r.productName || '').trim().toLowerCase();
+        return allowedIds.has(rp) || (rs && allowedIds.has(rs)) || (rn && allowedIds.has(rn));
+      });
     }
+
     return allFound;
   },
 
@@ -2146,6 +2167,8 @@ module.exports = {
       ...review,
       id: review.id || `rev-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       productId: cleanProductId,
+      productSlug: (review.productSlug || '').trim(),
+      productName: (review.productName || '').trim(),
       rating: Number(review.rating) || 5,
       date: review.date || new Date().toISOString().split('T')[0],
       verified: review.verified !== false,
@@ -2211,6 +2234,33 @@ module.exports = {
     } catch (_) {}
 
     return cleanReview;
+  },
+
+  async deleteReview(id) {
+    if (!id) return;
+    if (supabase && isSupabaseOperational()) {
+      try {
+        await supabase.from('reviews').delete().eq('id', id);
+      } catch (err) {
+        console.warn('Supabase delete review note:', err.message);
+      }
+      try {
+        const cfgRes = await supabase.from('admin_config').select('smtp').eq('id', 'all_customer_reviews').maybeSingle();
+        if (cfgRes && cfgRes.data && cfgRes.data.smtp && Array.isArray(cfgRes.data.smtp.reviews)) {
+          const updated = cfgRes.data.smtp.reviews.filter(r => r.id !== id);
+          await supabase.from('admin_config').upsert({
+            id: 'all_customer_reviews',
+            smtp: { reviews: updated }
+          });
+        }
+      } catch (_) {}
+    }
+
+    try {
+      const localReviews = readJson(REVIEWS_FILE, []);
+      const filtered = localReviews.filter(r => r.id !== id);
+      writeJson(REVIEWS_FILE, filtered);
+    } catch (_) {}
   },
 
   // Supabase client instance

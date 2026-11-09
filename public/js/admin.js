@@ -7113,28 +7113,61 @@ function escapeHtml(str) {
 let allReviews = [];
 
 async function loadReviews() {
+  const tbody = document.getElementById('reviewsTableBody');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading reviews...</td></tr>';
+  }
+
+  // Pre-load products catalog if needed to display product names instead of raw IDs
+  if (!allProducts || allProducts.length === 0) {
+    try {
+      const pRes = await fetch(`/api/products?_t=${Date.now()}`);
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        if (pData && Array.isArray(pData.products)) {
+          allProducts = pData.products;
+        }
+      }
+    } catch (_) {}
+  }
+
+  let fetched = false;
+
+  // 1. Fetch from public reviews endpoint with cache-busting
   try {
-    const tbody = document.getElementById('reviewsTableBody');
-    if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading reviews...</td></tr>';
-    }
-    const res = await apiFetch('/api/admin/reviews');
-    const data = await res.json();
-    if (data && data.success) {
-      allReviews = data.reviews || [];
-      renderReviewsTable(allReviews);
-    } else {
-      throw new Error(data.message || 'Failed to fetch admin reviews');
+    const res = await fetch(`/api/reviews?_t=${Date.now()}`, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.reviews)) {
+        allReviews = data.reviews;
+        renderReviewsTable(allReviews);
+        fetched = true;
+      }
     }
   } catch (err) {
-    console.warn('Admin reviews API unavailable, falling back to public endpoint:', err.message);
+    console.warn('Reviews direct fetch note:', err.message);
+  }
+
+  // 2. Fallback to /api/admin/reviews
+  if (!fetched) {
     try {
-      const fallbackRes = await fetch(`${API_BASE}/api/reviews`);
-      const fallbackData = await fallbackRes.json();
-      allReviews = fallbackData.reviews || [];
-      renderReviewsTable(allReviews);
-    } catch (fbErr) {
-      console.error('Failed to load reviews:', fbErr);
+      const res = await apiFetch(`/api/admin/reviews?_t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.reviews)) {
+          allReviews = data.reviews;
+          renderReviewsTable(allReviews);
+          fetched = true;
+        }
+      }
+    } catch (adminErr) {
+      console.warn('Admin reviews API fetch note:', adminErr.message);
+    }
+  }
+
+  if (!fetched && (!allReviews || allReviews.length === 0)) {
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No customer reviews yet.</td></tr>';
     }
   }
 }
@@ -7149,14 +7182,21 @@ function renderReviewsTable(reviews) {
   }
 
   tbody.innerHTML = reviews.map(r => {
-    const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(Math.max(0, 5 - (r.rating || 5)));
-    const prod = (allProducts || []).find(p => p.id === r.productId);
-    const prodName = prod ? prod.name : (r.productId || 'General Catalog');
+    const numRating = Math.max(1, Math.min(5, Math.round(Number(r.rating) || 5)));
+    const stars = '★'.repeat(numRating) + '☆'.repeat(5 - numRating);
+    const pId = String(r.productId || r.product_id || '').trim().toLowerCase();
+    const prod = (allProducts || []).find(p => 
+      (p.id && String(p.id).trim().toLowerCase() === pId) ||
+      (p.slug && String(p.slug).trim().toLowerCase() === pId) ||
+      (p.name && String(p.name).trim().toLowerCase() === pId)
+    );
+    const prodName = prod ? prod.name : (r.productId || 'Catalog Product');
 
     return `
       <tr class="admin-review-row">
         <td class="rev-cell-prod">
           <strong style="font-size: 0.84rem; color: var(--text-main); font-weight: 700;">${escapeHtml(prodName)}</strong>
+          ${prod && prod.id !== r.productId ? `<div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(r.productId)}</div>` : ''}
         </td>
         <td class="rev-cell-cust">
           <div style="font-weight: 700; font-size: 0.84rem; color: var(--text-main);">${escapeHtml(r.author || 'Anonymous')}</div>
@@ -7164,7 +7204,7 @@ function renderReviewsTable(reviews) {
         </td>
         <td class="rev-cell-rating">
           <div style="color: #F59E0B; font-size: 0.95rem; letter-spacing: 1px;">${stars}</div>
-          <span style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted);">${r.rating}.0 / 5.0</span>
+          <span style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted);">${numRating}.0 / 5.0</span>
         </td>
         <td class="rev-cell-headline">
           <strong style="font-size: 0.82rem; color: var(--text-main);">${escapeHtml(r.headline || '')}</strong>
