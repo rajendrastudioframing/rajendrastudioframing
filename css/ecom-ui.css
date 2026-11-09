@@ -2210,6 +2210,44 @@
   white-space: nowrap !important;
 }
 
+.order-item-right {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+  margin-left: 8px !important;
+}
+
+.checkout-item-remove-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: #9CA3AF !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  transition: all 0.18s ease !important;
+  line-height: 1.2 !important;
+}
+
+.checkout-item-remove-btn:hover,
+.checkout-item-remove-btn:focus {
+  color: #DC2626 !important;
+  background: #FEE2E2 !important;
+  border-color: #FECACA !important;
+}
+
+.checkout-item-remove-btn svg {
+  flex-shrink: 0 !important;
+  pointer-events: none !important;
+}
+
 .order-breakdown-row {
   display: flex !important;
   justify-content: space-between !important;

@@ -287,10 +287,53 @@ function detectItemVariantLabel(item) {
               </div>
             ` : ''}
           </div>
-          <div class="order-item-price">₹${lineTotal.toLocaleString('en-IN')}</div>
+          <div class="order-item-right">
+            <div class="order-item-price">₹${lineTotal.toLocaleString('en-IN')}</div>
+            <button type="button" class="checkout-item-remove-btn" onclick="removeCheckoutItem(${idx})" title="Remove ${escapeHtml(item.name || 'item')} from order" aria-label="Remove item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              <span>Remove</span>
+            </button>
+          </div>
         </div>
       `;
     }).join('');
+  }
+}
+
+/**
+ * Remove an item from cart directly on Checkout page
+ */
+function removeCheckoutItem(index) {
+  try {
+    sessionStorage.removeItem('rf_buy_now_item');
+  } catch (_) {}
+
+  const targetIdx = parseInt(index, 10);
+  if (isNaN(targetIdx) || targetIdx < 0) return;
+
+  if (typeof removeFromCart === 'function') {
+    removeFromCart(targetIdx);
+  } else {
+    try {
+      const key = (typeof getCartStorageKey === 'function') ? getCartStorageKey() : 'rf_cart';
+      const raw = localStorage.getItem(key) || localStorage.getItem('rf_cart');
+      let c = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(c) && targetIdx < c.length) {
+        c.splice(targetIdx, 1);
+        localStorage.setItem(key, JSON.stringify(c));
+        localStorage.setItem('rf_cart', JSON.stringify(c));
+      }
+    } catch (e) {
+      console.error('Error removing item from checkout cart:', e);
+    }
+  }
+
+  // Force immediate re-render of order summary
+  if (typeof renderCheckoutOrderSummary === 'function') {
+    renderCheckoutOrderSummary();
   }
 }
 
@@ -698,6 +741,7 @@ if (document.readyState === 'loading') {
 // Global exports & event bindings
 window.updateCheckoutAuthUI = updateCheckoutAuthUI;
 window.renderCheckoutOrderSummary = renderCheckoutOrderSummary;
+window.removeCheckoutItem = removeCheckoutItem;
 
 window.addEventListener('customerAuthStateChanged', () => {
   updateCheckoutAuthUI();
