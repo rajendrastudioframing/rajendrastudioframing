@@ -234,6 +234,7 @@ async function syncToSupabase() {
         badge: cat.badge || cat.name,
         color: cat.color || '#C99A3D',
         bg: cat.bg || 'rgba(201, 154, 61, 0.15)',
+        image: cat.image || null,
         is_default: Boolean(cat.isDefault),
         created_at: cat.createdAt || new Date().toISOString()
       }, { onConflict: 'id' });

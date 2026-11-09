@@ -528,7 +528,7 @@
 
       try {
         const [catRes, prodRes] = await Promise.all([
-          fetch('/api/categories').catch(() => null),
+          fetch(`/api/categories?_t=${Date.now()}`).catch(() => null),
           fetch('/api/products').catch(() => null)
         ]);
 
@@ -566,13 +566,8 @@
         const catProducts = products.filter(p => (p.category || '').toLowerCase() === catId);
         const count = catProducts.length;
 
+        // Strictly preserve category's own uploaded/registered image (never overwrite with product images)
         let imgSrc = (cat.image && typeof cat.image === 'string' && cat.image.trim()) ? cat.image.trim() : '';
-        if (catProducts.length > 0) {
-          const firstWithImg = catProducts.find(p => (p.images && p.images.length > 0) || p.image);
-          if (firstWithImg) {
-            imgSrc = (firstWithImg.images && firstWithImg.images[0]) || firstWithImg.image;
-          }
-        }
         if (!imgSrc) {
           imgSrc = fallbackImages[catId] || 'assets/images/glass_frame.jpg';
         }
