@@ -63,11 +63,13 @@ CREATE TABLE IF NOT EXISTS public.products (
   finishes JSONB DEFAULT '[]'::jsonb,
   variants JSONB DEFAULT '[]'::jsonb,
   features JSONB DEFAULT '[]'::jsonb,
+  requires_photo BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Ensure newly added columns exist if table already existed
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS requires_photo BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS original_price NUMERIC;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS in_stock BOOLEAN DEFAULT TRUE;

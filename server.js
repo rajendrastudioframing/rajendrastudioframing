@@ -2641,7 +2641,7 @@ app.post('/api/orders', async (req, res) => {
         shipping: Number(shipping) || 0,
         total: Number(total) || 0,
         notes: notes || '',
-        orderPhoto: orderPhoto || null,
+        orderPhoto: orderPhoto || (items.find(i => i && i.uploadedPhoto && (i.uploadedPhoto.fileUrl || typeof i.uploadedPhoto === 'string')) ? items.find(i => i && i.uploadedPhoto && (i.uploadedPhoto.fileUrl || typeof i.uploadedPhoto === 'string')).uploadedPhoto : null) || null,
         paymentMethod: req.body.paymentMethod || 'Pick up from shop',
         upiUtr: req.body.upiUtr || null,
         status: 'pending',
