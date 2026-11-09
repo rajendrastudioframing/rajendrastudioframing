@@ -267,11 +267,11 @@
           </div>
 
                     <!-- SECTION 1: Product Customization Card (Size & Finish) -->
-          <div class="detail-card detail-customization-card">
+          <div class="detail-card detail-customization-card" id="detailCustomizationCard">
             <!-- Available Sizes / Options -->
-            <div class="option-group">
+            <div class="option-group" id="sizeOptionGroup">
               <div class="option-header">
-                <span class="option-name">Available Size:</span>
+                <span class="option-name" id="variantOptionTitle">Available Size:</span>
                 <span class="option-value-selected" id="selectedSizeLabel">6" × 8"</span>
               </div>
               <div class="size-chips" id="detailSizesContainer"></div>
@@ -347,6 +347,14 @@
               </div>
             </div>
 
+            <!-- Available Colors / Options -->
+            <div class="option-group" id="colorOptionGroup" style="display: none; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-light, #E2E8F0);">
+              <div class="option-header">
+                <span class="option-name">Available Color:</span>
+                <span class="option-value-selected" id="selectedColorLabel"></span>
+              </div>
+              <div class="color-chips" id="detailColorsContainer"></div>
+            </div>
 
           </div>
 

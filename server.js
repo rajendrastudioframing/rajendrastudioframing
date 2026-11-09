@@ -3802,7 +3802,7 @@ app.get('/api/admin/products', requireAuth, async (req, res) => {
  * Add New Product (POST)
  */
 app.post('/api/admin/products', requireAuth, async (req, res) => {
-  const { id, name, category, categoryLabel, price, originalPrice, badge, shortDescription, description, material, printingType, leadTime, image, images, status, stockQty, sizes, finishes, colors, variants } = req.body;
+  const { id, name, category, categoryLabel, price, originalPrice, badge, shortDescription, description, material, printingType, leadTime, image, images, status, stockQty, sizes, finishes, colors, variantType, variants } = req.body;
 
   if (!name || price === undefined || price === null || isNaN(Number(price))) {
     return res.status(400).json({ success: false, message: 'Product name and valid price are required.' });
@@ -3921,12 +3921,8 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
       price: Math.round(Number(price) * (1 + (idx * 0.25)))
     }));
   }
-  if (!resolvedSizes.length) {
-    resolvedSizes = [
-      { name: '8" × 10"', price: Number(price) },
-      { name: '10" × 12"', price: Math.round(Number(price) * 1.35) },
-      { name: '12" × 18"', price: Math.round(Number(price) * 1.8) }
-    ];
+  if (!resolvedSizes.length && !Array.isArray(sizes)) {
+    resolvedSizes = [];
   }
 
   // Resolve finishes (colors & variants)
@@ -3963,10 +3959,7 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
         priceDelta: 0
       }));
     } else {
-      resolvedFinishes = [
-        { id: 'gold-standoffs', name: 'Warm Gold', color: '#C99A3D', image: resolvedImage, priceDelta: 0 },
-        { id: 'black-standoffs', name: 'Matte Black', color: '#111111', image: resolvedImage, priceDelta: 0 }
-      ];
+      resolvedFinishes = [];
     }
   }
 
@@ -4000,6 +3993,7 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     leadTime: leadTime || '24 - 48 Hours',
     sizes: resolvedSizes,
     finishes: resolvedFinishes,
+    variantType: variantType || 'size',
     variants: Array.isArray(variants) ? variants : (typeof variants === 'string' && variants ? variants.split(',').map(v => v.trim()).filter(Boolean) : []),
     createdAt: new Date().toISOString()
   };
@@ -4213,6 +4207,14 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
     target.finishes = resolvedFinishes.map(f => {
       return { ...f };
     });
+  }
+
+  if (updates.colors !== undefined) {
+    target.colors = Array.isArray(updates.colors) ? updates.colors : [];
+  }
+
+  if (updates.variantType !== undefined) {
+    target.variantType = String(updates.variantType).trim();
   }
 
   if (updates.variants !== undefined) {

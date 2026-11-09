@@ -703,6 +703,7 @@ module.exports = {
             leadTime: data.lead_time || '24 - 48 Hours',
             sizes: Array.isArray(data.sizes) ? data.sizes : [],
             finishes: Array.isArray(data.finishes) ? data.finishes : [],
+            variantType: data.variant_type || data.variantType || (Array.isArray(data.variants) && data.variants[0]?.type) || 'size',
             variants: Array.isArray(data.variants) ? data.variants : [],
             features: Array.isArray(data.features) ? data.features : [],
             createdAt: data.created_at,
@@ -765,6 +766,7 @@ module.exports = {
               leadTime: remote.lead_time || '24 - 48 Hours',
               sizes: Array.isArray(remote.sizes) ? remote.sizes : (typeof remote.sizes === 'string' ? (() => { try { return JSON.parse(remote.sizes); } catch (_) { return []; } })() : []),
               finishes: Array.isArray(remote.finishes) ? remote.finishes : (typeof remote.finishes === 'string' ? (() => { try { return JSON.parse(remote.finishes); } catch (_) { return []; } })() : []),
+              variantType: remote.variant_type || remote.variantType || (Array.isArray(remote.variants) && remote.variants[0]?.type) || 'size',
               variants: Array.isArray(remote.variants) ? remote.variants : (typeof remote.variants === 'string' ? (() => { try { return JSON.parse(remote.variants); } catch (_) { return []; } })() : []),
               features: Array.isArray(remote.features) ? remote.features : (typeof remote.features === 'string' ? (() => { try { return JSON.parse(remote.features); } catch (_) { return []; } })() : []),
               createdAt: remote.created_at,
@@ -819,6 +821,7 @@ module.exports = {
       stockQty: product.stockQty !== undefined ? Number(product.stockQty) : 100,
       leadTime: product.leadTime || product.lead_time || '24 - 48 Hours',
       sizes: Array.isArray(product.sizes) ? product.sizes : [],
+      variantType: product.variantType || product.variant_type || (Array.isArray(product.variants) && product.variants[0]?.type) || 'size',
       variants: Array.isArray(product.variants) ? product.variants : [],
       features: Array.isArray(product.features) ? product.features : [],
       updatedAt: new Date().toISOString()
@@ -849,13 +852,20 @@ module.exports = {
           lead_time: sanitizedProduct.leadTime,
           sizes: sanitizedProduct.sizes,
           finishes: sanitizedProduct.finishes,
+          variant_type: sanitizedProduct.variantType,
           variants: sanitizedProduct.variants,
           features: sanitizedProduct.features,
           created_at: sanitizedProduct.createdAt || new Date().toISOString(),
           updated_at: sanitizedProduct.updatedAt || new Date().toISOString()
         };
-        const upsertPromise = supabase.from('products').upsert(supabaseRow, { onConflict: 'id' });
-        const { error } = await withTimeout(upsertPromise, 8000, 'Supabase products table upsert');
+        let upsertPromise = supabase.from('products').upsert(supabaseRow, { onConflict: 'id' });
+        let { error } = await withTimeout(upsertPromise, 8000, 'Supabase products table upsert');
+        if (error && error.message && error.message.toLowerCase().includes('variant_type')) {
+          const fallbackRow = { ...supabaseRow };
+          delete fallbackRow.variant_type;
+          const retryRes = await supabase.from('products').upsert(fallbackRow, { onConflict: 'id' });
+          error = retryRes.error;
+        }
         if (error) {
           if (isTableMissingError(error)) {
             console.warn('⚠️ [DATABASE] Supabase products table missing or schema cache not updated. Updating local store.');

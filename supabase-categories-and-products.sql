@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   lead_time TEXT DEFAULT '24 - 48 Hours',
   sizes JSONB DEFAULT '[]'::jsonb,
   finishes JSONB DEFAULT '[]'::jsonb,
+  variant_type TEXT DEFAULT 'size',
   variants JSONB DEFAULT '[]'::jsonb,
   features JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -107,6 +108,7 @@ ALTER TABLE public.products ADD COLUMN IF NOT EXISTS stock_qty INTEGER DEFAULT 1
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS lead_time TEXT DEFAULT '24 - 48 Hours';
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS sizes JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS finishes JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS variant_type TEXT DEFAULT 'size';
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS variants JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS features JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();

@@ -5147,23 +5147,79 @@ function initProductModals() {
     return found || '#C99A3D';
   }
 
-  // Active variants state (Size, Color/Hex, Price)
+  // Active variants state (Variant Type: 'size' | 'color' | 'material')
+  let newProductVariantType = 'size';
+  let editProductVariantType = 'size';
+
   let newProductVariants = [
-    { size: '8" × 10"', color: 'Warm Gold', colorHex: '#C99A3D', price: 599 }
+    { size: '8" × 10"', name: '8" × 10"', price: 599 }
   ];
   let editProductVariants = [];
+
+  window.setNewProductVariantType = function(type) {
+    newProductVariantType = type;
+    const pills = document.querySelectorAll('#newVariantTypePills .variant-type-pill');
+    pills.forEach(p => {
+      p.classList.toggle('active', p.getAttribute('data-type') === type);
+    });
+    // Ensure default name if empty when switching
+    newProductVariants.forEach((v, idx) => {
+      if (type === 'size' && !v.size) {
+        v.size = idx === 0 ? '8" × 10"' : '';
+        v.name = v.size;
+      } else if (type === 'color' && !v.color) {
+        v.color = idx === 0 ? 'Warm Gold' : '';
+        v.name = v.color;
+        v.colorHex = v.colorHex || '#C99A3D';
+      } else if (type === 'material' && !v.material) {
+        v.material = idx === 0 ? 'Acrylic Glass' : '';
+        v.name = v.material;
+      }
+    });
+    renderNewProductVariants();
+  };
 
   window.renderNewProductVariants = function() {
     const list = document.getElementById('newProductVariantsList');
     if (!list) return;
 
     if (!newProductVariants || newProductVariants.length === 0) {
-      newProductVariants = [{ size: '8" × 10"', color: 'Warm Gold', colorHex: '#C99A3D', price: 599 }];
+      newProductVariants = [{ size: '8" × 10"', name: '8" × 10"', price: 599 }];
     }
 
     list.innerHTML = newProductVariants.map((v, idx) => {
       const isDefault = idx === 0;
-      const hex = v.colorHex || getVariantColorHex(v.color) || '#C99A3D';
+      let fieldHtml = '';
+
+      if (newProductVariantType === 'size') {
+        const val = v.size !== undefined ? v.size : (v.name || '');
+        fieldHtml = `
+          <div class="variant-field-col">
+            <label class="variant-field-label">📏 Size / Dimension (Custom)</label>
+            <input type="text" class="variant-field-input" placeholder="e.g. 8&quot; × 10&quot;, 12&quot; × 18&quot;, 500ml, A4" value="${escapeHtml(val)}" oninput="updateNewProductVariant(${idx}, 'size', this.value)" />
+          </div>
+        `;
+      } else if (newProductVariantType === 'color') {
+        const val = v.color !== undefined ? v.color : (v.name || 'Warm Gold');
+        const hex = v.colorHex || (val ? getVariantColorHex(val) : '#C99A3D') || '#C99A3D';
+        fieldHtml = `
+          <div class="variant-field-col">
+            <label class="variant-field-label">🎨 Colour &amp; Hex Code</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="color" class="variant-color-swatch-input" id="newVariantColorSwatch_${idx}" value="${hex}" oninput="updateNewProductVariantColorPicker(${idx}, this.value)" onchange="updateNewProductVariantColorPicker(${idx}, this.value)" title="Click to choose color" />
+              <input type="text" class="variant-field-input" id="newVariantColorInput_${idx}" placeholder="e.g. Warm Gold, Matte Black, #1E3A8A" value="${escapeHtml(val)}" oninput="updateNewProductVariant(${idx}, 'color', this.value)" />
+            </div>
+          </div>
+        `;
+      } else if (newProductVariantType === 'material') {
+        const val = v.material !== undefined ? v.material : (v.name || '');
+        fieldHtml = `
+          <div class="variant-field-col">
+            <label class="variant-field-label">🪵 Material / Finish Type</label>
+            <input type="text" class="variant-field-input" placeholder="e.g. Acrylic Glass, Teak Wood, Textured Canvas, Metal" value="${escapeHtml(val)}" oninput="updateNewProductVariant(${idx}, 'material', this.value)" />
+          </div>
+        `;
+      }
 
       return `
         <div class="variant-item-card" data-idx="${idx}">
@@ -5176,17 +5232,7 @@ function initProductModals() {
             ` : `<span style="font-size: 0.70rem; color: var(--text-muted);">Main Catalog Price</span>`}
           </div>
           <div class="variant-fields-grid">
-            <div class="variant-field-col">
-              <label class="variant-field-label">📏 Size / Dimension (Custom)</label>
-              <input type="text" class="variant-field-input" placeholder="e.g. 8&quot; × 10&quot;, 12&quot; × 18&quot;, 500ml" value="${escapeHtml(v.size || '')}" oninput="updateNewProductVariant(${idx}, 'size', this.value)" />
-            </div>
-            <div class="variant-field-col">
-              <label class="variant-field-label">🎨 Color &amp; Hex Code</label>
-              <div style="display: flex; gap: 6px; align-items: center;">
-                <input type="color" class="variant-color-swatch-input" id="newVariantColorSwatch_${idx}" value="${hex}" oninput="updateNewProductVariantColorPicker(${idx}, this.value)" onchange="updateNewProductVariantColorPicker(${idx}, this.value)" title="Click to choose color" />
-                <input type="text" class="variant-field-input" id="newVariantColorInput_${idx}" placeholder="e.g. Warm Gold or #C99A3D" value="${escapeHtml(v.color || hex)}" oninput="updateNewProductVariant(${idx}, 'color', this.value)" />
-              </div>
-            </div>
+            ${fieldHtml}
             <div class="variant-field-col">
               <label class="variant-field-label">💰 Price (₹) *</label>
               <input type="number" class="variant-field-input" value="${v.price !== undefined && v.price !== null ? v.price : ''}" placeholder="599" min="1" required oninput="updateNewProductVariant(${idx}, 'price', this.value)" />
@@ -5202,6 +5248,7 @@ function initProductModals() {
       const upper = (hexVal || '#C99A3D').toUpperCase();
       newProductVariants[idx].colorHex = upper;
       newProductVariants[idx].color = upper;
+      newProductVariants[idx].name = upper;
       const txtInput = document.getElementById(`newVariantColorInput_${idx}`);
       if (txtInput) txtInput.value = upper;
     }
@@ -5209,17 +5256,33 @@ function initProductModals() {
 
   window.addNewProductVariant = function() {
     const nextIdx = newProductVariants.length;
-    const defaultSizes = ['8" × 10"', '10" × 12"', '12" × 18"', '16" × 24"', '20" × 30"'];
-    const nextSize = defaultSizes[nextIdx] || '';
     const prevPrice = Number(newProductVariants[newProductVariants.length - 1]?.price) || 599;
     const nextPrice = Math.round(prevPrice * 1.25);
 
-    newProductVariants.push({
-      size: nextSize,
-      color: newProductVariants[0]?.color || 'Warm Gold',
-      colorHex: newProductVariants[0]?.colorHex || '#C99A3D',
-      price: nextPrice
-    });
+    let newVar = { price: nextPrice };
+    if (newProductVariantType === 'size') {
+      const defaultSizes = ['8" × 10"', '10" × 12"', '12" × 18"', '16" × 24"', '20" × 30"'];
+      newVar.size = defaultSizes[nextIdx] || '';
+      newVar.name = newVar.size;
+    } else if (newProductVariantType === 'color') {
+      const defaultColors = [
+        { name: 'Warm Gold', hex: '#C99A3D' },
+        { name: 'Matte Black', hex: '#111111' },
+        { name: 'Pure White', hex: '#FFFFFF' },
+        { name: 'Royal Navy', hex: '#1E3A8A' },
+        { name: 'Rose Gold', hex: '#B76E79' }
+      ];
+      const c = defaultColors[nextIdx % defaultColors.length];
+      newVar.color = c.name;
+      newVar.name = c.name;
+      newVar.colorHex = c.hex;
+    } else if (newProductVariantType === 'material') {
+      const defaultMats = ['Acrylic Glass', 'Premium Teak Wood', 'Textured Canvas', 'Metallic Brushed', 'Matte Fine Art'];
+      newVar.material = defaultMats[nextIdx % defaultMats.length] || '';
+      newVar.name = newVar.material;
+    }
+
+    newProductVariants.push(newVar);
     renderNewProductVariants();
   };
 
@@ -5231,8 +5294,21 @@ function initProductModals() {
 
   window.updateNewProductVariant = function(idx, field, val) {
     if (newProductVariants[idx]) {
-      newProductVariants[idx][field] = field === 'price' ? (val === '' ? '' : Number(val)) : val;
-      if (field === 'color') {
+      if (field === 'price') {
+        newProductVariants[idx].price = val === '' ? '' : Number(val);
+        if (idx === 0) {
+          const pEl = document.getElementById('newProductPrice');
+          if (pEl) pEl.value = val;
+        }
+      } else if (field === 'size') {
+        newProductVariants[idx].size = val;
+        newProductVariants[idx].name = val;
+      } else if (field === 'material') {
+        newProductVariants[idx].material = val;
+        newProductVariants[idx].name = val;
+      } else if (field === 'color') {
+        newProductVariants[idx].color = val;
+        newProductVariants[idx].name = val;
         const detected = variantColorToHex(val);
         if (detected) {
           newProductVariants[idx].colorHex = detected;
@@ -5240,25 +5316,74 @@ function initProductModals() {
           if (swatch) swatch.value = detected;
         }
       }
-      if (idx === 0 && field === 'price') {
-        const pEl = document.getElementById('newProductPrice');
-        if (pEl) pEl.value = val;
-      }
     }
   };
 
   // Edit Modal Variants
+  window.setEditProductVariantType = function(type) {
+    editProductVariantType = type;
+    const pills = document.querySelectorAll('#editVariantTypePills .variant-type-pill');
+    pills.forEach(p => {
+      p.classList.toggle('active', p.getAttribute('data-type') === type);
+    });
+    // Ensure default name if empty when switching
+    editProductVariants.forEach((v, idx) => {
+      if (type === 'size' && !v.size) {
+        v.size = idx === 0 ? '8" × 10"' : '';
+        v.name = v.size;
+      } else if (type === 'color' && !v.color) {
+        v.color = idx === 0 ? 'Warm Gold' : '';
+        v.name = v.color;
+        v.colorHex = v.colorHex || '#C99A3D';
+      } else if (type === 'material' && !v.material) {
+        v.material = idx === 0 ? 'Acrylic Glass' : '';
+        v.name = v.material;
+      }
+    });
+    renderEditProductVariants();
+  };
+
   window.renderEditProductVariants = function() {
     const list = document.getElementById('editProductVariantsList');
     if (!list) return;
 
     if (!editProductVariants || editProductVariants.length === 0) {
-      editProductVariants = [{ size: '8" × 10"', color: 'Warm Gold', colorHex: '#C99A3D', price: 599 }];
+      editProductVariants = [{ size: '8" × 10"', name: '8" × 10"', price: 599 }];
     }
 
     list.innerHTML = editProductVariants.map((v, idx) => {
       const isDefault = idx === 0;
-      const hex = v.colorHex || getVariantColorHex(v.color) || '#C99A3D';
+      let fieldHtml = '';
+
+      if (editProductVariantType === 'size') {
+        const val = v.size !== undefined ? v.size : (v.name || '');
+        fieldHtml = `
+          <div class="variant-field-col">
+            <label class="variant-field-label">📏 Size / Dimension (Custom)</label>
+            <input type="text" class="variant-field-input" placeholder="e.g. 8&quot; × 10&quot;, 12&quot; × 18&quot;, 500ml, A4" value="${escapeHtml(val)}" oninput="updateEditProductVariant(${idx}, 'size', this.value)" />
+          </div>
+        `;
+      } else if (editProductVariantType === 'color') {
+        const val = v.color !== undefined ? v.color : (v.name || 'Warm Gold');
+        const hex = v.colorHex || (val ? getVariantColorHex(val) : '#C99A3D') || '#C99A3D';
+        fieldHtml = `
+          <div class="variant-field-col">
+            <label class="variant-field-label">🎨 Colour &amp; Hex Code</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="color" class="variant-color-swatch-input" id="editVariantColorSwatch_${idx}" value="${hex}" oninput="updateEditProductVariantColorPicker(${idx}, this.value)" onchange="updateEditProductVariantColorPicker(${idx}, this.value)" title="Click to choose color" />
+              <input type="text" class="variant-field-input" id="editVariantColorInput_${idx}" placeholder="e.g. Warm Gold, Matte Black, #1E3A8A" value="${escapeHtml(val)}" oninput="updateEditProductVariant(${idx}, 'color', this.value)" />
+            </div>
+          </div>
+        `;
+      } else if (editProductVariantType === 'material') {
+        const val = v.material !== undefined ? v.material : (v.name || '');
+        fieldHtml = `
+          <div class="variant-field-col">
+            <label class="variant-field-label">🪵 Material / Finish Type</label>
+            <input type="text" class="variant-field-input" placeholder="e.g. Acrylic Glass, Teak Wood, Textured Canvas, Metal" value="${escapeHtml(val)}" oninput="updateEditProductVariant(${idx}, 'material', this.value)" />
+          </div>
+        `;
+      }
 
       return `
         <div class="variant-item-card" data-idx="${idx}">
@@ -5271,17 +5396,7 @@ function initProductModals() {
             ` : `<span style="font-size: 0.70rem; color: var(--text-muted);">Main Catalog Price</span>`}
           </div>
           <div class="variant-fields-grid">
-            <div class="variant-field-col">
-              <label class="variant-field-label">📏 Size / Dimension (Custom)</label>
-              <input type="text" class="variant-field-input" placeholder="e.g. 8&quot; × 10&quot;, 12&quot; × 18&quot;, 500ml" value="${escapeHtml(v.size || '')}" oninput="updateEditProductVariant(${idx}, 'size', this.value)" />
-            </div>
-            <div class="variant-field-col">
-              <label class="variant-field-label">🎨 Color &amp; Hex Code</label>
-              <div style="display: flex; gap: 6px; align-items: center;">
-                <input type="color" class="variant-color-swatch-input" id="editVariantColorSwatch_${idx}" value="${hex}" oninput="updateEditProductVariantColorPicker(${idx}, this.value)" onchange="updateEditProductVariantColorPicker(${idx}, this.value)" title="Click to choose color" />
-                <input type="text" class="variant-field-input" id="editVariantColorInput_${idx}" placeholder="e.g. Warm Gold or #C99A3D" value="${escapeHtml(v.color || hex)}" oninput="updateEditProductVariant(${idx}, 'color', this.value)" />
-              </div>
-            </div>
+            ${fieldHtml}
             <div class="variant-field-col">
               <label class="variant-field-label">💰 Price (₹) *</label>
               <input type="number" class="variant-field-input" value="${v.price !== undefined && v.price !== null ? v.price : ''}" placeholder="599" min="1" required oninput="updateEditProductVariant(${idx}, 'price', this.value)" />
@@ -5297,6 +5412,7 @@ function initProductModals() {
       const upper = (hexVal || '#C99A3D').toUpperCase();
       editProductVariants[idx].colorHex = upper;
       editProductVariants[idx].color = upper;
+      editProductVariants[idx].name = upper;
       const txtInput = document.getElementById(`editVariantColorInput_${idx}`);
       if (txtInput) txtInput.value = upper;
     }
@@ -5304,17 +5420,33 @@ function initProductModals() {
 
   window.addEditProductVariant = function() {
     const nextIdx = editProductVariants.length;
-    const defaultSizes = ['8" × 10"', '10" × 12"', '12" × 18"', '16" × 24"', '20" × 30"'];
-    const nextSize = defaultSizes[nextIdx] || '';
     const prevPrice = Number(editProductVariants[editProductVariants.length - 1]?.price) || Number(document.getElementById('editProductPrice')?.value) || 599;
     const nextPrice = Math.round(prevPrice * 1.25);
 
-    editProductVariants.push({
-      size: nextSize,
-      color: editProductVariants[0]?.color || 'Warm Gold',
-      colorHex: editProductVariants[0]?.colorHex || '#C99A3D',
-      price: nextPrice
-    });
+    let newVar = { price: nextPrice };
+    if (editProductVariantType === 'size') {
+      const defaultSizes = ['8" × 10"', '10" × 12"', '12" × 18"', '16" × 24"', '20" × 30"'];
+      newVar.size = defaultSizes[nextIdx] || '';
+      newVar.name = newVar.size;
+    } else if (editProductVariantType === 'color') {
+      const defaultColors = [
+        { name: 'Warm Gold', hex: '#C99A3D' },
+        { name: 'Matte Black', hex: '#111111' },
+        { name: 'Pure White', hex: '#FFFFFF' },
+        { name: 'Royal Navy', hex: '#1E3A8A' },
+        { name: 'Rose Gold', hex: '#B76E79' }
+      ];
+      const c = defaultColors[nextIdx % defaultColors.length];
+      newVar.color = c.name;
+      newVar.name = c.name;
+      newVar.colorHex = c.hex;
+    } else if (editProductVariantType === 'material') {
+      const defaultMats = ['Acrylic Glass', 'Premium Teak Wood', 'Textured Canvas', 'Metallic Brushed', 'Matte Fine Art'];
+      newVar.material = defaultMats[nextIdx % defaultMats.length] || '';
+      newVar.name = newVar.material;
+    }
+
+    editProductVariants.push(newVar);
     renderEditProductVariants();
   };
 
@@ -5326,18 +5458,27 @@ function initProductModals() {
 
   window.updateEditProductVariant = function(idx, field, val) {
     if (editProductVariants[idx]) {
-      editProductVariants[idx][field] = field === 'price' ? (val === '' ? '' : Number(val)) : val;
-      if (field === 'color') {
+      if (field === 'price') {
+        editProductVariants[idx].price = val === '' ? '' : Number(val);
+        if (idx === 0) {
+          const pEl = document.getElementById('editProductPrice');
+          if (pEl) pEl.value = val;
+        }
+      } else if (field === 'size') {
+        editProductVariants[idx].size = val;
+        editProductVariants[idx].name = val;
+      } else if (field === 'material') {
+        editProductVariants[idx].material = val;
+        editProductVariants[idx].name = val;
+      } else if (field === 'color') {
+        editProductVariants[idx].color = val;
+        editProductVariants[idx].name = val;
         const detected = variantColorToHex(val);
         if (detected) {
           editProductVariants[idx].colorHex = detected;
           const swatch = document.getElementById(`editVariantColorSwatch_${idx}`);
           if (swatch) swatch.value = detected;
         }
-      }
-      if (idx === 0 && field === 'price') {
-        const pEl = document.getElementById('editProductPrice');
-        if (pEl) pEl.value = val;
       }
     }
   };
@@ -5369,8 +5510,12 @@ function initProductModals() {
       }
     }
 
+    newProductVariantType = 'size';
+    const nPills = document.querySelectorAll('#newVariantTypePills .variant-type-pill');
+    nPills.forEach(p => p.classList.toggle('active', p.getAttribute('data-type') === 'size'));
+
     newProductVariants = [
-      { size: '8" × 10"', color: 'Warm Gold', colorHex: '#C99A3D', price: 599 }
+      { size: '8" × 10"', name: '8" × 10"', price: 599 }
     ];
     window.renderNewProductVariants();
 
@@ -5480,27 +5625,59 @@ function initProductModals() {
       const basePrice = Number(newProductVariants[0]?.price || priceVal || 500);
       const priceNum = basePrice;
 
-      // Resolve all variants, sizes, and finishes dynamically from variants list
-      const resolvedSizes = newProductVariants.map(v => ({
-        name: (v.size || '8" × 10"').trim(),
-        price: Number(v.price) || basePrice
+      // Resolve all variants according to active variantType
+      const resolvedVariants = newProductVariants.map((v, i) => {
+        let valName = '';
+        let item = { price: Number(v.price) || basePrice };
+
+        if (newProductVariantType === 'size') {
+          valName = (v.size || v.name || '').trim();
+          item.type = 'size';
+          item.name = valName;
+          item.size = valName;
+        } else if (newProductVariantType === 'color') {
+          valName = (v.color || v.name || '').trim();
+          const hex = v.colorHex || (valName ? variantColorToHex(valName) : '') || '#C99A3D';
+          item.type = 'color';
+          item.name = valName;
+          item.color = valName;
+          item.colorHex = hex;
+        } else if (newProductVariantType === 'material') {
+          valName = (v.material || v.name || '').trim();
+          item.type = 'material';
+          item.name = valName;
+          item.material = valName;
+        }
+        return item;
+      }).filter(v => v.name);
+
+      if (resolvedVariants.length === 0) {
+        resolvedVariants.push({
+          type: newProductVariantType,
+          name: newProductVariantType === 'color' ? 'Warm Gold' : (newProductVariantType === 'material' ? 'Standard Material' : '8" × 10"'),
+          price: basePrice,
+          ...(newProductVariantType === 'color' ? { color: 'Warm Gold', colorHex: '#C99A3D' } : {}),
+          ...(newProductVariantType === 'material' ? { material: 'Standard Material' } : {}),
+          ...(newProductVariantType === 'size' ? { size: '8" × 10"' } : {})
+        });
+      }
+
+      const resolvedSizes = resolvedVariants.map(v => ({
+        name: v.name,
+        price: v.price
       }));
-      const resolvedColors = newProductVariants.map(v => ({
-        name: (v.color || v.colorHex || 'Warm Gold').trim(),
-        color: v.colorHex || getVariantColorHex(v.color)
+
+      const resolvedColors = resolvedVariants.filter(v => v.type === 'color').map(v => ({
+        name: v.name,
+        color: v.colorHex || '#C99A3D'
       }));
-      const resolvedFinishes = newProductVariants.map((v, i) => ({
-        id: `finish-${i + 1}`,
-        name: (v.color || v.colorHex || 'Warm Gold').trim(),
-        color: v.colorHex || getVariantColorHex(v.color),
+
+      const resolvedFinishes = resolvedVariants.map((v, i) => ({
+        id: `opt-${i + 1}`,
+        name: v.name,
+        color: v.colorHex || '#C99A3D',
         image: '',
-        priceDelta: Math.max(0, (Number(v.price) || basePrice) - basePrice)
-      }));
-      const resolvedVariants = newProductVariants.map(v => ({
-        size: (v.size || '8" × 10"').trim(),
-        color: (v.color || v.colorHex || 'Warm Gold').trim(),
-        colorHex: v.colorHex || getVariantColorHex(v.color),
-        price: Number(v.price) || basePrice
+        priceDelta: Math.max(0, v.price - basePrice)
       }));
 
       // Image selection: Uploaded photos (up to 5) or catalog preset default
@@ -5565,6 +5742,7 @@ function initProductModals() {
             sizes: resolvedSizes,
             colors: resolvedColors,
             finishes: resolvedFinishes,
+            variantType: newProductVariantType,
             variants: resolvedVariants
           })
         });
@@ -5813,29 +5991,44 @@ function initProductModals() {
       }
     }
 
+    // Detect and configure variant type for edit modal
+    let detectedType = prod.variantType || prod.variant_type || 'size';
+    if (!prod.variantType && !prod.variant_type && Array.isArray(prod.variants) && prod.variants[0]?.type) {
+      detectedType = prod.variants[0].type;
+    }
+    editProductVariantType = detectedType;
+    const editPills = document.querySelectorAll('#editVariantTypePills .variant-type-pill');
+    editPills.forEach(p => {
+      p.classList.toggle('active', p.getAttribute('data-type') === editProductVariantType);
+    });
+
     // Extract all variants from prod.variants or prod.sizes
     editProductVariants = [];
     if (Array.isArray(prod.variants) && prod.variants.length > 0) {
       prod.variants.forEach((v, i) => {
         if (typeof v === 'object' && v !== null) {
-          const sVal = v.size || (Array.isArray(prod.sizes) && prod.sizes[i] ? (typeof prod.sizes[i] === 'object' ? prod.sizes[i].name : prod.sizes[i]) : '8" × 10"');
-          const cVal = v.color || (Array.isArray(prod.colors) && prod.colors[i] ? (typeof prod.colors[i] === 'object' ? prod.colors[i].name : prod.colors[i]) : 'Warm Gold');
-          const hVal = v.colorHex || getVariantColorHex(cVal);
-          const pVal = v.price !== undefined ? Number(v.price) : (Array.isArray(prod.sizes) && prod.sizes[i] && prod.sizes[i].price ? Number(prod.sizes[i].price) : Number(prod.price || 599));
+          const val = v.name || (editProductVariantType === 'color' ? v.color : (editProductVariantType === 'material' ? v.material : v.size)) || '';
+          const sVal = v.size || val;
+          const cVal = v.color || val;
+          const mVal = v.material || val;
+          const hVal = v.colorHex || (cVal ? variantColorToHex(cVal) : '#C99A3D');
+          const pVal = v.price !== undefined ? Number(v.price) : Number(prod.price || 599);
           editProductVariants.push({
-            size: sVal,
-            color: cVal,
+            name: val,
+            size: sVal === 'Standard' || sVal === 'Standard Size' ? '' : sVal,
+            color: cVal === 'Standard' || cVal === 'Standard Finish' ? '' : cVal,
             colorHex: hVal,
+            material: mVal === 'Standard' || mVal === 'Standard Material' ? '' : mVal,
             price: pVal
           });
         } else if (typeof v === 'string') {
-          const sVal = (Array.isArray(prod.sizes) && prod.sizes[i]) ? (typeof prod.sizes[i] === 'object' ? prod.sizes[i].name : prod.sizes[i]) : '8" × 10"';
-          const cVal = v || 'Warm Gold';
           editProductVariants.push({
-            size: sVal,
-            color: cVal,
-            colorHex: getVariantColorHex(cVal),
-            price: (Array.isArray(prod.sizes) && prod.sizes[i] && prod.sizes[i].price) ? Number(prod.sizes[i].price) : Number(prod.price || 599)
+            name: v,
+            size: v,
+            color: v,
+            colorHex: variantColorToHex(v),
+            material: v,
+            price: Number(prod.price || 599)
           });
         }
       });
@@ -5844,21 +6037,31 @@ function initProductModals() {
         const sName = typeof s === 'object' && s !== null ? s.name : String(s);
         const sPrice = typeof s === 'object' && s !== null && s.price !== undefined ? Number(s.price) : Number(prod.price || 599);
         const cName = (Array.isArray(prod.finishes) && prod.finishes[i] && prod.finishes[i].name) ||
-                      (Array.isArray(prod.colors) && prod.colors[i] && prod.colors[i].name) || 'Warm Gold';
+                      (Array.isArray(prod.colors) && prod.colors[i] && prod.colors[i].name) || '';
         const cHex = (Array.isArray(prod.finishes) && prod.finishes[i] && prod.finishes[i].color) ||
-                     (Array.isArray(prod.colors) && prod.colors[i] && prod.colors[i].color) || getVariantColorHex(cName);
+                     (Array.isArray(prod.colors) && prod.colors[i] && prod.colors[i].color) || (cName ? variantColorToHex(cName) : '#C99A3D');
         editProductVariants.push({
-          size: sName,
-          color: cName,
+          name: sName || cName || '',
+          size: sName === 'Standard' || sName === 'Standard Size' ? '' : sName,
+          color: cName === 'Standard' || cName === 'Standard Finish' ? '' : cName,
           colorHex: cHex,
+          material: sName,
           price: sPrice
         });
       });
     }
 
     if (editProductVariants.length === 0) {
+      const defVal = editProductVariantType === 'color' ? 'Warm Gold' : (editProductVariantType === 'material' ? 'Standard Material' : '8" × 10"');
       editProductVariants = [
-        { size: '8" × 10"', color: 'Warm Gold', colorHex: '#C99A3D', price: Number(prod.price || 599) }
+        {
+          name: defVal,
+          size: editProductVariantType === 'size' ? defVal : '',
+          color: editProductVariantType === 'color' ? defVal : '',
+          colorHex: editProductVariantType === 'color' ? '#C99A3D' : '',
+          material: editProductVariantType === 'material' ? defVal : '',
+          price: Number(prod.price || 599)
+        }
       ];
     }
 
@@ -5901,26 +6104,59 @@ function initProductModals() {
 
       // Resolve all variants, sizes, and finishes dynamically from variants list
       const basePrice = Number(editProductVariants[0]?.price || price || 500);
-      const resolvedSizes = editProductVariants.map(v => ({
-        name: (v.size || '8" × 10"').trim(),
-        price: Number(v.price) || basePrice
+
+      const resolvedVariants = editProductVariants.map((v, i) => {
+        let valName = '';
+        let item = { price: Number(v.price) || basePrice };
+
+        if (editProductVariantType === 'size') {
+          valName = (v.size || v.name || '').trim();
+          item.type = 'size';
+          item.name = valName;
+          item.size = valName;
+        } else if (editProductVariantType === 'color') {
+          valName = (v.color || v.name || '').trim();
+          const hex = v.colorHex || (valName ? variantColorToHex(valName) : '') || '#C99A3D';
+          item.type = 'color';
+          item.name = valName;
+          item.color = valName;
+          item.colorHex = hex;
+        } else if (editProductVariantType === 'material') {
+          valName = (v.material || v.name || '').trim();
+          item.type = 'material';
+          item.name = valName;
+          item.material = valName;
+        }
+        return item;
+      }).filter(v => v.name);
+
+      if (resolvedVariants.length === 0) {
+        resolvedVariants.push({
+          type: editProductVariantType,
+          name: editProductVariantType === 'color' ? 'Warm Gold' : (editProductVariantType === 'material' ? 'Standard Material' : '8" × 10"'),
+          price: basePrice,
+          ...(editProductVariantType === 'color' ? { color: 'Warm Gold', colorHex: '#C99A3D' } : {}),
+          ...(editProductVariantType === 'material' ? { material: 'Standard Material' } : {}),
+          ...(editProductVariantType === 'size' ? { size: '8" × 10"' } : {})
+        });
+      }
+
+      const resolvedSizes = resolvedVariants.map(v => ({
+        name: v.name,
+        price: v.price
       }));
-      const resolvedColors = editProductVariants.map(v => ({
-        name: (v.color || v.colorHex || 'Warm Gold').trim(),
-        color: v.colorHex || getVariantColorHex(v.color)
+
+      const resolvedColors = resolvedVariants.filter(v => v.type === 'color').map(v => ({
+        name: v.name,
+        color: v.colorHex || '#C99A3D'
       }));
-      const resolvedFinishes = editProductVariants.map((v, i) => ({
-        id: `finish-${i + 1}`,
-        name: (v.color || v.colorHex || 'Warm Gold').trim(),
-        color: v.colorHex || getVariantColorHex(v.color),
+
+      const resolvedFinishes = resolvedVariants.map((v, i) => ({
+        id: `opt-${i + 1}`,
+        name: v.name,
+        color: v.colorHex || '#C99A3D',
         image: '',
-        priceDelta: Math.max(0, (Number(v.price) || basePrice) - basePrice)
-      }));
-      const resolvedVariants = editProductVariants.map(v => ({
-        size: (v.size || '8" × 10"').trim(),
-        color: (v.color || v.colorHex || 'Warm Gold').trim(),
-        colorHex: v.colorHex || getVariantColorHex(v.color),
-        price: Number(v.price) || basePrice
+        priceDelta: Math.max(0, v.price - basePrice)
       }));
 
       const saveBtn = document.getElementById('btnSaveEditProduct');
@@ -5961,6 +6197,7 @@ function initProductModals() {
             sizes: resolvedSizes,
             colors: resolvedColors,
             finishes: resolvedFinishes,
+            variantType: editProductVariantType,
             variants: resolvedVariants
           })
         });

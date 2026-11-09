@@ -78,7 +78,22 @@ async function initProductDetailPage() {
     };
   } catch (_) {}
 
-  selectedSize = currentProduct.sizes && currentProduct.sizes.length > 0 ? currentProduct.sizes[0] : null;
+  if (Array.isArray(currentProduct.variants) && currentProduct.variants.length > 0) {
+    const v0 = currentProduct.variants[0];
+    const v0Name = typeof v0 === 'object' && v0 !== null ? (v0.name || v0.size || v0.color || v0.material || 'Standard') : String(v0);
+    const v0Price = typeof v0 === 'object' && v0 !== null && v0.price !== undefined ? Number(v0.price) : Number(currentProduct.price || 0);
+    const v0Hex = typeof v0 === 'object' && v0 !== null ? (v0.colorHex || (v0.color ? getVariantColorHex(v0.color) : '')) : '';
+    selectedSize = { name: v0Name, price: v0Price, colorHex: v0Hex };
+  } else if (currentProduct.sizes && currentProduct.sizes.length > 0) {
+    const s0 = currentProduct.sizes[0];
+    selectedSize = {
+      name: typeof s0 === 'object' && s0 !== null ? (s0.name || 'Standard') : String(s0),
+      price: typeof s0 === 'object' && s0 !== null && s0.price !== undefined ? Number(s0.price) : Number(currentProduct.price || 0),
+      colorHex: ''
+    };
+  } else {
+    selectedSize = { name: 'Standard', price: Number(currentProduct.price || 0), colorHex: '' };
+  }
 
   if (finishIdParam && currentProduct.finishes && currentProduct.finishes.length > 0) {
     selectedFinish = currentProduct.finishes.find(f => f.id === finishIdParam) || currentProduct.finishes[0];
@@ -484,16 +499,144 @@ function updateCustomSizeValues() {
   updatePriceDisplay();
 }
 
+function getVariantColorHex(colorStr) {
+  if (!colorStr || typeof colorStr !== 'string') return '#C99A3D';
+  const cleanStr = colorStr.trim();
+  if (!cleanStr) return '#C99A3D';
+
+  if (/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(cleanStr)) {
+    let hex = cleanStr.startsWith('#') ? cleanStr : `#${cleanStr}`;
+    if (hex.length === 4) {
+      hex = `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`;
+    }
+    return hex.toUpperCase();
+  }
+
+  const lower = cleanStr.toLowerCase();
+  const commonColors = {
+    'warm gold': '#C99A3D',
+    'gold': '#FFD700',
+    'golden': '#FFD700',
+    'matte black': '#111111',
+    'black': '#000000',
+    'pure white': '#FFFFFF',
+    'white': '#FFFFFF',
+    'royal navy': '#1E3A8A',
+    'navy': '#000080',
+    'navy blue': '#000080',
+    'blue': '#2563EB',
+    'sky blue': '#38BDF8',
+    'light blue': '#93C5FD',
+    'dark blue': '#1E3A8A',
+    'red': '#DC2626',
+    'dark red': '#991B1B',
+    'crimson': '#DC143C',
+    'maroon': '#800000',
+    'green': '#16A34A',
+    'dark green': '#15803D',
+    'light green': '#86EFAC',
+    'emerald': '#10B981',
+    'yellow': '#EAB308',
+    'lemon': '#FEF08A',
+    'orange': '#F97316',
+    'dark orange': '#C2410C',
+    'purple': '#9333EA',
+    'violet': '#8B5CF6',
+    'pink': '#EC4899',
+    'light pink': '#FBCFE8',
+    'rose': '#F43F5E',
+    'rose gold': '#B76E79',
+    'silver': '#C0C0C0',
+    'grey': '#6B7280',
+    'gray': '#6B7280',
+    'brown': '#8B4513',
+    'teal': '#14B8A6',
+    'cyan': '#06B6D4',
+    'turquoise': '#40E0D0',
+    'olive': '#808000',
+    'beige': '#F5F5DC'
+  };
+  if (commonColors[lower]) return commonColors[lower];
+
+  if (typeof document !== 'undefined') {
+    try {
+      const ctx = document.createElement('canvas').getContext('2d');
+      ctx.fillStyle = cleanStr;
+      const comp = ctx.fillStyle;
+      if (comp && comp.startsWith('#')) return comp.toUpperCase();
+      if (comp && comp.startsWith('rgb')) {
+        const parts = comp.match(/\d+/g);
+        if (parts && parts.length >= 3) {
+          const r = Number(parts[0]).toString(16).padStart(2, '0');
+          const g = Number(parts[1]).toString(16).padStart(2, '0');
+          const b = Number(parts[2]).toString(16).padStart(2, '0');
+          return `#${r}${g}${b}`.toUpperCase();
+        }
+      }
+    } catch (_) {}
+  }
+  return '#C99A3D';
+}
+
 function renderSizeOptions() {
   const container = document.getElementById('detailSizesContainer');
-  if (!container || !currentProduct.sizes) return;
+  if (!container || !currentProduct) return;
 
-  container.innerHTML = currentProduct.sizes.map((s, idx) => {
-    const sName = typeof s === 'object' && s !== null ? (s.name || `Size ${idx + 1}`) : String(s);
-    const sPrice = typeof s === 'object' && s !== null && s.price !== undefined ? Number(s.price) : Number(currentProduct.price || 0);
+  const variantType = currentProduct.variantType || currentProduct.variant_type || 'size';
+  const titleEl = document.getElementById('variantOptionTitle') || document.querySelector('#sizeOptionGroup .option-name');
+  if (titleEl) {
+    if (variantType === 'color') {
+      titleEl.textContent = 'Available Colour:';
+    } else if (variantType === 'material') {
+      titleEl.textContent = 'Available Material:';
+    } else {
+      titleEl.textContent = 'Available Size:';
+    }
+  }
+
+  // Determine items list: prefer currentProduct.variants if available, else currentProduct.sizes
+  let items = [];
+  if (Array.isArray(currentProduct.variants) && currentProduct.variants.length > 0) {
+    items = currentProduct.variants.map((v, idx) => {
+      if (typeof v === 'object' && v !== null) {
+        const name = v.name || v.size || v.color || v.material || `Option ${idx + 1}`;
+        const price = v.price !== undefined ? Number(v.price) : Number(currentProduct.price || 0);
+        const hex = v.colorHex || (v.color ? getVariantColorHex(v.color) : (variantType === 'color' ? getVariantColorHex(name) : ''));
+        return { name, price, colorHex: hex, type: v.type || variantType };
+      }
+      const strVal = String(v);
+      return { name: strVal, price: Number(currentProduct.price || 0), colorHex: variantType === 'color' ? getVariantColorHex(strVal) : '', type: variantType };
+    });
+  } else if (Array.isArray(currentProduct.sizes) && currentProduct.sizes.length > 0) {
+    items = currentProduct.sizes.map((s, idx) => {
+      const sName = typeof s === 'object' && s !== null ? (s.name || `Option ${idx + 1}`) : String(s);
+      const sPrice = typeof s === 'object' && s !== null && s.price !== undefined ? Number(s.price) : Number(currentProduct.price || 0);
+      return { name: sName, price: sPrice, colorHex: '', type: variantType };
+    });
+  }
+
+  if (items.length === 0) {
+    const group = document.getElementById('sizeOptionGroup');
+    if (group) group.style.display = 'none';
+    return;
+  } else {
+    const group = document.getElementById('sizeOptionGroup');
+    if (group) group.style.display = 'block';
+  }
+
+  if (!selectedSize || !items.some(it => it.name === selectedSize.name)) {
+    selectedSize = { ...items[0] };
+  }
+
+  container.innerHTML = items.map((it) => {
+    const isAct = selectedSize && selectedSize.name === it.name;
+    const colorDotHtml = (variantType === 'color' && it.colorHex)
+      ? `<span class="chip-color-dot" style="background-color: ${it.colorHex};"></span>`
+      : '';
+
     return `
-      <button type="button" class="size-chip ${idx === 0 ? 'active' : ''}" data-size-name="${sName}" data-size-price="${sPrice}">
-        ${sName}
+      <button type="button" class="size-chip ${isAct ? 'active' : ''}" data-size-name="${escapeHtml(it.name)}" data-size-price="${it.price}" data-color-hex="${it.colorHex || ''}">
+        ${colorDotHtml}<span>${escapeHtml(it.name)}</span>
       </button>
     `;
   }).join('');
@@ -505,10 +648,11 @@ function renderSizeOptions() {
 
       const sizeName = chip.getAttribute('data-size-name');
       const sizePrice = parseFloat(chip.getAttribute('data-size-price'));
-      selectedSize = { name: sizeName, price: sizePrice };
+      const colorHex = chip.getAttribute('data-color-hex') || '';
+      selectedSize = { name: sizeName, price: sizePrice, colorHex };
 
       const csbBox = document.getElementById('customSizeBuilderBox');
-      if (sizeName.toLowerCase().includes('custom')) {
+      if (variantType === 'size' && sizeName.toLowerCase().includes('custom')) {
         if (csbBox) {
           csbBox.style.display = 'block';
           updateCustomSizeValues();
@@ -522,14 +666,17 @@ function renderSizeOptions() {
     });
   });
 
-  // Init custom size builder inputs and presets
-  initCustomSizeBuilder();
-
-  // Initial display setup
   const csbBox = document.getElementById('customSizeBuilderBox');
-  if (selectedSize && selectedSize.name.toLowerCase().includes('custom')) {
-    if (csbBox) csbBox.style.display = 'block';
-    updateCustomSizeValues();
+  if (variantType === 'size') {
+    initCustomSizeBuilder();
+    if (selectedSize && selectedSize.name.toLowerCase().includes('custom')) {
+      if (csbBox) csbBox.style.display = 'block';
+      updateCustomSizeValues();
+    } else {
+      if (csbBox) csbBox.style.display = 'none';
+      const selectedDisplay = document.getElementById('selectedSizeLabel');
+      if (selectedDisplay && selectedSize) selectedDisplay.textContent = selectedSize.name;
+    }
   } else {
     if (csbBox) csbBox.style.display = 'none';
     const selectedDisplay = document.getElementById('selectedSizeLabel');
@@ -1021,9 +1168,14 @@ function setupPhotoUpload() {
   const quoteBtn = document.getElementById('detailQuoteBtn');
   if (quoteBtn) {
     quoteBtn.addEventListener('click', () => {
-      const sizeStr = selectedSize ? selectedSize.name : '';
+      const vType = currentProduct.variantType || currentProduct.variant_type || 'size';
+      let optLabel = 'Size';
+      if (vType === 'color') optLabel = 'Colour';
+      else if (vType === 'material') optLabel = 'Material';
+
+      const optStr = selectedSize ? selectedSize.name : '';
       const finishStr = selectedFinish ? selectedFinish.name : '';
-      const specs = `Selected size: ${sizeStr}, Selected finish: ${finishStr}`;
+      const specs = `${optLabel}: ${optStr}${finishStr && finishStr !== 'Standard' && vType !== 'color' ? `, Finish: ${finishStr}` : ''}`;
       if (window.openQuoteModal) {
         window.openQuoteModal(currentProduct.name, specs);
       }
@@ -1034,11 +1186,20 @@ function setupPhotoUpload() {
   const whatsappBtn = document.getElementById('detailWhatsAppBtn');
   if (whatsappBtn) {
     whatsappBtn.addEventListener('click', () => {
-      const sizeStr = selectedSize ? selectedSize.name : 'Standard';
-      const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
+      const vType = currentProduct.variantType || currentProduct.variant_type || 'size';
+      let optLabel = 'Size';
+      if (vType === 'color') optLabel = 'Colour';
+      else if (vType === 'material') optLabel = 'Material';
+
+      const optStr = selectedSize ? selectedSize.name : 'Standard';
+      const finishStr = selectedFinish ? selectedFinish.name : '';
       const currentPrice = selectedSize ? selectedSize.price : currentProduct.price;
 
-      const message = `Hello Dahej Support!\n\nI am interested in ordering:\n• Product: ${currentProduct.name}\n• Category: ${currentProduct.categoryLabel}\n• Chosen Option: ${sizeStr}\n• Finish: ${finishStr}\n• Quantity: ${currentQuantity}\n• Price: ₹${currentPrice * currentQuantity}\n\nPlease share order details and design upload guidance.`;
+      let message = `Hello Dahej Support!\n\nI am interested in ordering:\n• Product: ${currentProduct.name}\n• Category: ${currentProduct.categoryLabel || currentProduct.category}\n• ${optLabel}: ${optStr}`;
+      if (finishStr && finishStr !== 'Standard' && vType !== 'color') {
+        message += `\n• Finish: ${finishStr}`;
+      }
+      message += `\n• Quantity: ${currentQuantity}\n• Price: ₹${currentPrice * currentQuantity}\n\nPlease share order details and design upload guidance.`;
 
       const url = `https://wa.me/919510757513?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
