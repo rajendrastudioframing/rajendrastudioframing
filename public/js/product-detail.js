@@ -38,32 +38,44 @@ async function initProductDetailPage() {
     ? window.PRODUCTS_DATA
     : ((typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) ? PRODUCTS_DATA : []);
 
-  if (!allProds.length) {
-    console.warn('PRODUCTS_DATA is empty or undefined');
-    return;
-  }
-
   const urlParams = new URLSearchParams(window.location.search);
-  const productId = urlParams.get('id') || 'plastic-frame-gallery';
+  const productId = (urlParams.get('id') || '').trim();
   const finishIdParam = urlParams.get('finish') || urlParams.get('color');
 
-  currentProduct = allProds.find(p => p.id === productId);
+  const cleanTarget = productId.toLowerCase();
+
+  // 1. Search in loaded products list (case-insensitive by id, name, slug)
+  if (cleanTarget && allProds.length > 0) {
+    currentProduct = allProds.find(p => {
+      if (!p) return false;
+      const pid = String(p.id || '').trim().toLowerCase();
+      const pname = String(p.name || '').trim().toLowerCase();
+      const pslug = String(p.slug || '').trim().toLowerCase();
+      return pid === cleanTarget || pname === cleanTarget || pslug === cleanTarget;
+    });
+  }
+
+  // 2. If not found in memory, fetch single product directly from API endpoint
   if (!currentProduct && productId) {
     try {
-      const singleRes = await fetch(`/api/products/${encodeURIComponent(productId)}?t=${Date.now()}`);
+      const singleRes = await fetch(`/api/products/${encodeURIComponent(productId)}?t=${Date.now()}`, { cache: 'no-store' });
       if (singleRes.ok) {
         const singleData = await singleRes.json();
         if (singleData && singleData.product) {
           currentProduct = singleData.product;
           if (Array.isArray(window.PRODUCTS_DATA)) {
-            window.PRODUCTS_DATA.push(currentProduct);
+            const exists = window.PRODUCTS_DATA.some(p => p.id === currentProduct.id);
+            if (!exists) window.PRODUCTS_DATA.push(currentProduct);
           }
         }
       }
     } catch (_) {}
   }
+
+  // 3. If STILL not found, NEVER silently fall back to an old deleted dummy product!
   if (!currentProduct) {
-    currentProduct = allProds[0];
+    renderProductNotFound(productId);
+    return;
   }
 
   try {
@@ -130,6 +142,35 @@ async function initProductDetailPage() {
   } catch (e) {
     console.error('Error in initProductReviews:', e);
   }
+}
+
+function renderProductNotFound(productId) {
+  document.title = 'Product Not Found | Dahej Support';
+  const mainEl = document.getElementById('mainContent');
+  if (mainEl) {
+    mainEl.innerHTML = `
+      <div class="container" style="padding: 80px 20px; text-align: center;">
+        <div style="max-width: 520px; margin: 0 auto; background: #FFFFFF; padding: 48px 28px; border-radius: 16px; border: 1px solid #E5E7EB; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
+          <div style="width: 56px; height: 56px; margin: 0 auto 18px; border-radius: 50%; background: #FEF3C7; color: #D97706; display: flex; align-items: center; justify-content: center;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <h1 style="font-family: var(--font-heading, sans-serif); font-size: 1.5rem; font-weight: 700; color: #111827; margin-bottom: 8px;">Product Not Found</h1>
+          <p style="color: #6B7280; font-size: 0.95rem; line-height: 1.5; margin-bottom: 24px;">
+            The requested product ${productId ? `(<strong>${escapeHtml(productId)}</strong>)` : ''} might have been removed, deleted, or is no longer available in the catalog.
+          </p>
+          <a href="products" class="btn btn-gold" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; font-weight: 600; text-decoration: none; border-radius: 999px;">
+            Browse Available Products
+          </a>
+        </div>
+      </div>
+    `;
+  }
+  const stickyBar = document.getElementById('stickyBottomBar');
+  if (stickyBar) stickyBar.style.display = 'none';
 }
 
 function populateProductData() {
@@ -1722,7 +1763,8 @@ const RATING_TEXTS = {
 };
 
 async function initProductReviews() {
-  const pId = currentProduct ? currentProduct.id : 'glass-frame-classic';
+  const pId = currentProduct ? currentProduct.id : '';
+  if (!pId) return;
   const storageKey = `rf_reviews_${pId}`;
 
   // 1. Try loading from API
@@ -1912,7 +1954,8 @@ function setupReviewFormHandlers() {
       const headline = (document.getElementById('reviewHeadline')?.value || '').trim();
       const comment = (document.getElementById('reviewComment')?.value || '').trim();
       const rating = selectedFormRating;
-      const pId = currentProduct ? currentProduct.id : 'glass-frame-classic';
+      const pId = currentProduct ? currentProduct.id : '';
+      if (!pId) return;
 
       if (!author || !headline || !comment) {
         alert('Please complete all required review fields.');
@@ -2218,7 +2261,8 @@ window.voteReviewHelpful = function(reviewId) {
     voted.push(reviewId);
     try {
       localStorage.setItem('rf_voted_reviews', JSON.stringify(voted));
-      const pId = currentProduct ? currentProduct.id : 'glass-frame-classic';
+      const pId = currentProduct ? currentProduct.id : '';
+      if (!pId) return;
       localStorage.setItem(`rf_reviews_${pId}`, JSON.stringify(productReviews));
     } catch (_) {}
 

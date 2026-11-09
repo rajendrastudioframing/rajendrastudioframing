@@ -676,8 +676,29 @@ module.exports = {
     const cleanId = String(id).trim();
     if (supabase && isSupabaseOperational()) {
       try {
-        const queryPromise = supabase.from('products').select('*').eq('id', cleanId).maybeSingle();
-        const { data, error } = await withTimeout(queryPromise, 4000, 'Supabase getProductById query');
+        let queryPromise = supabase.from('products').select('*').eq('id', cleanId).maybeSingle();
+        let { data, error } = await withTimeout(queryPromise, 4000, 'Supabase getProductById query');
+
+        // If not found by exact id, try case-insensitive ilike by id
+        if (!data || error) {
+          queryPromise = supabase.from('products').select('*').ilike('id', cleanId).maybeSingle();
+          const ilikeRes = await withTimeout(queryPromise, 3000, 'Supabase getProductById ilike query').catch(() => null);
+          if (ilikeRes && ilikeRes.data) {
+            data = ilikeRes.data;
+            error = null;
+          }
+        }
+
+        // If still not found, try case-insensitive match by name
+        if (!data || error) {
+          queryPromise = supabase.from('products').select('*').ilike('name', cleanId).maybeSingle();
+          const nameRes = await withTimeout(queryPromise, 3000, 'Supabase getProductById name query').catch(() => null);
+          if (nameRes && nameRes.data) {
+            data = nameRes.data;
+            error = null;
+          }
+        }
+
         if (!error && data) {
           return {
             id: data.id,
@@ -715,7 +736,14 @@ module.exports = {
       }
     }
     const products = readJson(PRODUCTS_FILE, []);
-    return products.find(p => p.id === cleanId) || null;
+    const cleanLower = cleanId.toLowerCase();
+    return products.find(p => {
+      if (!p) return false;
+      const pid = String(p.id || '').trim().toLowerCase();
+      const pname = String(p.name || '').trim().toLowerCase();
+      const pslug = String(p.slug || '').trim().toLowerCase();
+      return pid === cleanLower || pname === cleanLower || pslug === cleanLower;
+    }) || null;
   },
 
   async getProducts() {
@@ -899,9 +927,11 @@ module.exports = {
   },
 
   async deleteProduct(id) {
+    if (!id) return false;
+    const cleanId = String(id).trim();
     if (supabase && isSupabaseOperational()) {
       try {
-        const delPromise = supabase.from('products').delete().eq('id', id);
+        const delPromise = supabase.from('products').delete().or(`id.eq.${cleanId},id.ilike.${cleanId}`);
         const { error } = await withTimeout(delPromise, 5000, 'Supabase deleteProduct');
         if (error) {
           if (isTableMissingError(error)) {
@@ -921,7 +951,7 @@ module.exports = {
       }
     }
     let products = readJson(PRODUCTS_FILE, []);
-    products = products.filter(p => p.id !== id);
+    products = products.filter(p => p && String(p.id).toLowerCase() !== cleanId.toLowerCase());
     writeJson(PRODUCTS_FILE, products);
     setImmediate(() => {
       try { syncProductsDataFiles(products); } catch (_) {}

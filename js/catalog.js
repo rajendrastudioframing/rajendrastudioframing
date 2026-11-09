@@ -122,6 +122,7 @@ async function fetchLiveCatalogData() {
     renderCatalog();
   } catch (err) {
     console.warn('Live catalog data sync note:', err.message);
+    renderCatalog();
   }
 }
 window.fetchLiveCatalogData = fetchLiveCatalogData;
@@ -148,7 +149,20 @@ async function initCatalog() {
   setupSortSelect();
   initUnifiedBar();
   updateCategoryUI();
-  renderCatalog();
+
+  // Show clean spinner while loading fresh catalog products from database
+  const currentProds = getCatalogProducts();
+  if (!currentProds || currentProds.length === 0) {
+    gridContainer.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+        <div style="display: inline-block; width: 36px; height: 36px; border: 3px solid rgba(201,154,61,0.2); border-top-color: #C99A3D; border-radius: 50%; animation: rfSpin 0.75s linear infinite; margin-bottom: 14px;"></div>
+        <p style="color: #6B7280; font-size: 0.95rem; font-weight: 500;">Loading fresh catalog products...</p>
+      </div>
+      <style>@keyframes rfSpin { to { transform: rotate(360deg); } }</style>
+    `;
+  } else {
+    renderCatalog();
+  }
 
   // 2. Fetch live data immediately from server
   await fetchLiveCatalogData();

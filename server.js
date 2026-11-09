@@ -2464,12 +2464,39 @@ app.get('/api/products/:id', async (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
-  const products = await db.getProducts();
-  const prod = products.find(p => p.id === req.params.id);
-  if (!prod) {
-    return res.status(404).json({ success: false, message: 'Product not found' });
+  try {
+    const rawId = (req.params.id || '').trim();
+    if (!rawId) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    // 1. First try single product fetch (supports case-insensitive id & name)
+    let prod = await db.getProductById(rawId);
+
+    // 2. Fallback to searching all active catalog products case-insensitively
+    if (!prod) {
+      const cleanTarget = rawId.toLowerCase();
+      const products = await db.getProducts();
+      if (Array.isArray(products)) {
+        prod = products.find(p => {
+          if (!p) return false;
+          const pid = String(p.id || '').trim().toLowerCase();
+          const pname = String(p.name || '').trim().toLowerCase();
+          const pslug = String(p.slug || '').trim().toLowerCase();
+          return pid === cleanTarget || pname === cleanTarget || pslug === cleanTarget;
+        });
+      }
+    }
+
+    if (!prod) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    res.json({ success: true, product: prod });
+  } catch (err) {
+    console.error('Error fetching product by ID:', err);
+    res.status(500).json({ success: false, message: 'Server error retrieving product' });
   }
-  res.json({ success: true, product: prod });
 });
 
 
