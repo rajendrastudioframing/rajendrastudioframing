@@ -2603,6 +2603,11 @@
   /* -------------------------------------------------
      2. REDESIGNED CATEGORIES SHOWCASE (EDITORIAL CARDS)
      ------------------------------------------------- */
+  /* Categories Page Hero Banner - Visible on Desktop/System, Hidden on Mobile Phones */
+  .categories-hero-section {
+    display: none !important;
+  }
+
   .categories-showcase-section {
     padding: 24px 0 calc(96px + env(safe-area-inset-bottom, 0px)) !important;
   }

@@ -1767,6 +1767,11 @@ body.product-page-active {
 }
 
 @media (max-width: 768px) {
+  /* Categories Page Hero Banner - Visible on Desktop/System, Hidden on Mobile Phones */
+  .categories-hero-section {
+    display: none !important;
+  }
+
   .detail-related-section {
     margin-top: 36px;
     padding-bottom: 16px;
@@ -4846,6 +4851,11 @@ body:has(.modal-overlay.open) {
 }
 
 @media (max-width: 768px) {
+  /* Categories Page Hero Banner - Visible on Desktop/System, Hidden on Mobile Phones */
+  .categories-hero-section {
+    display: none !important;
+  }
+
   .detail-related-section {
     overflow-x: clip !important;
     padding-bottom: 8px !important;

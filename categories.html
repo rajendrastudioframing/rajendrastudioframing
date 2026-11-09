@@ -18,11 +18,22 @@
   <meta property="og:type" content="website" />
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/style.css?v=cat_v1" />
-  <link rel="stylesheet" href="css/components.css?v=cat_v1" />
-  <link rel="stylesheet" href="css/animations.css?v=cat_v1" />
+  <link rel="stylesheet" href="css/style.css?v=cat_v2" />
+  <link rel="stylesheet" href="css/components.css?v=cat_v2" />
+  <link rel="stylesheet" href="css/animations.css?v=cat_v2" />
   <link rel="stylesheet" href="css/cart.css" />
-  <link rel="stylesheet" href="css/ecom-ui.css" />
+  <link rel="stylesheet" href="css/ecom-ui.css?v=cat_v2" />
+  <style>
+    /* Remove hero banner from categories page only on mobile phones */
+    @media (max-width: 768px) {
+      .categories-hero-section {
+        display: none !important;
+      }
+      .categories-showcase-section {
+        padding-top: 20px !important;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -166,8 +177,8 @@
   <!-- Main Content -->
   <main id="mainContent">
 
-    <!-- Page Header Banner with Cinematic Background -->
-    <section class="page-header-banner banner-products">
+    <!-- Page Header Banner with Cinematic Background (Visible on Desktop/System, Hidden on Mobile Phones) -->
+    <section class="page-header-banner banner-products categories-hero-section">
       <div class="container">
         <div class="page-header-content">
           <nav class="breadcrumbs" aria-label="Breadcrumb">
