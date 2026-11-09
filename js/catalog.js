@@ -93,11 +93,13 @@ function getCatalogProducts() {
   return [];
 }
 
-async function fetchLiveCatalogData() {
+async function fetchLiveCatalogData(forceRefresh = false) {
   try {
+    const urlSuffix = forceRefresh ? `?t=${Date.now()}` : '';
+    const fetchOptions = forceRefresh ? { cache: 'no-store' } : {};
     const [catRes, prodRes] = await Promise.all([
-      fetch('/api/categories?t=' + Date.now(), { cache: 'no-store' }).catch(() => null),
-      fetch('/api/products?t=' + Date.now(), { cache: 'no-store' }).catch(() => null)
+      fetch('/api/categories' + urlSuffix, fetchOptions).catch(() => null),
+      fetch('/api/products' + urlSuffix, fetchOptions).catch(() => null)
     ]);
 
     if (catRes && catRes.ok) {
@@ -172,7 +174,7 @@ async function initCatalog() {
     const bc = new BroadcastChannel('rf_catalog_sync');
     bc.onmessage = (ev) => {
       console.log('⚡ [CATALOG] Instant sync message received:', ev.data);
-      fetchLiveCatalogData();
+      fetchLiveCatalogData(true);
     };
   } catch (_) {}
 

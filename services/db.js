@@ -35,6 +35,23 @@ if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
 // Global in-memory cache to guarantee instant persistence across all lambda invocations in the instance
 global._rfMemoryStore = global._rfMemoryStore || {};
 
+// High-performance query memory cache (reduces Supabase network latency to sub-millisecond)
+let _productsCache = null;
+let _productsCacheTime = 0;
+let _categoriesCache = null;
+let _categoriesCacheTime = 0;
+const CACHE_TTL_MS = 60 * 1000; // 60s TTL
+
+function invalidateProductsCache() {
+  _productsCache = null;
+  _productsCacheTime = 0;
+}
+
+function invalidateCategoriesCache() {
+  _categoriesCache = null;
+  _categoriesCacheTime = 0;
+}
+
 function getWritableFilePath(filePath) {
   if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
     const tmpDir = path.join(os.tmpdir(), 'rajesh_framing_data');
@@ -674,6 +691,20 @@ module.exports = {
   async getProductById(id) {
     if (!id) return null;
     const cleanId = String(id).trim();
+    const cleanLower = cleanId.toLowerCase();
+
+    // Fast in-memory cache check (0ms)
+    if (_productsCache && Array.isArray(_productsCache)) {
+      const match = _productsCache.find(p => {
+        if (!p) return false;
+        const pid = String(p.id || '').trim().toLowerCase();
+        const pname = String(p.name || '').trim().toLowerCase();
+        const pslug = String(p.slug || '').trim().toLowerCase();
+        return pid === cleanLower || pname === cleanLower || pslug === cleanLower;
+      });
+      if (match) return match;
+    }
+
     if (supabase && isSupabaseOperational()) {
       try {
         let queryPromise = supabase.from('products').select('*').eq('id', cleanId).maybeSingle();
@@ -736,7 +767,6 @@ module.exports = {
       }
     }
     const products = readJson(PRODUCTS_FILE, []);
-    const cleanLower = cleanId.toLowerCase();
     return products.find(p => {
       if (!p) return false;
       const pid = String(p.id || '').trim().toLowerCase();
@@ -747,6 +777,9 @@ module.exports = {
   },
 
   async getProducts() {
+    if (_productsCache && (Date.now() - _productsCacheTime < CACHE_TTL_MS)) {
+      return _productsCache;
+    }
     const localProducts = readJson(PRODUCTS_FILE, []);
     if (supabase && isSupabaseOperational()) {
       try {
@@ -801,13 +834,15 @@ module.exports = {
               updatedAt: remote.updated_at
             };
           });
+          _productsCache = mapped;
+          _productsCacheTime = Date.now();
           return mapped;
         }
       } catch (err) {
         console.warn('⚠️ [DATABASE] Supabase getProducts error, using fallback:', err.message);
       }
     }
-    return localProducts;
+    return _productsCache || localProducts;
   },
 
   async saveProduct(product) {
@@ -920,6 +955,7 @@ module.exports = {
       products.unshift(sanitizedProduct);
     }
     writeJson(PRODUCTS_FILE, products);
+    invalidateProductsCache();
     setImmediate(() => {
       try { syncProductsDataFiles(products); } catch (_) {}
     });
@@ -953,6 +989,7 @@ module.exports = {
     let products = readJson(PRODUCTS_FILE, []);
     products = products.filter(p => p && String(p.id).toLowerCase() !== cleanId.toLowerCase());
     writeJson(PRODUCTS_FILE, products);
+    invalidateProductsCache();
     setImmediate(() => {
       try { syncProductsDataFiles(products); } catch (_) {}
     });
@@ -961,6 +998,9 @@ module.exports = {
 
   // --- CATEGORIES ---
   async getCategories() {
+    if (_categoriesCache && (Date.now() - _categoriesCacheTime < CACHE_TTL_MS)) {
+      return _categoriesCache;
+    }
     if (supabase && isSupabaseOperational()) {
       try {
         const queryPromise = supabase.from('categories').select('*').order('created_at', { ascending: true });
@@ -978,6 +1018,8 @@ module.exports = {
             isDefault: false,
             createdAt: cat.created_at || cat.createdAt
           }));
+          _categoriesCache = mapped;
+          _categoriesCacheTime = Date.now();
           setImmediate(() => { try { syncCategoriesDataFiles(mapped); } catch (_) {} });
           return mapped;
         }
@@ -987,6 +1029,8 @@ module.exports = {
     }
 
     let categories = readJson(CATEGORIES_FILE, []);
+    _categoriesCache = categories;
+    _categoriesCacheTime = Date.now();
     setImmediate(() => { try { syncCategoriesDataFiles(categories); } catch (_) {} });
     return categories;
   },
@@ -1056,6 +1100,7 @@ module.exports = {
     }
 
     writeJson(CATEGORIES_FILE, categories);
+    invalidateCategoriesCache();
     syncCategoriesDataFiles(categories);
     return newCategory;
   },
@@ -1087,6 +1132,7 @@ module.exports = {
     let categories = readJson(CATEGORIES_FILE, []);
     categories = categories.filter(c => (c.id || '').toLowerCase() !== cleanId);
     writeJson(CATEGORIES_FILE, categories);
+    invalidateCategoriesCache();
     syncCategoriesDataFiles(categories);
     return true;
   },

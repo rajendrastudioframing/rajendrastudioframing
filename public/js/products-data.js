@@ -1,6 +1,6 @@
 /**
  * RAJENDRA STUDIO & FRAMING - MASTER PRODUCTS CATALOG DATA
- * Total: 0 static products - Real products auto-synced from Supabase / Admin Panel
+ * Total: 0 products - Auto-synced from Admin Panel
  */
 
 var PRODUCTS_DATA = [];

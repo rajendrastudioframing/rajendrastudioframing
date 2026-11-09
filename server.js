@@ -2453,17 +2453,13 @@ app.post('/api/inquiries', async (req, res) => {
  * Public Customer Endpoint: Get Catalog Products (GET)
  */
 app.get('/api/products', async (req, res) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
+  res.set('Cache-Control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=60');
   const products = await db.getProducts();
   res.json({ success: true, products });
 });
 
 app.get('/api/products/:id', async (req, res) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
+  res.set('Cache-Control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=60');
   try {
     const rawId = (req.params.id || '').trim();
     if (!rawId) {
@@ -4276,9 +4272,7 @@ app.delete('/api/admin/products/:id', requireAuth, async (req, res) => {
  * Categories List (GET) - Public & Admin
  */
 app.get('/api/categories', async (req, res) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
+  res.set('Cache-Control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=60');
   try {
     const categories = await db.getCategories();
     res.json({ success: true, categories });
@@ -4288,9 +4282,7 @@ app.get('/api/categories', async (req, res) => {
 });
 
 app.get('/api/categories/:id', async (req, res) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
+  res.set('Cache-Control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=60');
   try {
     const categories = await db.getCategories();
     const cat = categories.find(c => (c.id || '').toLowerCase() === req.params.id.toLowerCase());
@@ -4790,43 +4782,6 @@ app.post('/api/contact', async (req, res) => {
 /**
  * Public Customer Reviews Endpoints (GET / POST)
  */
-app.get('/api/reviews', (req, res) => {
-  try {
-    const { productId } = req.query;
-    const allReviews = readJson(REVIEWS_FILE, []);
-    const filtered = productId ? allReviews.filter(r => r.productId === productId) : allReviews;
-    res.json({ success: true, reviews: filtered });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to load reviews' });
-  }
-});
-
-app.post('/api/reviews', (req, res) => {
-  try {
-    const { productId, author, city, rating, headline, comment } = req.body;
-    if (!productId || !author || !rating || !comment) {
-      return res.status(400).json({ success: false, message: 'Required review fields missing.' });
-    }
-    const allReviews = readJson(REVIEWS_FILE, []);
-    const newReview = {
-      id: `rev-${Date.now()}`,
-      productId,
-      author: String(author).trim(),
-      city: String(city || 'Dahej / Bharuch').trim(),
-      rating: Math.min(5, Math.max(1, Number(rating) || 5)),
-      date: new Date().toISOString().split('T')[0],
-      headline: String(headline || '').trim() || 'Verified Purchase Review',
-      comment: String(comment).trim(),
-      verified: true,
-      helpful: 0
-    };
-    allReviews.unshift(newReview);
-    writeJson(REVIEWS_FILE, allReviews);
-    res.json({ success: true, message: 'Review submitted successfully!', review: newReview });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to save review' });
-  }
-});
 
 /**
  * Mark Message Read/Unread (PUT)
@@ -5044,6 +4999,7 @@ app.post('/api/admin/settings/smtp/test', requireAuth, handleTestSmtp);
  * Customer Reviews Endpoints (GET & POST)
  */
 app.get('/api/reviews', async (req, res) => {
+  res.set('Cache-Control', 'public, max-age=10, s-maxage=20, stale-while-revalidate=30');
   try {
     const { productId } = req.query;
     const reviews = await db.getReviews(productId || null);

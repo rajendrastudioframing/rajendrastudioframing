@@ -535,20 +535,21 @@
       let products = (typeof window.PRODUCTS_DATA !== 'undefined' && Array.isArray(window.PRODUCTS_DATA)) ? window.PRODUCTS_DATA : ((typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) ? PRODUCTS_DATA : []);
 
       try {
-        const res = await fetch('/api/categories?t=' + Date.now(), { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
+        const [catRes, prodRes] = await Promise.all([
+          fetch('/api/categories').catch(() => null),
+          fetch('/api/products').catch(() => null)
+        ]);
+
+        if (catRes && catRes.ok) {
+          const data = await catRes.json();
           if (data && data.success && Array.isArray(data.categories)) {
             categories = data.categories;
             window.CATEGORIES_DATA = categories;
           }
         }
-      } catch (_) {}
 
-      try {
-        const resP = await fetch('/api/products?t=' + Date.now(), { cache: 'no-store' });
-        if (resP.ok) {
-          const dataP = await resP.json();
+        if (prodRes && prodRes.ok) {
+          const dataP = await prodRes.json();
           if (dataP && dataP.success && Array.isArray(dataP.products)) {
             products = dataP.products;
             window.PRODUCTS_DATA = products;

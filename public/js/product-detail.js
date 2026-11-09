@@ -18,33 +18,14 @@ let selectedSize = null;
 let selectedFinish = null;
 
 async function initProductDetailPage() {
-  // Sync fresh products from server if available
-  try {
-    const res = await fetch('/api/products?t=' + Date.now());
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.success && Array.isArray(data.products) && data.products.length > 0) {
-        window.PRODUCTS_DATA = data.products;
-        if (typeof PRODUCTS_DATA !== 'undefined') {
-          try { PRODUCTS_DATA = data.products; } catch (_) {}
-        }
-      }
-    }
-  } catch (e) {
-    // Fallback to static PRODUCTS_DATA
-  }
-
-  const allProds = (window.PRODUCTS_DATA && Array.isArray(window.PRODUCTS_DATA) && window.PRODUCTS_DATA.length > 0)
-    ? window.PRODUCTS_DATA
-    : ((typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) ? PRODUCTS_DATA : []);
-
   const urlParams = new URLSearchParams(window.location.search);
   const productId = (urlParams.get('id') || '').trim();
   const finishIdParam = urlParams.get('finish') || urlParams.get('color');
-
   const cleanTarget = productId.toLowerCase();
 
-  // 1. Search in loaded products list (case-insensitive by id, name, slug)
+  const allProds = (window.PRODUCTS_DATA && Array.isArray(window.PRODUCTS_DATA)) ? window.PRODUCTS_DATA : [];
+
+  // 1. Instant check in memory if already cached (0ms)
   if (cleanTarget && allProds.length > 0) {
     currentProduct = allProds.find(p => {
       if (!p) return false;
@@ -55,10 +36,10 @@ async function initProductDetailPage() {
     });
   }
 
-  // 2. If not found in memory, fetch single product directly from API endpoint
+  // 2. Fast single-product query if not in memory (only 1 row from DB)
   if (!currentProduct && productId) {
     try {
-      const singleRes = await fetch(`/api/products/${encodeURIComponent(productId)}?t=${Date.now()}`, { cache: 'no-store' });
+      const singleRes = await fetch(`/api/products/${encodeURIComponent(productId)}`);
       if (singleRes.ok) {
         const singleData = await singleRes.json();
         if (singleData && singleData.product) {
@@ -72,10 +53,45 @@ async function initProductDetailPage() {
     } catch (_) {}
   }
 
-  // 3. If STILL not found, NEVER silently fall back to an old deleted dummy product!
+  // 3. Fallback: query /api/products if still not found
+  if (!currentProduct) {
+    try {
+      const allRes = await fetch('/api/products');
+      if (allRes.ok) {
+        const allData = await allRes.json();
+        if (allData && allData.success && Array.isArray(allData.products)) {
+          window.PRODUCTS_DATA = allData.products;
+          if (cleanTarget) {
+            currentProduct = allData.products.find(p => {
+              if (!p) return false;
+              const pid = String(p.id || '').trim().toLowerCase();
+              const pname = String(p.name || '').trim().toLowerCase();
+              const pslug = String(p.slug || '').trim().toLowerCase();
+              return pid === cleanTarget || pname === cleanTarget || pslug === cleanTarget;
+            });
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 4. If product genuinely doesn't exist, display Not Found
   if (!currentProduct) {
     renderProductNotFound(productId);
     return;
+  }
+
+  // 5. In background: fetch full catalog for related products without blocking UI
+  if (!window.PRODUCTS_DATA || window.PRODUCTS_DATA.length <= 1) {
+    fetch('/api/products')
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.success && Array.isArray(d.products)) {
+          window.PRODUCTS_DATA = d.products;
+          try { renderRelatedProducts(); } catch (_) {}
+        }
+      })
+      .catch(() => {});
   }
 
   try {
@@ -1396,359 +1412,9 @@ function setupTabs() {
 /* ==========================================================================
    CUSTOMER REVIEWS & RATINGS CONTROLLER
    ========================================================================== */
-const SEED_PRODUCT_REVIEWS = {
-  'glass-frame-classic': [
-    {
-      id: 'rev-gfc-1',
-      productId: 'glass-frame-classic',
-      author: 'Dr. Pratik Desai',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-24',
-      headline: 'Museum quality float glass and impeccable brass standoffs!',
-      comment: 'Ordered an 18x24 glass frame for our family portrait. The diamond-beveled float glass clarity is stunning, and the metallic standoffs make it float off the wall like in an art gallery. Delivered to Bharuch in heavy protective wooden casing.',
-      verified: true,
-      helpful: 18
-    },
-    {
-      id: 'rev-gfc-2',
-      productId: 'glass-frame-classic',
-      author: 'Anjali Mehta',
-      city: 'Dahej GIDC',
-      rating: 5,
-      date: '2026-09-20',
-      headline: 'Fast 24-hr turnaround for our corporate executive awards',
-      comment: 'We needed 10 glass award frames customized with company logos on short notice. Dahej Support delivered all 10 within 24 hours. The archival print vibrant colors didn\'t smudge or bleed. Exceptional studio service!',
-      verified: true,
-      helpful: 12
-    },
-    {
-      id: 'rev-gfc-3',
-      productId: 'glass-frame-classic',
-      author: 'Kavita Solanki',
-      city: 'Ankleshwar',
-      rating: 4,
-      date: '2026-09-15',
-      headline: 'Very elegant glass finish, highly recommended',
-      comment: 'The finish is super premium and looks much more expensive than the price paid. Sturdy hardware and easy to hang with provided wall anchors. Will definitely order again for my living room gallery.',
-      verified: true,
-      helpful: 7
-    },
-    {
-      id: 'rev-gfc-4',
-      productId: 'glass-frame-classic',
-      author: 'Rajesh Patel',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-10',
-      headline: 'Flawless framing precision and ultra-secure packaging',
-      comment: 'Ordered two 12×16 frames with certificate mats. The beveled float glass has crystal-clear transparency with zero distortion. Delivered safely cushioned in heavy corner shields and bubble wrap.',
-      verified: true,
-      helpful: 15
-    }
-  ],
-  'plastic-frame-gallery': [
-    {
-      id: 'rev-pfg-1',
-      productId: 'plastic-frame-gallery',
-      author: 'Sanjay Patel',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-22',
-      headline: 'Lightweight yet sturdy with authentic conservation matting',
-      comment: 'Used these frames to build a 9-photo memory wall in my home. The polymer build is ultra-clean with zero corner gaps, and the 1.5mm museum matting gives every picture a royal appearance.',
-      verified: true,
-      helpful: 15
-    },
-    {
-      id: 'rev-pfg-2',
-      productId: 'plastic-frame-gallery',
-      author: 'Roshni Shah',
-      city: 'Dahej',
-      rating: 5,
-      date: '2026-09-17',
-      headline: 'Great value and crisp photo print included',
-      comment: 'I sent my digital photo via WhatsApp and the studio color-matched it perfectly before framing. Crystal clear glazing and zero dust inside. Very impressed.',
-      verified: true,
-      helpful: 9
-    },
-    {
-      id: 'rev-pfg-3',
-      productId: 'plastic-frame-gallery',
-      author: 'Vikram Rathod',
-      city: 'Surat',
-      rating: 4,
-      date: '2026-09-10',
-      headline: 'Clean matte finish, ideal for office corridors',
-      comment: 'Ordered 15 frames for our regional branch office. All arrived in spotless condition with reinforced corner guards. Excellent quality polymer.',
-      verified: true,
-      helpful: 6
-    },
-    {
-      id: 'rev-pfg-4',
-      productId: 'plastic-frame-gallery',
-      author: 'Alkesh Joshi',
-      city: 'Dahej GIDC',
-      rating: 5,
-      date: '2026-09-06',
-      headline: 'Perfect alignment and robust polymer wall brackets',
-      comment: 'Installed 6 gallery frames in our executive boardroom. The clean black border looks dignified and the matte finish resists fingerprints completely.',
-      verified: true,
-      helpful: 11
-    }
-  ],
-  'printed-water-bottle-steel': [
-    {
-      id: 'rev-pwb-1',
-      productId: 'printed-water-bottle-steel',
-      author: 'Hardik Chauhan',
-      city: 'Dahej GIDC',
-      rating: 5,
-      date: '2026-09-21',
-      headline: 'Laser engraved finish doesn\'t scratch even after daily factory use',
-      comment: 'Ordered insulated steel bottles with laser-etched names for our plant engineering team. Keeps water ice-cold throughout the humid afternoon shifts. Outstanding industrial quality.',
-      verified: true,
-      helpful: 21
-    },
-    {
-      id: 'rev-pwb-2',
-      productId: 'printed-water-bottle-steel',
-      author: 'Pooja Varma',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-16',
-      headline: 'Stunning 360-degree color print gift for my brother',
-      comment: 'The wrap-around color printing is vivid and sharp. No peeling or discoloration after multiple dishwasher runs. Great personalized gift!',
-      verified: true,
-      helpful: 11
-    },
-    {
-      id: 'rev-pwb-3',
-      productId: 'printed-water-bottle-steel',
-      author: 'Manish Doshi',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-12',
-      headline: 'Laser etching is sharp and temperature retention is solid',
-      comment: 'Keeps cold drinks chilled all day during our plant inspections. The metallic silver finish and custom logo engraving are top notch.',
-      verified: true,
-      helpful: 14
-    },
-    {
-      id: 'rev-pwb-4',
-      productId: 'printed-water-bottle-steel',
-      author: 'Bhavin Vyas',
-      city: 'Dahej',
-      rating: 4,
-      date: '2026-09-08',
-      headline: 'Great corporate welcome kit merchandise',
-      comment: 'Ordered 30 customized units for new plant joiners. High grade stainless steel, leak-proof cap, and arrived ahead of schedule.',
-      verified: true,
-      helpful: 8
-    }
-  ],
-  'customized-coffee-mug': [
-    {
-      id: 'rev-cmc-1',
-      productId: 'customized-coffee-mug',
-      author: 'Mona Joshi',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-23',
-      headline: 'High-gloss sublimation and brilliant colors!',
-      comment: 'Created custom magic mugs for our anniversary. The color transition when pouring hot tea is completely seamless and amazed everyone. Grade-A ceramic with rich weight.',
-      verified: true,
-      helpful: 24
-    },
-    {
-      id: 'rev-cmc-2',
-      productId: 'customized-coffee-mug',
-      author: 'Tushar Rana',
-      city: 'Dahej',
-      rating: 5,
-      date: '2026-09-19',
-      headline: 'Bulk corporate mugs delivered on time',
-      comment: '50 custom branded mugs ordered for our Dahej logistics facility. Every single logo print is centered and color-accurate to our brand hex codes. Thank you Dahej Support!',
-      verified: true,
-      helpful: 14
-    },
-    {
-      id: 'rev-cmc-3',
-      productId: 'customized-coffee-mug',
-      author: 'Neha Trivedi',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-14',
-      headline: 'Vibrant glossy ceramic with ergonomic handle',
-      comment: 'Printed our family reunion picture on 8 mugs. Colors are deep, edges are sharp, and microwave safe without fading.',
-      verified: true,
-      helpful: 10
-    },
-    {
-      id: 'rev-cmc-4',
-      productId: 'customized-coffee-mug',
-      author: 'Krunal Shah',
-      city: 'Ankleshwar',
-      rating: 4,
-      date: '2026-09-07',
-      headline: 'Fast delivery and very secure gift packaging',
-      comment: 'Each mug came safely boxed in individual bubble casing. The print finish is completely smooth with no blemishes.',
-      verified: true,
-      helpful: 7
-    }
-  ],
-  'custom-file-printing': [
-    {
-      id: 'rev-cfp-1',
-      productId: 'custom-file-printing',
-      author: 'Gaurav Bhatt',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-18',
-      headline: 'Durable 450 GSM board files with heavy metal clips',
-      comment: 'We order all our legal files and audit binders from Dahej Support. Heavy duty clips don\'t bend and the matte lamination prevents edge tearing.',
-      verified: true,
-      helpful: 13
-    },
-    {
-      id: 'rev-cfp-2',
-      productId: 'custom-file-printing',
-      author: 'Rakesh Shah',
-      city: 'Dahej GIDC',
-      rating: 5,
-      date: '2026-09-15',
-      headline: 'Durable binding and crystal clear corporate logo printing',
-      comment: 'We use these custom printed ring files for all our ISO audit documentation. The laminated board withstands frequent office handling.',
-      verified: true,
-      helpful: 9
-    },
-    {
-      id: 'rev-cfp-3',
-      productId: 'custom-file-printing',
-      author: 'Divya Parmar',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-11',
-      headline: 'High precision indexing and vibrant spine printing',
-      comment: 'Organized our annual project proposals in these branded executive binders. Excellent paper stock and rigid build.',
-      verified: true,
-      helpful: 8
-    },
-    {
-      id: 'rev-cfp-4',
-      productId: 'custom-file-printing',
-      author: 'Amit Chauhan',
-      city: 'Surat',
-      rating: 4,
-      date: '2026-09-06',
-      headline: 'Heavy duty clips that never slip or tear pages',
-      comment: 'Reliable supplier for office printing supplies. The matte lamination gives a very professional presentation touch.',
-      verified: true,
-      helpful: 6
-    }
-  ],
-  'printed-office-folder-executive': [
-    {
-      id: 'rev-pof-1',
-      productId: 'printed-office-folder-executive',
-      author: 'Kinjal Parekh',
-      city: 'Dahej / Bharuch',
-      rating: 5,
-      date: '2026-09-22',
-      headline: 'Gold foil stamping looks extremely prestigious',
-      comment: 'Our presentation folders with metallic gold foil stamping turned out fantastic. Clients at our Dahej industrial expo specifically remarked on how luxurious our folders felt.',
-      verified: true,
-      helpful: 16
-    },
-    {
-      id: 'rev-pof-2',
-      productId: 'printed-office-folder-executive',
-      author: 'Jignesh Patel',
-      city: 'Dahej GIDC',
-      rating: 5,
-      date: '2026-09-18',
-      headline: 'Stunning metallic gold foil stamping on heavy stock',
-      comment: 'Our client proposal folders made an outstanding first impression during our supplier negotiations. Luxury texture.',
-      verified: true,
-      helpful: 12
-    },
-    {
-      id: 'rev-pof-3',
-      productId: 'printed-office-folder-executive',
-      author: 'Pradeep Nair',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-13',
-      headline: 'Crisp inside pockets with business card slits',
-      comment: 'Everything fits neatly without tearing. Premium 400 GSM cardstock with clean die-cutting and rich matte coating.',
-      verified: true,
-      helpful: 8
-    },
-    {
-      id: 'rev-pof-4',
-      productId: 'printed-office-folder-executive',
-      author: 'Shailesh Dave',
-      city: 'Ankleshwar',
-      rating: 4,
-      date: '2026-09-07',
-      headline: 'Prompt delivery and immaculate batch printing quality',
-      comment: 'Ordered 200 folders for our corporate conference. Colors matched our branding guidelines down to the exact Pantone shade.',
-      verified: true,
-      helpful: 6
-    }
-  ],
-  'custom-fine-art-canvas': [
-    {
-      id: 'rev-fac-1',
-      productId: 'custom-fine-art-canvas',
-      author: 'Rohan Merchant',
-      city: 'Surat',
-      rating: 5,
-      date: '2026-09-25',
-      headline: 'Breathtaking 12-color archival giclée canvas',
-      comment: 'Printed a 30x40 landscape photography canvas. The texture of the 380 GSM natural cotton and depth of black tones are extraordinary. Gallery wrapping around the pine frame is taut and flawless.',
-      verified: true,
-      helpful: 28
-    },
-    {
-      id: 'rev-fac-2',
-      productId: 'custom-fine-art-canvas',
-      author: 'Smita Kothari',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-20',
-      headline: 'Gallery grade texture with vibrant pigment saturation',
-      comment: 'Transformed our wedding portrait into an art gallery canvas. The natural cotton grain and wood stretching are museum class.',
-      verified: true,
-      helpful: 14
-    },
-    {
-      id: 'rev-fac-3',
-      productId: 'custom-fine-art-canvas',
-      author: 'Vijay Makwana',
-      city: 'Dahej',
-      rating: 5,
-      date: '2026-09-15',
-      headline: 'Zero sag pine frame and UV protective lacquer coating',
-      comment: 'Hung in our lobby reception under direct spot lighting. Zero glare, high contrast blacks, and rich vibrant hues.',
-      verified: true,
-      helpful: 11
-    },
-    {
-      id: 'rev-fac-4',
-      productId: 'custom-fine-art-canvas',
-      author: 'Aarti Panchal',
-      city: 'Surat',
-      rating: 4,
-      date: '2026-09-09',
-      headline: 'Exceeded expectations in turnaround and color accuracy',
-      comment: 'Dahej Support shared a WhatsApp color proof before final print. The canvas arrived flawless and ready to hang.',
-      verified: true,
-      helpful: 7
-    }
-  ]
-};
-
+/* ==========================================================================
+   CUSTOMER REVIEWS & RATINGS CONTROLLER (REAL VERIFIED REVIEWS ONLY)
+   ========================================================================== */
 let productReviews = [];
 let activeReviewFilter = 'all';
 let activeReviewSort = 'recent';
@@ -1762,110 +1428,41 @@ const RATING_TEXTS = {
   5: '5.0 - Excellent! Outstanding luxury craftsmanship'
 };
 
+window.toggleReviewForm = function(open) {
+  const card = document.getElementById('writeReviewCard');
+  if (!card) return;
+  const isHidden = card.style.display === 'none' || !card.style.display;
+  const shouldOpen = (open !== undefined) ? Boolean(open) : isHidden;
+  card.style.display = shouldOpen ? 'block' : 'none';
+  if (shouldOpen) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+};
+
 async function initProductReviews() {
   const pId = currentProduct ? currentProduct.id : '';
   if (!pId) return;
-  const storageKey = `rf_reviews_${pId}`;
 
-  // 1. Try loading from API
+  // Clear legacy mock reviews from browser storage
   try {
-    const res = await fetch(`/api/reviews?productId=${encodeURIComponent(pId)}`);
+    localStorage.removeItem('rf_reviews_' + pId);
+  } catch (_) {}
+
+  // Fetch real verified reviews from API
+  try {
+    const res = await fetch('/api/reviews?productId=' + encodeURIComponent(pId));
     if (res.ok) {
       const data = await res.json();
-      if (data && data.success && Array.isArray(data.reviews) && data.reviews.length > 0) {
+      if (data && data.success && Array.isArray(data.reviews)) {
         productReviews = data.reviews;
+      } else {
+        productReviews = [];
       }
+    } else {
+      productReviews = [];
     }
   } catch (err) {
-    // API not reachable or offline
-  }
-
-  // 2. Fallback to localStorage or seed
-  const seedList = SEED_PRODUCT_REVIEWS[pId] || [
-    {
-      id: `rev-${pId}-1`,
-      productId: pId,
-      author: 'Verified Studio Patron',
-      city: 'Bharuch',
-      rating: 5,
-      date: '2026-09-20',
-      headline: 'Exceptional craftsmanship and swift turnaround',
-      comment: 'The materials, print fidelity, and bespoke finishing from Dahej Support were top notch. Seamless process from ordering to doorstep delivery.',
-      verified: true,
-      helpful: 14
-    },
-    {
-      id: `rev-${pId}-2`,
-      productId: pId,
-      author: 'Rajesh P.',
-      city: 'Dahej GIDC',
-      rating: 5,
-      date: '2026-09-16',
-      headline: 'Superb quality and rapid turnaround',
-      comment: 'Very professional team in Bharuch. The prints arrived safely packed and flawless in every corner.',
-      verified: true,
-      helpful: 10
-    },
-    {
-      id: `rev-${pId}-3`,
-      productId: pId,
-      author: 'Deepak Shah',
-      city: 'Ankleshwar',
-      rating: 5,
-      date: '2026-09-12',
-      headline: 'Highly recommend for custom bespoke work',
-      comment: 'Ordered for our office presentation. The material feel and finish exceeded all expectations.',
-      verified: true,
-      helpful: 8
-    },
-    {
-      id: `rev-${pId}-4`,
-      productId: pId,
-      author: 'Sneha Patel',
-      city: 'Bharuch',
-      rating: 4,
-      date: '2026-09-05',
-      headline: 'Stunning archival finish and sturdy craftsmanship',
-      comment: 'Will definitely order again for future framing needs. Top tier studio in the region!',
-      verified: true,
-      helpful: 6
-    }
-  ];
-
-  if (!productReviews || productReviews.length === 0) {
-    try {
-      const revRes = await fetch(`/api/reviews?productId=${encodeURIComponent(pId)}&t=${Date.now()}`);
-      if (revRes.ok) {
-        const revData = await revRes.json();
-        if (revData && revData.success && Array.isArray(revData.reviews) && revData.reviews.length > 0) {
-          productReviews = revData.reviews;
-        }
-      }
-    } catch (_) {}
-  }
-
-  if (!productReviews || productReviews.length === 0) {
-    const local = localStorage.getItem(storageKey);
-    if (local) {
-      try {
-        const parsed = JSON.parse(local);
-        if (Array.isArray(parsed)) {
-          // If cached local reviews have fewer items than seed, sync with seed so all 4 columns are filled
-          if (parsed.length < seedList.length) {
-            productReviews = seedList;
-            localStorage.setItem(storageKey, JSON.stringify(seedList));
-          } else {
-            productReviews = parsed;
-          }
-        }
-      } catch (_) {}
-    }
-    if (!productReviews || productReviews.length === 0) {
-      productReviews = seedList;
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(productReviews));
-      } catch (_) {}
-    }
+    productReviews = [];
   }
 
   // Setup form toggling & star picker
@@ -1874,7 +1471,7 @@ async function initProductReviews() {
   // Setup filter & sort events
   setupReviewFilterSort();
 
-  // Render review elements
+  // Render review elements (real reviews or clean empty state)
   renderReviewsSection();
 }
 
@@ -2058,23 +1655,55 @@ function setupReviewFilterSort() {
 
 function renderReviewsSection() {
   const total = productReviews.length;
-  if (total === 0) return;
+
+  const overallScoreEl = document.getElementById('reviewOverallScore');
+  const subtextEl = document.getElementById('reviewSummarySubtext');
+  const topScore = document.getElementById('detailRatingScore');
+  const topCount = document.getElementById('detailReviewCount');
+  const listContainer = document.getElementById('reviewsListContainer');
+
+  if (total === 0) {
+    if (overallScoreEl) overallScoreEl.textContent = '5.0';
+    if (subtextEl) subtextEl.textContent = 'Be the first to review';
+    if (topScore) topScore.textContent = '★ 5.0';
+    if (topCount) topCount.textContent = '(No reviews yet)';
+
+    for (let s = 1; s <= 5; s++) {
+      const barEl = document.getElementById(`bar${s}Stars`);
+      const countEl = document.getElementById(`count${s}Stars`);
+      if (barEl) barEl.style.width = '0%';
+      if (countEl) countEl.textContent = '0% (0)';
+    }
+
+    if (listContainer) {
+      listContainer.setAttribute('data-count', '0');
+      listContainer.innerHTML = `
+        <div class="empty-reviews-state" style="text-align: center; padding: 48px 20px; background: #FAF9F6; border-radius: 14px; border: 1px dashed #E5E7EB; margin-top: 10px;">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">✨</div>
+          <p style="font-weight: 700; margin-bottom: 6px; color: var(--primary-black, #111827); font-size: 1.05rem;">No customer reviews yet</p>
+          <p style="font-size: 0.9rem; color: #6B7280; margin-bottom: 18px; max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.5;">Have you purchased or customized this piece? Be the first to share your experience!</p>
+          <button type="button" class="btn btn-gold btn-sm" onclick="toggleReviewForm(true)" style="padding: 9px 22px; font-size: 0.88rem;">Write the First Review</button>
+        </div>
+      `;
+    }
+    return;
+  }
 
   const sumRating = productReviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0);
   const avg = (sumRating / total).toFixed(1);
 
   // Update Score Elements
-  const overallScoreEl = document.getElementById('reviewOverallScore');
+
   if (overallScoreEl) overallScoreEl.textContent = avg;
 
-  const subtextEl = document.getElementById('reviewSummarySubtext');
+
   if (subtextEl) subtextEl.textContent = `Based on ${total} verified ratings`;
 
   // Update Top Bar Rating
-  const topScore = document.getElementById('detailRatingScore');
+
   if (topScore) topScore.textContent = `${avg} / 5.0`;
 
-  const topCount = document.getElementById('detailReviewCount');
+
   if (topCount) topCount.textContent = `(${total} customer reviews)`;
 
   // Breakdown percentages
