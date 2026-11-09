@@ -11,6 +11,29 @@ let allCustomerOrders = [];
 let activeFilter = 'all';
 let searchQuery = '';
 
+function detectOrderVariantMeta(item) {
+  if (!item) return { label: 'Size', icon: '📐' };
+  const vType = (item.variantType || item.variant_type || '').toLowerCase();
+  const vLabel = item.variantLabel || (vType === 'color' || vType === 'colour' ? 'Colour' : (vType === 'material' ? 'Material' : (vType === 'size' ? 'Size' : '')));
+
+  if (vLabel === 'Colour' || vType === 'color' || vType === 'colour') {
+    return { label: 'Colour', icon: '🎨' };
+  }
+  if (vLabel === 'Material' || vType === 'material') {
+    return { label: 'Material', icon: '🪵' };
+  }
+
+  const val = (item.size || '').trim().toLowerCase();
+  if (val && (
+    val.startsWith('#') ||
+    ['blue', 'red', 'gold', 'warm gold', 'black', 'matte black', 'white', 'pure white', 'green', 'yellow', 'pink', 'rose gold', 'silver', 'grey', 'gray', 'brown', 'purple', 'violet', 'orange', 'navy', 'royal navy', 'cyan', 'teal'].includes(val)
+  )) {
+    return { label: 'Colour', icon: '🎨' };
+  }
+
+  return { label: 'Size', icon: '📐' };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initOrdersPage();
 
@@ -347,6 +370,8 @@ function createOrderCardHtml(order) {
           let productUrl = targetId ? `${base}?id=${encodeURIComponent(targetId)}` : 'products';
           if (targetId && item.finishId) productUrl += `&finish=${encodeURIComponent(item.finishId)}`;
 
+          const vMeta = detectOrderVariantMeta(item);
+
           return `
           <div class="order-item-row">
             <a href="${productUrl}" class="order-item-thumb-link" title="View product details" style="display: block; flex-shrink: 0;">
@@ -364,8 +389,8 @@ function createOrderCardHtml(order) {
                 </a>
               </div>
               <div class="order-item-specs">
-                ${item.size ? `<span class="order-item-spec-tag">📐 ${escapeHtml(item.size)}</span>` : ''}
-                ${item.finish ? `<span class="order-item-spec-tag">🎨 ${escapeHtml(item.finish)}</span>` : ''}
+                ${item.size && item.size !== 'Standard' ? `<span class="order-item-spec-tag">${vMeta.icon} ${vMeta.label}: ${escapeHtml(item.size)}</span>` : ''}
+                ${item.finish && item.finish !== 'Standard' && vMeta.label !== 'Colour' ? `<span class="order-item-spec-tag">🎨 ${escapeHtml(item.finish)}</span>` : ''}
                 ${item.category ? `<span class="order-item-spec-tag">🏷️ ${escapeHtml(item.category)}</span>` : ''}
               </div>
             </div>
@@ -646,19 +671,21 @@ function openInvoiceModal(orderId) {
         </tr>
       </thead>
       <tbody>
-        ${items.map(i => `
+        ${items.map(i => {
+          const vMeta = detectOrderVariantMeta(i);
+          return `
           <tr>
             <td>
               <strong>${escapeHtml(i.name || 'Custom Framed Piece')}</strong>
               <div style="font-size: 0.78rem; color: #6B7280;">
-                ${i.size ? `Size: ${escapeHtml(i.size)} • ` : ''}${i.finish ? `Finish: ${escapeHtml(i.finish)}` : ''}
+                ${i.size && i.size !== 'Standard' ? `${vMeta.label}: ${escapeHtml(i.size)} • ` : ''}${i.finish && i.finish !== 'Standard' && vMeta.label !== 'Colour' ? `Finish: ${escapeHtml(i.finish)}` : ''}
               </div>
             </td>
             <td style="text-align: center;">${i.quantity || 1}</td>
             <td style="text-align: right;">₹${Number(i.price || 0).toLocaleString('en-IN')}</td>
             <td style="text-align: right; font-weight: 700;">₹${(Number(i.price || 0) * Number(i.quantity || 1)).toLocaleString('en-IN')}</td>
           </tr>
-        `).join('')}
+        `;}).join('')}
       </tbody>
       <tfoot>
         <tr>

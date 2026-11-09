@@ -1243,6 +1243,8 @@ function createOrderCardRowHTML(order) {
   // Extract selected frame size and finish/color
   let itemSize = '';
   let itemFinish = '';
+  let itemSizeLabel = 'Size';
+  let itemSizeIcon = '📏';
   let extraItemsCount = 0;
   if (Array.isArray(order.items) && order.items.length > 0) {
     const firstItem = order.items[0];
@@ -1253,6 +1255,24 @@ function createOrderCardRowHTML(order) {
       itemFinish = firstItem.finish;
     }
     extraItemsCount = order.items.length - 1;
+
+    const vType = (firstItem.variantType || firstItem.variant_type || '').toLowerCase();
+    if (vType === 'color' || vType === 'colour') {
+      itemSizeLabel = 'Colour';
+      itemSizeIcon = '🎨';
+    } else if (vType === 'material') {
+      itemSizeLabel = 'Material';
+      itemSizeIcon = '🪵';
+    } else {
+      const val = (firstItem.size || '').trim().toLowerCase();
+      if (val && (
+        val.startsWith('#') ||
+        ['blue', 'red', 'gold', 'warm gold', 'black', 'matte black', 'white', 'pure white', 'green', 'yellow', 'pink', 'rose gold', 'silver', 'grey', 'gray', 'brown', 'purple', 'violet', 'orange', 'navy', 'royal navy', 'cyan', 'teal'].includes(val)
+      )) {
+        itemSizeLabel = 'Colour';
+        itemSizeIcon = '🎨';
+      }
+    }
   } else if (order.specs) {
     const sizeMatch = order.specs.match(/(\d+[\s"x×]+[\d"'\s]+|[A-Za-z0-9]+\s*(?:Classic|Large|Small|Medium|Square|Mini|Portrait|Landscape))/i);
     if (sizeMatch) itemSize = sizeMatch[1].trim();
@@ -1311,8 +1331,8 @@ function createOrderCardRowHTML(order) {
           <span class="prod-name-text" title="${escapeHtml(cleanTitle)}">${escapeHtml(cleanTitle)}</span>
           <div class="order-prod-specs-tags">
             <span class="prod-qty-text">Qty: ${order.quantity || 1}</span>
-            ${itemSize ? `<span class="prod-spec-chip size" title="Customer Selected Size">📏 ${escapeHtml(itemSize)}</span>` : ''}
-            ${itemFinish ? `<span class="prod-spec-chip finish" title="Customer Selected Frame Color / Finish">🎨 ${escapeHtml(itemFinish)}</span>` : ''}
+            ${itemSize ? `<span class="prod-spec-chip ${itemSizeLabel.toLowerCase()}" title="Customer Selected ${itemSizeLabel}">${itemSizeIcon} ${escapeHtml(itemSize)}</span>` : ''}
+            ${itemFinish && itemFinish !== 'Standard' && itemSizeLabel !== 'Colour' ? `<span class="prod-spec-chip finish" title="Customer Selected Frame Color / Finish">🎨 ${escapeHtml(itemFinish)}</span>` : ''}
             ${extraItemsCount > 0 ? `<span class="prod-extra-chip" onclick="openOrderDetailsModal('${escapeHtml(order.id)}')" title="Click to view all items">+${extraItemsCount} more</span>` : ''}
           </div>
         </div>
@@ -1557,6 +1577,23 @@ window.openOrderDetailsModal = (orderId) => {
       const itemFinish = it.finish || 'Standard';
       const lineTotal = Number(it.lineTotal || (it.price * it.quantity) || 0).toLocaleString('en-IN');
 
+      const vType = (it.variantType || it.variant_type || '').toLowerCase();
+      let vLabel = it.variantLabel || (vType === 'color' || vType === 'colour' ? 'Colour' : (vType === 'material' ? 'Material' : 'Size'));
+      let vIcon = '📏';
+
+      if (!vLabel || vLabel === 'Size') {
+        const val = (it.size || '').trim().toLowerCase();
+        if (val && (
+          val.startsWith('#') ||
+          ['blue', 'red', 'gold', 'warm gold', 'black', 'matte black', 'white', 'pure white', 'green', 'yellow', 'pink', 'rose gold', 'silver', 'grey', 'gray', 'brown', 'purple', 'violet', 'orange', 'navy', 'royal navy', 'cyan', 'teal'].includes(val)
+        )) {
+          vLabel = 'Colour';
+        }
+      }
+
+      if (vLabel === 'Colour') vIcon = '🎨';
+      else if (vLabel === 'Material') vIcon = '🪵';
+
       return `
         <tr class="order-detail-item-row">
           <td>
@@ -1569,10 +1606,10 @@ window.openOrderDetailsModal = (orderId) => {
             </div>
           </td>
           <td>
-            <span class="order-detail-spec-badge size">📏 ${escapeHtml(itemSize)}</span>
+            <span class="order-detail-spec-badge ${vLabel.toLowerCase()}">${vIcon} ${vLabel}: ${escapeHtml(itemSize)}</span>
           </td>
           <td>
-            <span class="order-detail-spec-badge finish">🎨 ${escapeHtml(itemFinish)}</span>
+            <span class="order-detail-spec-badge finish">${vLabel === 'Colour' ? `🎨 ${escapeHtml(itemSize)}` : (itemFinish && itemFinish !== 'Standard' ? `🎨 ${escapeHtml(itemFinish)}` : 'Standard')}</span>
           </td>
           <td>
             ${itemPhoto ? `

@@ -921,7 +921,10 @@ function setupOptionInteractions() {
   const addToCartBtn = document.getElementById('detailAddToCartBtn');
   if (addToCartBtn) {
     addToCartBtn.addEventListener('click', () => {
-
+      const vType = currentProduct.variantType || currentProduct.variant_type || 'size';
+      let optLabel = 'Size';
+      if (vType === 'color') optLabel = 'Colour';
+      else if (vType === 'material') optLabel = 'Material';
 
       const sizeStr = selectedSize ? selectedSize.name : 'Standard';
       const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
@@ -938,6 +941,8 @@ function setupOptionInteractions() {
           category: currentProduct.category,
           size: sizeStr,
           finish: finishStr,
+          variantType: vType,
+          variantLabel: optLabel,
           uploadedPhoto: currentUploadedPhoto ? { ...currentUploadedPhoto } : null,
           leadTime: currentProduct.leadTime || '24 - 48 Hours'
         }, currentQuantity, true);
@@ -973,6 +978,11 @@ function setupOptionInteractions() {
         }
       }
 
+      const vType = currentProduct.variantType || currentProduct.variant_type || 'size';
+      let optLabel = 'Size';
+      if (vType === 'color') optLabel = 'Colour';
+      else if (vType === 'material') optLabel = 'Material';
+
       const sizeStr = selectedSize ? selectedSize.name : 'Standard';
       const finishStr = selectedFinish ? selectedFinish.name : 'Standard';
       const finishDelta = (selectedFinish && typeof selectedFinish.priceDelta === 'number') ? selectedFinish.priceDelta : 0;
@@ -988,11 +998,13 @@ function setupOptionInteractions() {
           category: currentProduct.category,
           size: sizeStr,
           finish: finishStr,
+          variantType: vType,
+          variantLabel: optLabel,
           uploadedPhoto: currentUploadedPhoto ? { ...currentUploadedPhoto } : null,
           leadTime: currentProduct.leadTime || '24 - 48 Hours'
         }, currentQuantity);
       } else {
-        window.location.href = `checkout.html?buyNow=${currentProduct.id}&qty=${currentQuantity}&size=${encodeURIComponent(sizeStr)}&finish=${encodeURIComponent(finishStr)}&image=${encodeURIComponent(activeImg)}`;
+        window.location.href = `checkout.html?buyNow=${currentProduct.id}&qty=${currentQuantity}&size=${encodeURIComponent(sizeStr)}&finish=${encodeURIComponent(finishStr)}&image=${encodeURIComponent(activeImg)}&variantType=${encodeURIComponent(vType)}`;
       }
     });
   }

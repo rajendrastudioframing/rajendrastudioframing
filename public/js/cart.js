@@ -260,6 +260,8 @@ function addToCart(product, quantity = 1, openDrawer = true) {
   const qtyToAdd = Math.max(1, parseInt(quantity, 10) || 1);
   const size = product.size || 'Standard';
   const finish = product.finish || 'Standard';
+  const variantType = product.variantType || product.variant_type || 'size';
+  const variantLabel = product.variantLabel || (variantType === 'color' ? 'Colour' : (variantType === 'material' ? 'Material' : 'Size'));
 
   // Check if same product with same size & finish is already in cart
   const existingIndex = cart.findIndex(item => 
@@ -270,6 +272,10 @@ function addToCart(product, quantity = 1, openDrawer = true) {
 
   if (existingIndex > -1) {
     cart[existingIndex].quantity += qtyToAdd;
+    if (variantType && !cart[existingIndex].variantType) {
+      cart[existingIndex].variantType = variantType;
+      cart[existingIndex].variantLabel = variantLabel;
+    }
   } else {
     cart.push({
       id: product.id,
@@ -279,6 +285,8 @@ function addToCart(product, quantity = 1, openDrawer = true) {
       category: product.category || 'frames',
       size: size,
       finish: finish,
+      variantType: variantType,
+      variantLabel: variantLabel,
       leadTime: product.leadTime || '24 - 48 Hours',
       quantity: qtyToAdd
     });
@@ -335,6 +343,8 @@ function buyNow(product, quantity = 1) {
     category: product.category || 'frames',
     size: size,
     finish: finish,
+    variantType: product.variantType || product.variant_type || 'size',
+    variantLabel: product.variantLabel || '',
     uploadedPhoto: product.uploadedPhoto || null,
     leadTime: product.leadTime || '24 - 48 Hours',
     quantity: qtyToAdd
@@ -550,6 +560,43 @@ function renderCartDrawer() {
     checkoutBtn.style.opacity = '1';
   }
 
+function detectCartItemVariantLabel(item) {
+  if (!item) return 'Size';
+  if (item.variantLabel && typeof item.variantLabel === 'string') {
+    return item.variantLabel;
+  }
+  const vType = (item.variantType || item.variant_type || '').toLowerCase();
+  if (vType === 'color' || vType === 'colour') return 'Colour';
+  if (vType === 'material') return 'Material';
+  if (vType === 'size') return 'Size';
+
+  if (typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) {
+    const prod = PRODUCTS_DATA.find(p => p.id === item.id || (p.name && p.name.trim().toLowerCase() === (item.name || '').trim().toLowerCase()));
+    if (prod) {
+      const pType = (prod.variantType || prod.variant_type || '').toLowerCase();
+      if (pType === 'color' || pType === 'colour') return 'Colour';
+      if (pType === 'material') return 'Material';
+      if (pType === 'size') return 'Size';
+      if (Array.isArray(prod.variants) && prod.variants.some(v => v.type === 'color' || v.color)) {
+        return 'Colour';
+      }
+      if (Array.isArray(prod.variants) && prod.variants.some(v => v.type === 'material' || v.material)) {
+        return 'Material';
+      }
+    }
+  }
+
+  const val = (item.size || '').trim().toLowerCase();
+  if (val && (
+    val.startsWith('#') ||
+    ['blue', 'red', 'gold', 'warm gold', 'black', 'matte black', 'white', 'pure white', 'green', 'yellow', 'pink', 'rose gold', 'silver', 'grey', 'gray', 'brown', 'purple', 'violet', 'orange', 'navy', 'royal navy', 'cyan', 'teal'].includes(val)
+  )) {
+    return 'Colour';
+  }
+
+  return 'Size';
+}
+
   body.innerHTML = cart.map((item, index) => {
     const itemTotal = (Number(item.price) || 0) * (Number(item.quantity) || 1);
     
@@ -572,6 +619,8 @@ function renderCartDrawer() {
     }
     if (finishId) productUrl += `&finish=${encodeURIComponent(finishId)}`;
 
+    const vLabel = detectCartItemVariantLabel(item);
+
     return `
       <div class="cart-item" data-index="${index}">
         <a href="${productUrl}" class="cart-item-img-link" title="View ${escapeCartHtml(item.name)}" onclick="closeCartDrawer();">
@@ -586,8 +635,8 @@ function renderCartDrawer() {
               </a>
             </h4>
             <div class="cart-item-meta">
-              ${item.size && item.size !== 'Standard' ? `<span>Size: <strong>${escapeCartHtml(item.size)}</strong></span> • ` : ''}
-              ${item.finish && item.finish !== 'Standard' ? `<span>Finish: <strong>${escapeCartHtml(item.finish)}</strong></span>` : ''}
+              ${item.size && item.size !== 'Standard' ? `<span>${vLabel}: <strong>${escapeCartHtml(item.size)}</strong></span>` : ''}
+              ${item.finish && item.finish !== 'Standard' && vLabel !== 'Colour' ? `<span> • Finish: <strong>${escapeCartHtml(item.finish)}</strong></span>` : ''}
             </div>
             ${item.uploadedPhoto ? `
               <div style="margin-top: 4px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; color: #059669; background: #ECFDF5; padding: 2px 7px; border-radius: 4px; border: 1px solid #A7F3D0;">

@@ -294,24 +294,49 @@ function renderTrackingResult(order, container) {
         </div>
       </div>
 
+function detectTrackOrderVariantMeta(item) {
+  if (!item) return { label: 'Size', icon: '📐' };
+  const vType = (item.variantType || item.variant_type || '').toLowerCase();
+  const vLabel = item.variantLabel || (vType === 'color' || vType === 'colour' ? 'Colour' : (vType === 'material' ? 'Material' : (vType === 'size' ? 'Size' : '')));
+
+  if (vLabel === 'Colour' || vType === 'color' || vType === 'colour') {
+    return { label: 'Colour', icon: '🎨' };
+  }
+  if (vLabel === 'Material' || vType === 'material') {
+    return { label: 'Material', icon: '🪵' };
+  }
+
+  const val = (item.size || '').trim().toLowerCase();
+  if (val && (
+    val.startsWith('#') ||
+    ['blue', 'red', 'gold', 'warm gold', 'black', 'matte black', 'white', 'pure white', 'green', 'yellow', 'pink', 'rose gold', 'silver', 'grey', 'gray', 'brown', 'purple', 'violet', 'orange', 'navy', 'royal navy', 'cyan', 'teal'].includes(val)
+  )) {
+    return { label: 'Colour', icon: '🎨' };
+  }
+
+  return { label: 'Size', icon: '📐' };
+}
+
       <!-- Items Section -->
       <div class="track-items-section">
         <div class="track-items-heading">Order Summary (${(order.items || []).length} items)</div>
         <div class="track-items-list">
-          ${(order.items || []).map(item => `
+          ${(order.items || []).map(item => {
+            const vMeta = detectTrackOrderVariantMeta(item);
+            return `
             <div class="track-item-row">
               <img src="${item.image || 'assets/images/glass_frame.jpg'}" alt="${escapeHtml(item.name)}" class="track-item-thumb" onerror="this.src='assets/images/glass_frame.jpg'" />
               <div class="track-item-info">
                 <div class="track-item-name">${escapeHtml(item.name)}</div>
                 <div class="track-item-meta">
-                  Qty: ${item.quantity || 1} • Size: ${escapeHtml(item.size || 'Standard')} • Finish: ${escapeHtml(item.finish || 'Standard')}
+                  Qty: ${item.quantity || 1}${item.size && item.size !== 'Standard' ? ` • ${vMeta.label}: ${escapeHtml(item.size)}` : ''}${item.finish && item.finish !== 'Standard' && vMeta.label !== 'Colour' ? ` • Finish: ${escapeHtml(item.finish)}` : ''}
                 </div>
               </div>
               <div class="track-item-price">
                 ₹${Number(item.price * (item.quantity || 1)).toLocaleString('en-IN')}
               </div>
             </div>
-          `).join('')}
+          `;}).join('')}
         </div>
       </div>
 

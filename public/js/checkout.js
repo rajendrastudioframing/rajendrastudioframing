@@ -212,6 +212,45 @@ function getItemProductUrl(item) {
   return url;
 }
 
+function detectItemVariantLabel(item) {
+  if (!item) return 'Size';
+  if (item.variantLabel && typeof item.variantLabel === 'string') {
+    return item.variantLabel;
+  }
+  const vType = (item.variantType || item.variant_type || '').toLowerCase();
+  if (vType === 'color' || vType === 'colour') return 'Colour';
+  if (vType === 'material') return 'Material';
+  if (vType === 'size') return 'Size';
+
+  // Check against PRODUCTS_DATA
+  if (typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) {
+    const prod = PRODUCTS_DATA.find(p => p.id === item.id || (p.name && p.name.trim().toLowerCase() === (item.name || '').trim().toLowerCase()));
+    if (prod) {
+      const pType = (prod.variantType || prod.variant_type || '').toLowerCase();
+      if (pType === 'color' || pType === 'colour') return 'Colour';
+      if (pType === 'material') return 'Material';
+      if (pType === 'size') return 'Size';
+      if (Array.isArray(prod.variants) && prod.variants.some(v => v.type === 'color' || v.color)) {
+        return 'Colour';
+      }
+      if (Array.isArray(prod.variants) && prod.variants.some(v => v.type === 'material' || v.material)) {
+        return 'Material';
+      }
+    }
+  }
+
+  // Fallback heuristic: check if value is a known color or hex
+  const val = (item.size || '').trim().toLowerCase();
+  if (val && (
+    val.startsWith('#') ||
+    ['blue', 'red', 'gold', 'warm gold', 'black', 'matte black', 'white', 'pure white', 'green', 'yellow', 'pink', 'rose gold', 'silver', 'grey', 'gray', 'brown', 'purple', 'violet', 'orange', 'navy', 'royal navy', 'cyan', 'teal'].includes(val)
+  )) {
+    return 'Colour';
+  }
+
+  return 'Size';
+}
+
   if (itemsList) {
     itemsList.innerHTML = cart.map((item, idx) => {
       const qty = Number(item.quantity) || 1;
@@ -220,11 +259,12 @@ function getItemProductUrl(item) {
       const image = item.image || 'assets/images/custom_canvas.jpg';
       const productUrl = getItemProductUrl(item);
 
+      const vLabel = detectItemVariantLabel(item);
       const metaParts = [];
       if (item.size && item.size !== 'Standard') {
-        metaParts.push(`Size: <strong>${escapeHtml(item.size)}</strong>`);
+        metaParts.push(`${vLabel}: <strong>${escapeHtml(item.size)}</strong>`);
       }
-      if (item.finish && item.finish !== 'Standard') {
+      if (item.finish && item.finish !== 'Standard' && vLabel !== 'Colour') {
         metaParts.push(`Finish: <strong>${escapeHtml(item.finish)}</strong>`);
       }
       const metaHtml = metaParts.length > 0 ? metaParts.join(' • ') + ' • ' : '';
@@ -607,7 +647,8 @@ function initCheckoutPage() {
           const size = urlParams.get('size') || 'Standard';
           const finish = urlParams.get('finish') || 'Standard';
           const img = urlParams.get('image') || p.image;
-          addToCart({ ...p, size, finish, image: img }, qty, false);
+          const variantType = urlParams.get('variantType') || p.variantType || p.variant_type || 'size';
+          addToCart({ ...p, size, finish, image: img, variantType }, qty, false);
         }
       }
     }
