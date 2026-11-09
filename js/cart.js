@@ -276,6 +276,8 @@ function addToCart(product, quantity = 1, openDrawer = true) {
       cart[existingIndex].variantType = variantType;
       cart[existingIndex].variantLabel = variantLabel;
     }
+    if (product.uploadedPhoto) cart[existingIndex].uploadedPhoto = product.uploadedPhoto;
+    if (product.requiresPhoto !== undefined) cart[existingIndex].requiresPhoto = Boolean(product.requiresPhoto);
   } else {
     cart.push({
       id: product.id,
@@ -287,6 +289,9 @@ function addToCart(product, quantity = 1, openDrawer = true) {
       finish: finish,
       variantType: variantType,
       variantLabel: variantLabel,
+      uploadedPhoto: product.uploadedPhoto || null,
+      requiresPhoto: Boolean(product.requiresPhoto || product.requires_photo),
+      requires_photo: Boolean(product.requiresPhoto || product.requires_photo),
       leadTime: product.leadTime || '24 - 48 Hours',
       quantity: qtyToAdd
     });
@@ -346,6 +351,8 @@ function buyNow(product, quantity = 1) {
     variantType: product.variantType || product.variant_type || 'size',
     variantLabel: product.variantLabel || '',
     uploadedPhoto: product.uploadedPhoto || null,
+    requiresPhoto: Boolean(product.requiresPhoto || product.requires_photo),
+    requires_photo: Boolean(product.requiresPhoto || product.requires_photo),
     leadTime: product.leadTime || '24 - 48 Hours',
     quantity: qtyToAdd
   };

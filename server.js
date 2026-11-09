@@ -3825,7 +3825,7 @@ app.get('/api/admin/products', requireAuth, async (req, res) => {
  * Add New Product (POST)
  */
 app.post('/api/admin/products', requireAuth, async (req, res) => {
-  const { id, name, category, categoryLabel, price, originalPrice, badge, shortDescription, description, material, printingType, leadTime, image, images, status, stockQty, sizes, finishes, colors, variantType, variants } = req.body;
+  const { id, name, category, categoryLabel, price, originalPrice, badge, shortDescription, description, material, printingType, leadTime, image, images, status, stockQty, sizes, finishes, colors, variantType, variants, requiresPhoto, requires_photo } = req.body;
 
   if (!name || price === undefined || price === null || isNaN(Number(price))) {
     return res.status(400).json({ success: false, message: 'Product name and valid price are required.' });
@@ -4018,6 +4018,8 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
     finishes: resolvedFinishes,
     variantType: variantType || 'size',
     variants: Array.isArray(variants) ? variants : (typeof variants === 'string' && variants ? variants.split(',').map(v => v.trim()).filter(Boolean) : []),
+    requiresPhoto: Boolean(requiresPhoto !== undefined ? requiresPhoto : requires_photo),
+    requires_photo: Boolean(requiresPhoto !== undefined ? requiresPhoto : requires_photo),
     createdAt: new Date().toISOString()
   };
 
@@ -4246,6 +4248,11 @@ app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
     } else if (typeof updates.variants === 'string') {
       target.variants = updates.variants.split(',').map(v => v.trim()).filter(Boolean);
     }
+  }
+
+  if (updates.requiresPhoto !== undefined || updates.requires_photo !== undefined) {
+    target.requiresPhoto = Boolean(updates.requiresPhoto !== undefined ? updates.requiresPhoto : updates.requires_photo);
+    target.requires_photo = target.requiresPhoto;
   }
 
   target.updatedAt = new Date().toISOString();

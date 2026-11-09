@@ -830,6 +830,8 @@ module.exports = {
               variantType: remote.variant_type || remote.variantType || (Array.isArray(remote.variants) && remote.variants[0]?.type) || 'size',
               variants: Array.isArray(remote.variants) ? remote.variants : (typeof remote.variants === 'string' ? (() => { try { return JSON.parse(remote.variants); } catch (_) { return []; } })() : []),
               features: Array.isArray(remote.features) ? remote.features : (typeof remote.features === 'string' ? (() => { try { return JSON.parse(remote.features); } catch (_) { return []; } })() : []),
+              requiresPhoto: Boolean(remote.requires_photo !== undefined ? remote.requires_photo : remote.requiresPhoto),
+              requires_photo: Boolean(remote.requires_photo !== undefined ? remote.requires_photo : remote.requiresPhoto),
               createdAt: remote.created_at,
               updatedAt: remote.updated_at
             };
@@ -887,6 +889,8 @@ module.exports = {
       variantType: product.variantType || product.variant_type || (Array.isArray(product.variants) && product.variants[0]?.type) || 'size',
       variants: Array.isArray(product.variants) ? product.variants : [],
       features: Array.isArray(product.features) ? product.features : [],
+      requiresPhoto: Boolean(product.requiresPhoto !== undefined ? product.requiresPhoto : product.requires_photo),
+      requires_photo: Boolean(product.requiresPhoto !== undefined ? product.requiresPhoto : product.requires_photo),
       updatedAt: new Date().toISOString()
     };
 
@@ -918,14 +922,16 @@ module.exports = {
           variant_type: sanitizedProduct.variantType,
           variants: sanitizedProduct.variants,
           features: sanitizedProduct.features,
+          requires_photo: sanitizedProduct.requiresPhoto,
           created_at: sanitizedProduct.createdAt || new Date().toISOString(),
           updated_at: sanitizedProduct.updatedAt || new Date().toISOString()
         };
         let upsertPromise = supabase.from('products').upsert(supabaseRow, { onConflict: 'id' });
         let { error } = await withTimeout(upsertPromise, 8000, 'Supabase products table upsert');
-        if (error && error.message && error.message.toLowerCase().includes('variant_type')) {
+        if (error && error.message && (error.message.toLowerCase().includes('requires_photo') || error.message.toLowerCase().includes('variant_type'))) {
           const fallbackRow = { ...supabaseRow };
-          delete fallbackRow.variant_type;
+          if (error.message.toLowerCase().includes('requires_photo')) delete fallbackRow.requires_photo;
+          if (error.message.toLowerCase().includes('variant_type')) delete fallbackRow.variant_type;
           const retryRes = await supabase.from('products').upsert(fallbackRow, { onConflict: 'id' });
           error = retryRes.error;
         }

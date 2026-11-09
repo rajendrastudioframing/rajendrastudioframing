@@ -1001,6 +1001,7 @@ function setupOptionInteractions() {
           variantType: vType,
           variantLabel: optLabel,
           uploadedPhoto: currentUploadedPhoto ? { ...currentUploadedPhoto } : null,
+          requiresPhoto: Boolean(currentProduct && (currentProduct.requiresPhoto || currentProduct.requires_photo)),
           leadTime: currentProduct.leadTime || '24 - 48 Hours'
         }, currentQuantity, true);
       }
@@ -1058,10 +1059,11 @@ function setupOptionInteractions() {
           variantType: vType,
           variantLabel: optLabel,
           uploadedPhoto: currentUploadedPhoto ? { ...currentUploadedPhoto } : null,
+          requiresPhoto: Boolean(currentProduct && (currentProduct.requiresPhoto || currentProduct.requires_photo)),
           leadTime: currentProduct.leadTime || '24 - 48 Hours'
         }, currentQuantity);
       } else {
-        window.location.href = `checkout.html?buyNow=${currentProduct.id}&qty=${currentQuantity}&size=${encodeURIComponent(sizeStr)}&finish=${encodeURIComponent(finishStr)}&image=${encodeURIComponent(activeImg)}&variantType=${encodeURIComponent(vType)}`;
+        window.location.href = `checkout.html?buyNow=${currentProduct.id}&qty=${currentQuantity}&size=${encodeURIComponent(sizeStr)}&finish=${encodeURIComponent(finishStr)}&image=${encodeURIComponent(activeImg)}&variantType=${encodeURIComponent(vType)}&requiresPhoto=${Boolean(currentProduct && (currentProduct.requiresPhoto || currentProduct.requires_photo))}`;
       }
     });
   }
@@ -1089,6 +1091,13 @@ function setupPhotoUpload() {
   const removeBtn = document.getElementById('btnRemoveUploadedPhoto');
 
   if (!dropzone || !fileInput) return;
+
+  if (currentProduct && (currentProduct.requiresPhoto || currentProduct.requires_photo)) {
+    const subtitle = emptyState ? emptyState.querySelector('.upload-prompt-subtitle') : null;
+    if (subtitle) {
+      subtitle.innerHTML = '<strong style="color: #DC2626;">⚠️ Photo Compulsory for this product</strong> • Max 1MB (JPG, PNG, WEBP) • Or send via WhatsApp';
+    }
+  }
 
   // Open file dialog when clicking dropzone (unless clicking remove)
   dropzone.addEventListener('click', (e) => {
@@ -1156,9 +1165,9 @@ function setupPhotoUpload() {
   function handlePhotoSelection(file) {
     if (!file) return;
 
-    // Check size <= 2MB
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Photo is too large. Please select an image under 2MB.');
+    // Check size <= 1MB (Per user requirement: max 1MB per image)
+    if (file.size > 1 * 1024 * 1024) {
+      alert('Photo is larger than 1MB. Please select an image under 1MB, or send high-resolution original photos directly to us on WhatsApp (+91 95107 57513)!');
       if (fileInput) fileInput.value = '';
       return;
     }

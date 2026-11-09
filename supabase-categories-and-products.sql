@@ -85,11 +85,13 @@ CREATE TABLE IF NOT EXISTS public.products (
   variant_type TEXT DEFAULT 'size',
   variants JSONB DEFAULT '[]'::jsonb,
   features JSONB DEFAULT '[]'::jsonb,
+  requires_photo BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Ensure all columns exist even if table was previously created with fewer columns
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS requires_photo BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS category_label TEXT;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS original_price NUMERIC;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS price_display TEXT;

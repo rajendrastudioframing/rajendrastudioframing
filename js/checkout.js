@@ -337,6 +337,229 @@ function removeCheckoutItem(index) {
   }
 }
 
+
+/* ==========================================================================
+   CHECKOUT PHOTO REQUIRED MODAL CONTROLLER
+   Triggered strictly for products where Admin checked "Requires Photo"
+   ========================================================================== */
+window._currentPendingPhotoCartIndex = -1;
+window._tempCheckoutUploadedPhoto = null;
+window._photoSentViaWhatsApp = false;
+
+function openPhotoRequiredModal(item, index) {
+  window._currentPendingPhotoCartIndex = index;
+  window._tempCheckoutUploadedPhoto = null;
+  window._photoSentViaWhatsApp = false;
+
+  const modal = document.getElementById('checkoutPhotoRequiredModal');
+  const nameEl = document.getElementById('photoModalProductName');
+  const fileInput = document.getElementById('checkoutPhotoInput');
+  const promptBox = document.getElementById('checkoutPhotoUploadPrompt');
+  const previewBox = document.getElementById('checkoutPhotoPreviewBox');
+  const confirmCb = document.getElementById('photoConfirmationCheckbox');
+  const proceedBtn = document.getElementById('btnConfirmPhotoAndPlaceOrder');
+  const waBtnText = document.getElementById('btnWhatsAppText');
+
+  if (nameEl) nameEl.textContent = (item && item.name) ? item.name : 'Custom Product';
+  if (fileInput) fileInput.value = '';
+  if (promptBox) promptBox.style.display = 'block';
+  if (previewBox) previewBox.style.display = 'none';
+  if (confirmCb) confirmCb.checked = false;
+  if (waBtnText) waBtnText.textContent = 'Send Photo on WhatsApp';
+  if (proceedBtn) {
+    proceedBtn.disabled = true;
+    proceedBtn.style.opacity = '0.5';
+    proceedBtn.style.cursor = 'not-allowed';
+  }
+
+  if (modal) {
+    modal.style.setProperty('display', 'flex', 'important');
+  }
+}
+
+function closePhotoRequiredModal() {
+  const modal = document.getElementById('checkoutPhotoRequiredModal');
+  if (modal) {
+    modal.style.setProperty('display', 'none', 'important');
+  }
+  window._currentPendingPhotoCartIndex = -1;
+  window._tempCheckoutUploadedPhoto = null;
+  window._photoSentViaWhatsApp = false;
+}
+
+function handleCheckoutPhotoSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  // Strict Max 1MB validation per user requirement
+  if (file.size > 1 * 1024 * 1024) {
+    alert('Photo size is larger than 1MB. Please select an image under 1MB or click "Send Photo on WhatsApp" to send larger/original photos directly!');
+    event.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const dataUrl = e.target.result;
+
+    const thumbImg = document.getElementById('checkoutPhotoThumb');
+    const nameEl = document.getElementById('checkoutPhotoFileName');
+    const promptBox = document.getElementById('checkoutPhotoUploadPrompt');
+    const previewBox = document.getElementById('checkoutPhotoPreviewBox');
+    const confirmCb = document.getElementById('photoConfirmationCheckbox');
+    const proceedBtn = document.getElementById('btnConfirmPhotoAndPlaceOrder');
+
+    if (thumbImg) thumbImg.src = dataUrl;
+    if (nameEl) nameEl.textContent = file.name;
+    if (promptBox) promptBox.style.display = 'none';
+    if (previewBox) previewBox.style.display = 'flex';
+
+    window._tempCheckoutUploadedPhoto = {
+      fileUrl: dataUrl,
+      fileName: file.name,
+      fileSize: file.size
+    };
+
+    // Auto-check confirmation tickbox and unlock Proceed button
+    if (confirmCb) confirmCb.checked = true;
+    if (proceedBtn) {
+      proceedBtn.disabled = false;
+      proceedBtn.style.opacity = '1';
+      proceedBtn.style.cursor = 'pointer';
+    }
+
+    // Upload to server asynchronously in background
+    try {
+      const resp = await fetch('/api/upload-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: file.name, fileData: dataUrl })
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (resp.ok && data && data.success && data.fileUrl && window._tempCheckoutUploadedPhoto) {
+        window._tempCheckoutUploadedPhoto.fileUrl = data.fileUrl;
+        window._tempCheckoutUploadedPhoto.fileName = data.fileName || file.name;
+      }
+    } catch (_) {}
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeCheckoutUploadedPhoto() {
+  const fileInput = document.getElementById('checkoutPhotoInput');
+  const promptBox = document.getElementById('checkoutPhotoUploadPrompt');
+  const previewBox = document.getElementById('checkoutPhotoPreviewBox');
+  const confirmCb = document.getElementById('photoConfirmationCheckbox');
+  const proceedBtn = document.getElementById('btnConfirmPhotoAndPlaceOrder');
+
+  if (fileInput) fileInput.value = '';
+  if (promptBox) promptBox.style.display = 'block';
+  if (previewBox) previewBox.style.display = 'none';
+  window._tempCheckoutUploadedPhoto = null;
+
+  if (!window._photoSentViaWhatsApp) {
+    if (confirmCb) confirmCb.checked = false;
+    if (proceedBtn) {
+      proceedBtn.disabled = true;
+      proceedBtn.style.opacity = '0.5';
+      proceedBtn.style.cursor = 'not-allowed';
+    }
+  }
+}
+
+function handleSendPhotoViaWhatsApp() {
+  let cart = typeof getCart === 'function' ? getCart() : [];
+  if (!cart.length) {
+    try { cart = JSON.parse(localStorage.getItem('rf_cart')) || []; } catch (_) {}
+  }
+  const pendingItem = cart[window._currentPendingPhotoCartIndex] || {};
+  const prodName = pendingItem.name || 'Custom Photo Frame';
+
+  const message = `Hello Rajesh Framing Studio!\n\nI am placing an order for "${prodName}" on your website and sending my custom photo here for framing/printing.`;
+  const url = `https://wa.me/919510757513?text=${encodeURIComponent(message)}`;
+  window.open(url, '_blank');
+
+  window._photoSentViaWhatsApp = true;
+  window._tempCheckoutUploadedPhoto = {
+    fileUrl: 'WHATSAPP_PENDING',
+    fileName: 'Photo sent on WhatsApp (+91 95107 57513)'
+  };
+
+  const waBtnText = document.getElementById('btnWhatsAppText');
+  if (waBtnText) waBtnText.textContent = '✅ WhatsApp Chat Opened (Photo Sent)';
+
+  const confirmCb = document.getElementById('photoConfirmationCheckbox');
+  const proceedBtn = document.getElementById('btnConfirmPhotoAndPlaceOrder');
+
+  if (confirmCb) confirmCb.checked = true;
+  if (proceedBtn) {
+    proceedBtn.disabled = false;
+    proceedBtn.style.opacity = '1';
+    proceedBtn.style.cursor = 'pointer';
+  }
+}
+
+function togglePhotoConfirmProceedBtn() {
+  const confirmCb = document.getElementById('photoConfirmationCheckbox');
+  const proceedBtn = document.getElementById('btnConfirmPhotoAndPlaceOrder');
+  if (!proceedBtn) return;
+
+  const isChecked = confirmCb && confirmCb.checked;
+  if (isChecked) {
+    proceedBtn.disabled = false;
+    proceedBtn.style.opacity = '1';
+    proceedBtn.style.cursor = 'pointer';
+  } else {
+    proceedBtn.disabled = true;
+    proceedBtn.style.opacity = '0.5';
+    proceedBtn.style.cursor = 'not-allowed';
+  }
+}
+
+function proceedAfterPhotoConfirmation() {
+  const confirmCb = document.getElementById('photoConfirmationCheckbox');
+  if (!confirmCb || !confirmCb.checked) {
+    alert('Please check the confirmation box: (I have uploaded image here / I have messaged on whatsapp)');
+    return;
+  }
+
+  let cart = typeof getCart === 'function' ? getCart() : [];
+  if (!cart.length) {
+    try { cart = JSON.parse(localStorage.getItem('rf_cart')) || []; } catch (_) {}
+  }
+
+  const idx = window._currentPendingPhotoCartIndex;
+  if (idx >= 0 && cart[idx]) {
+    const photoToSave = window._tempCheckoutUploadedPhoto || {
+      fileUrl: 'WHATSAPP_PENDING',
+      fileName: 'Photo sent on WhatsApp (+91 95107 57513)'
+    };
+    cart[idx].uploadedPhoto = photoToSave;
+    cart[idx].photoConfirmed = true;
+
+    if (typeof saveCart === 'function') {
+      saveCart(cart);
+    } else {
+      const key = (typeof getCartStorageKey === 'function') ? getCartStorageKey() : 'rf_cart';
+      localStorage.setItem(key, JSON.stringify(cart));
+      localStorage.setItem('rf_cart', JSON.stringify(cart));
+    }
+  }
+
+  closePhotoRequiredModal();
+
+  // Continue placing order now that photo is confirmed
+  submitCheckoutOrder();
+}
+
+window.openPhotoRequiredModal = openPhotoRequiredModal;
+window.closePhotoRequiredModal = closePhotoRequiredModal;
+window.handleCheckoutPhotoSelected = handleCheckoutPhotoSelected;
+window.removeCheckoutUploadedPhoto = removeCheckoutUploadedPhoto;
+window.handleSendPhotoViaWhatsApp = handleSendPhotoViaWhatsApp;
+window.togglePhotoConfirmProceedBtn = togglePhotoConfirmProceedBtn;
+window.proceedAfterPhotoConfirmation = proceedAfterPhotoConfirmation;
+
 /**
  * Submit Checkout Order (Exposed globally for button and form triggers)
  */
@@ -478,6 +701,36 @@ async function submitCheckoutOrder(e) {
     return;
   }
 
+  // 4.1 Gate: Verify customer photo for products requiring photo
+  let pendingPhotoIndex = -1;
+  let pendingPhotoItem = null;
+
+  for (let i = 0; i < cart.length; i++) {
+    const item = cart[i];
+    let isReq = Boolean(item.requiresPhoto || item.requires_photo);
+    if (!isReq && typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) {
+      const p = PRODUCTS_DATA.find(prod => prod && (prod.id === item.id || (prod.name && prod.name.trim().toLowerCase() === (item.name || '').trim().toLowerCase())));
+      if (p && (p.requiresPhoto || p.requires_photo)) {
+        isReq = true;
+        item.requiresPhoto = true;
+      }
+    }
+
+    const hasPhoto = Boolean(item.uploadedPhoto && (item.uploadedPhoto.fileUrl || typeof item.uploadedPhoto === 'string'));
+    const hasConfirmed = Boolean(item.photoConfirmed);
+
+    if (isReq && !hasPhoto && !hasConfirmed) {
+      pendingPhotoIndex = i;
+      pendingPhotoItem = item;
+      break;
+    }
+  }
+
+  if (pendingPhotoItem) {
+    openPhotoRequiredModal(pendingPhotoItem, pendingPhotoIndex);
+    return;
+  }
+
   if (window._isPlacingOrder) {
     console.warn('Order submission already in progress.');
     return;
@@ -511,7 +764,15 @@ async function submitCheckoutOrder(e) {
     subtotal: subtotal,
     shipping: 0,
     total: total,
-    notes: notes
+    notes: (() => {
+      let finalNotes = notes || '';
+      const waItems = cart.filter(it => it.uploadedPhoto && (it.uploadedPhoto.fileUrl === 'WHATSAPP_PENDING' || (typeof it.uploadedPhoto.fileName === 'string' && it.uploadedPhoto.fileName.includes('WhatsApp'))));
+      if (waItems.length > 0) {
+        const waMsg = `[Customer Photo: Sending via WhatsApp for ${waItems.map(it => it.name).join(', ')}]`;
+        finalNotes = finalNotes ? `${finalNotes} • ${waMsg}` : waMsg;
+      }
+      return finalNotes;
+    })()
   };
 
   const headers = { 'Content-Type': 'application/json' };

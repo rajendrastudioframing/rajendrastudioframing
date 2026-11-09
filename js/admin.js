@@ -1218,32 +1218,47 @@ function getOrderCustomerNote(order) {
 }
 
 function getOrderCustomerPhoto(order) {
-  if (order.customerPhotoUrl && typeof order.customerPhotoUrl === 'string') {
-    return { url: order.customerPhotoUrl, name: order.customerPhotoName || 'Customer Photo' };
+  if (!order) return null;
+
+  // Check if customer photo is marked via WhatsApp
+  const isWa = (order.customerPhotoUrl === 'WHATSAPP_PENDING') ||
+               (order.uploadedFileUrl === 'WHATSAPP_PENDING') ||
+               (order.orderPhoto && (order.orderPhoto.fileUrl === 'WHATSAPP_PENDING' || order.orderPhoto === 'WHATSAPP_PENDING')) ||
+               (Array.isArray(order.items) && order.items.some(i => i && i.uploadedPhoto && (i.uploadedPhoto.fileUrl === 'WHATSAPP_PENDING' || i.uploadedPhoto === 'WHATSAPP_PENDING'))) ||
+               (order.specs && order.specs.toLowerCase().includes('whatsapp photo')) ||
+               (order.notes && order.notes.toLowerCase().includes('whatsapp photo'));
+
+  if (isWa) {
+    return { url: 'WHATSAPP_PENDING', name: 'Photo via WhatsApp', isWhatsApp: true };
   }
-  if (order.uploadedFileUrl && typeof order.uploadedFileUrl === 'string') {
-    return { url: order.uploadedFileUrl, name: order.uploadFileName || order.uploadedFileName || 'Customer Photo' };
+
+  if (order.customerPhotoUrl && typeof order.customerPhotoUrl === 'string' && order.customerPhotoUrl !== 'WHATSAPP_PENDING') {
+    return { url: order.customerPhotoUrl, name: order.customerPhotoName || 'Customer Photo', isWhatsApp: false };
   }
-  if (order.uploadedPhoto && order.uploadedPhoto.fileUrl) {
-    return { url: order.uploadedPhoto.fileUrl, name: order.uploadedPhoto.fileName || 'Customer Photo' };
+  if (order.uploadedFileUrl && typeof order.uploadedFileUrl === 'string' && order.uploadedFileUrl !== 'WHATSAPP_PENDING') {
+    return { url: order.uploadedFileUrl, name: order.uploadFileName || order.uploadedFileName || 'Customer Photo', isWhatsApp: false };
   }
-  if (order.orderPhoto && order.orderPhoto.fileUrl) {
-    return { url: order.orderPhoto.fileUrl, name: order.orderPhoto.fileName || 'Customer Photo' };
+  if (order.uploadedPhoto && order.uploadedPhoto.fileUrl && order.uploadedPhoto.fileUrl !== 'WHATSAPP_PENDING') {
+    return { url: order.uploadedPhoto.fileUrl, name: order.uploadedPhoto.fileName || 'Customer Photo', isWhatsApp: false };
+  }
+  if (order.orderPhoto && order.orderPhoto.fileUrl && order.orderPhoto.fileUrl !== 'WHATSAPP_PENDING') {
+    return { url: order.orderPhoto.fileUrl, name: order.orderPhoto.fileName || 'Customer Photo', isWhatsApp: false };
   }
   if (Array.isArray(order.items)) {
-    const it = order.items.find(i => i && i.uploadedPhoto && (i.uploadedPhoto.fileUrl || typeof i.uploadedPhoto === 'string'));
+    const it = order.items.find(i => i && i.uploadedPhoto && (i.uploadedPhoto.fileUrl || typeof i.uploadedPhoto === 'string') && i.uploadedPhoto.fileUrl !== 'WHATSAPP_PENDING' && i.uploadedPhoto !== 'WHATSAPP_PENDING');
     if (it) {
       return {
         url: it.uploadedPhoto.fileUrl || it.uploadedPhoto,
-        name: it.uploadedPhoto.fileName || it.uploadedPhoto.originalName || 'Customer Photo'
+        name: it.uploadedPhoto.fileName || it.uploadedPhoto.originalName || 'Customer Photo',
+        isWhatsApp: false
       };
     }
   }
-  if (order.hasUpload && order.uploadFileName) {
+  if (order.hasUpload && order.uploadFileName && order.uploadFileName !== 'WHATSAPP_PENDING') {
     if (order.uploadFileName.startsWith('http') || order.uploadFileName.startsWith('assets/') || order.uploadFileName.startsWith('/')) {
-      return { url: order.uploadFileName, name: order.uploadFileName.split('/').pop() };
+      return { url: order.uploadFileName, name: order.uploadFileName.split('/').pop(), isWhatsApp: false };
     }
-    return { url: `assets/images/uploads/${order.uploadFileName}`, name: order.uploadFileName };
+    return { url: `assets/images/uploads/${order.uploadFileName}`, name: order.uploadFileName, isWhatsApp: false };
   }
   return null;
 }
@@ -1440,7 +1455,15 @@ function createOrderCardRowHTML(order) {
         <!-- 5. Customer Photo (Dedicated Column) -->
         <div class="order-col-info order-col-photo">
           <span class="col-field-label">Customer Photo</span>
-          ${custPhoto ? `
+          ${custPhoto ? (custPhoto.isWhatsApp ? `
+            <div class="cust-photo-wa-box" title="Customer sending photo on WhatsApp" style="display: flex; flex-direction: column; align-items: center; gap: 3px;">
+              <a href="https://wa.me/${(order.phone || '').replace(/\D/g, '')}" target="_blank" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 4px; background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; font-size: 0.70rem; font-weight: 700; padding: 4px 7px; border-radius: 6px; text-decoration: none;" title="Open WhatsApp chat with customer">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.058-2.18-.553-1.638-.673-2.684-2.336-2.766-2.445-.082-.109-.661-.88-.661-1.678 0-.798.419-1.189.569-1.353.15-.164.33-.205.441-.205.111 0 .222.001.32.006.103.004.24-.039.375.285.144.344.49 1.196.533 1.284.043.088.072.19.014.305-.058.115-.087.186-.173.287-.087.1-.183.224-.262.301-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.174.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.174.232-.145.39-.087.159.058 1.009.477 1.182.564.173.087.289.13.332.204.043.074.043.431-.101.836z"/></svg>
+                On WhatsApp
+              </a>
+              <span class="photo-attached-tag" style="background: rgba(22, 163, 74, 0.1); color: #16A34A; border-color: rgba(22, 163, 74, 0.25);">Via Chat</span>
+            </div>
+          ` : `
             <div class="cust-photo-preview-box" onclick="openCustomerPhotoModal('${escapeHtml(custPhoto.url)}', '${escapeHtml(order.id)}', '${escapeHtml(order.name)}', '${escapeHtml(custPhoto.name)}')" title="Click to view customer photo">
               <img src="${escapeHtml(custPhoto.url)}" alt="${escapeHtml(custPhoto.name)}" class="cust-photo-mini-img" onerror="this.onerror=null; this.src='assets/images/custom_canvas.jpg';" />
               <span class="cust-photo-hover-tag">🔍</span>
@@ -1448,7 +1471,7 @@ function createOrderCardRowHTML(order) {
             <span class="photo-attached-tag" title="Photo Attached">
               <span class="photo-dot"></span> Attached
             </span>
-          ` : `
+          `) : `
             <div class="cust-photo-none-box" title="Standard product (No photo uploaded)">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
               <span>No Photo</span>
@@ -1712,12 +1735,18 @@ window.openOrderDetailsModal = (orderId) => {
             <span class="order-detail-spec-badge finish">${vLabel === 'Colour' ? `🎨 ${escapeHtml(itemSize)}` : (itemFinish && itemFinish !== 'Standard' ? `🎨 ${escapeHtml(itemFinish)}` : 'Standard')}</span>
           </td>
           <td>
-            ${itemPhoto ? `
+            ${itemPhoto ? (itemPhoto === 'WHATSAPP_PENDING' || (itemPhotoName && itemPhotoName.toLowerCase().includes('whatsapp')) ? `
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="display: inline-flex; align-items: center; gap: 4px; background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 6px;">
+                  📱 Photo on WhatsApp
+                </span>
+              </div>
+            ` : `
               <div style="display: flex; align-items: center; gap: 6px;">
                 <img src="${escapeHtml(itemPhoto)}" alt="Photo" class="order-detail-photo-mini" onclick="openCustomerPhotoModal('${escapeHtml(itemPhoto)}', '${escapeHtml(displayOrderId)}', '${escapeHtml(order.name)}', '${escapeHtml(itemPhotoName)}')" title="Click to view full photo" />
                 <button type="button" class="btn-detail-view-photo" onclick="openCustomerPhotoModal('${escapeHtml(itemPhoto)}', '${escapeHtml(displayOrderId)}', '${escapeHtml(order.name)}', '${escapeHtml(itemPhotoName)}')">🔍 View</button>
               </div>
-            ` : `
+            `) : `
               <span style="font-size: 0.72rem; color: var(--text-muted);">No Custom Photo</span>
             `}
           </td>
@@ -4659,10 +4688,11 @@ function renderAdminProducts(products) {
 
         <!-- 2. Product Name, ID & Specs -->
         <td class="prod-cell-title" style="vertical-align: middle;">
-          <div class="prod-row-name">
+          <div class="prod-row-name" style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
             <a href="product-detail.html?id=${encodeURIComponent(pId)}" target="_blank" style="color: inherit; text-decoration: none;" title="Open Product Page">
               ${escapeHtml(pName)}
             </a>
+            ${(p.requiresPhoto || p.requires_photo) ? `<span style="display: inline-flex; align-items: center; gap: 3px; font-size: 0.68rem; font-weight: 700; color: #B45309; background: #FEF3C7; border: 1px solid #FCD34D; padding: 1px 6px; border-radius: 4px;" title="Customer Photo Compulsory for Order">📷 Photo Compulsory</span>` : ''}
           </div>
           <div class="prod-row-meta">
             <code class="prod-sku-code">${escapeHtml(pId)}</code>
@@ -5671,6 +5701,8 @@ function initProductModals() {
     if (optPriceInput) optPriceInput.value = '';
     const origPriceInput = document.getElementById('newProductOriginalPrice');
     if (origPriceInput) origPriceInput.value = '';
+    const reqPhotoEl = document.getElementById('newProductRequiresPhoto');
+    if (reqPhotoEl) reqPhotoEl.checked = false;
     const targetModal = document.getElementById('addProductModal');
     if (targetModal) targetModal.classList.add('open');
   };
@@ -5760,6 +5792,7 @@ function initProductModals() {
       const material = document.getElementById('newProductMaterial') ? document.getElementById('newProductMaterial').value.trim() : 'Premium Material';
       const printingType = document.getElementById('newProductPrintingType') ? document.getElementById('newProductPrintingType').value.trim() : '';
       const desc = document.getElementById('newProductDesc') ? document.getElementById('newProductDesc').value.trim() : '';
+      const requiresPhoto = document.getElementById('newProductRequiresPhoto') ? document.getElementById('newProductRequiresPhoto').checked : false;
 
       if (!name) {
         showToast('Name Required', 'Please enter a product name.', 'warning');
@@ -5889,7 +5922,9 @@ function initProductModals() {
             colors: resolvedColors,
             finishes: resolvedFinishes,
             variantType: newProductVariantType,
-            variants: resolvedVariants
+            variants: resolvedVariants,
+            requiresPhoto,
+            requires_photo: requiresPhoto
           })
         });
 
@@ -6111,6 +6146,9 @@ function initProductModals() {
     const printingTypeEl = document.getElementById('editProductPrintingType');
     if (printingTypeEl) printingTypeEl.value = prod.printingType || '';
 
+    const reqPhotoEl = document.getElementById('editProductRequiresPhoto');
+    if (reqPhotoEl) reqPhotoEl.checked = Boolean(prod.requiresPhoto || prod.requires_photo);
+
     const descEl = document.getElementById('editProductDesc');
     if (descEl) descEl.value = prod.shortDescription || '';
 
@@ -6238,6 +6276,7 @@ function initProductModals() {
       const printingType = document.getElementById('editProductPrintingType') ? document.getElementById('editProductPrintingType').value.trim() : '';
       const desc = document.getElementById('editProductDesc') ? document.getElementById('editProductDesc').value.trim() : '';
       const fullDesc = document.getElementById('editProductFullDesc') ? document.getElementById('editProductFullDesc').value.trim() : desc;
+      const requiresPhoto = document.getElementById('editProductRequiresPhoto') ? document.getElementById('editProductRequiresPhoto').checked : false;
 
       // Final image resolution
       let editPhotos = uploadedEditProductImages.length > 0 ? [...uploadedEditProductImages] : [];
@@ -6344,7 +6383,9 @@ function initProductModals() {
             colors: resolvedColors,
             finishes: resolvedFinishes,
             variantType: editProductVariantType,
-            variants: resolvedVariants
+            variants: resolvedVariants,
+            requiresPhoto,
+            requires_photo: requiresPhoto
           })
         });
 
