@@ -1587,14 +1587,34 @@ async function initProductReviews() {
   const normPId = (pId || (currentProduct && currentProduct.id) || '').toLowerCase();
   const storageKey = getProductReviewsStorageKey(normPId);
 
+  const TRIAL_REVIEW_IDS = new Set([
+    'rev-custom-company-envelope-set-2',
+    'rev-cust-live-1794226875795',
+    'rev-1790625191990',
+    'rev-gfc-1',
+    'rev-gfc-2',
+    'rev-pfg-1',
+    'rev-pwb-1',
+    'rev-ccm-1',
+    'rev-test-live-1794225614036'
+  ]);
+
+  function isLegitReview(r) {
+    if (!r || !r.id) return false;
+    const cleanId = String(r.id).trim().toLowerCase();
+    if (TRIAL_REVIEW_IDS.has(r.id) || TRIAL_REVIEW_IDS.has(cleanId)) return false;
+    if (cleanId.startsWith('test-') || cleanId.startsWith('rev-test-') || cleanId.startsWith('rev-cust-live-')) return false;
+    return true;
+  }
+
   // 1. Retrieve cached reviews from localStorage for instantaneous first render
   try {
     const cachedRaw = localStorage.getItem(storageKey);
     if (cachedRaw) {
       const cached = JSON.parse(cachedRaw);
-      if (Array.isArray(cached) && cached.length > 0) {
-        productReviews = cached.filter(r => matchesCurrentProduct(r));
-        renderReviewsSection();
+      if (Array.isArray(cached)) {
+        productReviews = cached.filter(r => matchesCurrentProduct(r) && isLegitReview(r));
+        if (productReviews.length > 0) renderReviewsSection();
       }
     }
   } catch (_) {}
@@ -1607,35 +1627,12 @@ async function initProductReviews() {
     if (res.ok) {
       const data = await res.json();
       if (data && data.success && Array.isArray(data.reviews)) {
-        // Strict product-wise isolation using alias-aware matching
-        const serverFiltered = data.reviews.filter(r => matchesCurrentProduct(r));
-
-        // Merge server reviews with any local reviews
-        const mergedMap = new Map();
-        serverFiltered.forEach(r => mergedMap.set(r.id, r));
-
-        if (Array.isArray(productReviews)) {
-          for (const lr of productReviews) {
-            if (matchesCurrentProduct(lr)) {
-              if (!mergedMap.has(lr.id)) {
-                mergedMap.set(lr.id, lr);
-                // Also auto-sync any local-only review to the public cloud so all other visitors can see it!
-                try {
-                  fetch('/api/reviews', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(lr)
-                  });
-                } catch (_) {}
-              }
-            }
-          }
-        }
-
-        productReviews = Array.from(mergedMap.values());
-        // Sort newest first
+        // Strict product-wise isolation using alias-aware matching & trial filter
+        productReviews = data.reviews.filter(r => matchesCurrentProduct(r) && isLegitReview(r));
         productReviews.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-        localStorage.setItem(storageKey, JSON.stringify(productReviews));
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(productReviews));
+        } catch (_) {}
         renderReviewsSection();
       }
     }

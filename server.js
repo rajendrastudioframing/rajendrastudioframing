@@ -4839,6 +4839,18 @@ app.delete('/api/admin/reviews/:id', requireAuth, async (req, res) => {
 });
 
 /**
+ * Admin: Purge All Trial & Mock Data (Reviews & Messages)
+ */
+app.all('/api/admin/clean-trial-data', async (req, res) => {
+  try {
+    const result = await db.cleanTrialData();
+    res.json({ success: true, message: 'All trial reviews, test messages, and mock inquiries successfully purged from Supabase and server storage.', result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Cleanup error: ' + err.message });
+  }
+});
+
+/**
  * Admin Settings (GET)
  */
 app.get('/api/admin/settings', requireAuth, async (req, res) => {

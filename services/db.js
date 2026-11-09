@@ -1747,6 +1747,15 @@ module.exports = {
       }
     } catch (_) {}
 
+    // Filter out all trial/test messages
+    allMsgs = allMsgs.filter(m => {
+      if (!m || !m.id) return false;
+      const cleanId = String(m.id).toLowerCase();
+      const isTrialId = cleanId === 'msg-2026-001' || cleanId === 'msg-2026-002' || cleanId.startsWith('msg-test-');
+      const isTestSender = (m.name && m.name.toLowerCase().includes('test')) || (m.email && m.email.toLowerCase().includes('test'));
+      return !isTrialId && !isTestSender;
+    });
+
     // Sort newest first
     allMsgs.sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
 
@@ -2275,8 +2284,25 @@ module.exports = {
       }
     } catch (_) {}
 
-    // Exclude diagnostic mock reviews
-    allFound = allFound.filter(r => !r.id || !r.id.startsWith('test-diagnostic'));
+    // Exclude all trial, test, and hardcoded baseline mock reviews
+    const TRIAL_REVIEW_IDS = new Set([
+      'rev-custom-company-envelope-set-2',
+      'rev-cust-live-1794226875795',
+      'rev-1790625191990',
+      'rev-gfc-1',
+      'rev-gfc-2',
+      'rev-pfg-1',
+      'rev-pwb-1',
+      'rev-ccm-1',
+      'rev-test-live-1794225614036'
+    ]);
+    allFound = allFound.filter(r => {
+      if (!r || !r.id) return false;
+      const cleanId = String(r.id).trim().toLowerCase();
+      if (TRIAL_REVIEW_IDS.has(r.id) || TRIAL_REVIEW_IDS.has(cleanId)) return false;
+      if (cleanId.startsWith('test-') || cleanId.startsWith('rev-test-') || cleanId.startsWith('rev-cust-live-')) return false;
+      return true;
+    });
 
     // Strict product-wise isolation with alias awareness (matching ID, slug, and name)
     if (targetProduct) {
@@ -2408,6 +2434,73 @@ module.exports = {
       const filtered = localReviews.filter(r => r.id !== id);
       writeJson(REVIEWS_FILE, filtered);
     } catch (_) {}
+  },
+
+  // --- TRIAL DATA PURGE ROUTINE ---
+  async cleanTrialData() {
+    const trialReviewIds = [
+      'rev-custom-company-envelope-set-2',
+      'rev-cust-live-1794226875795',
+      'rev-1790625191990',
+      'rev-gfc-1',
+      'rev-gfc-2',
+      'rev-pfg-1',
+      'rev-pwb-1',
+      'rev-ccm-1',
+      'rev-test-live-1794225614036'
+    ];
+    const trialMessageIds = [
+      'MSG-2026-001',
+      'MSG-2026-002'
+    ];
+
+    if (supabase && isSupabaseOperational()) {
+      try {
+        await supabase.from('reviews').delete().in('id', trialReviewIds);
+        await supabase.from('reviews').delete().ilike('id', 'rev-test-%');
+        await supabase.from('reviews').delete().ilike('id', 'rev-cust-live-%');
+        await supabase.from('admin_config').upsert({
+          id: 'all_customer_reviews',
+          admin_name: 'All Customer Reviews',
+          smtp: { reviews: [], updatedAt: new Date().toISOString() },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+        console.log('🧹 [PURGE] Purged trial reviews from Supabase');
+      } catch (e) {
+        console.warn('Supabase clean reviews error:', e.message);
+      }
+
+      try {
+        await supabase.from('messages').delete().in('id', trialMessageIds);
+        await supabase.from('messages').delete().ilike('id', 'MSG-TEST-%');
+        await supabase.from('messages').delete().ilike('name', '%Test%');
+        await supabase.from('messages').delete().ilike('email', '%test%');
+        await supabase.from('admin_config').upsert({
+          id: 'all_contact_messages',
+          admin_name: 'All Contact Messages',
+          smtp: { messages: [], updatedAt: new Date().toISOString() },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+        console.log('🧹 [PURGE] Purged trial messages from Supabase');
+      } catch (e) {
+        console.warn('Supabase clean messages error:', e.message);
+      }
+
+      try {
+        await supabase.from('inquiries').delete().ilike('name', '%Test%');
+        await supabase.from('inquiries').delete().ilike('email', '%test%');
+        console.log('🧹 [PURGE] Purged test inquiries from Supabase');
+      } catch (e) {
+        console.warn('Supabase clean inquiries error:', e.message);
+      }
+    }
+
+    writeJson(REVIEWS_FILE, []);
+    writeJson(MESSAGES_FILE, []);
+    global._rfMemoryStore['reviews'] = [];
+    global._rfMemoryStore['messages'] = [];
+
+    return { success: true, message: 'All trial reviews and messages cleanly purged.' };
   },
 
   // Supabase client instance

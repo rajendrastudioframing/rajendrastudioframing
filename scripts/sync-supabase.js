@@ -112,29 +112,54 @@ async function syncToSupabase() {
     console.error('   ❌ Customers sync failed:', err.message);
   }
 
-  // 3. SYNC REVIEWS
+  // 3. SYNC REVIEWS & PURGE TRIAL DATA
   try {
-    const reviews = readJsonFile('reviews.json', []);
-    console.log(`⭐ Syncing ${reviews.length} customer reviews...`);
-    for (const r of reviews) {
-      const { error } = await supabase.from('reviews').upsert({
-        id: r.id,
-        product_id: r.productId,
-        author: r.author,
-        city: r.city || 'Dahej / Bharuch',
-        rating: Number(r.rating) || 5,
-        date: r.date || new Date().toISOString().split('T')[0],
-        headline: r.headline,
-        comment: r.comment,
-        verified: Boolean(r.verified),
-        helpful: Number(r.helpful) || 0
-      }, { onConflict: 'id' });
+    const trialReviewIds = [
+      'rev-custom-company-envelope-set-2',
+      'rev-cust-live-1794226875795',
+      'rev-1790625191990',
+      'rev-gfc-1',
+      'rev-gfc-2',
+      'rev-pfg-1',
+      'rev-pwb-1',
+      'rev-ccm-1',
+      'rev-test-live-1794225614036'
+    ];
+    await supabase.from('reviews').delete().in('id', trialReviewIds);
+    await supabase.from('reviews').delete().ilike('id', 'rev-test-%');
+    await supabase.from('reviews').delete().ilike('id', 'rev-cust-live-%');
+    await supabase.from('admin_config').upsert({
+      id: 'all_customer_reviews',
+      admin_name: 'All Customer Reviews',
+      smtp: { reviews: [], updatedAt: new Date().toISOString() },
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
 
-      if (error) {
-        console.warn(`   ⚠️ Review sync error (${r.id}):`, error.message);
+    const reviews = readJsonFile('reviews.json', []);
+    if (reviews.length) {
+      console.log(`⭐ Syncing ${reviews.length} customer reviews...`);
+      for (const r of reviews) {
+        const { error } = await supabase.from('reviews').upsert({
+          id: r.id,
+          product_id: r.productId,
+          author: r.author,
+          city: r.city || 'Dahej / Bharuch',
+          rating: Number(r.rating) || 5,
+          date: r.date || new Date().toISOString().split('T')[0],
+          headline: r.headline,
+          comment: r.comment,
+          verified: Boolean(r.verified),
+          helpful: Number(r.helpful) || 0
+        }, { onConflict: 'id' });
+
+        if (error) {
+          console.warn(`   ⚠️ Review sync error (${r.id}):`, error.message);
+        }
       }
+      console.log('   ✅ Reviews synchronized successfully.');
+    } else {
+      console.log('   ✅ All trial reviews purged. No hardcoded reviews present.');
     }
-    console.log('   ✅ Reviews synchronized successfully.');
   } catch (err) {
     console.error('   ❌ Reviews sync failed:', err.message);
   }
@@ -272,8 +297,22 @@ async function syncToSupabase() {
     console.error('   ❌ Admin config sync failed:', err.message);
   }
 
-  // 8. SYNC CONTACT MESSAGES
+  // 8. SYNC CONTACT MESSAGES & PURGE TRIAL DATA
   try {
+    const trialMessageIds = ['MSG-2026-001', 'MSG-2026-002'];
+    await supabase.from('messages').delete().in('id', trialMessageIds);
+    await supabase.from('messages').delete().ilike('id', 'MSG-TEST-%');
+    await supabase.from('messages').delete().ilike('name', '%Test%');
+    await supabase.from('messages').delete().ilike('email', '%test%');
+    await supabase.from('inquiries').delete().ilike('name', '%Test%');
+    await supabase.from('inquiries').delete().ilike('email', '%test%');
+    await supabase.from('admin_config').upsert({
+      id: 'all_contact_messages',
+      admin_name: 'All Contact Messages',
+      smtp: { messages: [], updatedAt: new Date().toISOString() },
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+
     const messages = readJsonFile('messages.json', []);
     if (messages.length) {
       console.log(`✉️  Syncing ${messages.length} contact messages...`);
@@ -293,18 +332,9 @@ async function syncToSupabase() {
           console.warn(`   ⚠️ Message sync error (${m.id}):`, error.message);
         }
       }
-
-      // Also backup to admin_config
-      try {
-        await supabase.from('admin_config').upsert({
-          id: 'all_contact_messages',
-          admin_name: 'All Contact Messages',
-          smtp: { messages, updatedAt: new Date().toISOString() },
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'id' });
-      } catch (_) {}
-
       console.log('   ✅ Contact messages synchronized successfully.');
+    } else {
+      console.log('   ✅ All trial messages purged. No hardcoded messages present.');
     }
   } catch (err) {
     console.error('   ❌ Contact messages sync failed:', err.message);

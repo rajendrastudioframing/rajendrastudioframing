@@ -6824,6 +6824,17 @@ async function loadMessages() {
     }
   }
 
+  // Filter out any trial/test messages
+  if (Array.isArray(allMessages)) {
+    allMessages = allMessages.filter(m => {
+      if (!m || !m.id) return false;
+      const cleanId = String(m.id).toLowerCase();
+      const isTrialId = cleanId === 'msg-2026-001' || cleanId === 'msg-2026-002' || cleanId.startsWith('msg-test-');
+      const isTestSender = (m.name && m.name.toLowerCase().includes('test')) || (m.email && m.email.toLowerCase().includes('test'));
+      return !isTrialId && !isTestSender;
+    });
+  }
+
   renderContactMessages(allMessages || []);
 
   // Update unread badge in sidebar
@@ -7315,35 +7326,35 @@ async function loadReviews() {
     console.warn('Public reviews fetch note:', pubErr.message);
   }
 
-  // 3. Scan localStorage for any client-side saved reviews and merge
+  // Clean out any old trial review keys from browser localStorage
   try {
-    for (let i = 0; i < localStorage.length; i++) {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
-      if (key && key.startsWith('rf_reviews_')) {
-        const raw = localStorage.getItem(key);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) {
-            parsed.forEach(lr => {
-              if (lr && lr.id && !reviewMap.has(lr.id)) {
-                reviewMap.set(lr.id, lr);
-                // Background push to server
-                try {
-                  apiFetch('/api/reviews', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(lr)
-                  }).catch(() => {});
-                } catch (_) {}
-              }
-            });
-          }
-        }
+      if (key && (key.startsWith('rf_reviews_') || key === 'rf_all_reviews')) {
+        localStorage.removeItem(key);
       }
     }
   } catch (_) {}
 
-  allReviews = Array.from(reviewMap.values());
+  const TRIAL_REVIEW_IDS = new Set([
+    'rev-custom-company-envelope-set-2',
+    'rev-cust-live-1794226875795',
+    'rev-1790625191990',
+    'rev-gfc-1',
+    'rev-gfc-2',
+    'rev-pfg-1',
+    'rev-pwb-1',
+    'rev-ccm-1',
+    'rev-test-live-1794225614036'
+  ]);
+
+  allReviews = Array.from(reviewMap.values()).filter(r => {
+    if (!r || !r.id) return false;
+    const cleanId = String(r.id).trim().toLowerCase();
+    if (TRIAL_REVIEW_IDS.has(r.id) || TRIAL_REVIEW_IDS.has(cleanId)) return false;
+    if (cleanId.startsWith('test-') || cleanId.startsWith('rev-test-') || cleanId.startsWith('rev-cust-live-')) return false;
+    return true;
+  });
 
   // Sort newest first
   allReviews.sort((a, b) => {
