@@ -8,10 +8,71 @@ document.addEventListener('DOMContentLoaded', () => {
   initFaqAccordion();
 });
 
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function initContactForm() {
   const form = document.getElementById('contactEnquiryForm');
   const successBox = document.getElementById('contactFormSuccess');
   if (!form) return;
+
+  // Dynamically sync Product Interested In dropdown with live database categories
+  const serviceSelect = document.getElementById('contactService');
+  if (serviceSelect) {
+    const syncContactCategories = (cats) => {
+      if (!serviceSelect || !Array.isArray(cats) || !cats.length) return;
+      const currentVal = serviceSelect.value;
+      const validCats = cats.filter(c => c && (c.name || c.id));
+      if (!validCats.length) return;
+      let optsHtml = `<option value="">Select a category or product...</option>`;
+      validCats.forEach(cat => {
+        const catName = (cat.name || cat.id).trim();
+        optsHtml += `<option value="${escapeHtml(catName)}">${escapeHtml(catName)}</option>`;
+      });
+      optsHtml += `<option value="Bulk Corporate Order">Bulk Corporate Gifting Order</option>`;
+      optsHtml += `<option value="Other Requirements">Other Requirements</option>`;
+      serviceSelect.innerHTML = optsHtml;
+      if (currentVal && Array.from(serviceSelect.options).some(o => o.value === currentVal)) {
+        serviceSelect.value = currentVal;
+      }
+    };
+
+    if (typeof window.CATEGORIES_DATA !== 'undefined' && Array.isArray(window.CATEGORIES_DATA) && window.CATEGORIES_DATA.length) {
+      syncContactCategories(window.CATEGORIES_DATA);
+    }
+
+    fetch(`/api/categories?_t=${Date.now()}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && Array.isArray(data.categories) && data.categories.length) {
+          window.CATEGORIES_DATA = data.categories;
+          syncContactCategories(data.categories);
+        }
+      })
+      .catch(() => {});
+
+    try {
+      const bc = new BroadcastChannel('rf_catalog_sync');
+      bc.addEventListener('message', () => {
+        fetch(`/api/categories?_t=${Date.now()}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d && d.success && Array.isArray(d.categories)) {
+              window.CATEGORIES_DATA = d.categories;
+              syncContactCategories(d.categories);
+            }
+          })
+          .catch(() => {});
+      });
+    } catch (_) {}
+  }
 
   const API_BASE = window.location.origin.includes(':5500') 
     ? 'http://localhost:5000' 

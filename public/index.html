@@ -354,12 +354,8 @@
                 <div class="form-group">
                   <label class="form-label" for="homeContactInterest">Product Interest</label>
                   <select id="homeContactInterest" class="form-select">
-                    <option value="Glass Photo Frames">Glass Photo Frames</option>
-                    <option value="Plastic Photo Frames">Plastic Photo Frames</option>
+                    <option value="Frames">Frames</option>
                     <option value="Bottle Printing">Bottle Printing</option>
-                    <option value="Mug Printing">Mug Printing</option>
-                    <option value="File &amp; Folder Printing">File &amp; Folder Printing</option>
-                    <option value="Custom Printing">Custom Printing</option>
                     <option value="Other Requirements">Other Requirements</option>
                   </select>
                 </div>
@@ -517,6 +513,33 @@
   <script src="js/customer-auth.js?v=live_v1"></script>
   <script src="js/quote-modal.js?v=live_v1"></script>
   <script>
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function syncContactInterestSelect(cats) {
+      const interestSelect = document.getElementById('homeContactInterest');
+      if (!interestSelect || !Array.isArray(cats) || cats.length === 0) return;
+      const currentVal = interestSelect.value;
+      const validCats = cats.filter(c => c && (c.name || c.id));
+      if (!validCats.length) return;
+      let optsHtml = validCats.map(cat => {
+        const catName = (cat.name || cat.id).trim();
+        return `<option value="${escapeHtml(catName)}">${escapeHtml(catName)}</option>`;
+      }).join('');
+      optsHtml += '<option value="Other Requirements">Other Requirements</option>';
+      interestSelect.innerHTML = optsHtml;
+      if (currentVal && Array.from(interestSelect.options).some(o => o.value === currentVal)) {
+        interestSelect.value = currentVal;
+      }
+    }
+
     async function loadAndRenderHomeCategories() {
       const grid = document.getElementById('homeCategoriesGrid');
       if (!grid) return;
@@ -534,6 +557,9 @@
       let categories = (typeof window.CATEGORIES_DATA !== 'undefined' && Array.isArray(window.CATEGORIES_DATA)) ? window.CATEGORIES_DATA : ((typeof CATEGORIES_DATA !== 'undefined' && Array.isArray(CATEGORIES_DATA)) ? CATEGORIES_DATA : []);
       let products = (typeof window.PRODUCTS_DATA !== 'undefined' && Array.isArray(window.PRODUCTS_DATA)) ? window.PRODUCTS_DATA : ((typeof PRODUCTS_DATA !== 'undefined' && Array.isArray(PRODUCTS_DATA)) ? PRODUCTS_DATA : []);
 
+      // Synchronize Product Interest dropdown immediately with preloaded categories
+      syncContactInterestSelect(categories);
+
       try {
         const [catRes, prodRes] = await Promise.all([
           fetch(`/api/categories?_t=${Date.now()}`).catch(() => null),
@@ -545,6 +571,7 @@
           if (data && data.success && Array.isArray(data.categories)) {
             categories = data.categories;
             window.CATEGORIES_DATA = categories;
+            syncContactInterestSelect(categories);
           }
         }
 

@@ -469,6 +469,57 @@ function initHomeContactForm() {
   const successBox = document.getElementById('homeFormSuccess');
   if (!form) return;
 
+  // Dynamic sync of Product Interest dropdown with current database categories
+  const interestSelect = document.getElementById('homeContactInterest');
+  if (interestSelect) {
+    const syncInterest = (cats) => {
+      if (!interestSelect || !Array.isArray(cats) || !cats.length) return;
+      const currentVal = interestSelect.value;
+      const validCats = cats.filter(c => c && (c.name || c.id));
+      if (!validCats.length) return;
+      let optsHtml = validCats.map(cat => {
+        const catName = String(cat.name || cat.id).trim();
+        const escVal = catName.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+        const escText = catName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `<option value="${escVal}">${escText}</option>`;
+      }).join('');
+      optsHtml += '<option value="Other Requirements">Other Requirements</option>';
+      interestSelect.innerHTML = optsHtml;
+      if (currentVal && Array.from(interestSelect.options).some(o => o.value === currentVal)) {
+        interestSelect.value = currentVal;
+      }
+    };
+
+    if (typeof window.CATEGORIES_DATA !== 'undefined' && Array.isArray(window.CATEGORIES_DATA) && window.CATEGORIES_DATA.length) {
+      syncInterest(window.CATEGORIES_DATA);
+    }
+
+    fetch(`/api/categories?_t=${Date.now()}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && Array.isArray(data.categories) && data.categories.length) {
+          window.CATEGORIES_DATA = data.categories;
+          syncInterest(data.categories);
+        }
+      })
+      .catch(() => {});
+
+    try {
+      const bc = new BroadcastChannel('rf_catalog_sync');
+      bc.addEventListener('message', () => {
+        fetch(`/api/categories?_t=${Date.now()}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d && d.success && Array.isArray(d.categories)) {
+              window.CATEGORIES_DATA = d.categories;
+              syncInterest(d.categories);
+            }
+          })
+          .catch(() => {});
+      });
+    } catch (_) {}
+  }
+
   const API_BASE = window.location.origin.includes(':5500') 
     ? 'http://localhost:5000' 
     : window.location.origin;

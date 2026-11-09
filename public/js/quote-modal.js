@@ -188,6 +188,64 @@ function injectQuoteModalMarkup() {
       hide();
     }
   });
+
+  syncQuoteModalOptions();
+}
+
+function syncQuoteModalOptions() {
+  const select = document.getElementById('quoteProduct');
+  if (!select) return;
+
+  let categories = (typeof window.CATEGORIES_DATA !== 'undefined' && Array.isArray(window.CATEGORIES_DATA)) ? window.CATEGORIES_DATA : [];
+  let products = (typeof window.PRODUCTS_DATA !== 'undefined' && Array.isArray(window.PRODUCTS_DATA)) ? window.PRODUCTS_DATA : [];
+
+  const renderOpts = (cats, prods) => {
+    if (!select || !Array.isArray(cats) || !cats.length) return;
+    const currentVal = select.value;
+    let html = `<option value="">Select an option...</option>`;
+
+    cats.forEach(cat => {
+      const catId = (cat.id || '').toLowerCase();
+      const catName = cat.name || cat.id;
+      const catProds = Array.isArray(prods) ? prods.filter(p => (p.category || '').toLowerCase() === catId) : [];
+
+      html += `<optgroup label="${catName.replace(/&/g, '&amp;')}">`;
+      html += `<option value="${catName.replace(/&/g, '&amp;')} (General)">All ${catName.replace(/&/g, '&amp;')}</option>`;
+      catProds.forEach(p => {
+        if (p.name) {
+          html += `<option value="${p.name.replace(/&/g, '&amp;')}">${p.name.replace(/&/g, '&amp;')}</option>`;
+        }
+      });
+      html += `</optgroup>`;
+    });
+
+    html += `
+      <optgroup label="Other Inquiries">
+        <option value="Bulk Corporate Order">Bulk Corporate Gifting</option>
+        <option value="Other Custom Requirement">Other Custom Requirement</option>
+      </optgroup>
+    `;
+
+    select.innerHTML = html;
+    if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+      select.value = currentVal;
+    }
+  };
+
+  if (categories.length) {
+    renderOpts(categories, products);
+  }
+
+  fetch(`/api/categories?_t=${Date.now()}`)
+    .then(r => r.json())
+    .then(d => {
+      if (d && d.success && Array.isArray(d.categories) && d.categories.length) {
+        categories = d.categories;
+        window.CATEGORIES_DATA = categories;
+        renderOpts(categories, window.PRODUCTS_DATA || products);
+      }
+    })
+    .catch(() => {});
 }
 
 /* --- Trigger modal anywhere on click --- */
@@ -211,6 +269,8 @@ function openQuoteModal(productName = '', requirements = '') {
   const reqInput = document.getElementById('quoteRequirements');
 
   if (!modal) return;
+
+  syncQuoteModalOptions();
 
   // Reset view to form
   if (formBody) formBody.style.display = 'block';
