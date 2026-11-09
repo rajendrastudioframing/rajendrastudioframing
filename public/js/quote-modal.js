@@ -245,7 +245,7 @@ function syncQuoteModalOptions() {
         renderOpts(categories, window.PRODUCTS_DATA || products);
       }
     })
-    .catch(() => {});
+    .catch(() => { });
 }
 
 /* --- Trigger modal anywhere on click --- */
@@ -281,7 +281,7 @@ function openQuoteModal(productName = '', requirements = '') {
     let matched = false;
     for (let i = 0; i < productSelect.options.length; i++) {
       if (productSelect.options[i].text.toLowerCase().includes(productName.toLowerCase()) ||
-          productName.toLowerCase().includes(productSelect.options[i].value.toLowerCase())) {
+        productName.toLowerCase().includes(productSelect.options[i].value.toLowerCase())) {
         productSelect.selectedIndex = i;
         matched = true;
         break;
@@ -380,8 +380,8 @@ function bindQuoteFormSubmit() {
   const whatsAppBtn = document.getElementById('quoteWhatsAppBtn');
   if (!form) return;
 
-  const API_BASE = window.location.origin.includes(':5500') 
-    ? 'http://localhost:5000' 
+  const API_BASE = window.location.origin.includes(':5500')
+    ? 'http://localhost:5000'
     : window.location.origin;
 
   form.addEventListener('submit', async (e) => {

@@ -3044,18 +3044,18 @@ body.modal-open {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .admin-main {
     margin-left: 0 !important;
     width: 100% !important;
   }
   .admin-sidebar {
     position: fixed;
-    left: -250px;
+    left: -280px;
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.35);
   }
   .admin-sidebar.open {
-    transform: translateX(250px);
+    transform: translateX(280px);
   }
   .sidebar-toggle-btn {
     display: flex;
@@ -4308,7 +4308,7 @@ body.admin-login-body {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .admin-layout {
     overflow-x: hidden;
   }
@@ -4320,14 +4320,14 @@ body.admin-login-body {
     position: fixed !important;
     top: 0 !important;
     bottom: 0 !important;
-    left: -270px !important;
-    width: 260px !important;
+    left: -280px !important;
+    width: 270px !important;
     z-index: 1000 !important;
     box-shadow: 10px 0 35px rgba(0, 0, 0, 0.45) !important;
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
   .admin-sidebar.open {
-    transform: translateX(270px) !important;
+    transform: translateX(280px) !important;
   }
   .sidebar-toggle-btn {
     display: flex !important;
