@@ -1341,7 +1341,7 @@ function renderRelatedProducts() {
   scored.sort((a, b) => b.score - a.score);
 
   // Pick the top 4 most relevant products for a balanced row
-  const related = scored.slice(0, 4).map(item => item.product);
+  const related = scored.slice(0, 8).map(item => item.product);
 
   container.innerHTML = related.map(p => {
     const priceFormatted = p.price ? `₹${p.price}` : p.priceDisplay;
