@@ -2376,7 +2376,7 @@ app.get('/api/admin/inquiries', requireAuth, async (req, res) => {
  */
 app.post('/api/inquiries', async (req, res) => {
   try {
-    const { name, phone, email, product, specs, quantity, notes, uploadFileName } = req.body;
+    const { name, phone, email, product, specs, quantity, notes, uploadFileName, amount, estimatedValue, paymentStatus } = req.body;
 
     if (!name || !phone) {
       return res.status(400).json({ success: false, message: 'Name and phone number are required.' });
@@ -2384,6 +2384,7 @@ app.post('/api/inquiries', async (req, res) => {
 
     const inquiries = await db.getInquiries();
     const newId = `INQ-${new Date().getFullYear()}-${String(inquiries.length + 1).padStart(3, '0')}`;
+    const parsedAmount = Number(estimatedValue || amount || (Number(quantity) || 1) * 650);
 
     const newInquiry = {
       id: newId,
@@ -2393,7 +2394,9 @@ app.post('/api/inquiries', async (req, res) => {
       product: product || 'Custom Framing / Printing',
       specs: specs || '',
       quantity: Number(quantity) || 1,
-      estimatedValue: (Number(quantity) || 1) * 650,
+      estimatedValue: parsedAmount,
+      total: parsedAmount,
+      paymentMethod: paymentStatus || 'Direct Studio',
       notes: notes || '',
       status: 'New',
       hasUpload: Boolean(uploadFileName),
@@ -2447,6 +2450,11 @@ app.post('/api/inquiries', async (req, res) => {
     console.error('Error saving inquiry:', err);
     res.status(500).json({ success: false, message: 'Failed to record quote inquiry.' });
   }
+});
+
+app.post('/api/quote', (req, res, next) => {
+  req.url = '/api/inquiries';
+  app.handle(req, res, next);
 });
 
 /**

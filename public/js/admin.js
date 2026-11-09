@@ -3136,6 +3136,7 @@ function initNewOrderModal() {
 
   window.openNewOrderModal = () => {
     form.reset();
+    populateProductCategoryDropdowns();
     modal.classList.add('open');
   };
 
@@ -3148,13 +3149,25 @@ function initNewOrderModal() {
     const name = document.getElementById('newOrderCustName').value.trim();
     const phone = document.getElementById('newOrderCustPhone').value.trim();
     const email = document.getElementById('newOrderCustEmail').value.trim();
-    const product = document.getElementById('newOrderProductSelect').value;
+    const product = document.getElementById('newOrderProductSelect') ? document.getElementById('newOrderProductSelect').value : '';
     const qty = parseInt(document.getElementById('newOrderQty').value) || 1;
     const amount = parseInt(document.getElementById('newOrderAmount').value) || 0;
+    const paymentStatus = document.getElementById('newOrderPaymentStatus') ? document.getElementById('newOrderPaymentStatus').value : 'Paid';
     const notes = document.getElementById('newOrderNotes').value.trim();
 
+    if (!product) {
+      showToast('Category Required', 'Please select a custom framing category first.', 'warning');
+      return;
+    }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Recording Order...';
+    }
+
     try {
-      const res = await fetch(`${API_BASE}/api/quote`, {
+      const res = await apiFetch(`/api/inquiries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3164,22 +3177,30 @@ function initNewOrderModal() {
           product: `[ONLINE ORDER] ${product} (x${qty})`,
           specs: notes || `Direct Studio Order - ${product}`,
           quantity: qty,
+          amount: amount,
+          estimatedValue: amount || (qty * 650),
+          paymentStatus,
           notes: notes || 'Direct Studio Custom Order'
         })
       });
 
       const data = await res.json();
-      if (data.success) {
+      if (data && data.success) {
         closeNewOrderModal();
         await loadInquiries();
         await loadDashboardStats();
-        alert('New order recorded successfully!');
+        showToast('Order Recorded', `New custom order recorded for ${name}!`, 'success');
       } else {
-        alert(data.message || 'Failed to record order.');
+        showToast('Error', (data && data.message) || 'Failed to record order.', 'danger');
       }
     } catch (err) {
       console.error('Error creating order:', err);
-      alert('Could not connect to server.');
+      showToast('Error', 'Could not connect to server.', 'danger');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Order';
+      }
     }
   });
 }
@@ -4210,19 +4231,26 @@ function renderCategoryTabs() {
 function populateProductCategoryDropdowns() {
   const newCatSelect = document.getElementById('newProductCategory');
   const editCatSelect = document.getElementById('editProductCategory');
+  const newOrderProductSelect = document.getElementById('newOrderProductSelect');
 
-  let optionsHtml = '';
+  let idOptionsHtml = '';
+  let nameOptionsHtml = '';
+
   if (allAdminCategories.length === 0) {
-    optionsHtml = '<option value="">No categories yet - create category first</option>';
+    idOptionsHtml = '<option value="">No categories created yet - create category first</option>';
+    nameOptionsHtml = '<option value="">No categories created yet - create category first</option>';
   } else {
-    optionsHtml = allAdminCategories.map(c => 
+    idOptionsHtml = allAdminCategories.map(c => 
       `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`
+    ).join('');
+    nameOptionsHtml = allAdminCategories.map(c => 
+      `<option value="${escapeHtml(c.name || c.id)}">${escapeHtml(c.name || c.id)}</option>`
     ).join('');
   }
 
   if (newCatSelect) {
     const currentVal = newCatSelect.value;
-    newCatSelect.innerHTML = optionsHtml;
+    newCatSelect.innerHTML = idOptionsHtml;
     if (currentVal && allAdminCategories.some(c => c.id === currentVal)) {
       newCatSelect.value = currentVal;
     }
@@ -4230,9 +4258,17 @@ function populateProductCategoryDropdowns() {
 
   if (editCatSelect) {
     const currentVal = editCatSelect.value;
-    editCatSelect.innerHTML = optionsHtml;
+    editCatSelect.innerHTML = idOptionsHtml;
     if (currentVal && allAdminCategories.some(c => c.id === currentVal)) {
       editCatSelect.value = currentVal;
+    }
+  }
+
+  if (newOrderProductSelect) {
+    const currentVal = newOrderProductSelect.value;
+    newOrderProductSelect.innerHTML = nameOptionsHtml;
+    if (currentVal && allAdminCategories.some(c => (c.name || c.id) === currentVal)) {
+      newOrderProductSelect.value = currentVal;
     }
   }
 }
