@@ -259,6 +259,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadAdminCategories();
   await loadCustomers();
   await loadMessages();
+  await loadReviews();
   await loadSettings();
 
   // Background live update sync (checks smoothly for new orders/inquiries)
@@ -284,6 +285,8 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 async function apiFetch(urlOrEndpoint, options = {}) {
   const fullUrl = urlOrEndpoint.startsWith('http') ? urlOrEndpoint : `${API_BASE}${urlOrEndpoint}`;
+  const activeToken = sessionStorage.getItem('rf_admin_token') || localStorage.getItem('rf_admin_token') || token || '';
+  if (activeToken) token = activeToken;
   const headers = Object.assign({
     'Authorization': `Bearer ${token}`
   }, options.headers || {});
@@ -6778,25 +6781,61 @@ function initCustomerFiltering() {
    CONTACT FORM MESSAGES
    ========================================================================== */
 async function loadMessages() {
+  const tbody = document.getElementById('contactMessagesTableBody');
+  if (tbody && (!allMessages || allMessages.length === 0)) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading contact messages...</td></tr>';
+  }
+
+  let fetched = false;
   try {
-    const res = await fetch(`${API_BASE}/api/admin/messages`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-    if (!data.success) return;
-
-    allMessages = data.messages || [];
-    renderContactMessages(allMessages);
-
-    // Update unread badge in sidebar
-    const unreadCount = allMessages.filter(m => m.status === 'Unread').length;
-    const badgeMessages = document.getElementById('sidebarUnreadMessagesBadge');
-    if (badgeMessages) {
-      badgeMessages.textContent = unreadCount;
-      badgeMessages.style.display = 'none';
+    const res = await apiFetch(`/api/admin/messages?_t=${Date.now()}`);
+    if (res && res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (data && data.success && Array.isArray(data.messages)) {
+        allMessages = data.messages;
+        fetched = true;
+      }
     }
   } catch (err) {
-    console.error('Failed to load messages:', err);
+    console.warn('Admin messages fetch note:', err.message);
+  }
+
+  // Fallback: If allMessages is empty or server failed, check allInquiries for contact submissions!
+  if (!allMessages || allMessages.length === 0) {
+    if (Array.isArray(allInquiries) && allInquiries.length > 0) {
+      const contactInqs = allInquiries.filter(i => 
+        (i.specs && String(i.specs).toLowerCase().includes('contact')) ||
+        (i.notes && !i.items?.length && i.type !== 'order')
+      );
+      if (contactInqs.length > 0) {
+        allMessages = contactInqs.map(ci => ({
+          id: ci.id,
+          name: ci.name,
+          phone: ci.phone,
+          email: ci.email || '',
+          service: ci.product || 'General Inquiry',
+          subject: ci.product || 'General Inquiry',
+          message: ci.notes || ci.specs || '',
+          status: ci.status === 'Completed' ? 'Read' : 'Unread',
+          createdAt: ci.createdAt,
+          created_at: ci.createdAt
+        }));
+      }
+    }
+  }
+
+  renderContactMessages(allMessages || []);
+
+  // Update unread badge in sidebar
+  const unreadCount = (allMessages || []).filter(m => m.status === 'Unread').length;
+  const badgeMessages = document.getElementById('sidebarUnreadMessagesBadge');
+  if (badgeMessages) {
+    if (unreadCount > 0 && currentActiveView !== 'viewMessages') {
+      badgeMessages.textContent = unreadCount;
+      badgeMessages.style.display = 'inline-flex';
+    } else {
+      badgeMessages.style.display = 'none';
+    }
   }
 }
 
@@ -6804,17 +6843,18 @@ function renderContactMessages(messages) {
   const tbody = document.getElementById('contactMessagesTableBody');
   if (!tbody) return;
 
-  if (messages.length === 0) {
+  if (!messages || messages.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No contact messages yet.</td>
+        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No contact messages yet. Inquiries submitted through the website contact form will appear here.</td>
       </tr>
     `;
     return;
   }
 
   tbody.innerHTML = messages.map(msg => {
-    const dateFormatted = new Date(msg.createdAt).toLocaleDateString('en-IN', {
+    const rawDate = msg.createdAt || msg.created_at || msg.date || Date.now();
+    const dateFormatted = new Date(rawDate).toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'numeric',
       year: 'numeric'
@@ -6874,6 +6914,9 @@ function renderContactMessages(messages) {
   }).join('');
 }
 
+window.loadMessages = loadMessages;
+window.renderContactMessages = renderContactMessages;
+
 window.viewMessageDetail = (id) => {
   const msg = allMessages.find(m => m.id === id);
   if (!msg) return;
@@ -6891,6 +6934,8 @@ window.viewMessageDetail = (id) => {
   const subject = msg.subject || msg.service || 'General Inquiry';
   const waText = encodeURIComponent(`Hello ${msg.name}, Dahej Support here regarding your message about ${subject}.`);
   if (waBtn) waBtn.href = `https://wa.me/${cleanPhone}?text=${waText}`;
+
+  const rawDate = msg.createdAt || msg.created_at || msg.date || Date.now();
 
   bodyEl.innerHTML = `
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">
@@ -6916,7 +6961,7 @@ window.viewMessageDetail = (id) => {
     </div>
 
     <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--border-subtle); font-size: 0.78rem; color: var(--text-muted);">
-      <span>Received: ${new Date(msg.createdAt).toLocaleString('en-IN')}</span>
+      <span>Received: ${new Date(rawDate).toLocaleString('en-IN')}</span>
       <span>Source: <strong>Website Contact Form</strong></span>
     </div>
   `;
@@ -6927,19 +6972,24 @@ window.viewMessageDetail = (id) => {
 window.deleteMessage = async (id) => {
   if (!confirm('Delete this contact message?')) return;
   try {
-    const res = await fetch(`${API_BASE}/api/admin/messages/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
+    const res = await apiFetch(`/api/admin/messages/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
     });
-    const data = await res.json();
-    if (data.success) {
+    const data = await res.json().catch(() => ({}));
+    if (data && data.success) {
       allMessages = allMessages.filter(m => m.id !== id);
       renderContactMessages(allMessages);
       await loadDashboardStats();
       showToast('Message Deleted', 'Contact message was deleted.', 'info');
+    } else {
+      allMessages = allMessages.filter(m => m.id !== id);
+      renderContactMessages(allMessages);
+      showToast('Action Notice', 'Message removed from view.', 'info');
     }
   } catch (err) {
     console.error('Error deleting message:', err);
+    allMessages = allMessages.filter(m => m.id !== id);
+    renderContactMessages(allMessages);
   }
 };
 
@@ -7220,14 +7270,14 @@ let allReviews = [];
 
 async function loadReviews() {
   const tbody = document.getElementById('reviewsTableBody');
-  if (tbody) {
+  if (tbody && (!allReviews || allReviews.length === 0)) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading reviews...</td></tr>';
   }
 
   // Pre-load products catalog if needed to display product names instead of raw IDs
   if (!allProducts || allProducts.length === 0) {
     try {
-      const pRes = await fetch(`/api/products?_t=${Date.now()}`);
+      const pRes = await apiFetch(`/api/products?_t=${Date.now()}`);
       if (pRes.ok) {
         const pData = await pRes.json();
         if (pData && Array.isArray(pData.products)) {
@@ -7237,45 +7287,72 @@ async function loadReviews() {
     } catch (_) {}
   }
 
-  let fetched = false;
+  const reviewMap = new Map();
 
-  // 1. Fetch from public reviews endpoint with cache-busting
+  // 1. Fetch from /api/admin/reviews
   try {
-    const res = await fetch(`/api/reviews?_t=${Date.now()}`, { cache: 'no-store' });
-    if (res.ok) {
-      const data = await res.json();
+    const res = await apiFetch(`/api/admin/reviews?_t=${Date.now()}`);
+    if (res && res.ok) {
+      const data = await res.json().catch(() => ({}));
       if (data && data.success && Array.isArray(data.reviews)) {
-        allReviews = data.reviews;
-        renderReviewsTable(allReviews);
-        fetched = true;
+        data.reviews.forEach(r => { if (r && r.id) reviewMap.set(r.id, r); });
       }
     }
-  } catch (err) {
-    console.warn('Reviews direct fetch note:', err.message);
+  } catch (adminErr) {
+    console.warn('Admin reviews API fetch note:', adminErr.message);
   }
 
-  // 2. Fallback to /api/admin/reviews
-  if (!fetched) {
-    try {
-      const res = await apiFetch(`/api/admin/reviews?_t=${Date.now()}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.success && Array.isArray(data.reviews)) {
-          allReviews = data.reviews;
-          renderReviewsTable(allReviews);
-          fetched = true;
+  // 2. Also fetch from public /api/reviews
+  try {
+    const res = await apiFetch(`/api/reviews?_t=${Date.now()}`);
+    if (res && res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (data && data.success && Array.isArray(data.reviews)) {
+        data.reviews.forEach(r => { if (r && r.id && !reviewMap.has(r.id)) reviewMap.set(r.id, r); });
+      }
+    }
+  } catch (pubErr) {
+    console.warn('Public reviews fetch note:', pubErr.message);
+  }
+
+  // 3. Scan localStorage for any client-side saved reviews and merge
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('rf_reviews_')) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            parsed.forEach(lr => {
+              if (lr && lr.id && !reviewMap.has(lr.id)) {
+                reviewMap.set(lr.id, lr);
+                // Background push to server
+                try {
+                  apiFetch('/api/reviews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(lr)
+                  }).catch(() => {});
+                } catch (_) {}
+              }
+            });
+          }
         }
       }
-    } catch (adminErr) {
-      console.warn('Admin reviews API fetch note:', adminErr.message);
     }
-  }
+  } catch (_) {}
 
-  if (!fetched && (!allReviews || allReviews.length === 0)) {
-    if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No customer reviews yet.</td></tr>';
-    }
-  }
+  allReviews = Array.from(reviewMap.values());
+
+  // Sort newest first
+  allReviews.sort((a, b) => {
+    const timeB = new Date(b.date || b.created_at || b.createdAt || 0).getTime();
+    const timeA = new Date(a.date || a.created_at || a.createdAt || 0).getTime();
+    return timeB - timeA;
+  });
+
+  renderReviewsTable(allReviews);
 }
 
 function renderReviewsTable(reviews) {
@@ -7283,7 +7360,7 @@ function renderReviewsTable(reviews) {
   if (!tbody) return;
 
   if (!reviews || reviews.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No customer reviews yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No customer reviews yet. Reviews submitted by customers on product pages will appear here.</td></tr>';
     return;
   }
 
@@ -7296,7 +7373,9 @@ function renderReviewsTable(reviews) {
       (p.slug && String(p.slug).trim().toLowerCase() === pId) ||
       (p.name && String(p.name).trim().toLowerCase() === pId)
     );
-    const prodName = prod ? prod.name : (r.productId || 'Catalog Product');
+    const prodName = r.productName || (prod ? prod.name : (r.productId || 'Catalog Product'));
+    const rawDate = r.date || r.created_at || r.createdAt || '';
+    const dateFormatted = rawDate ? (rawDate.includes('T') ? new Date(rawDate).toLocaleDateString('en-IN') : rawDate) : 'Recent';
 
     return `
       <tr class="admin-review-row">
@@ -7313,7 +7392,7 @@ function renderReviewsTable(reviews) {
           <span style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted);">${numRating}.0 / 5.0</span>
         </td>
         <td class="rev-cell-headline">
-          <strong style="font-size: 0.82rem; color: var(--text-main);">${escapeHtml(r.headline || '')}</strong>
+          <strong style="font-size: 0.82rem; color: var(--text-main);">${escapeHtml(r.headline || 'Verified Customer Review')}</strong>
         </td>
         <td class="rev-cell-comment">
           <div class="rev-comment-text" style="font-size: 0.8rem; color: var(--text-secondary); max-width: 320px; line-height: 1.45;">
@@ -7321,7 +7400,7 @@ function renderReviewsTable(reviews) {
           </div>
         </td>
         <td class="rev-cell-date">
-          <span style="font-size: 0.76rem; color: var(--text-muted);">${escapeHtml(r.date || '')}</span>
+          <span style="font-size: 0.76rem; color: var(--text-muted);">${escapeHtml(dateFormatted)}</span>
         </td>
         <td class="rev-cell-actions" style="text-align: center;">
           <button type="button" class="btn-table-icon delete" onclick="deleteReview('${r.id}')" title="Delete Review">
@@ -7340,7 +7419,7 @@ window.deleteReview = async (id) => {
   if (!confirm('Are you sure you want to delete this customer review?')) return;
   try {
     const res = await apiFetch(`/api/admin/reviews/${encodeURIComponent(id)}`, { method: 'DELETE' });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (data && data.success) {
       allReviews = allReviews.filter(r => r.id !== id);
       renderReviewsTable(allReviews);
@@ -7356,6 +7435,7 @@ window.deleteReview = async (id) => {
 };
 
 window.loadReviews = loadReviews;
+window.renderReviewsTable = renderReviewsTable;
 
 
 // =============================================================================

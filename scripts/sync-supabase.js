@@ -272,7 +272,45 @@ async function syncToSupabase() {
     console.error('   ❌ Admin config sync failed:', err.message);
   }
 
-  // 8. SYNC DELETED ORDERS REGISTRY & SEQUENCE
+  // 8. SYNC CONTACT MESSAGES
+  try {
+    const messages = readJsonFile('messages.json', []);
+    if (messages.length) {
+      console.log(`✉️  Syncing ${messages.length} contact messages...`);
+      for (const m of messages) {
+        const { error } = await supabase.from('messages').upsert({
+          id: m.id,
+          name: m.name,
+          phone: m.phone,
+          email: m.email || '',
+          service: m.service || m.subject || 'General Inquiry',
+          message: m.message,
+          status: m.status || 'Unread',
+          created_at: m.createdAt || m.created_at || new Date().toISOString()
+        }, { onConflict: 'id' });
+
+        if (error) {
+          console.warn(`   ⚠️ Message sync error (${m.id}):`, error.message);
+        }
+      }
+
+      // Also backup to admin_config
+      try {
+        await supabase.from('admin_config').upsert({
+          id: 'all_contact_messages',
+          admin_name: 'All Contact Messages',
+          smtp: { messages, updatedAt: new Date().toISOString() },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+      } catch (_) {}
+
+      console.log('   ✅ Contact messages synchronized successfully.');
+    }
+  } catch (err) {
+    console.error('   ❌ Contact messages sync failed:', err.message);
+  }
+
+  // 9. SYNC DELETED ORDERS REGISTRY & SEQUENCE
   try {
     const deletedList = readJsonFile('deleted-orders.json', []).map(x => String(x || '').toLowerCase().trim().replace(/^#/, ''));
     if (deletedList.length) {

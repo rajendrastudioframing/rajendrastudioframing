@@ -1668,36 +1668,183 @@ module.exports = {
 
   // --- CONTACT MESSAGES ---
   async getMessages() {
+    let allMsgs = [];
     if (supabase && isSupabaseOperational()) {
-      const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
-      if (!error && data) return data;
+      try {
+        const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
+        if (!error && Array.isArray(data)) {
+          allMsgs = data.map(m => ({
+            id: m.id,
+            name: m.name,
+            phone: m.phone,
+            email: m.email || '',
+            service: m.service || 'General Inquiry',
+            subject: m.service || 'General Inquiry',
+            message: m.message || '',
+            status: m.status || 'Unread',
+            createdAt: m.created_at || new Date().toISOString(),
+            created_at: m.created_at || new Date().toISOString()
+          }));
+        } else if (error) {
+          console.warn('Supabase messages table query note:', error.message);
+        }
+      } catch (err) {
+        console.warn('Supabase messages table fetch exception:', err.message);
+      }
+
+      // Check redundant cloud backup in admin_config
+      try {
+        const cfgRes = await supabase.from('admin_config').select('smtp').eq('id', 'all_contact_messages').maybeSingle();
+        if (cfgRes && cfgRes.data && cfgRes.data.smtp && Array.isArray(cfgRes.data.smtp.messages)) {
+          const idSet = new Set(allMsgs.map(m => m.id));
+          for (const cm of cfgRes.data.smtp.messages) {
+            if (!idSet.has(cm.id)) {
+              allMsgs.push(cm);
+              idSet.add(cm.id);
+            }
+          }
+        }
+      } catch (_) {}
     }
-    return readJson(MESSAGES_FILE, []);
+
+    // Merge any local messages from MESSAGES_FILE
+    try {
+      const localMsgs = readJson(MESSAGES_FILE, []);
+      const idSet = new Set(allMsgs.map(m => m.id));
+      for (const lm of localMsgs) {
+        if (!idSet.has(lm.id)) {
+          allMsgs.push(lm);
+          idSet.add(lm.id);
+        }
+      }
+    } catch (_) {}
+
+    // ALSO: Merge contact inquiries from inquiries table so any customer submission from contact form is never lost!
+    try {
+      const inqs = await this.getInquiries();
+      const contactInqs = inqs.filter(i => 
+        (i.specs && String(i.specs).toLowerCase().includes('contact')) ||
+        (i.notes && String(i.notes).length > 0 && !i.items?.length && i.type !== 'order')
+      );
+      const idSet = new Set(allMsgs.map(m => m.id));
+      for (const ci of contactInqs) {
+        const mappedId = 'MSG-' + ci.id;
+        if (!idSet.has(ci.id) && !idSet.has(mappedId)) {
+          allMsgs.push({
+            id: ci.id,
+            name: ci.name,
+            phone: ci.phone,
+            email: ci.email || '',
+            service: ci.product || 'Contact Inquiry',
+            subject: ci.product || 'Contact Inquiry',
+            message: ci.notes || ci.specs || '',
+            status: ci.status === 'Completed' ? 'Read' : 'Unread',
+            createdAt: ci.createdAt || new Date().toISOString(),
+            created_at: ci.createdAt || new Date().toISOString()
+          });
+          idSet.add(ci.id);
+        }
+      }
+    } catch (_) {}
+
+    // Sort newest first
+    allMsgs.sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
+
+    return allMsgs;
   },
 
   async saveMessage(msg) {
+    const cleanMsg = {
+      id: msg.id || `MSG-${new Date().getFullYear()}-${Date.now()}`,
+      name: (msg.name || 'Anonymous').trim(),
+      phone: (msg.phone || '').trim(),
+      email: (msg.email || '').trim(),
+      service: (msg.service || msg.subject || 'General Inquiry').trim(),
+      subject: (msg.subject || msg.service || 'General Inquiry').trim(),
+      message: (msg.message || '').trim(),
+      status: msg.status || 'Unread',
+      createdAt: msg.createdAt || msg.created_at || new Date().toISOString(),
+      created_at: msg.created_at || msg.createdAt || new Date().toISOString()
+    };
+
     if (supabase && isSupabaseOperational()) {
-      const { error } = await supabase.from('messages').upsert(msg);
-      if (!error) return msg;
+      // 1. Upsert to Supabase messages table with strict schema matching
+      try {
+        const dbRow = {
+          id: cleanMsg.id,
+          name: cleanMsg.name,
+          phone: cleanMsg.phone,
+          email: cleanMsg.email,
+          service: cleanMsg.service,
+          message: cleanMsg.message,
+          status: cleanMsg.status,
+          created_at: cleanMsg.createdAt
+        };
+        const { error } = await supabase.from('messages').upsert(dbRow, { onConflict: 'id' });
+        if (error) {
+          console.warn('Supabase messages table upsert error:', error.message);
+        } else {
+          console.log(`✅ Message ${cleanMsg.id} saved in Supabase`);
+        }
+      } catch (err) {
+        console.warn('Supabase messages save exception:', err.message);
+      }
+
+      // 2. Redundant cloud backup in admin_config
+      try {
+        const cfgRes = await supabase.from('admin_config').select('smtp').eq('id', 'all_contact_messages').maybeSingle();
+        let cloudList = (cfgRes && cfgRes.data && cfgRes.data.smtp && Array.isArray(cfgRes.data.smtp.messages))
+          ? cfgRes.data.smtp.messages
+          : [];
+        const cIdx = cloudList.findIndex(m => m.id === cleanMsg.id);
+        if (cIdx !== -1) {
+          cloudList[cIdx] = cleanMsg;
+        } else {
+          cloudList.unshift(cleanMsg);
+        }
+        await supabase.from('admin_config').upsert({
+          id: 'all_contact_messages',
+          smtp: { messages: cloudList }
+        });
+      } catch (_) {}
     }
-    const messages = readJson(MESSAGES_FILE, []);
-    const idx = messages.findIndex(m => m.id === msg.id);
-    if (idx !== -1) {
-      messages[idx] = { ...messages[idx], ...msg };
-    } else {
-      messages.unshift(msg);
-    }
-    writeJson(MESSAGES_FILE, messages);
-    return msg;
+
+    // 3. Local JSON file backup
+    try {
+      const messages = readJson(MESSAGES_FILE, []);
+      const idx = messages.findIndex(m => m.id === cleanMsg.id);
+      if (idx !== -1) {
+        messages[idx] = { ...messages[idx], ...cleanMsg };
+      } else {
+        messages.unshift(cleanMsg);
+      }
+      writeJson(MESSAGES_FILE, messages);
+    } catch (_) {}
+
+    return cleanMsg;
   },
 
   async deleteMessage(id) {
+    if (!id) return true;
     if (supabase && isSupabaseOperational()) {
-      await supabase.from('messages').delete().eq('id', id);
+      try {
+        await supabase.from('messages').delete().eq('id', id);
+      } catch (_) {}
+      try {
+        const cfgRes = await supabase.from('admin_config').select('smtp').eq('id', 'all_contact_messages').maybeSingle();
+        if (cfgRes && cfgRes.data && cfgRes.data.smtp && Array.isArray(cfgRes.data.smtp.messages)) {
+          const updated = cfgRes.data.smtp.messages.filter(m => m.id !== id);
+          await supabase.from('admin_config').upsert({
+            id: 'all_contact_messages',
+            smtp: { messages: updated }
+          });
+        }
+      } catch (_) {}
     }
     let messages = readJson(MESSAGES_FILE, []);
     messages = messages.filter(m => m.id !== id);
-    return writeJson(MESSAGES_FILE, messages);
+    writeJson(MESSAGES_FILE, messages);
+    return true;
   },
 
   // --- PHOTO UPLOAD HELPER ---
