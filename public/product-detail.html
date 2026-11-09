@@ -523,7 +523,17 @@
             <div class="review-inputs-grid">
               <div class="review-input-group">
                 <label for="reviewAuthor" class="review-field-label">Your Name <span class="required-star">*</span></label>
-                <input type="text" id="reviewAuthor" class="review-input" placeholder="e.g. Kavya Tandel" required />
+                <div style="position: relative;">
+                  <input type="text" id="reviewAuthor" class="review-input" placeholder="e.g. Kavya Tandel" required readonly style="background-color: #F3F4F6; cursor: not-allowed; font-weight: 600; color: #111827;" />
+                  <span id="reviewAuthorLockIcon" style="display: none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem;" title="Verified Account (Cannot be changed)">🔒</span>
+                </div>
+                <div id="reviewAuthorLockNotice" style="display: none; align-items: center; gap: 4px; margin-top: 6px; font-size: 0.78rem; color: #059669; font-weight: 600;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span>✓ Verified Account Name (Auto-locked)</span>
+                </div>
+                <div id="reviewAuthorGuestNotice" style="display: none; align-items: center; gap: 4px; margin-top: 6px; font-size: 0.78rem; color: #D97706; font-weight: 500;">
+                  <span>🔒 Please <a href="javascript:void(0)" onclick="openCustomerAuthModal(null, 'review')" style="color: #D97706; font-weight: 700; text-decoration: underline;">sign in</a> to post a verified review.</span>
+                </div>
               </div>
               <div class="review-input-group">
                 <label for="reviewCity" class="review-field-label">City / Location <span class="required-star">*</span></label>

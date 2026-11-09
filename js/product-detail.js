@@ -1428,14 +1428,113 @@ const RATING_TEXTS = {
   5: '5.0 - Excellent! Outstanding luxury craftsmanship'
 };
 
+function applyLoggedInUserToReviewForm() {
+  const authorInput = document.getElementById('reviewAuthor');
+  const cityInput = document.getElementById('reviewCity');
+  const lockIcon = document.getElementById('reviewAuthorLockIcon');
+  const lockNotice = document.getElementById('reviewAuthorLockNotice');
+  const guestNotice = document.getElementById('reviewAuthorGuestNotice');
+  if (!authorInput) return null;
+
+  let user = null;
+  if (window.CustomerAuth && typeof window.CustomerAuth.getCustomerUser === 'function') {
+    user = window.CustomerAuth.getCustomerUser();
+  }
+  if (!user) {
+    try {
+      const raw = localStorage.getItem('rf_customer_user') || localStorage.getItem('rajesh_customer_user');
+      if (raw) user = JSON.parse(raw);
+    } catch (_) {}
+  }
+
+  const token = localStorage.getItem('rf_customer_token');
+  const isLoggedIn = (window.CustomerAuth && typeof window.CustomerAuth.isCustomerLoggedIn === 'function')
+    ? window.CustomerAuth.isCustomerLoggedIn()
+    : Boolean(token || (user && (user.name || user.email)));
+
+  if (isLoggedIn && user && (user.name || user.email)) {
+    const verifiedName = (user.name && user.name.trim() !== 'Valued Customer')
+      ? user.name.trim()
+      : (user.email ? user.email.split('@')[0] : 'Customer');
+
+    authorInput.value = verifiedName;
+    authorInput.readOnly = true;
+    authorInput.setAttribute('readonly', 'readonly');
+    authorInput.style.backgroundColor = '#F3F4F6';
+    authorInput.style.color = '#111827';
+    authorInput.style.fontWeight = '600';
+    authorInput.style.cursor = 'not-allowed';
+    authorInput.style.borderColor = '#D1D5DB';
+
+    if (lockIcon) lockIcon.style.display = 'inline-block';
+    if (lockNotice) {
+      lockNotice.style.display = 'flex';
+      lockNotice.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> <span>✓ Verified Account Name: <strong>${escapeHtml(verifiedName)}</strong> (Auto-locked)</span>`;
+    }
+    if (guestNotice) guestNotice.style.display = 'none';
+
+    // Auto-fill city if empty and available in user profile
+    if (cityInput && !cityInput.value.trim()) {
+      if (user.city) {
+        cityInput.value = user.city;
+      } else if (user.address && (user.address.toLowerCase().includes('dahej') || user.address.toLowerCase().includes('bharuch') || user.address.toLowerCase().includes('surat'))) {
+        cityInput.value = 'Dahej / Bharuch';
+      }
+    }
+    return user;
+  } else {
+    // Guest or not signed in
+    authorInput.value = '';
+    authorInput.readOnly = true;
+    authorInput.setAttribute('readonly', 'readonly');
+    authorInput.placeholder = 'Please sign in to write a review with your verified name';
+    authorInput.style.backgroundColor = '#F9FAFB';
+    authorInput.style.color = '#6B7280';
+    authorInput.style.fontWeight = '500';
+    authorInput.style.cursor = 'pointer';
+    authorInput.onclick = () => {
+      if (window.CustomerAuth && typeof window.CustomerAuth.openAuthModal === 'function') {
+        window.CustomerAuth.openAuthModal(() => {
+          applyLoggedInUserToReviewForm();
+        }, 'review');
+      }
+    };
+
+    if (lockIcon) lockIcon.style.display = 'none';
+    if (lockNotice) lockNotice.style.display = 'none';
+    if (guestNotice) guestNotice.style.display = 'flex';
+    return null;
+  }
+}
+
 window.toggleReviewForm = function(open) {
   const card = document.getElementById('writeReviewCard');
   if (!card) return;
+
   const isHidden = card.style.display === 'none' || !card.style.display;
   const shouldOpen = (open !== undefined) ? Boolean(open) : isHidden;
-  card.style.display = shouldOpen ? 'block' : 'none';
+
   if (shouldOpen) {
+    const isLoggedIn = (window.CustomerAuth && typeof window.CustomerAuth.isCustomerLoggedIn === 'function')
+      ? window.CustomerAuth.isCustomerLoggedIn()
+      : Boolean(localStorage.getItem('rf_customer_token') || localStorage.getItem('rf_customer_user'));
+
+    if (!isLoggedIn) {
+      if (window.CustomerAuth && typeof window.CustomerAuth.openAuthModal === 'function') {
+        window.CustomerAuth.openAuthModal(() => {
+          applyLoggedInUserToReviewForm();
+          card.style.display = 'block';
+          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 'review');
+        return;
+      }
+    }
+
+    applyLoggedInUserToReviewForm();
+    card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    card.style.display = 'none';
   }
 };
 
@@ -1468,6 +1567,14 @@ async function initProductReviews() {
   // Setup form toggling & star picker
   setupReviewFormHandlers();
 
+  // Auto-fill logged-in customer info if available
+  applyLoggedInUserToReviewForm();
+
+  // Listen for login/logout events to keep review form synchronized
+  window.addEventListener('customerAuthStateChanged', () => {
+    applyLoggedInUserToReviewForm();
+  });
+
   // Setup filter & sort events
   setupReviewFilterSort();
 
@@ -1485,21 +1592,7 @@ function setupReviewFormHandlers() {
   if (toggleBtn && card) {
     toggleBtn.addEventListener('click', () => {
       const isHidden = card.style.display === 'none' || !card.style.display;
-      card.style.display = isHidden ? 'block' : 'none';
-      if (isHidden) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        // Auto-fill logged-in customer info if available
-        try {
-          const custUser = localStorage.getItem('rajesh_customer_user');
-          if (custUser) {
-            const parsed = JSON.parse(custUser);
-            const authorInput = document.getElementById('reviewAuthor');
-            if (authorInput && !authorInput.value && parsed.name) {
-              authorInput.value = parsed.name;
-            }
-          }
-        } catch (_) {}
-      }
+      window.toggleReviewForm(isHidden);
     });
   }
 
@@ -1546,15 +1639,46 @@ function setupReviewFormHandlers() {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const author = (document.getElementById('reviewAuthor')?.value || '').trim();
-      const city = (document.getElementById('reviewCity')?.value || '').trim();
+      let currentUser = null;
+      if (window.CustomerAuth && typeof window.CustomerAuth.getCustomerUser === 'function') {
+        currentUser = window.CustomerAuth.getCustomerUser();
+      }
+      if (!currentUser) {
+        try {
+          const raw = localStorage.getItem('rf_customer_user') || localStorage.getItem('rajesh_customer_user');
+          if (raw) currentUser = JSON.parse(raw);
+        } catch (_) {}
+      }
+
+      const isLoggedIn = (window.CustomerAuth && typeof window.CustomerAuth.isCustomerLoggedIn === 'function')
+        ? window.CustomerAuth.isCustomerLoggedIn()
+        : Boolean(localStorage.getItem('rf_customer_token') || (currentUser && (currentUser.name || currentUser.email)));
+
+      if (!isLoggedIn || !currentUser) {
+        if (window.CustomerAuth && typeof window.CustomerAuth.openAuthModal === 'function') {
+          window.CustomerAuth.openAuthModal(() => {
+            applyLoggedInUserToReviewForm();
+          }, 'review');
+        } else {
+          alert('Please sign in to your verified customer account to post a review.');
+        }
+        return;
+      }
+
+      const verifiedAuthor = (currentUser.name && currentUser.name.trim() !== 'Valued Customer')
+        ? currentUser.name.trim()
+        : (currentUser.email ? currentUser.email.split('@')[0] : 'Customer');
+
+      // Strictly enforce the authenticated account name directly
+      const author = verifiedAuthor;
+      const city = (document.getElementById('reviewCity')?.value || '').trim() || (currentUser.city || 'Dahej / Bharuch');
       const headline = (document.getElementById('reviewHeadline')?.value || '').trim();
       const comment = (document.getElementById('reviewComment')?.value || '').trim();
       const rating = selectedFormRating;
       const pId = currentProduct ? currentProduct.id : '';
       if (!pId) return;
 
-      if (!author || !headline || !comment) {
+      if (!headline || !comment) {
         alert('Please complete all required review fields.');
         return;
       }
@@ -1575,7 +1699,8 @@ function setupReviewFormHandlers() {
         headline,
         comment,
         verified: true,
-        helpful: 0
+        helpful: 0,
+        customerEmail: currentUser.email || ''
       };
 
       // 1. Try sending to server
@@ -1595,11 +1720,12 @@ function setupReviewFormHandlers() {
         localStorage.setItem(`rf_reviews_${pId}`, JSON.stringify(productReviews));
       } catch (_) {}
 
-      // 3. Reset form and hide card
+      // 3. Reset form, hide card and reapply locked identity
       form.reset();
       selectedFormRating = 5;
       if (ratingInput) ratingInput.value = 5;
       if (ratingText) ratingText.textContent = RATING_TEXTS[5];
+      applyLoggedInUserToReviewForm();
       if (card) card.style.display = 'none';
 
       if (submitBtn) {
