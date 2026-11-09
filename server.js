@@ -3101,6 +3101,81 @@ app.post('/api/admin/orders/resync-store', requireAuth, async (req, res) => {
 });
 
 /**
+ * Helper: Automatically deduct product stock when an order is accepted/confirmed by Admin.
+ * Decrements stockQty by the ordered quantity for each item in the order.
+ * If stock reaches 0, marks product as 'Out of Stock' and inStock = false.
+ */
+async function deductStockForAcceptedOrder(target) {
+  if (!target) return [];
+
+  let itemsToDeduct = [];
+  if (Array.isArray(target.items) && target.items.length > 0) {
+    itemsToDeduct = target.items;
+  } else if (target.product) {
+    const cleanName = String(target.product).replace('[ONLINE ORDER]', '').trim();
+    itemsToDeduct = [{
+      name: cleanName,
+      quantity: Number(target.quantity) || 1
+    }];
+  }
+
+  if (!itemsToDeduct.length) return [];
+
+  const catalogProducts = await db.getProducts().catch(() => []);
+  const updatedProducts = [];
+
+  for (const it of itemsToDeduct) {
+    if (!it) continue;
+    const deductQty = Math.max(1, Number(it.quantity) || 1);
+    const itId = it.id || it.productId || it._id;
+    const itName = (it.name || '').trim().toLowerCase();
+
+    // Match product in catalog: first by exact ID, then by exact Name
+    let prod = null;
+    if (itId) {
+      prod = catalogProducts.find(p => p && p.id && String(p.id).toLowerCase() === String(itId).toLowerCase());
+    }
+    if (!prod && itName) {
+      prod = catalogProducts.find(p => p && p.name && p.name.trim().toLowerCase() === itName);
+    }
+    // Partial match fallback
+    if (!prod && itName) {
+      prod = catalogProducts.find(p => p && p.name && (p.name.trim().toLowerCase().includes(itName) || itName.includes(p.name.trim().toLowerCase())));
+    }
+    // Direct db lookup fallback
+    if (!prod && itId) {
+      prod = await db.getProductById(itId).catch(() => null);
+    }
+
+    if (prod) {
+      const currentStock = Number(prod.stockQty !== undefined ? prod.stockQty : (prod.stock_qty !== undefined ? prod.stock_qty : 100));
+      const newStock = Math.max(0, currentStock - deductQty);
+      prod.stockQty = newStock;
+      prod.stock_qty = newStock;
+      if (newStock === 0) {
+        prod.status = 'Out of Stock';
+        prod.inStock = false;
+      }
+      console.log(`📉 [STOCK DECREMENT] Product "${prod.name}" (${prod.id}): Stock reduced from ${currentStock} to ${newStock} (-${deductQty} units) upon order acceptance.`);
+      await db.saveProduct(prod).catch(err => {
+        console.error('⚠️ [STOCK DECREMENT ERROR] Failed to save updated product stock:', err.message);
+      });
+      updatedProducts.push({
+        id: prod.id,
+        name: prod.name,
+        stockQty: newStock,
+        status: prod.status,
+        inStock: prod.inStock
+      });
+    } else {
+      console.warn(`⚠️ [STOCK DECREMENT] Could not locate product in catalog for ordered item:`, it);
+    }
+  }
+
+  return updatedProducts;
+}
+
+/**
  * Admin: Update Inquiry / Order Status (PUT)
  * When an order is accepted, cancelled, shipped, or delivered, automatically emails the customer!
  */
@@ -3137,8 +3212,8 @@ async function handleUpdateOrderStatus(req, res) {
     const isPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'picked_up' || rawStatus.toLowerCase() === 'picked up'));
 
     // Guard: Prevent duplicate order acceptance, duplicate email dispatch, or overwriting pickup date
-    const isAlreadyAccepted = (order && (order.status === 'confirmed' || order.status === 'accepted' || Boolean(order.confirmationDate))) ||
-      (inq && (inq.status === 'confirmed' || inq.status === 'accepted' || Boolean(inq.confirmationDate)));
+    const isAlreadyAccepted = (order && (order.status === 'confirmed' || order.status === 'accepted' || Boolean(order.confirmationDate) || Boolean(order.stockDeducted))) ||
+      (inq && (inq.status === 'confirmed' || inq.status === 'accepted' || Boolean(inq.confirmationDate) || Boolean(inq.stockDeducted)));
 
     const isAlreadyCancelled = (order && (order.status === 'cancelled' || order.status === 'canceled' || order.status === 'rejected')) ||
       (inq && (inq.status === 'cancelled' || inq.status === 'canceled' || inq.status === 'rejected'));
@@ -3276,6 +3351,18 @@ async function handleUpdateOrderStatus(req, res) {
       targetObj.total = targetObj.total || inq.estimatedValue || 0;
     }
 
+    // Deduct inventory stock when order is accepted/confirmed (idempotent, only runs once)
+    let stockDecrementResults = [];
+    if (isConfirming && !isAlreadyAccepted) {
+      try {
+        stockDecrementResults = await deductStockForAcceptedOrder(targetObj || order || inq || req.body);
+        if (order) order.stockDeducted = true;
+        if (inq) inq.stockDeducted = true;
+      } catch (stockErr) {
+        console.error('⚠️ [STOCK DECREMENT ERROR]:', stockErr.message);
+      }
+    }
+
     // 2. Update in-memory models
     if (inq) {
       if (normalizedStatus) inq.status = normalizedStatus;
@@ -3285,7 +3372,10 @@ async function handleUpdateOrderStatus(req, res) {
         if (!inq.confirmedAt) inq.confirmedAt = timestamp;
       }
       if (finalPickupDate) inq.pickupDate = finalPickupDate;
-      if (isConfirming) inq.confirmedEmailSent = true;
+      if (isConfirming) {
+        inq.confirmedEmailSent = true;
+        inq.stockDeducted = true;
+      }
       if (isReadyForPickup) inq.readyEmailSent = true;
       if (isCancelling) inq.cancelledEmailSent = true;
       if (isPickup && !inq.pickedUpAt) inq.pickedUpAt = timestamp;
@@ -3300,7 +3390,10 @@ async function handleUpdateOrderStatus(req, res) {
         if (!order.confirmedAt) order.confirmedAt = timestamp;
       }
       if (finalPickupDate) order.pickupDate = finalPickupDate;
-      if (isConfirming) order.confirmedEmailSent = true;
+      if (isConfirming) {
+        order.confirmedEmailSent = true;
+        order.stockDeducted = true;
+      }
       if (isReadyForPickup) order.readyEmailSent = true;
       if (isCancelling) order.cancelledEmailSent = true;
       if (isPickup && !order.pickedUpAt) order.pickedUpAt = timestamp;
@@ -3448,6 +3541,7 @@ async function handleUpdateOrderStatus(req, res) {
     return res.json({
       success: true,
       message: statusMsg,
+      updatedProducts: stockDecrementResults,
       inquiry: inq,
       order: order,
       confirmationDate: finalConfirmationDate,
@@ -3507,8 +3601,8 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
     const isPickup = Boolean(rawStatus && (rawStatus.toLowerCase() === 'picked_up' || rawStatus.toLowerCase() === 'picked up'));
 
     // Guard: Prevent duplicate order acceptance, duplicate email dispatch, or overwriting pickup date
-    const isAlreadyAccepted = (order && (order.status === 'confirmed' || order.status === 'accepted' || Boolean(order.confirmationDate))) ||
-      (inq && (inq.status === 'confirmed' || inq.status === 'accepted' || Boolean(inq.confirmationDate)));
+    const isAlreadyAccepted = (order && (order.status === 'confirmed' || order.status === 'accepted' || Boolean(order.confirmationDate) || Boolean(order.stockDeducted))) ||
+      (inq && (inq.status === 'confirmed' || inq.status === 'accepted' || Boolean(inq.confirmationDate) || Boolean(inq.stockDeducted)));
 
     const isAlreadyCancelled = (order && (order.status === 'cancelled' || order.status === 'canceled' || order.status === 'rejected')) ||
       (inq && (inq.status === 'cancelled' || inq.status === 'canceled' || inq.status === 'rejected'));
@@ -3675,6 +3769,18 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
 
     const emailSentSuccess = Boolean(emailResult && (emailResult.sent || emailResult.success));
 
+    // Deduct inventory stock if order is accepted/confirmed
+    let stockDecrementResults = [];
+    if (isConfirming && !isAlreadyAccepted) {
+      try {
+        stockDecrementResults = await deductStockForAcceptedOrder(targetObj || order || inq || req.body);
+        if (order) order.stockDeducted = true;
+        if (inq) inq.stockDeducted = true;
+      } catch (stockErr) {
+        console.error('⚠️ [STOCK DECREMENT ERROR]:', stockErr.message);
+      }
+    }
+
     // Update order
     if (order) {
       if (normalizedStatus) order.status = normalizedStatus;
@@ -3703,7 +3809,10 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
         order.customer = order.customer || {};
         order.customer.address = address;
       }
-      if (isConfirming && emailSentSuccess) order.confirmedEmailSent = true;
+      if (isConfirming) {
+        if (emailSentSuccess) order.confirmedEmailSent = true;
+        order.stockDeducted = true;
+      }
       if (isReadyForPickup && emailSentSuccess) order.readyEmailSent = true;
       if (isCancelling && emailSentSuccess) order.cancelledEmailSent = true;
       order.updatedAt = timestamp;
@@ -3725,7 +3834,10 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
       if (customerPhone) inq.phone = customerPhone;
       if (customerEmail) inq.email = customerEmail;
       if (address) inq.deliveryAddress = address;
-      if (isConfirming && emailSentSuccess) inq.confirmedEmailSent = true;
+      if (isConfirming) {
+        if (emailSentSuccess) inq.confirmedEmailSent = true;
+        inq.stockDeducted = true;
+      }
       if (isReadyForPickup && emailSentSuccess) inq.readyEmailSent = true;
       if (isCancelling && emailSentSuccess) inq.cancelledEmailSent = true;
       inq.updatedAt = timestamp;
@@ -3739,6 +3851,7 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
     res.json({
       success: true,
       message: `Order #${cleanId} updated successfully.` + (emailSentSuccess ? ` Email notification sent to customer.` : ''),
+      updatedProducts: stockDecrementResults,
       order: targetObj,
       emailSent: emailSentSuccess,
       emailResult

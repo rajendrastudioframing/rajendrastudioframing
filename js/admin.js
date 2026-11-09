@@ -2501,6 +2501,23 @@ window.updateInquiryStatus = async (id, newStatus, customNotes = null) => {
       if (item) item.status = newStatus;
       await loadInquiries();
       await loadDashboardStats();
+      if (Array.isArray(data.updatedProducts) && data.updatedProducts.length > 0) {
+        data.updatedProducts.forEach(up => {
+          const p = allProducts.find(x => x && x.id === up.id);
+          if (p) {
+            p.stockQty = up.stockQty;
+            p.stock_qty = up.stockQty;
+            if (up.stockQty === 0) {
+              p.status = 'Out of Stock';
+              p.inStock = false;
+            }
+          }
+        });
+        if (typeof window.filterAdminProducts === 'function') {
+          window.filterAdminProducts();
+        }
+      }
+      loadProducts().catch(() => {});
       const emailNotice = data.emailResult && data.emailResult.sent ? ` (Customer notified via email)` : '';
       showToast('Status Updated', `Order #${cleanId} status changed to "${newStatus}".${emailNotice}`, 'success');
     } else {
@@ -3403,6 +3420,23 @@ function initConfirmAndPickupModals() {
 
           loadInquiries().catch(() => {});
           loadDashboardStats().catch(() => {});
+          if (Array.isArray(data.updatedProducts) && data.updatedProducts.length > 0) {
+            data.updatedProducts.forEach(up => {
+              const p = allProducts.find(x => x && x.id === up.id);
+              if (p) {
+                p.stockQty = up.stockQty;
+                p.stock_qty = up.stockQty;
+                if (up.stockQty === 0) {
+                  p.status = 'Out of Stock';
+                  p.inStock = false;
+                }
+              }
+            });
+            if (typeof window.filterAdminProducts === 'function') {
+              window.filterAdminProducts();
+            }
+          }
+          loadProducts().catch(() => {});
 
           const emailSent = Boolean(data.emailSent || (data.emailResult && (data.emailResult.sent || data.emailResult.success)));
           if (emailSent) {
@@ -3500,6 +3534,23 @@ function initConfirmAndPickupModals() {
 
           loadInquiries().catch(() => {});
           loadDashboardStats().catch(() => {});
+          if (Array.isArray(data.updatedProducts) && data.updatedProducts.length > 0) {
+            data.updatedProducts.forEach(up => {
+              const p = allProducts.find(x => x && x.id === up.id);
+              if (p) {
+                p.stockQty = up.stockQty;
+                p.stock_qty = up.stockQty;
+                if (up.stockQty === 0) {
+                  p.status = 'Out of Stock';
+                  p.inStock = false;
+                }
+              }
+            });
+            if (typeof window.filterAdminProducts === 'function') {
+              window.filterAdminProducts();
+            }
+          }
+          loadProducts().catch(() => {});
 
           const emailSent = Boolean(data.emailSent || (data.emailResult && (data.emailResult.sent || data.emailResult.success)));
           if (emailSent) {
@@ -4677,6 +4728,24 @@ function renderAdminProducts(products) {
     const pImage = p.image || 'assets/images/custom_canvas.jpg';
     const leadTime = p.leadTime || '24-48 Hours';
 
+    const currentStock = p.stockQty !== undefined ? Number(p.stockQty) : (p.stock_qty !== undefined ? Number(p.stock_qty) : 100);
+    let stockBadgeBg = '#dcfce7';
+    let stockBadgeColor = '#166534';
+    let stockBadgeBorder = '#bbf7d0';
+    let stockBadgeText = `${currentStock} units`;
+
+    if (currentStock === 0) {
+      stockBadgeBg = '#fee2e2';
+      stockBadgeColor = '#991b1b';
+      stockBadgeBorder = '#fca5a5';
+      stockBadgeText = '0 units (Empty)';
+    } else if (currentStock <= 5) {
+      stockBadgeBg = '#fef3c7';
+      stockBadgeColor = '#92400e';
+      stockBadgeBorder = '#fcd34d';
+      stockBadgeText = `${currentStock} units (Low)`;
+    }
+
     return `
       <tr data-product-id="${escapeHtml(pId)}" data-category="${escapeHtml(catKey)}" class="admin-product-row">
         <!-- 1. Thumbnail -->
@@ -4757,6 +4826,14 @@ function renderAdminProducts(products) {
               </svg>
             </span>
           </button>
+        </td>
+
+        <!-- 7b. Current Stock -->
+        <td class="prod-cell-stock-qty" style="text-align: center; vertical-align: middle;">
+          <span class="stock-qty-badge" style="display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-weight: 700; font-size: 0.80rem; background: ${stockBadgeBg}; color: ${stockBadgeColor}; border: 1px solid ${stockBadgeBorder}; white-space: nowrap;">
+            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${stockBadgeColor};"></span>
+            ${stockBadgeText}
+          </span>
         </td>
 
         <!-- 8. Lead Time -->
