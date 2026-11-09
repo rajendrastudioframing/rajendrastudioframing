@@ -1538,47 +1538,89 @@ window.toggleReviewForm = function(open) {
   }
 };
 
-async function initProductReviews() {
-  const pId = currentProduct ? currentProduct.id : '';
-  if (!pId) return;
+function getEffectiveProductId() {
+  if (currentProduct && currentProduct.id) {
+    return String(currentProduct.id).trim();
+  }
+  const urlParam = new URLSearchParams(window.location.search).get('id');
+  if (urlParam) {
+    return urlParam.trim();
+  }
+  return '';
+}
 
-  // Clear legacy mock reviews from browser storage
+function getProductReviewsStorageKey(productId) {
+  const norm = String(productId || '').trim().toLowerCase();
+  return 'rf_prod_reviews_' + norm;
+}
+
+async function initProductReviews() {
+  const pId = getEffectiveProductId();
+  if (!pId) return;
+  const normPId = pId.toLowerCase();
+  const storageKey = getProductReviewsStorageKey(normPId);
+
+  // 1. Immediately retrieve product-specific reviews from localStorage (Zero data loss on reload / hard refresh)
   try {
-    localStorage.removeItem('rf_reviews_' + pId);
+    const cachedRaw = localStorage.getItem(storageKey);
+    if (cachedRaw) {
+      const cached = JSON.parse(cachedRaw);
+      if (Array.isArray(cached) && cached.length > 0) {
+        // STRICT Isolation: Ensure every single review in memory belongs strictly to this product ID
+        productReviews = cached.filter(r => (r.productId || '').trim().toLowerCase() === normPId);
+        renderReviewsSection();
+      }
+    }
   } catch (_) {}
 
-  // Fetch real verified reviews from API
+  // 2. Fetch verified reviews from API with cache-busting so hard refresh always gets latest live data
   try {
-    const res = await fetch('/api/reviews?productId=' + encodeURIComponent(pId));
+    const res = await fetch(`/api/reviews?productId=${encodeURIComponent(pId)}&_t=${Date.now()}`, {
+      cache: 'no-store'
+    });
     if (res.ok) {
       const data = await res.json();
       if (data && data.success && Array.isArray(data.reviews)) {
-        productReviews = data.reviews;
-      } else {
-        productReviews = [];
+        // Strict product-wise isolation
+        const serverFiltered = data.reviews.filter(r => (r.productId || '').trim().toLowerCase() === normPId);
+
+        // Merge server reviews with any recently submitted local reviews
+        const mergedMap = new Map();
+        serverFiltered.forEach(r => mergedMap.set(r.id, r));
+
+        if (Array.isArray(productReviews)) {
+          productReviews.forEach(r => {
+            if ((r.productId || '').trim().toLowerCase() === normPId && !mergedMap.has(r.id)) {
+              mergedMap.set(r.id, r);
+            }
+          });
+        }
+
+        productReviews = Array.from(mergedMap.values());
+        // Sort newest first
+        productReviews.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+        localStorage.setItem(storageKey, JSON.stringify(productReviews));
       }
-    } else {
-      productReviews = [];
     }
   } catch (err) {
-    productReviews = [];
+    console.warn('API review fetch notice:', err);
   }
 
-  // Setup form toggling & star picker
+  // 3. Setup form toggling & star picker
   setupReviewFormHandlers();
 
-  // Auto-fill logged-in customer info if available
+  // 4. Auto-fill logged-in customer info if available
   applyLoggedInUserToReviewForm();
 
-  // Listen for login/logout events to keep review form synchronized
+  // 5. Listen for login/logout events to keep review form synchronized
   window.addEventListener('customerAuthStateChanged', () => {
     applyLoggedInUserToReviewForm();
   });
 
-  // Setup filter & sort events
+  // 6. Setup filter & sort events
   setupReviewFilterSort();
 
-  // Render review elements (real reviews or clean empty state)
+  // 7. Render review elements (real reviews or clean empty state)
   renderReviewsSection();
 }
 
@@ -1675,8 +1717,10 @@ function setupReviewFormHandlers() {
       const headline = (document.getElementById('reviewHeadline')?.value || '').trim();
       const comment = (document.getElementById('reviewComment')?.value || '').trim();
       const rating = selectedFormRating;
-      const pId = currentProduct ? currentProduct.id : '';
+      const pId = getEffectiveProductId();
       if (!pId) return;
+      const normPId = pId.toLowerCase();
+      const storageKey = getProductReviewsStorageKey(normPId);
 
       if (!headline || !comment) {
         alert('Please complete all required review fields.');
@@ -1690,7 +1734,7 @@ function setupReviewFormHandlers() {
       }
 
       const newReview = {
-        id: `rev-${Date.now()}`,
+        id: `rev-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
         productId: pId,
         author,
         city: city || 'Dahej / Bharuch',
@@ -1703,7 +1747,17 @@ function setupReviewFormHandlers() {
         customerEmail: currentUser.email || ''
       };
 
-      // 1. Try sending to server
+      // 1. Immediately store in local memory and product-specific localStorage
+      const existingReviews = (productReviews || []).filter(r => (r.productId || '').trim().toLowerCase() === normPId);
+      productReviews = [newReview, ...existingReviews];
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(productReviews));
+      } catch (_) {}
+
+      // 2. Immediately render with feedback so user sees review instantly
+      renderReviewsSection();
+
+      // 3. Post to backend server (saves to Supabase & data/reviews.json)
       try {
         await fetch('/api/reviews', {
           method: 'POST',
@@ -1711,16 +1765,10 @@ function setupReviewFormHandlers() {
           body: JSON.stringify(newReview)
         });
       } catch (err) {
-        // Continue with local storage save
+        console.warn('Review server save background warning:', err);
       }
 
-      // 2. Prepend to local memory and localStorage
-      productReviews.unshift(newReview);
-      try {
-        localStorage.setItem(`rf_reviews_${pId}`, JSON.stringify(productReviews));
-      } catch (_) {}
-
-      // 3. Reset form, hide card and reapply locked identity
+      // 4. Reset form, hide card and reapply locked identity
       form.reset();
       selectedFormRating = 5;
       if (ratingInput) ratingInput.value = 5;
@@ -1733,10 +1781,7 @@ function setupReviewFormHandlers() {
         submitBtn.innerHTML = '<span>Submit Review</span>';
       }
 
-      // 4. Re-render reviews with feedback
-      renderReviewsSection();
-
-      // Show temporary confirmation
+      // 5. Confirmation message
       alert(`Thank you, ${author}! Your verified review has been posted successfully.`);
     });
   }
@@ -1780,6 +1825,14 @@ function setupReviewFilterSort() {
 }
 
 function renderReviewsSection() {
+  const pId = getEffectiveProductId();
+  const normPId = pId.toLowerCase();
+  // Ensure productReviews strictly isolates to only this specific product ID
+  if (Array.isArray(productReviews)) {
+    productReviews = productReviews.filter(r => (r.productId || '').trim().toLowerCase() === normPId);
+  } else {
+    productReviews = [];
+  }
   const total = productReviews.length;
 
   const overallScoreEl = document.getElementById('reviewOverallScore');
@@ -2016,9 +2069,10 @@ window.voteReviewHelpful = function(reviewId) {
     voted.push(reviewId);
     try {
       localStorage.setItem('rf_voted_reviews', JSON.stringify(voted));
-      const pId = currentProduct ? currentProduct.id : '';
-      if (!pId) return;
-      localStorage.setItem(`rf_reviews_${pId}`, JSON.stringify(productReviews));
+      const pId = getEffectiveProductId();
+      if (pId) {
+        localStorage.setItem(getProductReviewsStorageKey(pId), JSON.stringify(productReviews));
+      }
     } catch (_) {}
 
     const counter = document.getElementById(`helpfulCount_${reviewId}`);

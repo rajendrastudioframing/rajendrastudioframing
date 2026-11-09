@@ -4999,11 +4999,13 @@ app.post('/api/admin/settings/smtp/test', requireAuth, handleTestSmtp);
  * Customer Reviews Endpoints (GET & POST)
  */
 app.get('/api/reviews', async (req, res) => {
-  res.set('Cache-Control', 'public, max-age=10, s-maxage=20, stale-while-revalidate=30');
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   try {
     const { productId } = req.query;
     const reviews = await db.getReviews(productId || null);
-    res.json({ success: true, reviews });
+    res.json({ success: true, count: reviews.length, reviews });
   } catch (err) {
     console.error('Error fetching reviews:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch reviews.' });
@@ -5011,15 +5013,16 @@ app.get('/api/reviews', async (req, res) => {
 });
 
 app.post('/api/reviews', async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   try {
-    const { id, productId, author, city, rating, date, headline, comment, verified, helpful } = req.body;
+    const { id, productId, author, city, rating, date, headline, comment, verified, helpful, customerEmail } = req.body;
     if (!productId || !author || !headline || !comment) {
       return res.status(400).json({ success: false, message: 'All review fields are required.' });
     }
 
     const review = {
-      id: id || `rev-${Date.now()}`,
-      productId,
+      id: id || `rev-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      productId: String(productId).trim(),
       author: author.trim(),
       city: (city || 'Dahej / Bharuch').trim(),
       rating: Number(rating) || 5,
@@ -5027,14 +5030,15 @@ app.post('/api/reviews', async (req, res) => {
       headline: headline.trim(),
       comment: comment.trim(),
       verified: verified !== false,
-      helpful: Number(helpful) || 0
+      helpful: Number(helpful) || 0,
+      customerEmail: (customerEmail || '').trim()
     };
 
-    await db.saveReview(review);
-    res.json({ success: true, message: 'Review submitted successfully!', review });
+    const saved = await db.saveReview(review);
+    res.json({ success: true, message: 'Review submitted successfully!', review: saved });
   } catch (err) {
     console.error('Error saving review:', err);
-    res.status(500).json({ success: false, message: 'Failed to save review.' });
+    res.status(500).json({ success: false, message: 'Failed to save review: ' + err.message });
   }
 });
 

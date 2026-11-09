@@ -2071,15 +2071,17 @@ module.exports = {
 
   // --- CUSTOMER REVIEWS ---
   async getReviews(productId = null) {
+    const targetProduct = productId ? String(productId).trim().toLowerCase() : null;
+
     if (supabase && isSupabaseOperational()) {
       try {
         let query = supabase.from('reviews').select('*').order('created_at', { ascending: false });
-        if (productId) {
-          query = query.eq('product_id', productId);
+        if (targetProduct) {
+          query = query.ilike('product_id', targetProduct);
         }
         const { data, error } = await query;
-        if (!error && data && data.length > 0) {
-          return data.map(r => ({
+        if (!error && Array.isArray(data)) {
+          const remoteReviews = data.map(r => ({
             id: r.id,
             productId: r.product_id,
             author: r.author,
@@ -2091,47 +2093,87 @@ module.exports = {
             verified: Boolean(r.verified),
             helpful: Number(r.helpful) || 0
           }));
+
+          // Strict product-wise isolation
+          const filtered = targetProduct
+            ? remoteReviews.filter(r => (r.productId || '').trim().toLowerCase() === targetProduct)
+            : remoteReviews;
+
+          // Merge any local reviews from REVIEWS_FILE
+          try {
+            const allReviews = readJson(REVIEWS_FILE, []);
+            const idSet = new Set(filtered.map(r => r.id));
+            const relevantLocal = targetProduct
+              ? allReviews.filter(r => (r.productId || '').trim().toLowerCase() === targetProduct)
+              : allReviews;
+            for (const lr of relevantLocal) {
+              if (!idSet.has(lr.id)) {
+                filtered.push(lr);
+                idSet.add(lr.id);
+              }
+            }
+          } catch (_) {}
+
+          return filtered;
+        } else if (error) {
+          console.warn('Supabase getReviews error, falling back to local:', error.message);
         }
       } catch (err) {
         console.warn('Supabase getReviews error, falling back to local:', err.message);
       }
     }
     const allReviews = readJson(REVIEWS_FILE, []);
-    if (productId) {
-      return allReviews.filter(r => r.productId === productId);
+    if (targetProduct) {
+      return allReviews.filter(r => (r.productId || '').trim().toLowerCase() === targetProduct);
     }
     return allReviews;
   },
 
   async saveReview(review) {
+    const cleanProductId = (review.productId || '').trim();
+    const cleanReview = {
+      ...review,
+      id: review.id || `rev-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      productId: cleanProductId,
+      rating: Number(review.rating) || 5,
+      date: review.date || new Date().toISOString().split('T')[0],
+      verified: review.verified !== false,
+      helpful: Number(review.helpful) || 0
+    };
+
     if (supabase && isSupabaseOperational()) {
       try {
         const dbRow = {
-          id: review.id,
-          product_id: review.productId,
-          author: review.author,
-          city: review.city || 'Dahej / Bharuch',
-          rating: Number(review.rating) || 5,
-          date: review.date || new Date().toISOString().split('T')[0],
-          headline: review.headline,
-          comment: review.comment,
-          verified: review.verified !== false,
-          helpful: Number(review.helpful) || 0
+          id: cleanReview.id,
+          product_id: cleanProductId,
+          author: cleanReview.author,
+          city: cleanReview.city || 'Dahej / Bharuch',
+          rating: cleanReview.rating,
+          date: cleanReview.date,
+          headline: cleanReview.headline,
+          comment: cleanReview.comment,
+          verified: cleanReview.verified,
+          helpful: cleanReview.helpful
         };
-        await supabase.from('reviews').upsert(dbRow, { onConflict: 'id' });
+        const { error } = await supabase.from('reviews').upsert(dbRow, { onConflict: 'id' });
+        if (error) {
+          console.warn('Supabase saveReview error:', error.message);
+        } else {
+          console.log(`✅ Review ${cleanReview.id} saved in Supabase for ${cleanProductId}`);
+        }
       } catch (err) {
         console.warn('Supabase saveReview error, writing local:', err.message);
       }
     }
     const reviews = readJson(REVIEWS_FILE, []);
-    const idx = reviews.findIndex(r => r.id === review.id);
+    const idx = reviews.findIndex(r => r.id === cleanReview.id);
     if (idx !== -1) {
-      reviews[idx] = { ...reviews[idx], ...review };
+      reviews[idx] = { ...reviews[idx], ...cleanReview };
     } else {
-      reviews.unshift(review);
+      reviews.unshift(cleanReview);
     }
     writeJson(REVIEWS_FILE, reviews);
-    return review;
+    return cleanReview;
   },
 
   // Supabase client instance
