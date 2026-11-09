@@ -2069,10 +2069,12 @@ module.exports = {
     return sanitizedWishlist;
   },
 
-  // --- CUSTOMER REVIEWS ---
+  // --- CUSTOMER REVIEWS (PUBLIC CLOUD PERSISTENCE) ---
   async getReviews(productId = null) {
     const targetProduct = productId ? String(productId).trim().toLowerCase() : null;
+    let allFound = [];
 
+    // 1. Fetch from Supabase reviews table
     if (supabase && isSupabaseOperational()) {
       try {
         let query = supabase.from('reviews').select('*').order('created_at', { ascending: false });
@@ -2093,40 +2095,49 @@ module.exports = {
             verified: Boolean(r.verified),
             helpful: Number(r.helpful) || 0
           }));
-
-          // Strict product-wise isolation
-          const filtered = targetProduct
-            ? remoteReviews.filter(r => (r.productId || '').trim().toLowerCase() === targetProduct)
-            : remoteReviews;
-
-          // Merge any local reviews from REVIEWS_FILE
-          try {
-            const allReviews = readJson(REVIEWS_FILE, []);
-            const idSet = new Set(filtered.map(r => r.id));
-            const relevantLocal = targetProduct
-              ? allReviews.filter(r => (r.productId || '').trim().toLowerCase() === targetProduct)
-              : allReviews;
-            for (const lr of relevantLocal) {
-              if (!idSet.has(lr.id)) {
-                filtered.push(lr);
-                idSet.add(lr.id);
-              }
-            }
-          } catch (_) {}
-
-          return filtered;
+          allFound = remoteReviews;
         } else if (error) {
-          console.warn('Supabase getReviews error, falling back to local:', error.message);
+          console.warn('Supabase reviews table query note:', error.message);
         }
       } catch (err) {
-        console.warn('Supabase getReviews error, falling back to local:', err.message);
+        console.warn('Supabase reviews table fetch exception:', err.message);
       }
+
+      // 1b. Check redundant backup in admin_config
+      try {
+        const cfgRes = await supabase.from('admin_config').select('smtp').eq('id', 'all_customer_reviews').maybeSingle();
+        if (cfgRes && cfgRes.data && cfgRes.data.smtp && Array.isArray(cfgRes.data.smtp.reviews)) {
+          const idSet = new Set(allFound.map(r => r.id));
+          for (const cr of cfgRes.data.smtp.reviews) {
+            if (!idSet.has(cr.id)) {
+              allFound.push(cr);
+              idSet.add(cr.id);
+            }
+          }
+        }
+      } catch (_) {}
     }
-    const allReviews = readJson(REVIEWS_FILE, []);
+
+    // 2. Merge any local reviews from REVIEWS_FILE
+    try {
+      const localReviews = readJson(REVIEWS_FILE, []);
+      const idSet = new Set(allFound.map(r => r.id));
+      for (const lr of localReviews) {
+        if (!idSet.has(lr.id)) {
+          allFound.push(lr);
+          idSet.add(lr.id);
+        }
+      }
+    } catch (_) {}
+
+    // Exclude diagnostic mock reviews
+    allFound = allFound.filter(r => !r.id || !r.id.startsWith('test-diagnostic'));
+
+    // Strict product-wise isolation
     if (targetProduct) {
-      return allReviews.filter(r => (r.productId || '').trim().toLowerCase() === targetProduct);
+      return allFound.filter(r => (r.productId || '').trim().toLowerCase() === targetProduct);
     }
-    return allReviews;
+    return allFound;
   },
 
   async saveReview(review) {
@@ -2142,6 +2153,7 @@ module.exports = {
     };
 
     if (supabase && isSupabaseOperational()) {
+      // 1a. Upsert to Supabase reviews table
       try {
         const dbRow = {
           id: cleanReview.id,
@@ -2157,22 +2169,47 @@ module.exports = {
         };
         const { error } = await supabase.from('reviews').upsert(dbRow, { onConflict: 'id' });
         if (error) {
-          console.warn('Supabase saveReview error:', error.message);
+          console.warn('Supabase reviews table upsert note:', error.message);
         } else {
           console.log(`✅ Review ${cleanReview.id} saved in Supabase for ${cleanProductId}`);
         }
       } catch (err) {
-        console.warn('Supabase saveReview error, writing local:', err.message);
+        console.warn('Supabase reviews table save exception:', err.message);
+      }
+
+      // 1b. Redundant cloud backup in admin_config
+      try {
+        const cfgRes = await supabase.from('admin_config').select('smtp').eq('id', 'all_customer_reviews').maybeSingle();
+        let cloudList = (cfgRes && cfgRes.data && cfgRes.data.smtp && Array.isArray(cfgRes.data.smtp.reviews))
+          ? cfgRes.data.smtp.reviews
+          : [];
+        const cIdx = cloudList.findIndex(r => r.id === cleanReview.id);
+        if (cIdx !== -1) {
+          cloudList[cIdx] = cleanReview;
+        } else {
+          cloudList.unshift(cleanReview);
+        }
+        await supabase.from('admin_config').upsert({
+          id: 'all_customer_reviews',
+          smtp: { reviews: cloudList }
+        });
+      } catch (err) {
+        console.warn('Supabase admin_config review backup note:', err.message);
       }
     }
-    const reviews = readJson(REVIEWS_FILE, []);
-    const idx = reviews.findIndex(r => r.id === cleanReview.id);
-    if (idx !== -1) {
-      reviews[idx] = { ...reviews[idx], ...cleanReview };
-    } else {
-      reviews.unshift(cleanReview);
-    }
-    writeJson(REVIEWS_FILE, reviews);
+
+    // 2. Local JSON file backup
+    try {
+      const reviews = readJson(REVIEWS_FILE, []);
+      const idx = reviews.findIndex(r => r.id === cleanReview.id);
+      if (idx !== -1) {
+        reviews[idx] = { ...reviews[idx], ...cleanReview };
+      } else {
+        reviews.unshift(cleanReview);
+      }
+      writeJson(REVIEWS_FILE, reviews);
+    } catch (_) {}
+
     return cleanReview;
   },
 

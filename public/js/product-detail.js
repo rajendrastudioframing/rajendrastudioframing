@@ -1560,20 +1560,19 @@ async function initProductReviews() {
   const normPId = pId.toLowerCase();
   const storageKey = getProductReviewsStorageKey(normPId);
 
-  // 1. Immediately retrieve product-specific reviews from localStorage (Zero data loss on reload / hard refresh)
+  // 1. Retrieve cached reviews from localStorage for instantaneous first render
   try {
     const cachedRaw = localStorage.getItem(storageKey);
     if (cachedRaw) {
       const cached = JSON.parse(cachedRaw);
       if (Array.isArray(cached) && cached.length > 0) {
-        // STRICT Isolation: Ensure every single review in memory belongs strictly to this product ID
-        productReviews = cached.filter(r => (r.productId || '').trim().toLowerCase() === normPId);
+        productReviews = cached.filter(r => (r.productId || r.product_id || '').trim().toLowerCase() === normPId);
         renderReviewsSection();
       }
     }
   } catch (_) {}
 
-  // 2. Fetch verified reviews from API with cache-busting so hard refresh always gets latest live data
+  // 2. Fetch fresh public reviews from Supabase Cloud / server
   try {
     const res = await fetch(`/api/reviews?productId=${encodeURIComponent(pId)}&_t=${Date.now()}`, {
       cache: 'no-store'
@@ -1582,24 +1581,35 @@ async function initProductReviews() {
       const data = await res.json();
       if (data && data.success && Array.isArray(data.reviews)) {
         // Strict product-wise isolation
-        const serverFiltered = data.reviews.filter(r => (r.productId || '').trim().toLowerCase() === normPId);
+        const serverFiltered = data.reviews.filter(r => (r.productId || r.product_id || '').trim().toLowerCase() === normPId);
 
-        // Merge server reviews with any recently submitted local reviews
+        // Merge server reviews with any local reviews
         const mergedMap = new Map();
         serverFiltered.forEach(r => mergedMap.set(r.id, r));
 
         if (Array.isArray(productReviews)) {
-          productReviews.forEach(r => {
-            if ((r.productId || '').trim().toLowerCase() === normPId && !mergedMap.has(r.id)) {
-              mergedMap.set(r.id, r);
+          for (const lr of productReviews) {
+            if ((lr.productId || lr.product_id || '').trim().toLowerCase() === normPId) {
+              if (!mergedMap.has(lr.id)) {
+                mergedMap.set(lr.id, lr);
+                // Also auto-sync any local-only review to the public cloud so all other visitors can see it!
+                try {
+                  fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(lr)
+                  });
+                } catch (_) {}
+              }
             }
-          });
+          }
         }
 
         productReviews = Array.from(mergedMap.values());
         // Sort newest first
         productReviews.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
         localStorage.setItem(storageKey, JSON.stringify(productReviews));
+        renderReviewsSection();
       }
     }
   } catch (err) {
@@ -1620,9 +1630,10 @@ async function initProductReviews() {
   // 6. Setup filter & sort events
   setupReviewFilterSort();
 
-  // 7. Render review elements (real reviews or clean empty state)
+  // 7. Render review elements
   renderReviewsSection();
 }
+
 
 function setupReviewFormHandlers() {
   const toggleBtn = document.getElementById('btnToggleWriteReview');
@@ -1747,26 +1758,33 @@ function setupReviewFormHandlers() {
         customerEmail: currentUser.email || ''
       };
 
-      // 1. Immediately store in local memory and product-specific localStorage
-      const existingReviews = (productReviews || []).filter(r => (r.productId || '').trim().toLowerCase() === normPId);
+      // 1. First save to public server & Supabase cloud so it is immediately visible to EVERYONE!
+      let serverSaved = false;
+      try {
+        const resp = await fetch('/api/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newReview)
+        });
+        if (resp.ok) {
+          const resData = await resp.json();
+          if (resData && resData.success) {
+            serverSaved = true;
+          }
+        }
+      } catch (err) {
+        console.warn('Server review save note:', err);
+      }
+
+      // 2. Prepend to local memory and product-specific localStorage
+      const existingReviews = (productReviews || []).filter(r => (r.productId || r.product_id || '').trim().toLowerCase() === normPId && r.id !== newReview.id);
       productReviews = [newReview, ...existingReviews];
       try {
         localStorage.setItem(storageKey, JSON.stringify(productReviews));
       } catch (_) {}
 
-      // 2. Immediately render with feedback so user sees review instantly
+      // 3. Immediately render with feedback so user sees review instantly
       renderReviewsSection();
-
-      // 3. Post to backend server (saves to Supabase & data/reviews.json)
-      try {
-        await fetch('/api/reviews', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newReview)
-        });
-      } catch (err) {
-        console.warn('Review server save background warning:', err);
-      }
 
       // 4. Reset form, hide card and reapply locked identity
       form.reset();
@@ -1782,7 +1800,11 @@ function setupReviewFormHandlers() {
       }
 
       // 5. Confirmation message
-      alert(`Thank you, ${author}! Your verified review has been posted successfully.`);
+      if (serverSaved) {
+        alert(`Thank you, ${author}! Your verified review has been published publicly and is now visible to all customers.`);
+      } else {
+        alert(`Thank you, ${author}! Your verified review has been recorded.`);
+      }
     });
   }
 }
@@ -1829,7 +1851,7 @@ function renderReviewsSection() {
   const normPId = pId.toLowerCase();
   // Ensure productReviews strictly isolates to only this specific product ID
   if (Array.isArray(productReviews)) {
-    productReviews = productReviews.filter(r => (r.productId || '').trim().toLowerCase() === normPId);
+    productReviews = productReviews.filter(r => (r.productId || r.product_id || '').trim().toLowerCase() === normPId);
   } else {
     productReviews = [];
   }
