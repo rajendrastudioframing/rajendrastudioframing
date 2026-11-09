@@ -31,6 +31,10 @@ try {
 } catch (_) {}
 let allInquiries = [];
 let allProducts = [];
+try {
+  const cachedProds = localStorage.getItem('rf_admin_products');
+  if (cachedProds) allProducts = JSON.parse(cachedProds);
+} catch (_) {}
 let allMessages = [];
 let allCustomers = [];
 
@@ -248,11 +252,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   initSettingsForms();
   initModalScrollLock();
 
-  // Initial Data Load
+  // Initial Data Load (load catalog products first so order thumbnails resolve immediately)
   await loadDashboardStats();
+  await loadProducts();
   await loadInquiries();
   await loadAdminCategories();
-  await loadProducts();
   await loadCustomers();
   await loadMessages();
   await loadSettings();
@@ -587,16 +591,88 @@ function initThemeToggle() {
 
 /* ==========================================================================
    PRODUCT IMAGE MATCHER
+   - Dynamically resolves the exact photo of the ordered product from catalog/items
    ========================================================================== */
-function getProductThumbnail(productString) {
-  const str = (productString || '').toLowerCase();
-  if (str.includes('glass')) return 'assets/images/glass_frame.jpg';
+function getProductThumbnail(productOrOrder, optionalOrder) {
+  const order = (typeof productOrOrder === 'object' && productOrOrder !== null) 
+    ? productOrOrder 
+    : (typeof optionalOrder === 'object' && optionalOrder !== null ? optionalOrder : null);
+  const rawStr = (typeof productOrOrder === 'string') ? productOrOrder : (order && order.product ? order.product : '');
+
+  // 1. If order has items with image, use the item's image
+  if (order && Array.isArray(order.items) && order.items.length > 0) {
+    for (const it of order.items) {
+      if (it && it.image && typeof it.image === 'string' && it.image.trim() && !it.image.includes('glass_frame.jpg')) {
+        return it.image.trim();
+      }
+    }
+  }
+
+  // 2. If order has direct image property
+  if (order && order.image && typeof order.image === 'string' && order.image.trim() && !order.image.includes('glass_frame.jpg')) {
+    return order.image.trim();
+  }
+
+  // 3. Match against allProducts catalog in memory
+  const cleanTitle = (rawStr || '')
+    .replace(/\[ONLINE ORDER\]/gi, '')
+    .replace(/\(x\d+\)/gi, '')
+    .trim()
+    .toLowerCase();
+
+  const prods = (typeof allProducts !== 'undefined' && Array.isArray(allProducts) && allProducts.length > 0)
+    ? allProducts
+    : ((typeof window !== 'undefined' && Array.isArray(window.PRODUCTS_DATA)) ? window.PRODUCTS_DATA : []);
+
+  if (prods.length > 0) {
+    const matched = prods.find(p => {
+      if (!p) return false;
+      const pId = String(p.id || '').trim().toLowerCase();
+      const pName = String(p.name || '').trim().toLowerCase();
+      const pSlug = String(p.slug || '').trim().toLowerCase();
+
+      // A. Match via order items
+      if (order && Array.isArray(order.items)) {
+        for (const it of order.items) {
+          const itId = String(it.id || '').trim().toLowerCase();
+          const itName = String(it.name || '').trim().toLowerCase();
+          if (itId && (itId === pId || itId === pSlug)) return true;
+          if (itName && (itName === pName || itName === pId)) return true;
+        }
+      }
+
+      // B. Match via cleanTitle
+      if (cleanTitle) {
+        if (cleanTitle === pName || cleanTitle === pId || cleanTitle === pSlug) return true;
+        if (pName && (pName.includes(cleanTitle) || cleanTitle.includes(pName))) return true;
+        if (pId && (pId.includes(cleanTitle) || cleanTitle.includes(pId))) return true;
+      }
+      return false;
+    });
+
+    if (matched) {
+      const prodImg = matched.image || (Array.isArray(matched.images) && matched.images[0]);
+      if (prodImg && typeof prodImg === 'string' && prodImg.trim()) {
+        return prodImg.trim();
+      }
+    }
+  }
+
+  // 4. Fallback from items[0].image
+  if (order && Array.isArray(order.items) && order.items[0] && order.items[0].image) {
+    return order.items[0].image.trim();
+  }
+
+  // 5. Keyword matcher for legacy/mock data
+  const str = cleanTitle || rawStr.toLowerCase();
   if (str.includes('plastic')) return 'assets/images/plastic_frame.jpg';
   if (str.includes('bottle')) return 'assets/images/printed_bottle.jpg';
   if (str.includes('mug')) return 'assets/images/custom_mug.jpg';
   if (str.includes('file')) return 'assets/images/printed_file.jpg';
   if (str.includes('folder')) return 'assets/images/printed_folder.jpg';
-  if (str.includes('canvas') || str.includes('custom')) return 'assets/images/custom_canvas.jpg';
+  if (str.includes('canvas')) return 'assets/images/custom_canvas.jpg';
+  if (str.includes('glass')) return 'assets/images/glass_frame.jpg';
+
   return 'assets/images/glass_frame.jpg';
 }
 
@@ -1185,7 +1261,7 @@ function formatLocalReadableDate(dateInput) {
 }
 
 function createOrderCardRowHTML(order) {
-  const thumb = getProductThumbnail(order.product);
+  const thumb = getProductThumbnail(order);
   const cleanPhone = (order.phone || '').replace(/\D/g, '');
 
   const dateObj = new Date(order.createdAt);
@@ -1551,7 +1627,7 @@ window.openOrderDetailsModal = (orderId) => {
             finish: order.finish || finish,
             price: Math.round((Number(order.estimatedValue) || 500) / parts.length),
             lineTotal: Math.round((Number(order.estimatedValue) || 500) / parts.length),
-            image: getProductThumbnail(cleanName),
+            image: getProductThumbnail(cleanName, order),
             uploadedPhoto: custPhoto ? { fileUrl: custPhoto.url, fileName: custPhoto.name } : null
           };
         });
@@ -1563,14 +1639,14 @@ window.openOrderDetailsModal = (orderId) => {
           finish: order.finish || finish,
           price: order.estimatedValue || 0,
           lineTotal: order.estimatedValue || 0,
-          image: getProductThumbnail(rawProductStr),
+          image: getProductThumbnail(rawProductStr, order),
           uploadedPhoto: custPhoto ? { fileUrl: custPhoto.url, fileName: custPhoto.name } : null
         }];
       }
     }
 
     const itemsRowsHTML = items.map(it => {
-      const itemImg = it.image || getProductThumbnail(it.name);
+      const itemImg = it.image || getProductThumbnail(it.name, order);
       const itemPhoto = it.uploadedPhoto ? (it.uploadedPhoto.fileUrl || it.uploadedPhoto) : (custPhoto ? custPhoto.url : null);
       const itemPhotoName = it.uploadedPhoto ? (it.uploadedPhoto.fileName || it.uploadedPhoto.originalName || 'Customer Photo') : (custPhoto ? custPhoto.name : null);
       const itemSize = it.size || 'Standard';
@@ -3867,11 +3943,16 @@ async function loadProducts() {
 
     if (data && (data.success || Array.isArray(data.products))) {
       allProducts = data.products || [];
+      try { localStorage.setItem('rf_admin_products', JSON.stringify(allProducts)); } catch (_) {}
       if (allAdminCategories.length === 0) {
         await loadAdminCategories();
       }
       updateAdminCategoryCounters(allProducts);
       window.filterAdminProducts();
+      // Re-render orders so thumbnails immediately show the actual ordered product's photo
+      if (typeof renderOrders === 'function') {
+        renderOrders();
+      }
     }
   } catch (err) {
     console.error('Failed to load products:', err);
@@ -3880,11 +3961,15 @@ async function loadProducts() {
       const data = await fallbackRes.json();
       if (data && (data.success || Array.isArray(data.products))) {
         allProducts = data.products || [];
+        try { localStorage.setItem('rf_admin_products', JSON.stringify(allProducts)); } catch (_) {}
         if (allAdminCategories.length === 0) {
           await loadAdminCategories();
         }
         updateAdminCategoryCounters(allProducts);
         window.filterAdminProducts();
+        if (typeof renderOrders === 'function') {
+          renderOrders();
+        }
       }
     } catch (e2) {
       console.error('Public products fallback also failed:', e2);
