@@ -4712,9 +4712,15 @@ app.get('/api/admin/customers', requireAuth, async (req, res) => {
       });
     }
 
-    // 4. Aggregate any customer who submitted an inquiry
+    // 4. Aggregate any customer who submitted a real custom frame quote (skip contact messages & deleted inquiries)
     if (Array.isArray(inquiries)) {
+      const deletedSet = new Set((await db.getDeletedOrderIds().catch(() => [])).map(x => String(x).toLowerCase().replace(/^#/, '')));
       inquiries.forEach(inq => {
+        if (!inq) return;
+        const cleanInqId = (inq.id || '').toLowerCase().replace(/^#/, '');
+        if (deletedSet.has(cleanInqId)) return;
+        if (inq.specs && String(inq.specs).toLowerCase().includes('contact')) return;
+        if (inq.product && String(inq.product).toLowerCase().includes('general inquiry')) return;
         const inqEmail = (inq.email || '').toLowerCase().trim();
         if (inqEmail && !customerMap.has(inqEmail)) {
           customerMap.set(inqEmail, {
@@ -4938,8 +4944,12 @@ app.delete('/api/admin/messages', requireAuth, async (req, res) => {
  */
 app.delete('/api/admin/messages/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
-  await db.deleteMessage(id);
-  res.json({ success: true, message: 'Message deleted.' });
+  const cleanId = String(id || '').trim();
+  await Promise.all([
+    db.deleteMessage(cleanId).catch(() => null),
+    db.deleteInquiry(cleanId).catch(() => null)
+  ]);
+  res.json({ success: true, message: 'Message deleted successfully.' });
 });
 
 /**

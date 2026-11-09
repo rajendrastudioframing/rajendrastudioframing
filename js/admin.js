@@ -6868,6 +6868,14 @@ function renderCustomersTable(customers) {
         <td class="cust-cell-spent">
           <strong style="color: var(--text-main); font-size: 0.9rem;">₹${totalSpent.toLocaleString('en-IN')}</strong>
         </td>
+        <td class="cust-cell-actions" style="text-align: center; vertical-align: middle;">
+          <button type="button" class="btn-table-icon delete" onclick="deleteCustomer('${escapeHtml(cust.email || cust.id)}')" title="Delete Customer Account">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </td>
       </tr>
     `;
   }).join('');
@@ -6918,13 +6926,16 @@ async function loadMessages() {
     console.warn('Admin messages fetch note:', err.message);
   }
 
-  // Fallback: If allMessages is empty or server failed, check allInquiries for contact submissions!
-  if (!allMessages || allMessages.length === 0) {
+  // Fallback: ONLY if server fetch completely failed (!fetched), check allInquiries for contact submissions!
+  if (!fetched && (!allMessages || allMessages.length === 0)) {
     if (Array.isArray(allInquiries) && allInquiries.length > 0) {
-      const contactInqs = allInquiries.filter(i => 
-        (i.specs && String(i.specs).toLowerCase().includes('contact')) ||
-        (i.notes && !i.items?.length && i.type !== 'order')
-      );
+      const contactInqs = allInquiries.filter(i => {
+        if (!i || !i.id) return false;
+        const cleanId = String(i.id).toLowerCase().replace(/^#/, '');
+        if (typeof isDeleted === 'function' && isDeleted(cleanId)) return false;
+        return (i.specs && String(i.specs).toLowerCase().includes('contact')) ||
+               (i.notes && !i.items?.length && i.type !== 'order');
+      });
       if (contactInqs.length > 0) {
         allMessages = contactInqs.map(ci => ({
           id: ci.id,
@@ -7100,25 +7111,55 @@ window.viewMessageDetail = (id) => {
 
 window.deleteMessage = async (id) => {
   if (!confirm('Delete this contact message?')) return;
+  const cleanId = String(id || '').trim();
   try {
-    const res = await apiFetch(`/api/admin/messages/${encodeURIComponent(id)}`, {
+    if (window._deletedOrderIdsCache) {
+      window._deletedOrderIdsCache.add(cleanId.toLowerCase().replace(/^#/, ''));
+      try {
+        localStorage.setItem('rf_admin_deleted_ids', JSON.stringify(Array.from(window._deletedOrderIdsCache)));
+      } catch (_) {}
+    }
+
+    await apiFetch(`/api/admin/messages/${encodeURIComponent(cleanId)}`, {
       method: 'DELETE'
     });
-    const data = await res.json().catch(() => ({}));
-    if (data && data.success) {
-      allMessages = allMessages.filter(m => m.id !== id);
-      renderContactMessages(allMessages);
-      await loadDashboardStats();
-      showToast('Message Deleted', 'Contact message was deleted.', 'info');
-    } else {
-      allMessages = allMessages.filter(m => m.id !== id);
-      renderContactMessages(allMessages);
-      showToast('Action Notice', 'Message removed from view.', 'info');
+    if (cleanId.startsWith('INQ-') || allInquiries.some(i => i.id === cleanId)) {
+      await apiFetch(`/api/admin/inquiries/${encodeURIComponent(cleanId)}`, { method: 'DELETE' }).catch(() => {});
     }
+
+    allMessages = allMessages.filter(m => m.id !== cleanId && m.id !== id);
+    allInquiries = allInquiries.filter(i => i.id !== cleanId && i.id !== id);
+    renderContactMessages(allMessages);
+    if (typeof renderOrders === 'function') renderOrders();
+    await loadDashboardStats();
+    await loadCustomers();
+    showToast('Message Deleted', 'Contact message was deleted permanently.', 'info');
   } catch (err) {
     console.error('Error deleting message:', err);
-    allMessages = allMessages.filter(m => m.id !== id);
+    allMessages = allMessages.filter(m => m.id !== cleanId && m.id !== id);
+    allInquiries = allInquiries.filter(i => i.id !== cleanId && i.id !== id);
     renderContactMessages(allMessages);
+    showToast('Message Removed', 'Message removed from view.', 'info');
+  }
+};
+
+window.deleteCustomer = async (idOrEmail) => {
+  if (!confirm(`Delete customer "${idOrEmail}"? This will remove their profile and history.`)) return;
+  const clean = String(idOrEmail || '').trim();
+  try {
+    await apiFetch(`/api/admin/customers/${encodeURIComponent(clean)}`, {
+      method: 'DELETE'
+    });
+    allCustomers = allCustomers.filter(c => c.email !== clean && c.id !== clean && (!c.phone || c.phone !== clean));
+    renderCustomersTable(allCustomers);
+    await loadCustomers();
+    await loadDashboardStats();
+    showToast('Customer Deleted', `Customer ${clean} removed successfully.`, 'info');
+  } catch (err) {
+    console.error('Error deleting customer:', err);
+    allCustomers = allCustomers.filter(c => c.email !== clean && c.id !== clean);
+    renderCustomersTable(allCustomers);
+    showToast('Customer Removed', 'Customer removed from view.', 'info');
   }
 };
 

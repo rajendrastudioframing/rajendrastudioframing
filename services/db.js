@@ -1841,14 +1841,18 @@ module.exports = {
 
   async deleteMessage(id) {
     if (!id) return true;
+    const cleanId = String(id).trim().replace(/^#/, '');
     if (supabase && isSupabaseOperational()) {
       try {
-        await supabase.from('messages').delete().eq('id', id);
+        await supabase.from('messages').delete().or(`id.eq.${cleanId},id.ilike.${cleanId}`);
+      } catch (_) {}
+      try {
+        await supabase.from('inquiries').delete().or(`id.eq.${cleanId},id.ilike.${cleanId}`);
       } catch (_) {}
       try {
         const cfgRes = await supabase.from('admin_config').select('smtp').eq('id', 'all_contact_messages').maybeSingle();
         if (cfgRes && cfgRes.data && cfgRes.data.smtp && Array.isArray(cfgRes.data.smtp.messages)) {
-          const updated = cfgRes.data.smtp.messages.filter(m => m.id !== id);
+          const updated = cfgRes.data.smtp.messages.filter(m => m.id !== cleanId && m.id !== id);
           await supabase.from('admin_config').upsert({
             id: 'all_contact_messages',
             smtp: { messages: updated }
@@ -1856,9 +1860,17 @@ module.exports = {
         }
       } catch (_) {}
     }
+    await this.recordDeletedOrderIds([cleanId]);
     let messages = readJson(MESSAGES_FILE, []);
-    messages = messages.filter(m => m.id !== id);
+    messages = messages.filter(m => m.id !== cleanId && m.id !== id);
     writeJson(MESSAGES_FILE, messages);
+
+    try {
+      let inquiries = readJson(INQUIRIES_FILE, []);
+      inquiries = inquiries.filter(i => i.id && i.id.toLowerCase().replace(/^#/, '') !== cleanId.toLowerCase());
+      writeJson(INQUIRIES_FILE, inquiries);
+    } catch (_) {}
+
     return true;
   },
 
@@ -2524,9 +2536,11 @@ module.exports = {
       }
 
       try {
+        await supabase.from('inquiries').delete().in('id', ['inq-2026-006', 'INQ-2026-006', '#inq-2026-006', '#INQ-2026-006']);
+        await supabase.from('inquiries').delete().ilike('specs', '%Contact%');
         await supabase.from('inquiries').delete().ilike('name', '%Test%');
         await supabase.from('inquiries').delete().ilike('email', '%test%');
-        console.log('🧹 [PURGE] Purged test inquiries from Supabase');
+        console.log('🧹 [PURGE] Purged contact submissions and test inquiries from Supabase');
       } catch (e) {
         console.warn('Supabase clean inquiries error:', e.message);
       }
