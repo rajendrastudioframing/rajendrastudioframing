@@ -1862,6 +1862,33 @@ module.exports = {
     return true;
   },
 
+  async clearAllMessages() {
+    if (supabase && isSupabaseOperational()) {
+      try {
+        const { data: supaMsgs } = await supabase.from('messages').select('id');
+        if (Array.isArray(supaMsgs)) {
+          for (const m of supaMsgs) {
+            if (m.id) await supabase.from('messages').delete().eq('id', m.id);
+          }
+        }
+        await supabase.from('messages').delete().neq('id', '___none___');
+      } catch (err) {
+        console.warn('⚠️ [DATABASE] Supabase clearAllMessages exception:', err.message);
+      }
+      try {
+        await supabase.from('admin_config').upsert({
+          id: 'all_contact_messages',
+          admin_name: 'All Contact Messages',
+          smtp: { messages: [], updatedAt: new Date().toISOString() },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+      } catch (_) {}
+    }
+    writeJson(MESSAGES_FILE, []);
+    global._rfMemoryStore['messages'] = [];
+    return true;
+  },
+
   // --- PHOTO UPLOAD HELPER ---
   async uploadPhoto(fileName, base64Data, mimeType = 'image/jpeg') {
     const rawExt = path.extname(fileName) || '.jpg';
@@ -2477,19 +2504,23 @@ module.exports = {
       }
 
       try {
-        await supabase.from('messages').delete().in('id', trialMessageIds);
-        await supabase.from('messages').delete().ilike('id', 'MSG-TEST-%');
-        await supabase.from('messages').delete().ilike('name', '%Test%');
-        await supabase.from('messages').delete().ilike('email', '%test%');
+        await supabase.from('messages').delete().neq('id', '___keep_none___');
         await supabase.from('admin_config').upsert({
           id: 'all_contact_messages',
           admin_name: 'All Contact Messages',
           smtp: { messages: [], updatedAt: new Date().toISOString() },
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
-        console.log('🧹 [PURGE] Purged trial messages from Supabase');
+        console.log('🧹 [PURGE] Purged all messages from Supabase');
       } catch (e) {
         console.warn('Supabase clean messages error:', e.message);
+      }
+
+      try {
+        await supabase.from('customers').delete().neq('email', '___keep_none___');
+        console.log('🧹 [PURGE] Purged all customers from Supabase');
+      } catch (e) {
+        console.warn('Supabase clean customers error:', e.message);
       }
 
       try {
@@ -2503,10 +2534,14 @@ module.exports = {
 
     writeJson(REVIEWS_FILE, []);
     writeJson(MESSAGES_FILE, []);
+    writeJson(CUSTOMERS_FILE, []);
+    writeJson(path.join(DATA_DIR, 'customer-sessions.json'), {});
     global._rfMemoryStore['reviews'] = [];
     global._rfMemoryStore['messages'] = [];
+    global._rfMemoryStore['customers'] = [];
+    global._rfMemoryStore['customerSessions'] = {};
 
-    return { success: true, message: 'All trial reviews and messages cleanly purged.' };
+    return { success: true, message: 'All messages, customers, reviews, and test data cleanly purged.' };
   },
 
   // Supabase client instance

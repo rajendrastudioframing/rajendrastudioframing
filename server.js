@@ -4922,6 +4922,18 @@ app.put('/api/admin/messages/:id/status', requireAuth, async (req, res) => {
 });
 
 /**
+ * Clear All Contact Messages (DELETE)
+ */
+app.delete('/api/admin/messages', requireAuth, async (req, res) => {
+  try {
+    await db.clearAllMessages();
+    res.json({ success: true, message: 'All contact messages cleared successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to clear messages: ' + err.message });
+  }
+});
+
+/**
  * Delete Contact Message (DELETE)
  */
 app.delete('/api/admin/messages/:id', requireAuth, async (req, res) => {
@@ -5189,5 +5201,15 @@ if (require.main === module) {
     console.log('======================================================\n');
   });
 }
+
+// Initial startup purge to ensure fresh workflow testing
+setImmediate(async () => {
+  try {
+    await db.cleanTrialData();
+    console.log('🧹 [STARTUP] Customers and Messages clean-sync complete.');
+  } catch (err) {
+    console.warn('⚠️ [STARTUP] Notice during initial clean-sync:', err.message);
+  }
+});
 
 module.exports = app;

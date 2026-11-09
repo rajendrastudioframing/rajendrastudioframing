@@ -88,26 +88,32 @@ async function syncToSupabase() {
   // 2. SYNC CUSTOMERS
   try {
     const customers = readJsonFile('customers.json', []);
-    console.log(`👤 Syncing ${customers.length} customer records...`);
-    for (const c of customers) {
-      const { error } = await supabase.from('customers').upsert({
-        id: c.id,
-        name: c.name,
-        email: c.email.trim().toLowerCase(),
-        phone: c.phone || '',
-        registered_at: c.registeredAt || new Date().toISOString(),
-        last_login_at: c.lastLoginAt || new Date().toISOString(),
-        login_count: Number(c.loginCount) || 1,
-        total_orders: Number(c.totalOrders) || 0,
-        total_spent: Number(c.totalSpent) || 0,
-        status: c.status || 'Active'
-      }, { onConflict: 'email' });
+    if (customers.length === 0) {
+      console.log('👤 Clearing customers in Supabase (empty customers.json)...');
+      await supabase.from('customers').delete().neq('email', '___keep_none___');
+      console.log('   ✅ Customers table cleared in Supabase.');
+    } else {
+      console.log(`👤 Syncing ${customers.length} customer records...`);
+      for (const c of customers) {
+        const { error } = await supabase.from('customers').upsert({
+          id: c.id,
+          name: c.name,
+          email: c.email.trim().toLowerCase(),
+          phone: c.phone || '',
+          registered_at: c.registeredAt || new Date().toISOString(),
+          last_login_at: c.lastLoginAt || new Date().toISOString(),
+          login_count: Number(c.loginCount) || 1,
+          total_orders: Number(c.totalOrders) || 0,
+          total_spent: Number(c.totalSpent) || 0,
+          status: c.status || 'Active'
+        }, { onConflict: 'email' });
 
-      if (error) {
-        console.warn(`   ⚠️ Customer sync error (${c.email}):`, error.message);
+        if (error) {
+          console.warn(`   ⚠️ Customer sync error (${c.email}):`, error.message);
+        }
       }
+      console.log('   ✅ Customers synchronized successfully.');
     }
-    console.log('   ✅ Customers synchronized successfully.');
   } catch (err) {
     console.error('   ❌ Customers sync failed:', err.message);
   }
@@ -314,7 +320,11 @@ async function syncToSupabase() {
     }, { onConflict: 'id' });
 
     const messages = readJsonFile('messages.json', []);
-    if (messages.length) {
+    if (messages.length === 0) {
+      console.log('✉️  Clearing contact messages in Supabase (empty messages.json)...');
+      await supabase.from('messages').delete().neq('id', '___keep_none___');
+      console.log('   ✅ Contact messages table cleared in Supabase.');
+    } else {
       console.log(`✉️  Syncing ${messages.length} contact messages...`);
       for (const m of messages) {
         const { error } = await supabase.from('messages').upsert({
@@ -333,8 +343,6 @@ async function syncToSupabase() {
         }
       }
       console.log('   ✅ Contact messages synchronized successfully.');
-    } else {
-      console.log('   ✅ All trial messages purged. No hardcoded messages present.');
     }
   } catch (err) {
     console.error('   ❌ Contact messages sync failed:', err.message);
