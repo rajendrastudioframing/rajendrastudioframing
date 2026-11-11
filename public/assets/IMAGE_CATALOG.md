@@ -86,10 +86,13 @@ Located at: `assets/images/`
 
 | File | Format | Usage |
 |---|---|---|
-| `logo.svg` | SVG Vector | High-res brand logo for navbar and footer |
-| `logo-icon.png` | PNG (Transparent) | Framing logo crest / icon badge |
-| `logo-text.png` | PNG (Transparent) | Typography wordmark "Rajendra Studio & Framing" |
-| `favicon.png` | PNG (Square) | Browser tab favicon and bookmark icon |
+| `logo-horizontal.png` | PNG (Transparent, 1024x301) | Primary horizontal brand logo for navbar, mobile drawer, footer badge, and invoices |
+| `logo.png` | PNG (Transparent) | Standard full horizontal logo alias |
+| `logo-full.png` | PNG (Transparent, 1000x1024) | Full stacked vertical brand logo (gift box icon + full title) for admin login portal and modals |
+| `logo-icon.png` | PNG (Transparent, 624x745) | Standalone gift box icon mark for admin sidebar and square badge placements |
+| `favicon.png` | PNG (Square / Transparent) | Browser tab favicon and mobile bookmark icon |
+| `favicon.ico` | ICO Binary (32-bit RGBA) | Universal multi-resolution desktop browser favicon |
+| `logo.svg` | SVG Vector | Scalable vector logo wrapper |
 
 ---
 

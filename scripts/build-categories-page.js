@@ -159,9 +159,8 @@ function generateCategoriesPage() {
   <header class="site-header" id="siteHeader">
     <div class="container">
       <nav class="navbar" aria-label="Main Navigation">
-        <a href="/" class="brand-logo" aria-label="Dahej Support Homepage">
-          <img src="assets/images/logo-icon.png" alt="Dahej Support Logo" class="brand-logo-img" />
-          <img src="assets/images/logo-text.png" alt="Dahej Support" class="brand-logo-text" />
+        <a href="/" class="brand-logo" aria-label="Rajendra Studio &amp; Photo Gifts Homepage">
+          <img src="assets/images/logo-horizontal.png" alt="Rajendra Studio &amp; Photo Gifts" class="brand-logo-img" />
         </a>
 
         <!-- Desktop Navigation Menu -->
@@ -255,9 +254,8 @@ function generateCategoriesPage() {
   <div class="drawer-backdrop"></div>
   <aside class="mobile-drawer" aria-label="Mobile Navigation">
     <div class="drawer-header">
-      <div class="brand-text-wrap" style="display: flex; align-items: center; gap: 8px;">
-        <img src="assets/images/logo-icon.png" alt="Dahej Support" style="height: 36px; width: auto;" />
-        <img src="assets/images/logo-text.png" alt="Dahej Support" style="height: 22px; width: auto;" />
+      <div class="brand-text-wrap" style="display: flex; align-items: center;">
+        <img src="assets/images/logo-horizontal.png" alt="Rajendra Studio &amp; Photo Gifts" style="height: 36px; width: auto; max-width: 180px; object-fit: contain;" />
       </div>
       <button class="drawer-close" aria-label="Close menu">&times;</button>
     </div>
@@ -364,9 +362,8 @@ ${categoriesSectionHtml}
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-            <img src="assets/images/logo-icon.png" alt="Dahej Support" style="height: 42px; width: auto;" />
-            <img src="assets/images/logo-text.png" alt="Dahej Support" style="height: 26px; width: auto; filter: brightness(1.2);" />
+          <div style="display: inline-flex; align-items: center; background: #FFFFFF; padding: 6px 14px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+            <img src="assets/images/logo-horizontal.png" alt="Rajendra Studio &amp; Photo Gifts" style="height: 38px; width: auto; max-width: 200px; display: block;" />
           </div>
           <p class="footer-tagline">Frames • Printing • Personalized Products</p>
           <p class="footer-desc">

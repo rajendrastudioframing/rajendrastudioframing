@@ -346,18 +346,15 @@ ul, ol {
 }
 
 .brand-logo-img {
-  height: 42px;
+  height: 44px;
   width: auto;
-  max-width: 48px;
+  max-width: 220px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.08));
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.06));
 }
 
 .brand-logo-text {
-  height: 26px;
-  width: auto;
-  max-width: 190px;
-  object-fit: contain;
+  display: none !important;
 }
 
 @media (max-width: 640px) {
@@ -366,7 +363,7 @@ ul, ol {
   }
   .brand-logo-img {
     height: 36px;
-    max-width: 40px;
+    max-width: 175px;
   }
   .brand-logo-text {
     height: 22px;
@@ -376,7 +373,8 @@ ul, ol {
 
 @media (max-width: 400px) {
   .brand-logo-img {
-    height: 30px;
+    height: 32px;
+    max-width: 150px;
   }
   .brand-logo-text {
     height: 18px;

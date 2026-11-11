@@ -517,10 +517,10 @@
           <!-- Header -->
           <div class="cust-auth-modal-header">
             <div class="cust-auth-brand-badge" style="background: transparent; border: none; box-shadow: none; display: flex; align-items: center; justify-content: center;">
-              <img src="assets/images/logo-icon.png" alt="Dahej Support" style="height: 48px; width: auto; object-fit: contain;" />
+              <img src="assets/images/logo-horizontal.png" alt="Rajendra Studio &amp; Photo Gifts" style="height: 40px; width: auto; max-width: 200px; object-fit: contain;" />
             </div>
             <h3 class="cust-auth-title" id="custAuthModalTitle">Customer Sign In</h3>
-            <p class="cust-auth-subtitle" id="custAuthModalSubtitle">Sign in or create your account to place your order with Dahej Support.</p>
+            <p class="cust-auth-subtitle" id="custAuthModalSubtitle">Sign in or create your account to place your order with Rajendra Studio & Photo Gifts.</p>
           </div>
 
           <!-- Alert Banner -->
@@ -878,7 +878,7 @@
     const titleEl = document.getElementById('custAuthModalTitle');
     const subEl = document.getElementById('custAuthModalSubtitle');
     if (titleEl) titleEl.textContent = (ctx && ctx.title) ? ctx.title : 'Customer Sign In';
-    if (subEl) subEl.textContent = (ctx && ctx.subtitle) ? ctx.subtitle : 'Sign in or create your account to place your order with Dahej Support.';
+    if (subEl) subEl.textContent = (ctx && ctx.subtitle) ? ctx.subtitle : 'Sign in or create your account to place your order with Rajendra Studio & Photo Gifts.';
 
     // Clear OTP inputs
     for (let i = 1; i <= 6; i++) {

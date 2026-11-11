@@ -629,12 +629,11 @@ function openInvoiceModal(orderId) {
   content.innerHTML = `
     <div class="invoice-header">
       <div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-          <img src="assets/images/logo-icon.png" alt="Dahej Support" style="height: 38px; width: auto;" />
-          <h2 style="font-family: var(--font-heading); font-size: 1.4rem; color: #111; margin: 0;">DAHEJ SUPPORT STUDIO</h2>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+          <img src="assets/images/logo-horizontal.png" alt="Rajendra Studio &amp; Photo Gifts" style="height: 42px; width: auto; object-fit: contain;" />
         </div>
         <p style="font-size: 0.8rem; color: #6B7280; margin: 0; line-height: 1.4;">
-          Rajendra Studio &amp; Framing • Dahej GIDC, Bharuch, Gujarat 392130<br>
+          Rajendra Studio &amp; Photo Gifts • Dahej GIDC, Bharuch, Gujarat 392130<br>
           Direct Hotline: +91 95107 57513 • Support: info@rajendrastudioandgifts.in
         </p>
       </div>
