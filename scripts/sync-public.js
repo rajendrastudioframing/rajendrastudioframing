@@ -27,7 +27,8 @@ const TARGET_FILES = [
   'products.html',
   'track-order.html',
   'favicon.ico',
-  'favicon.png'
+  'favicon.png',
+  'apple-touch-icon.png'
 ];
 
 function ensureDirSync(dir) {
