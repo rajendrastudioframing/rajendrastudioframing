@@ -1793,9 +1793,9 @@ window.openOrderDetailsModal = (orderId) => {
         <div class="order-detail-card">
           <div class="order-detail-card-title">📍 DELIVERY &amp; DESTINATION</div>
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-            <span class="order-detail-delivery-pill">${trackingMode === 'Doorstep Delivery' ? '🚚 Deliver to Doorstep' : '🏢 Studio Counter Pickup'}</span>
+            <span class="order-detail-delivery-pill">Pick up from shop</span>
           </div>
-          <div class="order-detail-card-address">${escapeHtml(deliveryAddress)}</div>
+          <div class="order-detail-card-address">Pick up from shop</div>
         </div>
 
         <!-- 3. Payment & Settlement -->
