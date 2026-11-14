@@ -108,12 +108,22 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+function normalizeTrackingInput(str) {
+  if (!str) return '';
+  return String(str)
+    .trim()
+    .replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')
+    .replace(/^#+/, '')
+    .replace(/-+/g, '-')
+    .trim();
+}
+
 async function trackOrder(orderId) {
   const container = document.getElementById('trackingResultContainer');
   if (!container) return;
 
-  // Normalize order ID
-  const cleanId = orderId.trim().replace(/^#/, '');
+  const rawClean = (orderId || '').trim();
+  const cleanId = normalizeTrackingInput(rawClean) || rawClean.replace(/^#+/, '');
 
   // Check if edit action requested in URL
   const currentParams = new URLSearchParams(window.location.search);
@@ -129,7 +139,7 @@ async function trackOrder(orderId) {
     <div class="track-skeleton-card">
       <div class="track-spinner"></div>
       <div style="font-weight: 700; font-size: 1.05rem; color: #1A1A18; margin-bottom: 6px;">Retrieving Order Status...</div>
-      <div style="font-size: 0.86rem; color: #76746E;">Querying studio production records for #${escapeHtml(cleanId)}</div>
+      <div style="font-size: 0.86rem; color: #76746E;">Querying studio records for #${escapeHtml(cleanId)}</div>
     </div>
   `;
 
@@ -138,6 +148,11 @@ async function trackOrder(orderId) {
     const data = await res.json();
 
     if (data.success && data.order) {
+      // Sync search input with canonical orderId
+      const inputEl = document.getElementById('trackOrderIdInput');
+      if (inputEl && data.order.orderId) {
+        inputEl.value = data.order.orderId;
+      }
       renderTrackingResult(data.order, container);
       if (actionParam === 'edit' && data.order.canEdit) {
         setTimeout(() => {
@@ -149,13 +164,13 @@ async function trackOrder(orderId) {
     }
   } catch (err) {
     console.error('Tracking fetch error:', err);
-    renderNotFound(cleanId, 'Unable to connect to Dahej Support studio server. Please check your internet connection and try again.', container);
+    renderNotFound(cleanId, 'Unable to connect to Rajendra Studio server. Please check your internet connection and try again.', container);
   }
 }
 
 function renderTrackingResult(order, container) {
   window.currentTrackedOrder = order;
-  const isCancelled = order.status === 'Cancelled' || order.isCancelled;
+  const isCancelled = order.status === 'Cancelled' || order.isCancelled || (order.rawStatus && ['cancelled', 'canceled', 'rejected'].includes(order.rawStatus.toLowerCase()));
   const statusClass = (order.status || 'in-progress').toLowerCase().replace(/\s+/g, '-');
 
   const createdDate = new Date(order.createdAt);
@@ -168,26 +183,30 @@ function renderTrackingResult(order, container) {
   });
 
   // Timeline Step Icons
-  const stepIcons = ['1', '2', '3', '4', '5'];
+  const stepIcons = ['1', '2', '3'];
 
-  const timelineHtml = isCancelled ? '' : `
+  // Strictly 3-step craftsmanship timeline (Order Placed -> Accepted/Rejected -> Pickup Date)
+  const timelineHtml = `
     <div class="track-timeline-section">
-      <ul class="track-steps-bar">
+      <ul class="track-steps-bar ${isCancelled ? 'has-cancelled-step' : ''}">
         ${(order.timeline || []).map((step, idx) => {
           let itemClass = '';
-          if (step.completed) itemClass = 'completed';
+          if (step.completed) itemClass += ' completed';
           if (step.current) itemClass += ' current';
+          if (step.cancelled) itemClass += ' cancelled';
+
+          const circleIcon = step.cancelled ? '✕' : (step.completed ? '✓' : stepIcons[idx] || (idx + 1));
 
           return `
-            <li class="track-step-item ${itemClass}">
+            <li class="track-step-item ${itemClass.trim()}">
               <div class="track-step-circle">
-                ${step.completed ? '✓' : stepIcons[idx]}
+                ${circleIcon}
               </div>
               <div class="track-step-info">
                 <div class="track-step-title">${escapeHtml(step.title)}</div>
                 <div class="track-step-sub">${escapeHtml(step.description)}</div>
                 ${step.date && step.date !== 'Pending' ? `
-                  <div style="font-size: 0.7rem; color: #8C6A1E; font-weight: 600; margin-top: 3px;">
+                  <div class="track-step-date-pill ${step.cancelled ? 'cancelled' : ''}">
                     ${escapeHtml(step.date)}
                   </div>
                 ` : ''}
@@ -200,7 +219,7 @@ function renderTrackingResult(order, container) {
   `;
 
   // WhatsApp Support Text
-  const waText = encodeURIComponent(`Hello Dahej Support Studio, I am tracking my order #${order.orderId}. Could you please provide an update?`);
+  const waText = encodeURIComponent(`Hello Rajendra Studio, I am tracking my order #${order.orderId}. Could you please provide an update?`);
   const waLink = `https://wa.me/919510757513?text=${waText}`;
 
   // Customer Masked Details
@@ -227,22 +246,21 @@ function renderTrackingResult(order, container) {
         </div>
       </div>
 
+      <!-- 3-Step Order Status Stepper -->
+      ${timelineHtml}
+
       <!-- Cancelled Notice if applicable -->
       ${isCancelled ? `
         <div class="track-cancelled-banner">
           <div class="cancelled-icon">✕</div>
           <div>
-            <div class="cancelled-title">Order Has Been Cancelled</div>
+            <div class="cancelled-title">Order Cancelled</div>
             <p class="cancelled-text">
-              ${order.notes && order.notes.includes('Reason:') ? escapeHtml(order.notes) : 'This order was cancelled by the studio. If any advance payment was made, our accounts team will process the refund to your source account.'}
-              For immediate clarification, please contact our studio on WhatsApp.
+              ${order.notes && order.notes.includes('Reason:') ? escapeHtml(order.notes) : (order.notes || 'This order was cancelled by the studio. If any payment was made, refund will be processed.')}
             </p>
           </div>
         </div>
       ` : ''}
-
-      <!-- 5-Stage Craftsmanship Stepper -->
-      ${timelineHtml}
 
       <!-- Order Details Grid -->
       <div class="track-details-grid">
@@ -259,7 +277,7 @@ function renderTrackingResult(order, container) {
           ${cust.emailMasked ? `<div class="track-info-line"><strong>Email:</strong> ${escapeHtml(cust.emailMasked)}</div>` : ''}
           <div class="track-info-line" style="margin-top: 6px;">
             <strong>Delivery Address:</strong><br>
-            <span style="color: #4A4843;">${escapeHtml(cust.address || 'Studio Pickup')}, ${escapeHtml(cust.city || 'Dahej')} ${escapeHtml(cust.pincode ? '(' + cust.pincode + ')' : '')}</span>
+            <span style="color: #4A4843;">${escapeHtml(cust.address || 'Studio Pickup - Bharuch Shop')}, ${escapeHtml(cust.city || 'Bharuch')} ${escapeHtml(cust.pincode ? '(' + cust.pincode + ')' : '')}</span>
           </div>
           ${order.canEdit ? `
             <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #E5E0D8;">
@@ -278,7 +296,7 @@ function renderTrackingResult(order, container) {
             </svg>
             Payment &amp; Fulfillment
           </div>
-          <div class="track-info-line"><strong>Payment Method:</strong> ${escapeHtml(order.paymentMethod || 'Pay on Delivery')}</div>
+          <div class="track-info-line"><strong>Payment Method:</strong> ${escapeHtml(order.paymentMethod || 'Pick up from shop')}</div>
           <div class="track-info-line">
             <strong>Payment Status:</strong> 
             <span style="color: ${order.paymentStatus === 'Paid' ? '#027A48' : '#B54708'}; font-weight: 700;">
@@ -293,29 +311,6 @@ function renderTrackingResult(order, container) {
           ` : ''}
         </div>
       </div>
-
-function detectTrackOrderVariantMeta(item) {
-  if (!item) return { label: 'Size', icon: '📐' };
-  const vType = (item.variantType || item.variant_type || '').toLowerCase();
-  const vLabel = item.variantLabel || (vType === 'color' || vType === 'colour' ? 'Colour' : (vType === 'material' ? 'Material' : (vType === 'size' ? 'Size' : '')));
-
-  if (vLabel === 'Colour' || vType === 'color' || vType === 'colour') {
-    return { label: 'Colour', icon: '🎨' };
-  }
-  if (vLabel === 'Material' || vType === 'material') {
-    return { label: 'Material', icon: '🪵' };
-  }
-
-  const val = (item.size || '').trim().toLowerCase();
-  if (val && (
-    val.startsWith('#') ||
-    ['blue', 'red', 'gold', 'warm gold', 'black', 'matte black', 'white', 'pure white', 'green', 'yellow', 'pink', 'rose gold', 'silver', 'grey', 'gray', 'brown', 'purple', 'violet', 'orange', 'navy', 'royal navy', 'cyan', 'teal'].includes(val)
-  )) {
-    return { label: 'Colour', icon: '🎨' };
-  }
-
-  return { label: 'Size', icon: '📐' };
-}
 
       <!-- Items Section -->
       <div class="track-items-section">
@@ -369,7 +364,7 @@ function detectTrackOrderVariantMeta(item) {
 }
 
 function renderNotFound(orderId, message, container) {
-  const waText = encodeURIComponent(`Hello Dahej Support, I cannot find my order #${orderId} on the website tracking tool. Could you please help check my order status?`);
+  const waText = encodeURIComponent(`Hello Rajendra Studio, I cannot find my order #${orderId} on the website tracking tool. Could you please help check my order status?`);
   const waLink = `https://wa.me/919510757513?text=${waText}`;
 
   container.innerHTML = `
@@ -418,7 +413,7 @@ window.openCustomerEditOrderModal = () => {
   if (addressInput) addressInput.value = cust.address || '';
 
   const cityInput = document.getElementById('customerEditCity');
-  if (cityInput) cityInput.value = cust.city || 'Dahej';
+  if (cityInput) cityInput.value = cust.city || 'Bharuch';
 
   const pincodeInput = document.getElementById('customerEditPincode');
   if (pincodeInput) pincodeInput.value = cust.pincode || '';

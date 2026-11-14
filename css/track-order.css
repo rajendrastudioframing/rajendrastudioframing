@@ -359,6 +359,34 @@
 }
 
 /* Cancelled Banner */
+
+.track-step-item.cancelled .track-step-circle {
+  background: #DC2626 !important;
+  border-color: #DC2626 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 0 0 5px rgba(220, 38, 38, 0.22) !important;
+  animation: none !important;
+}
+
+.track-step-item.cancelled .track-step-title {
+  color: #DC2626 !important;
+}
+
+.track-step-item.cancelled:not(:last-child)::after {
+  background: #DC2626 !important;
+}
+
+.track-step-date-pill {
+  font-size: 0.72rem;
+  color: #8C6A1E;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.track-step-date-pill.cancelled {
+  color: #DC2626 !important;
+}
+
 .track-cancelled-banner {
   background: #FEF3F2;
   border-left: 4px solid #B42318;

@@ -2788,24 +2788,106 @@ app.post('/api/orders', async (req, res) => {
  */
 app.get('/api/orders/track/:orderId', async (req, res) => {
   try {
-    const rawId = (req.params.orderId || '').trim().replace(/^#/, '');
-    if (!rawId) {
+    const rawParam = (req.params.orderId || '').trim();
+    if (!rawParam) {
       return res.status(400).json({ success: false, message: 'Order ID is required.' });
     }
 
-    let foundOrder = await db.getOrderById(rawId);
-    const inquiries = await db.getInquiries();
-    let foundInq = inquiries.find(i => i.id && i.id.toLowerCase() === rawId.toLowerCase());
+    // 1. Normalize unicode dashes and whitespace
+    const normalizedDashes = rawParam.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-').trim();
+    const cleanId = normalizedDashes.replace(/^#+/, '').trim();
+    const collapsedDashes = cleanId.replace(/-+/g, '-');
+    const alphaInput = cleanId.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const digitsOnly = cleanId.replace(/\D/g, '');
+
+    // 2. Direct lookup via db.getOrderById
+    let foundOrder = await db.getOrderById(cleanId);
+    if (!foundOrder && collapsedDashes !== cleanId) {
+      foundOrder = await db.getOrderById(collapsedDashes);
+    }
+    if (!foundOrder && rawParam !== cleanId) {
+      foundOrder = await db.getOrderById(rawParam);
+    }
+
+    // 3. Fallback: Search all orders in database
+    if (!foundOrder) {
+      try {
+        const allOrders = await db.getOrders();
+        if (Array.isArray(allOrders) && allOrders.length) {
+          foundOrder = allOrders.find(o => {
+            if (!o) return false;
+            const oId = String(o.orderId || '').trim();
+            const oAlpha = oId.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const oNormalized = oId.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-').replace(/-+/g, '-').toLowerCase();
+
+            // Match full normalized or alphanumeric ID
+            if (oNormalized === collapsedDashes.toLowerCase() || oAlpha === alphaInput) return true;
+
+            // Match partial sequence number (e.g. 011 or 11 or 2026-011)
+            if (alphaInput.length >= 2 && oAlpha.endsWith(alphaInput.padStart(3, '0'))) return true;
+            if (collapsedDashes.length >= 3 && oNormalized.includes(collapsedDashes.toLowerCase())) return true;
+
+            // Match customer phone (last 10 digits)
+            if (digitsOnly.length === 10) {
+              const custPhone = String((o.customer && o.customer.phone) || '').replace(/\D/g, '');
+              if (custPhone.endsWith(digitsOnly)) return true;
+            }
+
+            // Match customer email
+            if (rawParam.includes('@')) {
+              const custEmail = String((o.customer && o.customer.email) || '').trim().toLowerCase();
+              if (custEmail === rawParam.toLowerCase()) return true;
+            }
+
+            return false;
+          });
+        }
+      } catch (ordSearchErr) {
+        console.warn('⚠️ [TRACKING] Order fallback search error:', ordSearchErr.message);
+      }
+    }
+
+    // 4. Inquiries table check (for custom inquiries or online orders)
+    let foundInq = null;
+    try {
+      const inquiries = await db.getInquiries();
+      if (Array.isArray(inquiries) && inquiries.length) {
+        foundInq = inquiries.find(i => {
+          if (!i) return false;
+          const iId = String(i.id || '').trim();
+          const iAlpha = iId.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const iNormalized = iId.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-').replace(/-+/g, '-').toLowerCase();
+
+          if (iNormalized === collapsedDashes.toLowerCase() || iAlpha === alphaInput) return true;
+          if (alphaInput.length >= 2 && iAlpha.endsWith(alphaInput.padStart(3, '0'))) return true;
+          if (collapsedDashes.length >= 3 && iNormalized.includes(collapsedDashes.toLowerCase())) return true;
+
+          if (digitsOnly.length === 10) {
+            const inqPhone = String(i.phone || '').replace(/\D/g, '');
+            if (inqPhone.endsWith(digitsOnly)) return true;
+          }
+
+          if (rawParam.includes('@')) {
+            const inqEmail = String(i.email || '').trim().toLowerCase();
+            if (inqEmail === rawParam.toLowerCase()) return true;
+          }
+
+          return false;
+        });
+      }
+    } catch (inqSearchErr) {
+      console.warn('⚠️ [TRACKING] Inquiry fallback search error:', inqSearchErr.message);
+    }
 
     if (!foundOrder && !foundInq) {
       return res.status(404).json({
         success: false,
-        message: `Order #${rawId} was not found. Please verify your Order ID (e.g. RF-ORD-2026-003) or contact Rajesh Framing support.`
+        message: `Order #${rawParam} was not found. Please verify your Order ID (e.g. RF-ORD-2026-011) or contact Rajendra Studio support.`
       });
     }
 
-    const orderId = (foundOrder && foundOrder.orderId) || (foundInq && foundInq.id) || rawId;
-    const status = (foundOrder && foundOrder.status) || (foundInq && foundInq.status) || 'In Progress';
+    const orderId = (foundOrder && foundOrder.orderId) || (foundInq && foundInq.id) || collapsedDashes;
+    const status = (foundOrder && foundOrder.status) || (foundInq && foundInq.status) || 'Pending';
     const createdAt = (foundOrder && foundOrder.createdAt) || (foundInq && foundInq.createdAt) || new Date().toISOString();
     const updatedAt = (foundOrder && foundOrder.updatedAt) || (foundInq && foundInq.updatedAt) || createdAt;
     const notes = (foundOrder && foundOrder.notes) || (foundInq && foundInq.notes) || '';
@@ -2820,9 +2902,9 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
     const maskedPhone = rawPhone.length >= 10 ? rawPhone.slice(0, 3) + '••••' + rawPhone.slice(-3) : rawPhone;
     const rawEmail = String(custObj.email || (foundInq && foundInq.email) || '').trim();
     const maskedEmail = rawEmail.includes('@') ? rawEmail.split('@')[0].slice(0, 2) + '••••@' + rawEmail.split('@')[1] : rawEmail;
-    const address = custObj.address || (foundInq && (foundInq.deliveryAddress || foundInq.specs)) || 'Bharuch Delivery';
+    const address = custObj.address || (foundInq && (foundInq.deliveryAddress || foundInq.specs)) || 'Studio Pickup - Bharuch Shop';
     const city = custObj.city || 'Bharuch';
-    const pincode = custObj.pincode || '';
+    const pincode = custObj.pincode || '392001';
 
     // Items List
     let rawItems = (foundOrder && foundOrder.items) || (foundInq && foundInq.items) || [];
@@ -2856,94 +2938,158 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
 
     const total = Number((foundOrder && foundOrder.total) || (foundInq && (foundInq.total || foundInq.estimatedValue)) || 0);
     const paymentMethod = String((foundOrder && foundOrder.paymentMethod) || (foundInq && foundInq.paymentMethod) || 'Pick up from shop');
-    const isPaid = paymentMethod.toLowerCase().includes('upi') || status === 'Completed';
+    const isPaid = paymentMethod.toLowerCase().includes('upi') || String(status).toLowerCase() === 'completed';
     const paymentStatus = isPaid ? 'Paid' : 'Pending';
 
-    // Status derivation
-    const isCancelled = status === 'Cancelled';
-    const isNew = status === 'New' || status === 'Pending';
-    const isConfirmed = status === 'Confirmed' || status === 'Accepted';
-    const isInProduction = status === 'In Progress' || status === 'Processing';
-    const isShipped = status === 'Shipped' || status === 'Dispatched';
-    const isCompleted = status === 'Completed' || status === 'Delivered';
+    // Status normalization
+    const normStatus = String(status || '').toLowerCase().trim();
+    const isCancelled = ['cancelled', 'canceled', 'rejected'].includes(normStatus);
+    const isNew = ['new', 'pending', 'placed'].includes(normStatus);
+    const hasConfirmation = Boolean(
+      (foundOrder && (foundOrder.confirmationDate || foundOrder.confirmation_date)) ||
+      (foundInq && (foundInq.confirmationDate || foundInq.confirmed_date))
+    );
+    const isConfirmed = ['confirmed', 'accepted', 'in progress', 'processing', 'ready for pick up', 'ready for pickup', 'ready', 'completed', 'delivered', 'picked up'].includes(normStatus) || hasConfirmation;
+    const isPickedUp = ['completed', 'delivered', 'picked up'].includes(normStatus) || Boolean(
+      (foundOrder && (foundOrder.actualPickupDate || foundOrder.actual_pickup_date)) ||
+      (foundInq && (foundInq.actualPickupDate || foundInq.actual_pickup_date))
+    );
+    const isReadyForPickup = ['ready for pick up', 'ready for pickup', 'ready'].includes(normStatus);
+
+    const rawPickupDate = (foundOrder && (foundOrder.pickupDate || foundOrder.pickup_date)) || (foundInq && (foundInq.pickupDate || foundInq.pickup_date)) || null;
+    const rawConfDate = (foundOrder && (foundOrder.confirmationDate || foundOrder.confirmation_date)) || (foundInq && (foundInq.confirmationDate || foundInq.confirmed_date)) || null;
+    const rawActualPickupDate = (foundOrder && (foundOrder.actualPickupDate || foundOrder.actual_pickup_date)) || (foundInq && (foundInq.actualPickupDate || foundInq.actual_pickup_date)) || null;
+
+    // Helper: Format date in Indian locale
+    function formatReadable(dVal) {
+      if (!dVal) return null;
+      try {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(String(dVal).trim())) {
+          const parts = String(dVal).trim().split('-');
+          const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+          if (!isNaN(d.getTime())) {
+            return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+          }
+        }
+        const d = new Date(dVal);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+      } catch (_) {}
+      return String(dVal);
+    }
 
     let orderDateFormatted = 'Recent';
     try {
       const dt = new Date(createdAt);
       if (!isNaN(dt.getTime())) {
         orderDateFormatted = dt.toLocaleDateString('en-IN', {
-          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
         });
       }
     } catch (_) {}
 
-    let updateDateFormatted = orderDateFormatted;
-    try {
-      const dt = new Date(updatedAt);
-      if (!isNaN(dt.getTime())) {
-        updateDateFormatted = dt.toLocaleDateString('en-IN', {
-          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-      }
-    } catch (_) {}
+    const formattedPickupDate = formatReadable(rawPickupDate);
+    const formattedConfDate = formatReadable(rawConfDate);
+    const formattedActualPickupDate = formatReadable(rawActualPickupDate);
 
-    const timeline = [
-      {
-        id: 'placed',
-        step: 1,
-        title: 'Order Placed',
-        description: 'Order received and logged in system',
-        date: orderDateFormatted,
-        completed: true,
-        current: isNew
-      },
-      {
-        id: 'confirmed',
+    // Strictly 3 steps (or 2 steps if rejected/cancelled)
+    const timeline = [];
+
+    // Step 1: Order Placed
+    timeline.push({
+      id: 'placed',
+      step: 1,
+      title: 'Order Placed',
+      description: 'Order received and logged in system',
+      date: orderDateFormatted,
+      completed: true,
+      current: false
+    });
+
+    if (isCancelled) {
+      // Step 2: Rejected / Cancelled - STOP HERE!
+      const cancelReason = (notes && notes.includes('Reason:'))
+        ? notes.split('Reason:')[1].trim()
+        : (notes || 'This order has been cancelled by the studio.');
+
+      timeline.push({
+        id: 'cancelled',
         step: 2,
-        title: 'Order Accepted & Confirmed',
-        description: 'Reviewed and approved by framing studio',
-        date: (!isNew && !isCancelled) ? 'Confirmed' : 'Pending',
-        completed: isConfirmed || isInProduction || isShipped || isCompleted,
-        current: false
-      },
-      {
-        id: 'production',
-        step: 3,
-        title: 'Framing & Precision Crafting',
-        description: 'Mounting, glass cutting, and frame assembly',
-        date: (isShipped || isCompleted) ? 'Completed' : ((isConfirmed || isInProduction) ? 'In Progress' : 'Pending'),
-        completed: isShipped || isCompleted,
-        current: (isConfirmed || isInProduction) && !isShipped && !isCompleted
-      },
-      {
-        id: 'dispatched',
-        step: 4,
-        title: 'Out for Delivery / Pickup Ready',
-        description: 'Quality inspected and dispatched for doorstep delivery',
-        date: isCompleted ? 'Completed' : (isShipped ? 'Out for Delivery' : 'Pending'),
-        completed: isCompleted,
-        current: isShipped
-      },
-      {
-        id: 'delivered',
-        step: 5,
-        title: 'Delivered',
-        description: 'Handed over to customer',
-        date: isCompleted ? updateDateFormatted : 'Pending',
-        completed: isCompleted,
-        current: isCompleted
+        title: 'Order Cancelled',
+        description: cancelReason,
+        date: 'Cancelled',
+        completed: true,
+        current: false,
+        cancelled: true
+      });
+      // Do NOT push Step 3 when cancelled!
+    } else {
+      // Step 2: Accepted / Confirmed
+      timeline.push({
+        id: 'accepted',
+        step: 2,
+        title: isConfirmed ? 'Order Accepted' : 'Order Review',
+        description: isConfirmed ? 'Order approved & confirmed by studio' : 'Under review by studio team',
+        date: isConfirmed ? (formattedConfDate ? `✓ Confirmed: ${formattedConfDate}` : 'Confirmed') : 'Pending Studio Review',
+        completed: isConfirmed,
+        current: !isConfirmed
+      });
+
+      // Step 3: Pickup Date (ONLY when accepted)
+      let pickupTitle = 'Pickup Date';
+      let pickupDesc = '';
+      let pickupDateText = 'Pending Acceptance';
+      let pickupCompleted = false;
+      let pickupCurrent = false;
+
+      if (isPickedUp) {
+        pickupTitle = 'Order Picked Up';
+        pickupDesc = 'Collected by customer from Rajendra Studio';
+        pickupDateText = formattedActualPickupDate ? `✓ Collected: ${formattedActualPickupDate}` : (formattedPickupDate ? `✓ Picked Up: ${formattedPickupDate}` : 'Picked Up');
+        pickupCompleted = true;
+        pickupCurrent = true;
+      } else if (isReadyForPickup) {
+        pickupTitle = 'Ready for Pick Up';
+        pickupDesc = 'Your order is ready for collection at Rajendra Studio (Opp. ICICI Bank, Tulsidham Chokdi, Bharuch)';
+        pickupDateText = formattedPickupDate ? `🗓️ Ready by: ${formattedPickupDate}` : 'Ready for Pick Up';
+        pickupCompleted = false;
+        pickupCurrent = true;
+      } else if (isConfirmed) {
+        pickupTitle = 'Pickup Date';
+        pickupDesc = formattedPickupDate ? `Ready for collection on ${formattedPickupDate}` : 'Studio is preparing your order for pickup';
+        pickupDateText = formattedPickupDate ? `🗓️ Ready by: ${formattedPickupDate}` : 'Scheduling Pickup';
+        pickupCompleted = false;
+        pickupCurrent = true;
+      } else {
+        pickupTitle = 'Pickup Date';
+        pickupDesc = 'Pickup date will be scheduled once order is accepted';
+        pickupDateText = 'Pending Studio Acceptance';
+        pickupCompleted = false;
+        pickupCurrent = false;
       }
-    ];
+
+      timeline.push({
+        id: 'pickup',
+        step: 3,
+        title: pickupTitle,
+        description: pickupDesc,
+        date: pickupDateText,
+        completed: pickupCompleted,
+        current: pickupCurrent
+      });
+    }
 
     res.json({
       success: true,
       order: {
         orderId,
-        status,
-        pickupDate: (foundOrder && (foundOrder.pickupDate || foundOrder.pickup_date)) || (foundInq && (foundInq.pickupDate || foundInq.pickup_date)) || null,
-        confirmationDate: (foundOrder && (foundOrder.confirmationDate || foundOrder.confirmation_date)) || (foundInq && (foundInq.confirmationDate || foundInq.confirmation_date)) || null,
+        status: isCancelled ? 'Cancelled' : (isConfirmed ? (isPickedUp ? 'Completed' : (isReadyForPickup ? 'Ready for Pick Up' : 'Confirmed')) : 'Pending'),
+        rawStatus: status,
+        pickupDate: rawPickupDate,
+        confirmationDate: rawConfDate,
         isCancelled,
-        canEdit: (status === 'New' || status === 'Pending' || status === 'Placed' || status === 'In Progress') && !isCancelled,
+        canEdit: isNew && !isCancelled,
         customer: {
           name,
           phone: rawPhone,
@@ -2977,18 +3123,31 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
  */
 app.put('/api/orders/:orderId/customer-update', async (req, res) => {
   try {
-    const rawId = (req.params.orderId || '').trim().replace(/^#/, '');
+    const rawId = (req.params.orderId || '').trim().replace(/^#+/, '');
     if (!rawId) {
       return res.status(400).json({ success: false, message: 'Order ID is required.' });
     }
 
+    const normId = rawId.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-').replace(/-+/g, '-').toLowerCase();
+    const alphaId = normId.replace(/[^a-z0-9]/g, '');
+
     const { name, phone, email, address, city, pincode, notes } = req.body;
 
     const orders = await db.getOrders();
-    const order = orders.find(o => o.orderId && (o.orderId.toLowerCase() === rawId.toLowerCase() || o.orderId.toLowerCase() === `rf-ord-${rawId.toLowerCase()}`));
+    const order = orders.find(o => {
+      if (!o || !o.orderId) return false;
+      const oNorm = o.orderId.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-').replace(/-+/g, '-').toLowerCase();
+      const oAlpha = oNorm.replace(/[^a-z0-9]/g, '');
+      return oNorm === normId || oAlpha === alphaId || o.orderId.toLowerCase() === rawId.toLowerCase() || oNorm === `rf-ord-${normId}`;
+    });
 
     const inquiries = await db.getInquiries();
-    const inq = inquiries.find(i => i.id && (i.id.toLowerCase() === rawId.toLowerCase() || i.id.toLowerCase() === `rf-ord-${rawId.toLowerCase()}`));
+    const inq = inquiries.find(i => {
+      if (!i || !i.id) return false;
+      const iNorm = i.id.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-').replace(/-+/g, '-').toLowerCase();
+      const iAlpha = iNorm.replace(/[^a-z0-9]/g, '');
+      return iNorm === normId || iAlpha === alphaId || i.id.toLowerCase() === rawId.toLowerCase() || iNorm === `rf-ord-${normId}`;
+    });
 
     if (!order && !inq) {
       return res.status(404).json({ success: false, message: `Order #${rawId} not found.` });

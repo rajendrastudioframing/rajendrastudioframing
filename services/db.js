@@ -1214,24 +1214,58 @@ module.exports = {
   },
 
   async getOrderById(orderId) {
-    const cleanId = (orderId || '').trim().replace(/^#/, '');
+    if (!orderId) return null;
+    const raw = String(orderId).trim();
+    // Normalize unicode dashes (en-dash, em-dash, figure dash, minus sign, etc.)
+    const normalizedDashes = raw.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-');
+    const cleanId = normalizedDashes.replace(/^#+/, '').trim();
     if (!cleanId) return null;
-    const idVariants = Array.from(new Set([
-      cleanId,
-      '#' + cleanId,
-      cleanId.toLowerCase(),
-      '#' + cleanId.toLowerCase(),
-      cleanId.toUpperCase(),
-      '#' + cleanId.toUpperCase()
-    ]));
+
+    // Collapsed dashes (e.g. RF-ORD--2026-011 -> RF-ORD-2026-011)
+    const collapsedDashes = cleanId.replace(/-+/g, '-');
+    // Double-dash version (e.g. RF-ORD-2026-011 -> RF-ORD--2026-011)
+    const doubleDashes = collapsedDashes.replace(/RF-ORD-/i, 'RF-ORD--');
+
+    const variantSet = new Set();
+    [raw, normalizedDashes, cleanId, collapsedDashes, doubleDashes].forEach(v => {
+      if (!v) return;
+      const s = String(v).trim();
+      const noHash = s.replace(/^#+/, '').trim();
+      variantSet.add(s);
+      variantSet.add('#' + noHash);
+      variantSet.add(noHash);
+      variantSet.add(noHash.toUpperCase());
+      variantSet.add(noHash.toLowerCase());
+      variantSet.add('#' + noHash.toUpperCase());
+      variantSet.add('#' + noHash.toLowerCase());
+    });
+
+    const idVariants = Array.from(variantSet);
     if (supabase && isSupabaseOperational()) {
       try {
-        const queryPromise = supabase
+        let queryPromise = supabase
           .from('orders')
           .select('*')
           .in('order_id', idVariants)
           .maybeSingle();
-        const { data, error } = await withTimeout(queryPromise, 4000, 'Supabase getOrderById');
+        let { data, error } = await withTimeout(queryPromise, 4000, 'Supabase getOrderById');
+
+        // Fallback ilike search if exact match in idVariants failed
+        if ((!data || error) && collapsedDashes.length >= 3) {
+          const searchPattern = collapsedDashes.startsWith('RF-ORD') ? `%${collapsedDashes}%` : `%${collapsedDashes}`;
+          const ilikeQuery = supabase
+            .from('orders')
+            .select('*')
+            .ilike('order_id', searchPattern)
+            .limit(1)
+            .maybeSingle();
+          const ilikeRes = await withTimeout(ilikeQuery, 3000, 'Supabase getOrderById ilike');
+          if (!ilikeRes.error && ilikeRes.data) {
+            data = ilikeRes.data;
+            error = null;
+          }
+        }
+
         if (!error && data) {
           let parsedCustomer = data.customer || {};
           if (typeof parsedCustomer === 'string' && parsedCustomer.trim().startsWith('{')) {
@@ -1270,7 +1304,12 @@ module.exports = {
       }
     }
     const orders = readJson(ORDERS_FILE, []);
-    const found = orders.find(o => o.orderId && o.orderId.toLowerCase() === cleanId.toLowerCase());
+    const alphaInput = cleanId.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const found = orders.find(o => {
+      if (!o || !o.orderId) return false;
+      const oAlpha = o.orderId.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return oAlpha === alphaInput || idVariants.includes(o.orderId) || o.orderId.toLowerCase() === cleanId.toLowerCase();
+    });
     if (found) return found;
 
     return null;
