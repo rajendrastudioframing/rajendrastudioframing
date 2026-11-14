@@ -149,7 +149,7 @@ async function syncToSupabase() {
           id: r.id,
           product_id: r.productId,
           author: r.author,
-          city: r.city || 'Dahej / Bharuch',
+          city: r.city || 'Bharuch',
           rating: Number(r.rating) || 5,
           date: r.date || new Date().toISOString().split('T')[0],
           headline: r.headline,

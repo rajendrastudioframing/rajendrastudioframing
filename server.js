@@ -389,7 +389,7 @@ function generateCustomerLoginEmailHtml({ customerName, customerEmail, loginTime
                   RAJESH <span style="color: #C99A3D;">FRAMING</span>
                 </div>
                 <div style="font-size: 11px; letter-spacing: 1.5px; color: #C5A880; text-transform: uppercase; margin-top: 5px;">
-                  Custom Framing Studio &bull; Dahej &amp; Bharuch
+                  Custom Framing Studio &bull; Bharuch
                 </div>
               </td>
             </tr>
@@ -944,7 +944,7 @@ ${(newStatus === 'Placed' || newStatus === 'New' || newStatus === 'Order Placed'
 Order Summary:
 Order ID: #${orderId}
 Total Amount: ₹${Number(total || 0).toLocaleString('en-IN')}
-Delivery To: ${address || 'Studio Pickup / Dahej & Bharuch'}
+Delivery To: ${address || 'Studio Pickup / Bharuch'}
 
 If you have any questions, reach our studio:
 Phone: +91 95107 57513
@@ -2577,7 +2577,7 @@ app.post('/api/orders', async (req, res) => {
     } = req.body;
 
     const orderAddress = (address && address.trim()) || 'Studio Pickup - Dahej Shop';
-    const orderCity = (city && city.trim()) || 'Dahej / Bharuch';
+    const orderCity = (city && city.trim()) || 'Bharuch';
     const orderState = (state && state.trim()) || 'Gujarat';
     const orderPincode = (pincode && pincode.trim()) || '392130';
 
@@ -2818,8 +2818,8 @@ app.get('/api/orders/track/:orderId', async (req, res) => {
     const maskedPhone = rawPhone.length >= 10 ? rawPhone.slice(0, 3) + '••••' + rawPhone.slice(-3) : rawPhone;
     const rawEmail = String(custObj.email || (foundInq && foundInq.email) || '').trim();
     const maskedEmail = rawEmail.includes('@') ? rawEmail.split('@')[0].slice(0, 2) + '••••@' + rawEmail.split('@')[1] : rawEmail;
-    const address = custObj.address || (foundInq && (foundInq.deliveryAddress || foundInq.specs)) || 'Dahej / Bharuch Delivery';
-    const city = custObj.city || 'Dahej / Bharuch';
+    const address = custObj.address || (foundInq && (foundInq.deliveryAddress || foundInq.specs)) || 'Bharuch Delivery';
+    const city = custObj.city || 'Bharuch';
     const pincode = custObj.pincode || '';
 
     // Items List
@@ -3297,7 +3297,7 @@ async function handleUpdateOrderStatus(req, res) {
           phone: custPhone,
           email: custEmail,
           address: deliveryAddress,
-          city: 'Dahej / Bharuch',
+          city: 'Bharuch',
           state: 'Gujarat',
           pincode: '392130'
         },
@@ -3686,7 +3686,7 @@ app.put('/api/admin/orders/:id/update', requireAuth, async (req, res) => {
           phone: custPhone,
           email: custEmail,
           address: deliveryAddress,
-          city: 'Dahej / Bharuch',
+          city: 'Bharuch',
           state: 'Gujarat',
           pincode: '392130'
         },
@@ -5184,7 +5184,7 @@ app.post('/api/reviews', async (req, res) => {
       id: id || `rev-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       productId: String(productId).trim(),
       author: author.trim(),
-      city: (city || 'Dahej / Bharuch').trim(),
+      city: (city || 'Bharuch').trim(),
       rating: Number(rating) || 5,
       date: date || new Date().toISOString().split('T')[0],
       headline: headline.trim(),

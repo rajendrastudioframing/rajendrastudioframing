@@ -11,7 +11,7 @@ const categoriesSectionHtml = `
         <div class="categories-showcase-header">
           <span class="eyebrow">★ Handcrafted Collections</span>
           <h2>Explore Our 5 Categories</h2>
-          <p>Discover our bespoke framing and personalized printing solutions handcrafted in Dahej &amp; Bharuch. Select any category to view all products.</p>
+          <p>Discover our bespoke framing and personalized printing solutions handcrafted in Bharuch. Select any category to view all products.</p>
         </div>
 
         <div class="categories-main-grid">
@@ -136,7 +136,7 @@ function generateCategoriesPage() {
   <link rel="icon" type="image/png" href="assets/images/favicon.png" />
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="apple-touch-icon" href="assets/images/favicon.png" />
-  <meta name="description" content="Explore our 5 signature collections: Studio &amp; Framing, Personalized Printing, Office Stationery, Custom Canvas Art, and Keepsake Photo Gifts in Dahej &amp; Bharuch." />
+  <meta name="description" content="Explore our 5 signature collections: Studio &amp; Framing, Personalized Printing, Office Stationery, Custom Canvas Art, and Keepsake Photo Gifts in Bharuch." />
   <meta name="keywords" content="Photo Frame Categories, Glass Frames Bharuch, Custom Mug Printing Dahej, Office Files Folders Printing, Custom Canvas Art, Photo Gifts Keepsakes" />
   <meta name="theme-color" content="#111111" />
 
@@ -300,7 +300,7 @@ function generateCategoriesPage() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
-              <span>Handcrafted in Dahej &amp; Bharuch</span>
+              <span>Handcrafted in Bharuch</span>
             </div>
             <div class="page-header-trust-item">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -367,7 +367,7 @@ ${categoriesSectionHtml}
           </div>
           <p class="footer-tagline">Frames • Printing • Personalized Products</p>
           <p class="footer-desc">
-            Your trusted destination for custom photo framing, glass mounts, durable polymer frames, personalized drinkware, and executive office printing in Dahej and Bharuch.
+            Your trusted destination for custom photo framing, glass mounts, durable polymer frames, personalized drinkware, and executive office printing in Bharuch.
           </p>
 
         </div>

@@ -586,7 +586,7 @@ async function submitCheckoutOrder(e) {
   let email = emailInput ? emailInput.value.trim() : '';
   const notes = notesInput ? notesInput.value.trim() : '';
   const address = addressEl && addressEl.value.trim() ? addressEl.value.trim() : 'Studio Pickup - Dahej Shop';
-  const city = cityEl && cityEl.value.trim() ? cityEl.value.trim() : 'Dahej / Bharuch';
+  const city = cityEl && cityEl.value.trim() ? cityEl.value.trim() : 'Bharuch';
   const state = stateEl && stateEl.value.trim() ? stateEl.value.trim() : 'Gujarat';
   const pincode = pincodeEl && pincodeEl.value.trim() ? pincodeEl.value.trim() : '392130';
   const fulfillment = fulfillmentEl ? fulfillmentEl.value : 'pickup';

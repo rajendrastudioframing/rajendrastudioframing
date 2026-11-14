@@ -342,7 +342,7 @@ const newSeedData = `const SEED_PRODUCT_REVIEWS = {
       id: 'rev-pof-1',
       productId: 'printed-office-folder-executive',
       author: 'Kinjal Parekh',
-      city: 'Dahej / Bharuch',
+      city: 'Bharuch',
       rating: 5,
       date: '2026-09-22',
       headline: 'Gold foil stamping looks extremely prestigious',

@@ -1461,7 +1461,7 @@ async function notifyOrderAcceptedByAdmin({ order, pickupDate = null, confirmati
 
                     <div style="margin-top: 14px; font-size: 13px; color: #1F2937; line-height: 1.6; background-color: #F0FDF4; border-radius: 8px; padding: 10px 14px; border: 1px dashed #A7F3D0;">
                       📍 <strong>Shop Address for Pickup:</strong><br>
-                      <strong>Rajesh Framing Studio</strong> &bull; GIDC Commercial Area, Dahej / Bharuch, Gujarat (392130)<br>
+                      <strong>Rajesh Framing Studio</strong> &bull; GIDC Commercial Area, Bharuch, Gujarat (392130)<br>
                       📞 <strong>Phone / WhatsApp:</strong> +91 95107 57513 &bull; ⏰ <strong>Studio Timings:</strong> 9:00 AM – 9:00 PM
                     </div>
 
@@ -1645,7 +1645,7 @@ async function notifyOrderAcceptedByAdmin({ order, pickupDate = null, confirmati
         to: customerEmail,
         subject: customerSubject,
         htmlContent: customerHtml,
-        textContent: `Hello ${customerName},\n\nYour custom order #${cleanId} has been confirmed by our studio team!\n\nPRODUCT READY & SHOP PICKUP DATE: ${formattedPickupDate}\nYour product will be ready on ${formattedPickupDate}. Please visit our shop on this date to collect your handcrafted order.\n\nShop Address for Pickup:\nRajesh Framing Studio, GIDC Commercial Area, Dahej / Bharuch, Gujarat (392130)\nPhone / WhatsApp: +91 95107 57513\nStudio Timings: 9:00 AM – 9:00 PM\n\nThank you for shopping with Rajendra Studio & Framing!`
+        textContent: `Hello ${customerName},\n\nYour custom order #${cleanId} has been confirmed by our studio team!\n\nPRODUCT READY & SHOP PICKUP DATE: ${formattedPickupDate}\nYour product will be ready on ${formattedPickupDate}. Please visit our shop on this date to collect your handcrafted order.\n\nShop Address for Pickup:\nRajesh Framing Studio, GIDC Commercial Area, Bharuch, Gujarat (392130)\nPhone / WhatsApp: +91 95107 57513\nStudio Timings: 9:00 AM – 9:00 PM\n\nThank you for shopping with Rajendra Studio & Framing!`
       });
       // Safety timeout of 5 seconds on customer email
       const timeoutTask = new Promise((_, reject) => setTimeout(() => reject(new Error('Brevo email timeout (5s)')), 5000));

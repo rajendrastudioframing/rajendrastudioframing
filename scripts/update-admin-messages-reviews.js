@@ -204,7 +204,7 @@ function renderReviewsTable(reviews) {
         </td>
         <td>
           <div style="font-weight: 700; font-size: 0.84rem; color: var(--text-main);">\${escapeHtml(r.author || 'Anonymous')}</div>
-          <div style="font-size: 0.74rem; color: var(--text-muted);">📍 \${escapeHtml(r.city || 'Dahej / Bharuch')}</div>
+          <div style="font-size: 0.74rem; color: var(--text-muted);">📍 \${escapeHtml(r.city || 'Bharuch')}</div>
         </td>
         <td>
           <div style="color: #F59E0B; font-size: 0.95rem; letter-spacing: 1px;">\${stars}</div>

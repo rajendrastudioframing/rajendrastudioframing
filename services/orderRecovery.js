@@ -63,7 +63,7 @@ function parseAdminAlert(html, subject, date) {
       phone: phone,
       email: email,
       address: address,
-      city: 'Dahej / Bharuch',
+      city: 'Bharuch',
       state: 'Gujarat',
       pincode: '392130'
     },

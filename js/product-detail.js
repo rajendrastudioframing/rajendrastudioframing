@@ -1487,7 +1487,7 @@ function applyLoggedInUserToReviewForm() {
       if (user.city) {
         cityInput.value = user.city;
       } else if (user.address && (user.address.toLowerCase().includes('dahej') || user.address.toLowerCase().includes('bharuch') || user.address.toLowerCase().includes('surat'))) {
-        cityInput.value = 'Dahej / Bharuch';
+        cityInput.value = 'Bharuch';
       }
     }
     return user;
@@ -1757,7 +1757,7 @@ function setupReviewFormHandlers() {
 
       // Strictly enforce the authenticated account name directly
       const author = verifiedAuthor;
-      const city = (document.getElementById('reviewCity')?.value || '').trim() || (currentUser.city || 'Dahej / Bharuch');
+      const city = (document.getElementById('reviewCity')?.value || '').trim() || (currentUser.city || 'Bharuch');
       const headline = (document.getElementById('reviewHeadline')?.value || '').trim();
       const comment = (document.getElementById('reviewComment')?.value || '').trim();
       const rating = selectedFormRating;
@@ -1784,7 +1784,7 @@ function setupReviewFormHandlers() {
         productSlug: (currentProduct && currentProduct.slug) ? String(currentProduct.slug).trim() : '',
         productName: (currentProduct && currentProduct.name) ? String(currentProduct.name).trim() : '',
         author,
-        city: city || 'Dahej / Bharuch',
+        city: city || 'Bharuch',
         rating,
         date: new Date().toISOString().split('T')[0],
         headline,
