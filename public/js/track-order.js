@@ -153,7 +153,11 @@ async function trackOrder(orderId) {
       if (inputEl && data.order.orderId) {
         inputEl.value = data.order.orderId;
       }
-      renderTrackingResult(data.order, container);
+      try {
+        renderTrackingResult(data.order, container);
+      } catch (rErr) {
+        console.error('Render error:', rErr);
+      }
       if (actionParam === 'edit' && data.order.canEdit) {
         setTimeout(() => {
           openCustomerEditOrderModal();
@@ -166,6 +170,30 @@ async function trackOrder(orderId) {
     console.error('Tracking fetch error:', err);
     renderNotFound(cleanId, 'Unable to connect to Rajendra Studio server. Please check your internet connection and try again.', container);
   }
+}
+
+
+function detectTrackOrderVariantMeta(item) {
+  if (!item) return { label: 'Size', icon: '📐' };
+  const vType = (item.variantType || item.variant_type || '').toLowerCase();
+  const vLabel = item.variantLabel || (vType === 'color' || vType === 'colour' ? 'Colour' : (vType === 'material' ? 'Material' : (vType === 'size' ? 'Size' : '')));
+
+  if (vLabel === 'Colour' || vType === 'color' || vType === 'colour') {
+    return { label: 'Colour', icon: '🎨' };
+  }
+  if (vLabel === 'Material' || vType === 'material') {
+    return { label: 'Material', icon: '🪵' };
+  }
+
+  const val = (item.size || '').trim().toLowerCase();
+  if (val && (
+    val.startsWith('#') ||
+    ['blue', 'red', 'gold', 'warm gold', 'black', 'matte black', 'white', 'pure white', 'green', 'yellow', 'pink', 'rose gold', 'silver', 'grey', 'gray', 'brown', 'purple', 'violet', 'orange', 'navy', 'royal navy', 'cyan', 'teal'].includes(val)
+  )) {
+    return { label: 'Colour', icon: '🎨' };
+  }
+
+  return { label: 'Size', icon: '📐' };
 }
 
 function renderTrackingResult(order, container) {
