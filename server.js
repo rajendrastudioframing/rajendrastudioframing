@@ -305,7 +305,7 @@ function generateOtpEmailHtml(otp, recipientEmail) {
         </div>
       </div>
       <div class="footer">
-        Rajendra Studio &amp; Framing • A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001<br><a href="https://maps.app.goo.gl/nrykyTtAQ544gm4e6" target="_blank" style="color: #C99A3D; text-decoration: underline; font-size: 11px;">📍 View on Google Maps</a><br>
+        Rajendra Studio &amp; Framing • A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001<br><a href="https://maps.app.goo.gl/cNKG3Da6yA8E8L5j8" target="_blank" style="color: #C99A3D; text-decoration: underline; font-size: 11px;">📍 View on Google Maps</a><br>
         Direct Customer Support: +91 95107 57513 • shop@rajendrastudioandgifts.in
       </div>
     </div>
@@ -358,7 +358,7 @@ function generateCustomerOtpEmailHtml(otp, recipientEmail) {
         </div>
       </div>
       <div class="footer">
-        Rajendra Studio &amp; Framing • A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001<br><a href="https://maps.app.goo.gl/nrykyTtAQ544gm4e6" target="_blank" style="color: #C99A3D; text-decoration: underline; font-size: 11px;">📍 View on Google Maps</a><br>
+        Rajendra Studio &amp; Framing • A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001<br><a href="https://maps.app.goo.gl/cNKG3Da6yA8E8L5j8" target="_blank" style="color: #C99A3D; text-decoration: underline; font-size: 11px;">📍 View on Google Maps</a><br>
         Direct Customer Support: +91 95107 57513 • shop@rajendrastudioandgifts.in
       </div>
     </div>
@@ -471,7 +471,7 @@ function generateCustomerLoginEmailHtml({ customerName, customerEmail, loginTime
                   Rajesh Framing Studio &bull; Dahej Support
                 </div>
                 <div style="font-size: 12px; color: #78716C; margin-bottom: 12px;">
-                  A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001 &bull; Phone: +91 95107 57513<br><a href="https://maps.app.goo.gl/nrykyTtAQ544gm4e6" target="_blank" style="color: #C99A3D; text-decoration: underline; font-size: 11px;">📍 View on Google Maps</a>
+                  A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001 &bull; Phone: +91 95107 57513<br><a href="https://maps.app.goo.gl/cNKG3Da6yA8E8L5j8" target="_blank" style="color: #C99A3D; text-decoration: underline; font-size: 11px;">📍 View on Google Maps</a>
                 </div>
                 <div>
                   <a href="https://wa.me/919510757513" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none; padding: 8px 18px; border-radius: 9999px; margin: 0 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);">
@@ -547,7 +547,7 @@ ${catalogUrl}
 
 Rajendra Studio & Framing
 A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001
-Google Maps: https://maps.app.goo.gl/nrykyTtAQ544gm4e6
+Google Maps: https://maps.app.goo.gl/cNKG3Da6yA8E8L5j8
 `;
 
     await transporter.sendMail({
@@ -787,7 +787,7 @@ function generateCustomerOrderEmailHtml({ orderId, customerName, newStatus, note
                   </a>
                 </div>
                 <div style="margin-top: 20px; font-size: 11px; color: #A8A29E; line-height: 1.6;">
-                  Rajendra Studio &amp; Framing &bull; A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001<br><a href="https://maps.app.goo.gl/nrykyTtAQ544gm4e6" target="_blank" style="color: #C99A3D; text-decoration: underline; font-size: 11px;">📍 View Location on Google Maps</a><br>
+                  Rajendra Studio &amp; Framing &bull; A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001<br><a href="https://maps.app.goo.gl/cNKG3Da6yA8E8L5j8" target="_blank" style="color: #C99A3D; text-decoration: underline; font-size: 11px;">📍 View Location on Google Maps</a><br>
                   This is an automated operational notification regarding your order with Dahej Support.
                 </div>
               </td>
@@ -953,7 +953,7 @@ WhatsApp: https://wa.me/919510757513
 
 Rajendra Studio & Framing
 A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001
-Google Maps: https://maps.app.goo.gl/nrykyTtAQ544gm4e6
+Google Maps: https://maps.app.goo.gl/cNKG3Da6yA8E8L5j8
 `;
 
     try {
