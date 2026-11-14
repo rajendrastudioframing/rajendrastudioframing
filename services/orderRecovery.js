@@ -65,7 +65,7 @@ function parseAdminAlert(html, subject, date) {
       address: address,
       city: 'Bharuch',
       state: 'Gujarat',
-      pincode: '392130'
+      pincode: '392001'
     },
     total,
     subtotal: total,

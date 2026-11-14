@@ -633,7 +633,7 @@ function openInvoiceModal(orderId) {
           <img src="assets/images/logo-horizontal.png" alt="Rajendra Studio &amp; Photo Gifts" style="height: 42px; width: auto; object-fit: contain;" />
         </div>
         <p style="font-size: 0.8rem; color: #6B7280; margin: 0; line-height: 1.4;">
-          Rajendra Studio &amp; Photo Gifts • Dahej GIDC, Bharuch, Gujarat 392130<br>
+          Rajendra Studio &amp; Photo Gifts • A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001<br>
           Direct Hotline: +91 95107 57513 • Support: info@rajendrastudioandgifts.in
         </p>
       </div>

@@ -164,7 +164,7 @@ function syncProductsDataFiles(products) {
       whatsapp: process.env.STUDIO_PHONE || "+91 95107 57513",
       whatsappNumber: process.env.STUDIO_WHATSAPP || "919510757513",
       email: "info@rajendrastudioandgifts.in",
-      address: "Dahej GIDC, Bharuch, Gujarat 392130",
+      address: "A/23 Chitrakut, Tulsidham chokdi, opp. ICICI Bank, Bharuch, Gujarat 392001",
       workingHours: "Mon - Sat: 9:30 AM - 8:30 PM | Sun: 10:00 AM - 2:00 PM",
       establishedYear: 2008,
       framesCrafted: "25,000+",
